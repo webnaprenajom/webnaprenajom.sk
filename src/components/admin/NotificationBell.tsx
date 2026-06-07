@@ -201,6 +201,21 @@ export const NotificationBell = () => {
                         })}
                       </span>
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {n.metadata?.lead_id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-primary"
+                            onClick={() => {
+                              if (!n.read) void markRead(n.id);
+                              setOpen(false);
+                              navigate(`/admin?lead=${n.metadata.lead_id}`);
+                            }}
+                            title="Otvoriť lead"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                         {!n.read && (
                           <Button
                             variant="ghost"
