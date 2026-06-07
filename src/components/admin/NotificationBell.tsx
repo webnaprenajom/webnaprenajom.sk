@@ -38,6 +38,7 @@ const typeIcon = (type: string) => {
 };
 
 export const NotificationBell = () => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
