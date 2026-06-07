@@ -37,6 +37,7 @@ const AdminWheelLeads = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Wheel leady | Web na prenájom";
