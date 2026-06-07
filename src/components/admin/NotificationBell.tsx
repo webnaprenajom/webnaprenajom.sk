@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Bell, Check, CheckCheck, Trash2, UserPlus, Sparkles, Inbox } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Check, CheckCheck, Trash2, UserPlus, Sparkles, Inbox, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
