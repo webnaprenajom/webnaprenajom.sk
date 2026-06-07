@@ -1,0 +1,1 @@
+ALTER TABLE public.rental_websites ADD COLUMN IF NOT EXISTS implementers JSONB NOT NULL DEFAULT '[]'::jsonb;
