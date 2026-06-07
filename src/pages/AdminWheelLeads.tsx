@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, Loader2, Search, ShieldAlert, LogOut, Sparkles, Mail, Check, Trash2, Send,
+  ArrowLeft, Loader2, Search, ShieldAlert, LogOut, Sparkles, Mail, Check, Trash2, Send, UserPlus,
 } from "lucide-react";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
