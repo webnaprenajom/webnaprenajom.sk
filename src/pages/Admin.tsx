@@ -192,6 +192,7 @@ const parseCsv = (text: string): string[][] => {
 
 const Admin = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { authChecking, isAdmin, userEmail, userId } = useAdminAccess();
   const [leads, setLeads] = useState<Lead[]>([]);
