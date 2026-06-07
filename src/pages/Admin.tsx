@@ -621,6 +621,44 @@ const Admin = () => {
     toast({ title: `Aktualizovaných ${ids.length} leadov`, description: STATUS_CONFIG[status]?.label });
   };
 
+  const bulkSetAssignee = async (assignee: string | null) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from("leads")
+      .update({ assigned_to: assignee })
+      .in("id", ids);
+    if (error) {
+      toast({ title: "Priradenie zlyhalo", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads((prev) => prev.map((l) => (ids.includes(l.id) ? { ...l, assigned_to: assignee } : l)));
+    setSelectedIds(new Set());
+    toast({
+      title: `Aktualizovaných ${ids.length} leadov`,
+      description: assignee ? `Priradené: ${assignee}` : "Nepriradené",
+    });
+  };
+
+  const bulkSetTemperature = async (temperature: LeadTemperature) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from("leads")
+      .update({ temperature })
+      .in("id", ids);
+    if (error) {
+      toast({ title: "Zmena teploty zlyhala", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads((prev) => prev.map((l) => (ids.includes(l.id) ? { ...l, temperature } : l)));
+    setSelectedIds(new Set());
+    toast({
+      title: `Aktualizovaných ${ids.length} leadov`,
+      description: `Teplota: ${temperature ?? "vyčistené"}`,
+    });
+  };
+
   const bulkDelete = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
