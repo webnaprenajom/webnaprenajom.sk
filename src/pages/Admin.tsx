@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import LeadBulkBar from "@/components/admin/leads/LeadBulkBar";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,6 +192,7 @@ const parseCsv = (text: string): string[][] => {
 
 const Admin = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { authChecking, isAdmin, userEmail, userId } = useAdminAccess();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -337,6 +339,21 @@ const Admin = () => {
     setEditFollowUpDate(lead.follow_up_date ? new Date(lead.follow_up_date) : undefined);
     setEditCreatedAt(lead.created_at ? new Date(lead.created_at) : undefined);
   };
+
+  // Open lead when navigated with ?lead=<id> (e.g. from notification quick action)
+  useEffect(() => {
+    const leadId = searchParams.get("lead");
+    if (!leadId || leads.length === 0) return;
+    if (selected?.id === leadId) return;
+    const target = leads.find((l) => l.id === leadId);
+    if (target) {
+      openLead(target);
+      // strip the param so re-open is possible after close
+      searchParams.delete("lead");
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, leads]);
 
   const handleSave = async () => {
     if (!selected) return;
@@ -617,6 +634,44 @@ const Admin = () => {
     setLeads((prev) => prev.map((l) => (ids.includes(l.id) ? { ...l, status } : l)));
     setSelectedIds(new Set());
     toast({ title: `Aktualizovaných ${ids.length} leadov`, description: STATUS_CONFIG[status]?.label });
+  };
+
+  const bulkSetAssignee = async (assignee: string | null) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from("leads")
+      .update({ assigned_to: assignee })
+      .in("id", ids);
+    if (error) {
+      toast({ title: "Priradenie zlyhalo", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads((prev) => prev.map((l) => (ids.includes(l.id) ? { ...l, assigned_to: assignee } : l)));
+    setSelectedIds(new Set());
+    toast({
+      title: `Aktualizovaných ${ids.length} leadov`,
+      description: assignee ? `Priradené: ${assignee}` : "Nepriradené",
+    });
+  };
+
+  const bulkSetTemperature = async (temperature: LeadTemperature) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const { error } = await supabase
+      .from("leads")
+      .update({ temperature })
+      .in("id", ids);
+    if (error) {
+      toast({ title: "Zmena teploty zlyhala", description: error.message, variant: "destructive" });
+      return;
+    }
+    setLeads((prev) => prev.map((l) => (ids.includes(l.id) ? { ...l, temperature } : l)));
+    setSelectedIds(new Set());
+    toast({
+      title: `Aktualizovaných ${ids.length} leadov`,
+      description: `Teplota: ${temperature ?? "vyčistené"}`,
+    });
   };
 
   const bulkDelete = async () => {
@@ -1225,34 +1280,23 @@ const Admin = () => {
         />
 
         {/* Bulk actions bar */}
-        {selectedIds.size > 0 && (
-          <section className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
-            <span className="text-sm font-semibold">{selectedIds.size} vybraných</span>
-            <Select onValueChange={(v) => bulkSetStatus(v as LeadStatus)}>
-              <SelectTrigger className="h-8 w-[200px] text-xs">
-                <Move className="w-3.5 h-3.5 mr-1" />
-                <SelectValue placeholder="Presunúť do statusu…" />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(STATUS_CONFIG) as LeadStatus[]).map((k) => (
-                  <SelectItem key={k} value={k}>{STATUS_CONFIG[k].label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button size="sm" variant="outline" onClick={() => bulkMove("stale")}>
-              <MailX className="w-4 h-4 mr-2" /> Bez reakcie
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => bulkMove("archive")}>
-              <Archive className="w-4 h-4 mr-2" /> Archív
-            </Button>
-            <Button size="sm" variant="destructive" onClick={bulkDelete}>
-              <Trash2 className="w-4 h-4 mr-2" /> Vymazať
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
-              Zrušiť výber
-            </Button>
-          </section>
-        )}
+        <LeadBulkBar
+          count={selectedIds.size}
+          statusOptions={(Object.keys(STATUS_CONFIG) as LeadStatus[]).map((k) => ({
+            value: k,
+            label: STATUS_CONFIG[k].label,
+          }))}
+          assigneeOptions={ASSIGNEES}
+          unassignedSentinel={UNASSIGNED}
+          onSetStatus={(v) => bulkSetStatus(v as LeadStatus)}
+          onSetAssignee={bulkSetAssignee}
+          onSetTemperature={bulkSetTemperature}
+          onMoveStale={() => bulkMove("stale")}
+          onMoveArchive={() => bulkMove("archive")}
+          onDelete={bulkDelete}
+          onClear={() => setSelectedIds(new Set())}
+        />
+
 
         {/* Table */}
         <section className="rounded-xl border border-border bg-card overflow-hidden">

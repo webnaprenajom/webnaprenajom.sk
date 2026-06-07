@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Bell, Check, CheckCheck, Trash2, UserPlus, Sparkles, Inbox } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Check, CheckCheck, Trash2, UserPlus, Sparkles, Inbox, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,7 @@ const typeIcon = (type: string) => {
 };
 
 export const NotificationBell = () => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
@@ -199,6 +201,21 @@ export const NotificationBell = () => {
                         })}
                       </span>
                       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {n.metadata?.lead_id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-primary"
+                            onClick={() => {
+                              if (!n.read) void markRead(n.id);
+                              setOpen(false);
+                              navigate(`/admin?lead=${n.metadata.lead_id}`);
+                            }}
+                            title="Otvoriť lead"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                         {!n.read && (
                           <Button
                             variant="ghost"

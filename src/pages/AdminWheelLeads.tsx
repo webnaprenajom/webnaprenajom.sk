@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, Loader2, Search, ShieldAlert, LogOut, Sparkles, Mail, Check, Trash2, Send,
+  ArrowLeft, Loader2, Search, ShieldAlert, LogOut, Sparkles, Mail, Check, Trash2, Send, UserPlus,
 } from "lucide-react";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
@@ -37,6 +37,7 @@ const AdminWheelLeads = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = "Wheel leady | Web na prenájom";
@@ -135,6 +136,63 @@ const AdminWheelLeads = () => {
     const update: any = { [field]: value || null };
     const { error } = await supabase.from("wheel_spins").update(update).eq("id", id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
+  };
+
+  const convertToLead = async (r: WheelRow) => {
+    const email = (r.email || "").trim().toLowerCase();
+    if (!email) {
+      toast({ title: "Bez emailu", description: "Záznam nemá email.", variant: "destructive" });
+      return;
+    }
+    setConvertingId(r.id);
+    try {
+      // Idempotency: check existing lead by lowercased email
+      const { data: existing, error: findErr } = await supabase
+        .from("leads")
+        .select("id, name, email")
+        .ilike("email", email)
+        .limit(1)
+        .maybeSingle();
+      if (findErr) throw findErr;
+
+      if (existing?.id) {
+        toast({
+          title: "Lead už existuje",
+          description: `${existing.name || existing.email} — otváram detail.`,
+        });
+        navigate(`/admin?lead=${existing.id}`);
+        return;
+      }
+
+      const notePieces = [
+        `Z kolesa šťastia: ${r.prize_label}${r.prize_value ? ` (${r.prize_value}%)` : ""}`,
+        r.coupon_code ? `Kupón: ${r.coupon_code}` : null,
+        r.notes ? `Pôvodná poznámka: ${r.notes}` : null,
+      ].filter(Boolean);
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("leads")
+        .insert({
+          name: r.name?.trim() || email,
+          email,
+          phone: r.phone || null,
+          source: "wheel",
+          type: "ai",
+          status: "new",
+          language: r.language || "sk",
+          notes: notePieces.join("\n"),
+        })
+        .select("id")
+        .single();
+      if (insErr) throw insErr;
+
+      toast({ title: "Lead vytvorený", description: `${email} — otváram detail.` });
+      navigate(`/admin?lead=${inserted.id}`);
+    } catch (e: any) {
+      toast({ title: "Konverzia zlyhala", description: e.message || String(e), variant: "destructive" });
+    } finally {
+      setConvertingId(null);
+    }
   };
 
   if (authChecking) return <main className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></main>;
@@ -260,6 +318,21 @@ const AdminWheelLeads = () => {
                             Reminder
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={convertingId === r.id}
+                          onClick={() => convertToLead(r)}
+                          className="mr-1"
+                          title="Konvertovať na lead"
+                        >
+                          {convertingId === r.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <UserPlus className="w-3.5 h-3.5 mr-1" />
+                          )}
+                          Konvertovať na lead
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => toggleRedeemed(r)} title="Označiť uplatnené">
                           <Check className="w-3.5 h-3.5" />
                         </Button>
