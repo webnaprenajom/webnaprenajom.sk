@@ -1280,34 +1280,23 @@ const Admin = () => {
         />
 
         {/* Bulk actions bar */}
-        {selectedIds.size > 0 && (
-          <section className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
-            <span className="text-sm font-semibold">{selectedIds.size} vybraných</span>
-            <Select onValueChange={(v) => bulkSetStatus(v as LeadStatus)}>
-              <SelectTrigger className="h-8 w-[200px] text-xs">
-                <Move className="w-3.5 h-3.5 mr-1" />
-                <SelectValue placeholder="Presunúť do statusu…" />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.keys(STATUS_CONFIG) as LeadStatus[]).map((k) => (
-                  <SelectItem key={k} value={k}>{STATUS_CONFIG[k].label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button size="sm" variant="outline" onClick={() => bulkMove("stale")}>
-              <MailX className="w-4 h-4 mr-2" /> Bez reakcie
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => bulkMove("archive")}>
-              <Archive className="w-4 h-4 mr-2" /> Archív
-            </Button>
-            <Button size="sm" variant="destructive" onClick={bulkDelete}>
-              <Trash2 className="w-4 h-4 mr-2" /> Vymazať
-            </Button>
-            <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
-              Zrušiť výber
-            </Button>
-          </section>
-        )}
+        <LeadBulkBar
+          count={selectedIds.size}
+          statusOptions={(Object.keys(STATUS_CONFIG) as LeadStatus[]).map((k) => ({
+            value: k,
+            label: STATUS_CONFIG[k].label,
+          }))}
+          assigneeOptions={ASSIGNEES}
+          unassignedSentinel={UNASSIGNED}
+          onSetStatus={(v) => bulkSetStatus(v as LeadStatus)}
+          onSetAssignee={bulkSetAssignee}
+          onSetTemperature={bulkSetTemperature}
+          onMoveStale={() => bulkMove("stale")}
+          onMoveArchive={() => bulkMove("archive")}
+          onDelete={bulkDelete}
+          onClear={() => setSelectedIds(new Set())}
+        />
+
 
         {/* Table */}
         <section className="rounded-xl border border-border bg-card overflow-hidden">
