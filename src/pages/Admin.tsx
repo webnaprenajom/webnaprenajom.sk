@@ -340,6 +340,21 @@ const Admin = () => {
     setEditCreatedAt(lead.created_at ? new Date(lead.created_at) : undefined);
   };
 
+  // Open lead when navigated with ?lead=<id> (e.g. from notification quick action)
+  useEffect(() => {
+    const leadId = searchParams.get("lead");
+    if (!leadId || leads.length === 0) return;
+    if (selected?.id === leadId) return;
+    const target = leads.find((l) => l.id === leadId);
+    if (target) {
+      openLead(target);
+      // strip the param so re-open is possible after close
+      searchParams.delete("lead");
+      setSearchParams(searchParams, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, leads]);
+
   const handleSave = async () => {
     if (!selected) return;
     if (!editName.trim() || !editEmail.trim()) {
