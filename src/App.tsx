@@ -38,6 +38,7 @@ const App = () => (
             <Route path="/de" element={<LocalizedPage lang="de" />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/today" element={<AdminToday />} />
             <Route path="/admin/logs" element={<AdminLogs />} />
             <Route path="/admin/notes" element={<AdminProjectNotes />} />
             <Route path="/admin/commissions" element={<AdminCommissions />} />
