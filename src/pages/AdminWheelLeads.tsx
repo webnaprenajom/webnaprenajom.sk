@@ -138,6 +138,63 @@ const AdminWheelLeads = () => {
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
   };
 
+  const convertToLead = async (r: WheelRow) => {
+    const email = (r.email || "").trim().toLowerCase();
+    if (!email) {
+      toast({ title: "Bez emailu", description: "Záznam nemá email.", variant: "destructive" });
+      return;
+    }
+    setConvertingId(r.id);
+    try {
+      // Idempotency: check existing lead by lowercased email
+      const { data: existing, error: findErr } = await supabase
+        .from("leads")
+        .select("id, name, email")
+        .ilike("email", email)
+        .limit(1)
+        .maybeSingle();
+      if (findErr) throw findErr;
+
+      if (existing?.id) {
+        toast({
+          title: "Lead už existuje",
+          description: `${existing.name || existing.email} — otváram detail.`,
+        });
+        navigate(`/admin?lead=${existing.id}`);
+        return;
+      }
+
+      const notePieces = [
+        `Z kolesa šťastia: ${r.prize_label}${r.prize_value ? ` (${r.prize_value}%)` : ""}`,
+        r.coupon_code ? `Kupón: ${r.coupon_code}` : null,
+        r.notes ? `Pôvodná poznámka: ${r.notes}` : null,
+      ].filter(Boolean);
+
+      const { data: inserted, error: insErr } = await supabase
+        .from("leads")
+        .insert({
+          name: r.name?.trim() || email,
+          email,
+          phone: r.phone || null,
+          source: "wheel",
+          type: "ai",
+          status: "new",
+          language: r.language || "sk",
+          notes: notePieces.join("\n"),
+        })
+        .select("id")
+        .single();
+      if (insErr) throw insErr;
+
+      toast({ title: "Lead vytvorený", description: `${email} — otváram detail.` });
+      navigate(`/admin?lead=${inserted.id}`);
+    } catch (e: any) {
+      toast({ title: "Konverzia zlyhala", description: e.message || String(e), variant: "destructive" });
+    } finally {
+      setConvertingId(null);
+    }
+  };
+
   if (authChecking) return <main className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></main>;
 
   if (!isAdmin) return (
