@@ -8,6 +8,7 @@ import NotFound from "./pages/NotFound";
 import LocalizedPage from "./pages/LocalizedPage";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
+import AdminToday from "./pages/AdminToday";
 import AdminLogs from "./pages/AdminLogs";
 import AdminProjectNotes from "./pages/AdminProjectNotes";
 import AdminCommissions from "./pages/AdminCommissions";
