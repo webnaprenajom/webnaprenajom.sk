@@ -318,6 +318,21 @@ const AdminWheelLeads = () => {
                             Reminder
                           </Button>
                         )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={convertingId === r.id}
+                          onClick={() => convertToLead(r)}
+                          className="mr-1"
+                          title="Konvertovať na lead"
+                        >
+                          {convertingId === r.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <UserPlus className="w-3.5 h-3.5 mr-1" />
+                          )}
+                          Konvertovať na lead
+                        </Button>
                         <Button size="sm" variant="ghost" onClick={() => toggleRedeemed(r)} title="Označiť uplatnené">
                           <Check className="w-3.5 h-3.5" />
                         </Button>
