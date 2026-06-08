@@ -1,12 +1,29 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import LeadBulkBar from "@/components/admin/leads/LeadBulkBar";
+import LeadsToolbar from "@/components/admin/leads/LeadsToolbar";
+import LeadsTable from "@/components/admin/leads/LeadsTable";
+import LeadDetailDialog from "@/components/admin/leads/LeadDetailDialog";
+import {
+  ARCHIVE_STATUSES,
+  ASSIGNEES,
+  Lead,
+  LeadStatus,
+  LeadTemperature,
+  SortDir,
+  SortKey,
+  STALE_DAYS,
+  STATUS_CONFIG,
+  UNASSIGNED,
+  ViewMode,
+  isStale,
+  typeLabel,
+} from "@/components/admin/leads/constants";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -14,14 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -42,35 +51,22 @@ import { toast } from "@/hooks/use-toast";
 import {
   Loader2,
   LogOut,
-  Search,
-  Download,
-  Upload,
-  Plus,
   TrendingUp,
   Users,
   Calendar as CalendarLucide,
   CheckCircle2,
-  Trash2,
   Bot,
-  Phone,
   Mail,
   ShieldAlert,
-  Flame,
-  Snowflake,
-  Minus,
   History,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   KanbanSquare,
-  Euro,
   Wallet,
-  CalendarIcon,
   ListTodo,
   Sparkles,
+  Menu,
+  FileSignature,
+  Palette,
 } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/admin/NotificationBell";
@@ -83,86 +79,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, Archive, MailX, FileSignature, Palette, Move } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-
-type LeadStatus = "new" | "to_call" | "contacted" | "send_offer" | "offer_silent" | "reminder" | "reminder_silent" | "scheduled" | "send_instructions" | "order" | "won" | "lost";
-type SortKey = "created_at" | "name" | "email" | "source" | "type" | "status" | "assigned_to" | "temperature";
-type SortDir = "asc" | "desc";
-type LeadTemperature = "hot" | "neutral" | "cold" | null;
-
-const ASSIGNEES = ["Peter", "Maroš", "Matuš"] as const;
-const UNASSIGNED = "__unassigned__";
-
-const TEMP_CONFIG: Record<"hot" | "neutral" | "cold", { label: string; icon: typeof Flame; className: string }> = {
-  hot: { label: "Hot", icon: Flame, className: "text-red-500 hover:bg-red-500/10" },
-  neutral: { label: "Neutral", icon: Minus, className: "text-yellow-500 hover:bg-yellow-500/10" },
-  cold: { label: "Cold", icon: Snowflake, className: "text-blue-400 hover:bg-blue-400/10" },
-};
-
-const TYPE_OPTIONS: { value: string; label: string }[] = [
-  { value: "ai", label: "AI návrh" },
-  { value: "consultation", label: "Konzultácia" },
-  { value: "redesign", label: "Re-dizajn" },
-  { value: "eshop", label: "Eshop" },
-  { value: "ai_solution", label: "AI riešenie" },
-  { value: "repair", label: "Opravy" },
-];
-
-const typeLabel = (t: string) =>
-  TYPE_OPTIONS.find((o) => o.value === t)?.label || t;
-
-interface Lead {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  message: string | null;
-  type: string;
-  language: string;
-  status: LeadStatus;
-  notes: string | null;
-  source: string | null;
-  temperature: LeadTemperature;
-  assigned_to: string | null;
-  consultation_date: string | null;
-  consultation_time: string | null;
-  follow_up_date: string | null;
-  amount: number | null;
-  created_at: string;
-  updated_at: string;
-  status_changed_at: string | null;
-  imported?: boolean;
-  import_batch?: string | null;
-}
-
-type ViewMode = "current" | "archive" | "stale" | "imported";
-
-const STALE_DAYS = 14;
-const STALE_STATUSES: LeadStatus[] = ["contacted", "reminder", "reminder_silent", "offer_silent"];
-const ARCHIVE_STATUSES: LeadStatus[] = ["won", "lost"];
-
-const isStale = (l: { status: string; status_changed_at: string | null; updated_at: string }) => {
-  if (l.status === "offer_silent") return true;
-  if (!STALE_STATUSES.includes(l.status as LeadStatus)) return false;
-  const since = l.status_changed_at ? new Date(l.status_changed_at).getTime() : new Date(l.updated_at).getTime();
-  return Date.now() - since >= STALE_DAYS * 86400000;
-};
-
-const STATUS_CONFIG: Record<LeadStatus, { label: string; className: string; rowClass: string; borderClass: string; sendsEmail?: "reminder" | "offer" | "order" | "instructions" }> = {
-  new:        { label: "Nový",            className: "bg-blue-500/15 text-blue-500 border-blue-500/30",       rowClass: "bg-blue-500/5 hover:bg-blue-500/10",       borderClass: "border-l-4 border-l-blue-500" },
-  to_call:    { label: "Zavolať 📞",      className: "bg-indigo-500/15 text-indigo-500 border-indigo-500/30", rowClass: "bg-indigo-500/5 hover:bg-indigo-500/10",   borderClass: "border-l-4 border-l-indigo-500" },
-  contacted:  { label: "Kontaktovaný",    className: "bg-yellow-500/15 text-yellow-500 border-yellow-500/30", rowClass: "bg-yellow-500/5 hover:bg-yellow-500/10",   borderClass: "border-l-4 border-l-yellow-500" },
-  send_offer: { label: "Poslať ponuku ✉", className: "bg-cyan-500/15 text-cyan-500 border-cyan-500/30",       rowClass: "bg-cyan-500/5 hover:bg-cyan-500/10",       borderClass: "border-l-4 border-l-cyan-500", sendsEmail: "offer" },
-  offer_silent: { label: "Po ponuke bez reakcie", className: "bg-pink-500/15 text-pink-500 border-pink-500/30", rowClass: "bg-pink-500/5 hover:bg-pink-500/10", borderClass: "border-l-4 border-l-pink-500" },
-  reminder:        { label: "Poslať reminder ✉", className: "bg-orange-500/15 text-orange-500 border-orange-500/30", rowClass: "bg-orange-500/5 hover:bg-orange-500/10", borderClass: "border-l-4 border-l-orange-500", sendsEmail: "reminder" },
-  reminder_silent: { label: "Reminder (bez e-mailu)", className: "bg-amber-600/15 text-amber-600 border-amber-600/30", rowClass: "bg-amber-600/5 hover:bg-amber-600/10", borderClass: "border-l-4 border-l-amber-600" },
-  scheduled:  { label: "Dohodnutý",       className: "bg-purple-500/15 text-purple-500 border-purple-500/30", rowClass: "bg-purple-500/5 hover:bg-purple-500/10",   borderClass: "border-l-4 border-l-purple-500" },
-  send_instructions: { label: "Zaslať inštrukcie 📋", className: "bg-teal-500/15 text-teal-600 border-teal-500/30", rowClass: "bg-teal-500/5 hover:bg-teal-500/10", borderClass: "border-l-4 border-l-teal-500", sendsEmail: "instructions" },
-  order:      { label: "Objednávka 📄",   className: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30", rowClass: "bg-emerald-500/5 hover:bg-emerald-500/10", borderClass: "border-l-4 border-l-emerald-500", sendsEmail: "order" },
-  won:        { label: "Zrealizovaný",    className: "bg-green-500/15 text-green-500 border-green-500/30",    rowClass: "bg-green-500/5 hover:bg-green-500/10",     borderClass: "border-l-4 border-l-green-500" },
-  lost:       { label: "Zamietnutý",      className: "bg-red-500/15 text-red-500 border-red-500/30",          rowClass: "bg-red-500/5 hover:bg-red-500/10",         borderClass: "border-l-4 border-l-red-500" },
-};
+import { TYPE_OPTIONS } from "@/components/admin/leads/constants";
 
 // CSV parser supporting quoted fields with commas/newlines
 const parseCsv = (text: string): string[][] => {
@@ -534,7 +451,7 @@ const Admin = () => {
     setSaving(false);
   };
 
-  const setLeadTemperature = async (lead: Lead, temp: LeadTemperature) => {
+  const setLeadTemperature = async (lead: Lead, temp: "hot" | "neutral" | "cold") => {
     // Toggle: clicking the same temperature clears it
     const next: LeadTemperature = lead.temperature === temp ? null : temp;
     const prev = lead.temperature;
@@ -755,15 +672,6 @@ const Admin = () => {
         return;
       }
 
-      // Some exports wrap whole rows in extra quotes producing one big cell starting with ","
-      // Detect that pattern and unwrap into real columns.
-      const looksWrapped =
-        rows[0].length <= 2 &&
-        typeof rows[0][rows[0].length - 1] === "string" &&
-        rows[0][rows[0].length - 1].includes(",") &&
-        rows[0][rows[0].length - 1].includes('"') === false &&
-        rows[0][rows[0].length - 1].split(",").length >= 3;
-
       // Simpler heuristic: header has only 1 cell containing many commas
       if (rows[0].length === 1 && rows[0][0].includes(",")) {
         rows = rows
@@ -977,13 +885,6 @@ const Admin = () => {
       setSortKey(key);
       setSortDir("asc");
     }
-  };
-
-  const SortIcon = ({ k }: { k: SortKey }) => {
-    if (sortKey !== k) return <ArrowUpDown className="w-3 h-3 inline opacity-40 ml-1" />;
-    return sortDir === "asc"
-      ? <ArrowUp className="w-3 h-3 inline ml-1" />
-      : <ArrowDown className="w-3 h-3 inline ml-1" />;
   };
 
   const stats = useMemo(() => {
@@ -1205,70 +1106,27 @@ const Admin = () => {
         </section>
 
         {/* Filters + actions */}
-        <section className="flex flex-col sm:flex-row flex-wrap gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Hľadať podľa mena, e-mailu, telefónu, zdroja, riešiteľa..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Všetky statusy</SelectItem>
-              {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                <SelectItem key={k} value={k}>{v.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <SelectValue placeholder="Typ" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Všetky typy</SelectItem>
-              {TYPE_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-            <SelectTrigger className="w-full sm:w-[160px]">
-              <SelectValue placeholder="Kto rieši" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Všetci riešitelia</SelectItem>
-              <SelectItem value={UNASSIGNED}>— Nepriradené —</SelectItem>
-              {ASSIGNEES.map((a) => (
-                <SelectItem key={a} value={a}>{a}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button onClick={() => setAddOpen(true)} variant="gradient">
-            <Plus className="w-4 h-4 mr-2" /> Nový lead
-          </Button>
-          <Button onClick={() => setBulkOfferOpen(true)} variant="outline">
-            <Mail className="w-4 h-4 mr-2" /> Poslať ponuku
-          </Button>
-          <Button onClick={() => fileInputRef.current?.click()} variant="outline">
-            <Upload className="w-4 h-4 mr-2" /> Import CSV
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,text/csv"
-            className="hidden"
-            onChange={handleCsvImport}
-          />
-          <Button onClick={exportCsv} variant="outline">
-            <Download className="w-4 h-4 mr-2" /> Export CSV
-          </Button>
-        </section>
+        <LeadsToolbar
+          search={search}
+          onSearchChange={setSearch}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          assigneeFilter={assigneeFilter}
+          onAssigneeFilterChange={setAssigneeFilter}
+          onAddLead={() => setAddOpen(true)}
+          onBulkOffer={() => setBulkOfferOpen(true)}
+          onImportClick={() => fileInputRef.current?.click()}
+          onExport={exportCsv}
+        />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv,text/csv"
+          className="hidden"
+          onChange={handleCsvImport}
+        />
 
         {/* Today must-do */}
         <TodayMustDoSection
@@ -1297,492 +1155,55 @@ const Admin = () => {
           onClear={() => setSelectedIds(new Set())}
         />
 
-
         {/* Table */}
-        <section className="rounded-xl border border-border bg-card overflow-hidden">
-          {loading ? (
-            <div className="py-16 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="py-16 text-center text-muted-foreground">Žiadne leady</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table className="text-xs [&_th]:h-9 [&_th]:px-2 [&_td]:p-2">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[36px]" onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={filtered.length > 0 && filtered.every((l) => selectedIds.has(l.id))}
-                        onCheckedChange={(v) => {
-                          if (v) setSelectedIds(new Set(filtered.map((l) => l.id)));
-                          else setSelectedIds(new Set());
-                        }}
-                        aria-label="Vybrať všetky"
-                      />
-                    </TableHead>
-                    <TableHead className="cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort("created_at")}>
-                      Dátum<SortIcon k="created_at" />
-                    </TableHead>
-                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("name")}>
-                      Meno<SortIcon k="name" />
-                    </TableHead>
-                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("email")}>
-                      Kontakt<SortIcon k="email" />
-                    </TableHead>
-                    <TableHead className="text-right whitespace-nowrap">Suma</TableHead>
-                    <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("source")}>
-                      Zdroj<SortIcon k="source" />
-                    </TableHead>
-                    <TableHead className="cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort("type")}>
-                      Typ<SortIcon k="type" />
-                    </TableHead>
-                    <TableHead className="cursor-pointer select-none min-w-[170px]" onClick={() => toggleSort("status")}>
-                      Status<SortIcon k="status" />
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap text-[11px]">Stav od</TableHead>
-                    <TableHead className="text-center cursor-pointer select-none whitespace-nowrap" onClick={() => toggleSort("temperature")}>
-                      Tep.<SortIcon k="temperature" />
-                    </TableHead>
-                    <TableHead>Pozn.</TableHead>
-                    <TableHead className="w-[40px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((lead) => {
-                    const cfg = STATUS_CONFIG[lead.status];
-                    const checked = selectedIds.has(lead.id);
-                    return (
-                    <TableRow
-                      key={lead.id}
-                      className={`cursor-pointer ${cfg?.borderClass || ""} ${cfg?.rowClass || "hover:bg-muted/50"}`}
-                      onClick={() => openLead(lead)}
-                    >
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={checked}
-                          onCheckedChange={(v) => {
-                            setSelectedIds((prev) => {
-                              const next = new Set(prev);
-                              if (v) next.add(lead.id);
-                              else next.delete(lead.id);
-                              return next;
-                            });
-                          }}
-                          aria-label="Vybrať lead"
-                        />
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-[11px] text-muted-foreground">
-                        {new Date(lead.created_at).toLocaleDateString("sk-SK", {
-                          day: "numeric",
-                          month: "short",
-                        })}
-                      </TableCell>
-                      <TableCell className="font-medium text-xs max-w-[140px] truncate">{lead.name}</TableCell>
-                      <TableCell className="max-w-[180px]">
-                        <div className="flex items-center gap-1 text-muted-foreground text-[11px] truncate">
-                          <Mail className="w-3 h-3 shrink-0" />
-                          <span className="truncate">{lead.email}</span>
-                        </div>
-                        {lead.phone && (
-                          <div className="flex items-center gap-1 text-muted-foreground text-[10px]">
-                            <Phone className="w-3 h-3 shrink-0" />
-                            {lead.phone}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right whitespace-nowrap">
-                        {lead.amount != null ? (
-                          <span className="font-bold text-green-600 dark:text-green-500 text-xs">
-                            {Number(lead.amount).toLocaleString("sk-SK", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}&nbsp;€
-                          </span>
-                        ) : (
-                          <span className="italic text-muted-foreground opacity-60">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-[11px] max-w-[100px] truncate">
-                        {lead.source || <span className="italic text-muted-foreground opacity-60">—</span>}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                          {typeLabel(lead.type)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Select
-                          value={lead.status}
-                          onValueChange={(v) => setLeadStatus(lead, v as LeadStatus)}
-                        >
-                          <SelectTrigger className={`h-7 text-[10px] px-2 min-w-[160px] ${STATUS_CONFIG[lead.status]?.className}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                              <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-[10px] text-muted-foreground">
-                        {lead.status_changed_at ? (
-                          <span title={new Date(lead.status_changed_at).toLocaleString("sk-SK")}>
-                            {new Date(lead.status_changed_at).toLocaleDateString("sk-SK", { day: "numeric", month: "short" })}
-                            <span className="opacity-60"> · {new Date(lead.status_changed_at).toLocaleTimeString("sk-SK", { hour: "2-digit", minute: "2-digit" })}</span>
-                          </span>
-                        ) : (
-                          <span className="italic opacity-60">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-0">
-                          {(["hot", "neutral", "cold"] as const).map((t) => {
-                            const cfg = TEMP_CONFIG[t];
-                            const Icon = cfg.icon;
-                            const active = lead.temperature === t;
-                            return (
-                              <Button
-                                key={t}
-                                size="icon"
-                                variant="ghost"
-                                title={cfg.label}
-                                onClick={() => setLeadTemperature(lead, t)}
-                                className={`h-6 w-6 ${cfg.className} ${active ? "bg-current/10 ring-1 ring-current" : "opacity-40 hover:opacity-100"}`}
-                              >
-                                <Icon className="w-3.5 h-3.5" />
-                              </Button>
-                            );
-                          })}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-[11px] text-muted-foreground max-w-[160px]">
-                        <div className="line-clamp-2 whitespace-pre-wrap">
-                          {lead.notes || <span className="italic opacity-60">—</span>}
-                        </div>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => setDeleteId(lead.id)}
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </section>
+        <LeadsTable
+          loading={loading}
+          leads={filtered}
+          selectedIds={selectedIds}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onToggleSort={toggleSort}
+          onToggleAll={(checked) => {
+            if (checked) setSelectedIds(new Set(filtered.map((l) => l.id)));
+            else setSelectedIds(new Set());
+          }}
+          onToggleOne={(id, checked) => {
+            setSelectedIds((prev) => {
+              const next = new Set(prev);
+              if (checked) next.add(id);
+              else next.delete(id);
+              return next;
+            });
+          }}
+          onOpenLead={openLead}
+          onSetStatus={setLeadStatus}
+          onSetTemperature={setLeadTemperature}
+          onRequestDelete={setDeleteId}
+        />
       </div>
 
       {/* Lead detail dialog */}
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detail leadu</DialogTitle>
-          </DialogHeader>
-          {selected && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name" className="text-muted-foreground text-xs">Meno</Label>
-                  <Input
-                    id="edit-name"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Meno klienta"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">Dátum príchodu</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !editCreatedAt && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {editCreatedAt ? format(editCreatedAt, "d. M. yyyy") : <span>Vyber dátum</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={editCreatedAt}
-                        onSelect={setEditCreatedAt}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                      {editCreatedAt && (
-                        <div className="p-2 border-t">
-                          <Button variant="ghost" size="sm" className="w-full" onClick={() => setEditCreatedAt(undefined)}>
-                            Zrušiť dátum
-                          </Button>
-                        </div>
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-email" className="text-muted-foreground text-xs">E-mail</Label>
-                  <Input
-                    id="edit-email"
-                    type="email"
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                    placeholder="email@example.sk"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-phone" className="text-muted-foreground text-xs">Telefón</Label>
-                  <Input
-                    id="edit-phone"
-                    value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    placeholder="+421..."
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">Termín konzultácie</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !editConsultDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {editConsultDate ? format(editConsultDate, "d. M. yyyy") : <span>Vyber dátum</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={editConsultDate}
-                        onSelect={setEditConsultDate}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                      {editConsultDate && (
-                        <div className="p-2 border-t">
-                          <Button variant="ghost" size="sm" className="w-full" onClick={() => setEditConsultDate(undefined)}>
-                            Zrušiť dátum
-                          </Button>
-                        </div>
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-time" className="text-muted-foreground text-xs">Čas</Label>
-                  <Input
-                    id="edit-time"
-                    value={editConsultTime}
-                    onChange={(e) => setEditConsultTime(e.target.value)}
-                    placeholder="napr. 14:00"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-amount" className="text-muted-foreground text-xs">Suma (€)</Label>
-                  <div className="relative">
-                    <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                    <Input
-                      id="edit-amount"
-                      inputMode="decimal"
-                      value={editAmount}
-                      onChange={(e) => setEditAmount(e.target.value)}
-                      placeholder="0"
-                      className="pl-9 font-bold text-green-600"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-                <Label className="text-sm font-semibold flex items-center gap-2">
-                  <CalendarIcon className="w-4 h-4 text-primary" />
-                  Ozvať sa klientovi dňa
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Lead sa v tento deň automaticky objaví v sekcii „Dnes musíš urobiť".
-                </p>
-                <div className="flex gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "flex-1 justify-start text-left font-normal",
-                          !editFollowUpDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {editFollowUpDate ? format(editFollowUpDate, "d. M. yyyy") : <span>Vyber dátum follow-upu</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={editFollowUpDate}
-                        onSelect={setEditFollowUpDate}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {[1, 3, 7, 14, 30].map((d) => (
-                    <Button
-                      key={d}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const dt = new Date();
-                        dt.setDate(dt.getDate() + d);
-                        setEditFollowUpDate(dt);
-                      }}
-                    >
-                      +{d}d
-                    </Button>
-                  ))}
-                  {editFollowUpDate && (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditFollowUpDate(undefined)}>
-                      Zrušiť
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {selected.message && (
-                <div>
-                  <Label className="text-muted-foreground text-xs">Správa od klienta</Label>
-                  <div className="mt-1 p-3 bg-muted/50 rounded-lg text-sm whitespace-pre-wrap">
-                    {selected.message}
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="type">Typ</Label>
-                  <Select value={editType} onValueChange={setEditType}>
-                    <SelectTrigger id="type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TYPE_OPTIONS.map((o) => (
-                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={editStatus} onValueChange={(v) => setEditStatus(v as LeadStatus)}>
-                    <SelectTrigger id="status">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                        <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selected.status_changed_at && (
-                    <p className="text-[10px] text-muted-foreground">
-                      Naposledy zmenený: {new Date(selected.status_changed_at).toLocaleString("sk-SK")}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="source">Zdroj</Label>
-                  <Input
-                    id="source"
-                    value={editSource}
-                    onChange={(e) => setEditSource(e.target.value)}
-                    placeholder="napr. Google, Facebook..."
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="assigned">Kto rieši</Label>
-                <Select
-                  value={editAssigned || UNASSIGNED}
-                  onValueChange={(v) => setEditAssigned(v === UNASSIGNED ? "" : v)}
-                >
-                  <SelectTrigger id="assigned">
-                    <SelectValue placeholder="Nepriradené" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={UNASSIGNED}>— Nepriradené —</SelectItem>
-                    {ASSIGNEES.map((a) => (
-                      <SelectItem key={a} value={a}>{a}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Teplota leadu</Label>
-                <div className="flex gap-2">
-                  {(["hot", "neutral", "cold"] as const).map((t) => {
-                    const cfg = TEMP_CONFIG[t];
-                    const Icon = cfg.icon;
-                    const active = editTemperature === t;
-                    return (
-                      <Button
-                        key={t}
-                        type="button"
-                        variant={active ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setEditTemperature(active ? null : t)}
-                        className={!active ? cfg.className : ""}
-                      >
-                        <Icon className="w-4 h-4 mr-1.5" />
-                        {cfg.label}
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Interné poznámky</Label>
-                <Textarea
-                  id="notes"
-                  value={editNotes}
-                  onChange={(e) => setEditNotes(e.target.value)}
-                  placeholder="Doplň poznámky o klientovi, dohodách, follow-up..."
-                  className="min-h-[120px]"
-                />
-              </div>
-
-              <div className="flex gap-2 justify-end pt-2">
-                <Button variant="outline" onClick={() => setSelected(null)}>
-                  Zrušiť
-                </Button>
-                <Button onClick={handleSave} variant="gradient" disabled={saving}>
-                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Uložiť
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <LeadDetailDialog
+        open={!!selected}
+        onOpenChange={(o) => !o && setSelected(null)}
+        selected={selected}
+        saving={saving}
+        onSave={handleSave}
+        editName={editName} setEditName={setEditName}
+        editEmail={editEmail} setEditEmail={setEditEmail}
+        editPhone={editPhone} setEditPhone={setEditPhone}
+        editType={editType} setEditType={setEditType}
+        editStatus={editStatus} setEditStatus={setEditStatus}
+        editSource={editSource} setEditSource={setEditSource}
+        editAssigned={editAssigned} setEditAssigned={setEditAssigned}
+        editTemperature={editTemperature} setEditTemperature={setEditTemperature}
+        editAmount={editAmount} setEditAmount={setEditAmount}
+        editConsultDate={editConsultDate} setEditConsultDate={setEditConsultDate}
+        editConsultTime={editConsultTime} setEditConsultTime={setEditConsultTime}
+        editFollowUpDate={editFollowUpDate} setEditFollowUpDate={setEditFollowUpDate}
+        editCreatedAt={editCreatedAt} setEditCreatedAt={setEditCreatedAt}
+        editNotes={editNotes} setEditNotes={setEditNotes}
+      />
 
       {/* Add lead dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
