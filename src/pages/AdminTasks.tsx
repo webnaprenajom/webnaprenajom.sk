@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,17 +30,17 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import {
-  ArrowLeft,
   Loader2,
-  ShieldAlert,
-  LogOut,
   Plus,
   Trash2,
   Pencil,
-  ListTodo,
+  UserRound,
 } from "lucide-react";
-import { useAdminAccess } from "@/hooks/useAdminAccess";
-import { NotificationBell } from "@/components/admin/NotificationBell";
+import {
+  adminLeadHref,
+  buildClientNameEmailMap,
+  customerHrefByClientName,
+} from "@/lib/adminNav";
 
 type TaskStatus =
   | "todo"
@@ -56,6 +57,7 @@ interface Task {
   title: string;
   description: string | null;
   client_name: string | null;
+  lead_id: string | null;
   assignee: string | null;
   status: TaskStatus;
   priority: TaskPriority;
@@ -109,7 +111,6 @@ const emptyForm = () => ({
 
 const AdminTasks = () => {
   const navigate = useNavigate();
-  const { authChecking, isAdmin, userEmail, userId } = useAdminAccess();
   const [items, setItems] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("active");
@@ -117,39 +118,28 @@ const AdminTasks = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm());
+  const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     document.title = "TO DO – aktívne zákazky | CRM";
-  }, [navigate]);
-
-  useEffect(() => {
-    if (authChecking) return;
-
-    if (!userId) {
-      navigate("/auth", { replace: true });
-      return;
-    }
-
-    if (isAdmin) {
-      void load();
-      return;
-    }
-
-    setLoading(false);
-  }, [authChecking, isAdmin, navigate, userId]);
+    void load();
+  }, []);
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("tasks").select("*").order("created_at", { ascending: false });
-    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else setItems((data || []) as Task[]);
+    const [tasksRes, leadsRes] = await Promise.all([
+      supabase.from("tasks").select("*").order("created_at", { ascending: false }),
+      supabase.from("leads").select("name,email"),
+    ]);
+    if (tasksRes.error) {
+      toast({ title: "Chyba", description: tasksRes.error.message, variant: "destructive" });
+    } else {
+      setItems((tasksRes.data || []) as Task[]);
+    }
+    if (!leadsRes.error && leadsRes.data) {
+      setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
+    }
     setLoading(false);
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth", { replace: true });
   };
 
   const openNew = () => { setForm(emptyForm()); setDialogOpen(true); };
@@ -226,60 +216,22 @@ const AdminTasks = () => {
     archived: items.filter((t) => t.status === "done").length,
   }), [items]);
 
-  if (authChecking) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </main>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md text-center space-y-4">
-          <ShieldAlert className="w-16 h-16 text-destructive mx-auto" />
-          <h1 className="text-2xl font-bold">Nemáte prístup</h1>
-          <Button onClick={handleSignOut} variant="outline">
-            <LogOut className="w-4 h-4 mr-2" /> Odhlásiť
-          </Button>
-        </div>
-      </main>
-    );
-  }
+  const fmt = (n: number) => `${n.toFixed(2)} €`;
 
   const isOverdue = (date: string | null, status: TaskStatus) =>
     !!date && status !== "done" && status !== "paid" && new Date(date) < new Date(new Date().toDateString());
 
-  const fmt = (n: number) => `${n.toFixed(2)} €`;
-
   return (
-    <main className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/admin")} variant="ghost" size="icon">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div>
-              <h1 className="text-base sm:text-xl font-bold flex items-center gap-2 min-w-0">
-                <ListTodo className="w-5 h-5 text-primary" />
-                TO DO – aktívne zákazky
-              </h1>
-              <p className="text-xs text-muted-foreground">{userEmail}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-2" /> Nová úloha</Button>
-            <Button onClick={handleSignOut} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" /> Odhlásiť
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+    <AdminShell
+      title="TO DO – aktívne zákazky"
+      backTo={{ label: "CRM", href: "/admin" }}
+      actions={
+        <Button onClick={openNew} size="sm">
+          <Plus className="w-4 h-4 mr-2" /> Nová úloha
+        </Button>
+      }
+    >
+      <div className="space-y-4">
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="text-xs text-muted-foreground">Aktívne</div>
@@ -375,7 +327,24 @@ const AdminTasks = () => {
                         <TableCell className="text-sm font-medium max-w-[260px]">
                           <button onClick={() => openEdit(t)} className="text-left hover:text-primary line-clamp-2">{t.title}</button>
                         </TableCell>
-                        <TableCell className="text-sm">{t.client_name || <span className="italic opacity-60">—</span>}</TableCell>
+                        <TableCell className="text-sm">
+                          {t.client_name ? (
+                            <div className="space-y-1">
+                              <div>{t.client_name}</div>
+                              {!t.lead_id && customerHrefByClientName(t.client_name, clientEmailMap) && (
+                                <Link
+                                  to={customerHrefByClientName(t.client_name, clientEmailMap)!}
+                                  className="text-[10px] text-primary hover:underline"
+                                  title="Zhoda podľa mena klienta"
+                                >
+                                  Zákazník 360°
+                                </Link>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="italic opacity-60">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-sm">{t.assignee || <span className="italic opacity-60">—</span>}</TableCell>
                         <TableCell className="text-sm text-right font-semibold whitespace-nowrap">{fmt(Number(t.amount || 0))}</TableCell>
                         <TableCell className="text-sm text-right whitespace-nowrap text-cyan-500">{fmt(Number(t.deposit || 0))}</TableCell>
@@ -394,6 +363,16 @@ const AdminTasks = () => {
                           </Select>
                         </TableCell>
                         <TableCell className="text-right whitespace-nowrap">
+                          {t.lead_id && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              title="Otvoriť lead v pipeline"
+                              onClick={() => navigate(adminLeadHref(t.lead_id!))}
+                            >
+                              <UserRound className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button size="icon" variant="ghost" onClick={() => openEdit(t)}><Pencil className="w-4 h-4" /></Button>
                           <Button size="icon" variant="ghost" onClick={() => remove(t.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                         </TableCell>
@@ -480,7 +459,7 @@ const AdminTasks = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+    </AdminShell>
   );
 };
 

@@ -92,7 +92,7 @@ const LeadsToolbar = ({
       <Button onClick={onAddLead} variant="gradient">
         <Plus className="w-4 h-4 mr-2" /> Nový lead
       </Button>
-      <Button onClick={onBulkOffer} variant="outline">
+      <Button onClick={onBulkOffer} variant="outline" title="Vyžaduje výber leadov v tabuľke">
         <Mail className="w-4 h-4 mr-2" /> Poslať ponuku
       </Button>
       <Button onClick={onImportClick} variant="outline">

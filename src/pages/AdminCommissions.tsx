@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,10 +30,14 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import {
-  ArrowLeft,
+  COMMISSION_STATUS_LABELS,
+  EXPENSE_STATUS_LABELS,
+  FINANCE_TRUTH_DISCLAIMER,
+} from "@/lib/finance/labels";
+import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
+import { type FactDraft, prefillFromCommission, prefillFromExpense } from "@/lib/finance/factDrafts";
+import {
   Loader2,
-  ShieldAlert,
-  LogOut,
   Wallet,
   Plus,
   Trash2,
@@ -41,8 +45,6 @@ import {
   Receipt,
   Copy,
 } from "lucide-react";
-import { NotificationBell } from "@/components/admin/NotificationBell";
-import { useAdminAccess } from "@/hooks/useAdminAccess";
 
 type PaymentStatus = "paid" | "unpaid";
 
@@ -69,8 +71,8 @@ interface Expense {
 }
 
 const STATUS_CONFIG: Record<PaymentStatus, { label: string; className: string }> = {
-  paid: { label: "Vyplatené", className: "bg-green-500/15 text-green-500 border-green-500/30" },
-  unpaid: { label: "Nevyplatené", className: "bg-yellow-500/15 text-yellow-500 border-yellow-500/30" },
+  paid: { label: COMMISSION_STATUS_LABELS.paid, className: "bg-green-500/15 text-green-500 border-green-500/30" },
+  unpaid: { label: COMMISSION_STATUS_LABELS.unpaid, className: "bg-yellow-500/15 text-yellow-500 border-yellow-500/30" },
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
@@ -96,9 +98,6 @@ const emptyExpense = () => ({
 });
 
 const AdminCommissions = () => {
-  const navigate = useNavigate();
-  const { authChecking, isAdmin, userEmail, userId } = useAdminAccess();
-
   // Commissions
   const [items, setItems] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,28 +113,16 @@ const AdminCommissions = () => {
   const [expDialogOpen, setExpDialogOpen] = useState(false);
   const [savingExp, setSavingExp] = useState(false);
   const [expForm, setExpForm] = useState(emptyExpense());
+  const [payoutFactDraft, setPayoutFactDraft] = useState<FactDraft | null>(null);
+  const [payoutFactOpen, setPayoutFactOpen] = useState(false);
+  const [costFactDraft, setCostFactDraft] = useState<FactDraft | null>(null);
+  const [costFactOpen, setCostFactOpen] = useState(false);
 
   useEffect(() => {
     document.title = "Provízie & Náklady | CRM";
-  }, [navigate]);
-
-  useEffect(() => {
-    if (authChecking) return;
-
-    if (!userId) {
-      navigate("/auth", { replace: true });
-      return;
-    }
-
-    if (isAdmin) {
-      void load();
-      void loadExpenses();
-      return;
-    }
-
-    setLoading(false);
-    setLoadingExp(false);
-  }, [authChecking, isAdmin, navigate, userId]);
+    void load();
+    void loadExpenses();
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -159,11 +146,6 @@ const AdminCommissions = () => {
     if (error) toast({ title: "Chyba načítania", description: error.message, variant: "destructive" });
     else setExpenses((data || []) as Expense[]);
     setLoadingExp(false);
-  };
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth", { replace: true });
   };
 
   // ===== Commissions =====
@@ -210,8 +192,34 @@ const AdminCommissions = () => {
   const togglePaid = async (c: Commission) => {
     const next: PaymentStatus = c.payment_status === "paid" ? "unpaid" : "paid";
     const { error } = await supabase.from("commissions").update({ payment_status: next }).eq("id", c.id);
-    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else load();
+    if (error) {
+      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      return;
+    }
+    load();
+    if (next === "paid") {
+      const { data: linked } = await supabase
+        .from("payout_records")
+        .select("id")
+        .eq("source_table", "commissions")
+        .eq("source_id", c.id)
+        .maybeSingle();
+      if (!linked) {
+        const draft = prefillFromCommission(c, {
+          commissions: [],
+          expenses: [],
+          websites: [],
+          payments: [],
+          paymentRecords: [],
+          payoutRecords: [],
+          costRecords: [],
+        });
+        if (draft) {
+          setPayoutFactDraft(draft);
+          setPayoutFactOpen(true);
+        }
+      }
+    }
   };
 
   // ===== Expenses =====
@@ -271,8 +279,34 @@ const AdminCommissions = () => {
   const togglePaidExp = async (e: Expense) => {
     const next: PaymentStatus = e.payment_status === "paid" ? "unpaid" : "paid";
     const { error } = await supabase.from("expenses").update({ payment_status: next }).eq("id", e.id);
-    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else loadExpenses();
+    if (error) {
+      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      return;
+    }
+    loadExpenses();
+    if (next === "paid") {
+      const { data: linked } = await supabase
+        .from("cost_records")
+        .select("id")
+        .eq("source_table", "expenses")
+        .eq("source_id", e.id)
+        .maybeSingle();
+      if (!linked) {
+        const draft = prefillFromExpense(e, {
+          commissions: [],
+          expenses: [],
+          websites: [],
+          payments: [],
+          paymentRecords: [],
+          payoutRecords: [],
+          costRecords: [],
+        });
+        if (draft) {
+          setCostFactDraft(draft);
+          setCostFactOpen(true);
+        }
+      }
+    }
   };
 
   const filtered = useMemo(
@@ -297,55 +331,14 @@ const AdminCommissions = () => {
     return { paid, unpaid, total: paid + unpaid };
   }, [expenses]);
 
-  if (authChecking) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </main>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md text-center space-y-4">
-          <ShieldAlert className="w-16 h-16 text-destructive mx-auto" />
-          <h1 className="text-2xl font-bold">Nemáte prístup</h1>
-          <p className="text-muted-foreground">Účet <strong>{userEmail}</strong> nemá pridelenú admin rolu.</p>
-          <Button onClick={handleSignOut} variant="outline">
-            <LogOut className="w-4 h-4 mr-2" /> Odhlásiť
-          </Button>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/admin")} variant="ghost" size="icon">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-            <div>
-              <h1 className="text-base sm:text-xl font-bold flex items-center gap-2 min-w-0">
-                <Wallet className="w-5 h-5 text-primary" />
-                Provízie & Náklady
-              </h1>
-              <p className="text-xs text-muted-foreground">{userEmail}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <Button onClick={handleSignOut} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" /> Odhlásiť
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+    <AdminShell
+      title="Provízie & Náklady"
+      subtitle="Interné stavy — nie audit platieb"
+      backTo={{ label: "CRM", href: "/admin" }}
+    >
+      <div className="space-y-4">
+        <p className="text-xs text-muted-foreground">{FINANCE_TRUTH_DISCLAIMER}</p>
         <Tabs defaultValue="commissions" className="space-y-4">
           <TabsList>
             <TabsTrigger value="commissions"><Wallet className="w-4 h-4 mr-2" />Provízie</TabsTrigger>
@@ -356,11 +349,11 @@ const AdminCommissions = () => {
           <TabsContent value="commissions" className="space-y-4">
             <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border bg-card p-4">
-                <div className="text-xs text-muted-foreground">Vyplatené</div>
+                <div className="text-xs text-muted-foreground">Označ. vyplatené</div>
                 <div className="text-2xl font-bold text-green-500">{totals.paid.toFixed(2)} €</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
-                <div className="text-xs text-muted-foreground">Nevyplatené</div>
+                <div className="text-xs text-muted-foreground">Nevyplatené (interný)</div>
                 <div className="text-2xl font-bold text-yellow-500">{totals.unpaid.toFixed(2)} €</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
@@ -374,8 +367,8 @@ const AdminCommissions = () => {
                 <SelectTrigger className="w-full sm:w-[220px]"><SelectValue placeholder="Stav" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Všetky stavy</SelectItem>
-                  <SelectItem value="unpaid">Nevyplatené</SelectItem>
-                  <SelectItem value="paid">Vyplatené</SelectItem>
+                  <SelectItem value="unpaid">Nevyplatené (interný)</SelectItem>
+                  <SelectItem value="paid">Označ. vyplatené</SelectItem>
                 </SelectContent>
               </Select>
               <Button onClick={openNew} size="sm"><Plus className="w-4 h-4 mr-2" /> Nová provízia</Button>
@@ -437,11 +430,11 @@ const AdminCommissions = () => {
           <TabsContent value="expenses" className="space-y-4">
             <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border bg-card p-4">
-                <div className="text-xs text-muted-foreground">Uhradené</div>
+                <div className="text-xs text-muted-foreground">Označ. uhradené</div>
                 <div className="text-2xl font-bold text-red-500">−{expTotals.paid.toFixed(2)} €</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
-                <div className="text-xs text-muted-foreground">Neuhradené</div>
+                <div className="text-xs text-muted-foreground">Neuhradené (interný)</div>
                 <div className="text-2xl font-bold text-red-400">−{expTotals.unpaid.toFixed(2)} €</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
@@ -494,7 +487,9 @@ const AdminCommissions = () => {
                             <TableCell className="text-sm text-right font-semibold whitespace-nowrap text-red-500">−{Number(e.amount || 0).toFixed(2)} €</TableCell>
                             <TableCell>
                               <button onClick={() => togglePaidExp(e)} title="Prepnúť stav">
-                                <Badge variant="outline" className={`text-xs cursor-pointer ${cfg.className}`}>{cfg.label === "Vyplatené" ? "Uhradené" : "Neuhradené"}</Badge>
+                                <Badge variant="outline" className={`text-xs cursor-pointer ${cfg.className}`}>
+                                  {e.payment_status === "paid" ? EXPENSE_STATUS_LABELS.paid : EXPENSE_STATUS_LABELS.unpaid}
+                                </Badge>
                               </button>
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground max-w-[260px]">
@@ -545,8 +540,8 @@ const AdminCommissions = () => {
               <Select value={form.payment_status} onValueChange={(v) => setForm({ ...form, payment_status: v as PaymentStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="unpaid">Nevyplatené</SelectItem>
-                  <SelectItem value="paid">Vyplatené</SelectItem>
+                  <SelectItem value="unpaid">Nevyplatené (interný)</SelectItem>
+                  <SelectItem value="paid">Označ. vyplatené</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -610,7 +605,27 @@ const AdminCommissions = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+
+      <FactConfirmDialog
+        open={payoutFactOpen}
+        onOpenChange={setPayoutFactOpen}
+        draft={payoutFactDraft}
+        mode="workflow"
+        onSaved={() => {
+          toast({ title: "Payout fact vytvorený", description: "Workflow status zostáva nezmenený." });
+        }}
+      />
+
+      <FactConfirmDialog
+        open={costFactOpen}
+        onOpenChange={setCostFactOpen}
+        draft={costFactDraft}
+        mode="workflow"
+        onSaved={() => {
+          toast({ title: "Cost fact vytvorený", description: "Workflow status zostáva nezmenený." });
+        }}
+      />
+    </AdminShell>
   );
 };
 

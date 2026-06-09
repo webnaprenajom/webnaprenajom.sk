@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -9,10 +10,14 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import {
-  ArrowLeft, Loader2, Search, ShieldAlert, LogOut, Sparkles, Mail, Check, Trash2, Send, UserPlus,
+  Loader2, Search, Check, Trash2, Send, UserPlus, UserRound,
 } from "lucide-react";
-import { NotificationBell } from "@/components/admin/NotificationBell";
-import { useAdminAccess } from "@/hooks/useAdminAccess";
+import {
+  adminCustomerHref,
+  adminLeadHref,
+  buildEmailLeadIdMap,
+  leadIdByEmail,
+} from "@/lib/adminNav";
 
 interface WheelRow {
   id: string;
@@ -32,46 +37,38 @@ interface WheelRow {
 
 const AdminWheelLeads = () => {
   const navigate = useNavigate();
-  const { authChecking, isAdmin, userEmail, userId } = useAdminAccess();
   const [rows, setRows] = useState<WheelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [emailLeadIdMap, setEmailLeadIdMap] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     document.title = "Wheel leady | Web na prenájom";
-  }, [navigate]);
-
-  useEffect(() => {
-    if (authChecking) return;
-
-    if (!userId) {
-      navigate("/auth", { replace: true });
-      return;
-    }
-
-    if (isAdmin) {
-      void load();
-      return;
-    }
-
-    setLoading(false);
-  }, [authChecking, isAdmin, navigate, userId]);
+    void load();
+  }, []);
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("wheel_spins")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else setRows((data || []) as WheelRow[]);
+    const [wheelRes, leadsRes] = await Promise.all([
+      supabase
+        .from("wheel_spins")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabase.from("leads").select("id,email"),
+    ]);
+    if (wheelRes.error) {
+      toast({ title: "Chyba", description: wheelRes.error.message, variant: "destructive" });
+    } else {
+      setRows((wheelRes.data || []) as WheelRow[]);
+    }
+    if (!leadsRes.error && leadsRes.data) {
+      setEmailLeadIdMap(buildEmailLeadIdMap(leadsRes.data));
+    }
     setLoading(false);
   };
-
-  const handleSignOut = async () => { await supabase.auth.signOut(); navigate("/auth", { replace: true }); };
 
   const filtered = useMemo(() => rows.filter((r) => {
     if (!search) return true;
@@ -146,7 +143,6 @@ const AdminWheelLeads = () => {
     }
     setConvertingId(r.id);
     try {
-      // Idempotency: check existing lead by lowercased email
       const { data: existing, error: findErr } = await supabase
         .from("leads")
         .select("id, name, email")
@@ -195,40 +191,12 @@ const AdminWheelLeads = () => {
     }
   };
 
-  if (authChecking) return <main className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></main>;
-
-  if (!isAdmin) return (
-    <main className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md text-center space-y-4">
-        <ShieldAlert className="w-16 h-16 text-destructive mx-auto" />
-        <h1 className="text-2xl font-bold">Nemáte prístup</h1>
-        <p className="text-muted-foreground">Účet <strong>{userEmail}</strong> nemá pridelenú admin rolu.</p>
-        <Button onClick={handleSignOut} variant="outline"><LogOut className="w-4 h-4 mr-2" /> Odhlásiť</Button>
-      </div>
-    </main>
-  );
-
   return (
-    <main className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/admin")} variant="ghost" size="icon"><ArrowLeft className="w-4 h-4" /></Button>
-            <div>
-              <h1 className="text-base sm:text-xl font-bold flex items-center gap-2 min-w-0">
-                <Sparkles className="w-5 h-5 text-amber-500" /> Wheel leady – točenie kolesom
-              </h1>
-              <p className="text-xs text-muted-foreground">{userEmail}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <Button onClick={handleSignOut} variant="outline" size="sm"><LogOut className="w-4 h-4 mr-2" /> Odhlásiť</Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+    <AdminShell
+      title="Wheel leady – točenie kolesom"
+      backTo={{ label: "CRM", href: "/admin" }}
+    >
+      <div className="space-y-4">
         <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { label: "Spolu točení", value: stats.total },
@@ -269,86 +237,115 @@ const AdminWheelLeads = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                        {new Date(r.created_at).toLocaleString("sk-SK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          defaultValue={r.name || ""}
-                          placeholder="Doplniť..."
-                          className="h-8 text-sm border-transparent hover:border-border focus:border-border"
-                          onBlur={(e) => e.target.value !== (r.name || "") && updateField(r.id, "name", e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <a href={`mailto:${r.email}`} className="text-primary hover:underline">{r.email}</a>
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          defaultValue={r.phone || ""}
-                          placeholder="—"
-                          className="h-8 text-sm w-36 border-transparent hover:border-border focus:border-border"
-                          onBlur={(e) => e.target.value !== (r.phone || "") && updateField(r.id, "phone", e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {r.prize_value > 0 ? (
-                          <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 border">{r.prize_value}%</Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs text-muted-foreground">{r.prize_label}</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {r.coupon_code ? (
-                          <code className="text-xs font-mono bg-muted px-2 py-1 rounded">{r.coupon_code}</code>
-                        ) : <span className="text-xs text-muted-foreground">—</span>}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {r.redeemed && <Badge className="bg-green-500/15 text-green-600 border-green-500/30 border text-xs">Uplatnené</Badge>}
-                          {r.reminder_sent_at && <Badge variant="outline" className="text-[10px]">Reminder ✓</Badge>}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right whitespace-nowrap">
-                        {r.coupon_code && (
-                          <Button size="sm" variant="outline" disabled={sendingId === r.id} onClick={() => sendReminder(r)} className="mr-1">
-                            {sendingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1" />}
-                            Reminder
-                          </Button>
-                        )}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          disabled={convertingId === r.id}
-                          onClick={() => convertToLead(r)}
-                          className="mr-1"
-                          title="Konvertovať na lead"
-                        >
-                          {convertingId === r.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  {filtered.map((r) => {
+                    const customerHref = adminCustomerHref(r.email);
+                    const leadId = leadIdByEmail(r.email, emailLeadIdMap);
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                          {new Date(r.created_at).toLocaleString("sk-SK", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            defaultValue={r.name || ""}
+                            placeholder="Doplniť..."
+                            className="h-8 text-sm border-transparent hover:border-border focus:border-border"
+                            onBlur={(e) => e.target.value !== (r.name || "") && updateField(r.id, "name", e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          <div className="space-y-0.5">
+                            {customerHref ? (
+                              <Link to={customerHref} className="text-primary hover:underline">
+                                {r.email}
+                              </Link>
+                            ) : (
+                              <span>{r.email}</span>
+                            )}
+                            <a
+                              href={`mailto:${r.email}`}
+                              className="text-[10px] text-muted-foreground hover:underline block"
+                            >
+                              Poslať e-mail
+                            </a>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            defaultValue={r.phone || ""}
+                            placeholder="—"
+                            className="h-8 text-sm w-36 border-transparent hover:border-border focus:border-border"
+                            onBlur={(e) => e.target.value !== (r.phone || "") && updateField(r.id, "phone", e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {r.prize_value > 0 ? (
+                            <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/30 border">{r.prize_value}%</Badge>
                           ) : (
-                            <UserPlus className="w-3.5 h-3.5 mr-1" />
+                            <Badge variant="outline" className="text-xs text-muted-foreground">{r.prize_label}</Badge>
                           )}
-                          Konvertovať na lead
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => toggleRedeemed(r)} title="Označiť uplatnené">
-                          <Check className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => remove(r.id)} className="text-muted-foreground hover:text-destructive">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          {r.coupon_code ? (
+                            <code className="text-xs font-mono bg-muted px-2 py-1 rounded">{r.coupon_code}</code>
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {r.redeemed && <Badge className="bg-green-500/15 text-green-600 border-green-500/30 border text-xs">Uplatnené</Badge>}
+                            {r.reminder_sent_at && <Badge variant="outline" className="text-[10px]">Reminder ✓</Badge>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right whitespace-nowrap">
+                          {leadId && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              title="Otvoriť lead v pipeline"
+                              onClick={() => navigate(adminLeadHref(leadId))}
+                              className="mr-1"
+                            >
+                              <UserRound className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {r.coupon_code && (
+                            <Button size="sm" variant="outline" disabled={sendingId === r.id} onClick={() => sendReminder(r)} className="mr-1">
+                              {sendingId === r.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5 mr-1" />}
+                              Reminder
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={convertingId === r.id}
+                            onClick={() => convertToLead(r)}
+                            className="mr-1"
+                            title="Konvertovať na lead"
+                          >
+                            {convertingId === r.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <UserPlus className="w-3.5 h-3.5 mr-1" />
+                            )}
+                            Konvertovať na lead
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => toggleRedeemed(r)} title="Označiť uplatnené">
+                            <Check className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => remove(r.id)} className="text-muted-foreground hover:text-destructive">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
           )}
         </section>
       </div>
-    </main>
+    </AdminShell>
   );
 };
 

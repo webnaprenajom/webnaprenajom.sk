@@ -1,8 +1,49 @@
-# Welcome to your Lovable project
+# webnaprenajom.sk — CRM + marketing site
+
+React + Vite + Supabase CRM with finance foundation, admin modules, and public marketing pages.
+
+**Go-live / deploy:** see [RELEASE.md](./RELEASE.md) for migrations, env vars, smoke tests, and GitHub checklist.
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Lovable URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+
+## Local setup
+
+```sh
+git clone <YOUR_GIT_URL>
+cd remix-of-webnaprenajom.sk
+npm ci
+cp .env.example .env   # add VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY
+npm run dev
+```
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Dev server (default port 5173) |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |
+| `npm test` | Run tests |
+
+### Supabase
+
+1. Link your Supabase project.
+2. Apply migrations: `supabase db push` (see [RELEASE.md](./RELEASE.md) for finance migration order).
+3. Set Edge Function secrets in Supabase dashboard (`RESEND_API_KEY`, etc.).
+
+### Admin routes
+
+| Route | Module |
+|-------|--------|
+| `/admin` | Leads pipeline |
+| `/admin/customer/:key` | Customer detail |
+| `/admin/finance` | Finance overview, records, reconciliation, governance |
+| `/admin/rentals` | Rental websites & payments |
+| `/admin/commissions` | Commissions & expenses |
+| `/admin/tasks` | Tasks |
+| `/admin/wheel-leads` | Wheel leads |
+
+Full smoke test checklist: [RELEASE.md § Smoke test](./RELEASE.md#4-smoke-test-checklist).
 
 ## How can I edit this code?
 

@@ -19,6 +19,10 @@ import {
   isStale,
   typeLabel,
 } from "@/components/admin/leads/constants";
+import {
+  getLeadStatusEmailToast,
+  runLeadStatusSideEffects,
+} from "@/components/admin/leads/leadStatusSideEffects";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +70,7 @@ import {
   Menu,
   FileSignature,
   Palette,
+  Sun,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -140,19 +145,28 @@ const Admin = () => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // Bulk send offer dialog
+  // Bulk send offer dialog (emails from selected leads)
   const [bulkOfferOpen, setBulkOfferOpen] = useState(false);
-  const [bulkOfferEmails, setBulkOfferEmails] = useState("");
   const [bulkOfferName, setBulkOfferName] = useState("");
   const [bulkOfferSending, setBulkOfferSending] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const handleBulkOfferSend = async () => {
-    const list = bulkOfferEmails
-      .split(/[,;\s\n]+/)
-      .map((e) => e.trim())
-      .filter(Boolean);
+    const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
+    const list = [
+      ...new Map(
+        selectedLeads
+          .map((l) => l.email?.trim())
+          .filter((e): e is string => !!e && e.includes("@"))
+          .map((e) => [e.toLowerCase(), e] as const),
+      ).values(),
+    ];
     if (list.length === 0) {
-      toast({ title: "Žiadne e-maily", description: "Vlož aspoň jednu adresu", variant: "destructive" });
+      toast({
+        title: "Žiadne platné e-maily",
+        description: "Vo výbere nie sú leady s použiteľnou e-mailovou adresou.",
+        variant: "destructive",
+      });
       return;
     }
     setBulkOfferSending(true);
@@ -170,8 +184,8 @@ const Admin = () => {
       });
       if (failed === 0) {
         setBulkOfferOpen(false);
-        setBulkOfferEmails("");
         setBulkOfferName("");
+        setSelectedIds(new Set());
       }
     } catch (e) {
       toast({
@@ -182,6 +196,18 @@ const Admin = () => {
     } finally {
       setBulkOfferSending(false);
     }
+  };
+
+  const openBulkOffer = () => {
+    if (selectedIds.size === 0) {
+      toast({
+        title: "Žiadny výber",
+        description: "Vyberte leady v tabuľke checkboxmi, potom odošlite ponuku.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setBulkOfferOpen(true);
   };
 
   // Manual add dialog state
@@ -279,15 +305,6 @@ const Admin = () => {
       return;
     }
     setSaving(true);
-    const statusChangedToReminder =
-      editStatus === "reminder" && selected.status !== "reminder";
-    const statusChangedToOffer =
-      editStatus === "send_offer" && selected.status !== "send_offer";
-    const statusChangedToOrder =
-      editStatus === "order" && selected.status !== "order";
-    const statusChangedToInstructions =
-      editStatus === "send_instructions" && selected.status !== "send_instructions";
-
     const parsedAmount = editAmount.trim() === "" ? null : Number(editAmount.replace(",", "."));
     if (parsedAmount !== null && Number.isNaN(parsedAmount)) {
       setSaving(false);
@@ -321,107 +338,26 @@ const Admin = () => {
       return;
     }
 
-    // Auto-send reminder email when status switches to "reminder"
-    if (statusChangedToReminder) {
-      try {
-        const { error: fnError } = await supabase.functions.invoke("send-reminder-email", {
-          body: { name: editName.trim(), email: editEmail.trim() },
-        });
-        if (fnError) {
-          toast({
-            title: "Uložené, ale reminder sa neodoslal",
-            description: fnError.message,
-            variant: "destructive",
-          });
-        } else {
-          toast({ title: "Uložené & reminder odoslaný", description: editEmail.trim() });
-        }
-      } catch (e) {
-        toast({
-          title: "Uložené, ale reminder zlyhal",
-          description: e instanceof Error ? e.message : "Neznáma chyba",
-          variant: "destructive",
-        });
-      }
-    } else if (statusChangedToOffer) {
-      try {
-        const { error: fnError } = await supabase.functions.invoke("send-offer-email", {
-          body: { name: editName.trim(), email: editEmail.trim() },
-        });
-        if (fnError) {
-          toast({
-            title: "Uložené, ale ponuka sa neodoslala",
-            description: fnError.message,
-            variant: "destructive",
-          });
-        } else {
-          toast({ title: "Uložené & ponuka odoslaná", description: editEmail.trim() });
-        }
-      } catch (e) {
-        toast({
-          title: "Uložené, ale ponuka zlyhala",
-          description: e instanceof Error ? e.message : "Neznáma chyba",
-          variant: "destructive",
-        });
-      }
-    } else if (statusChangedToOrder) {
-      try {
-        const { error: fnError } = await supabase.functions.invoke("send-order-email", {
-          body: {
-            name: editName.trim(),
-            email: editEmail.trim(),
-            amount: parsedAmount,
-          },
-        });
-        if (fnError) {
-          toast({
-            title: "Uložené, ale objednávka sa neodoslala",
-            description: fnError.message,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Uložené & objednávka odoslaná",
-            description: `${editEmail.trim()} · zmluva v prílohe`,
-          });
-        }
-      } catch (e) {
-        toast({
-          title: "Uložené, ale objednávka zlyhala",
-          description: e instanceof Error ? e.message : "Neznáma chyba",
-          variant: "destructive",
-        });
-      }
-    } else if (statusChangedToInstructions) {
-      try {
-        const { error: fnError } = await supabase.functions.invoke("send-instructions-email", {
-          body: {
-            name: editName.trim(),
-            email: editEmail.trim(),
-            amount: parsedAmount,
-          },
-        });
-        if (fnError) {
-          toast({
-            title: "Uložené, ale inštrukcie sa neodoslali",
-            description: fnError.message,
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Uložené & inštrukcie odoslané",
-            description: editEmail.trim(),
-          });
-        }
-      } catch (e) {
-        toast({
-          title: "Uložené, ale inštrukcie zlyhali",
-          description: e instanceof Error ? e.message : "Neznáma chyba",
-          variant: "destructive",
-        });
-      }
-    } else {
+    const emailResult = await runLeadStatusSideEffects(selected.status, editStatus, {
+      name: editName.trim(),
+      email: editEmail.trim(),
+      amount: parsedAmount,
+    });
+
+    if (emailResult.action === "skipped") {
       toast({ title: "Uložené" });
+    } else if (emailResult.action === "sent") {
+      toast(getLeadStatusEmailToast("detail", emailResult.kind, "sent", editEmail.trim()));
+    } else {
+      toast(
+        getLeadStatusEmailToast(
+          "detail",
+          emailResult.kind,
+          "failed",
+          editEmail.trim(),
+          emailResult.error,
+        ),
+      );
     }
 
     setLeads((prev) =>
@@ -492,37 +428,31 @@ const Admin = () => {
       return;
     }
 
-    // Auto-send email based on new status (mirrors dialog save logic)
-    const emailKind = STATUS_CONFIG[status]?.sendsEmail;
-    if (!emailKind) return;
-    const fnMap = {
-      reminder: { fn: "send-reminder-email", okTitle: "Reminder odoslaný", failTitle: "Reminder sa neodoslal" },
-      offer: { fn: "send-offer-email", okTitle: "Ponuka odoslaná", failTitle: "Ponuka sa neodoslala" },
-      order: { fn: "send-order-email", okTitle: "Objednávka odoslaná", failTitle: "Objednávka sa neodoslala" },
-      instructions: { fn: "send-instructions-email", okTitle: "Inštrukcie odoslané", failTitle: "Inštrukcie sa neodoslali" },
-    } as const;
-    const cfg = fnMap[emailKind];
-    try {
-      const { error: fnError } = await supabase.functions.invoke(cfg.fn, {
-        body: { name: lead.name, email: lead.email, amount: lead.amount ?? null },
-      });
-      if (fnError) {
-        toast({ title: cfg.failTitle, description: fnError.message, variant: "destructive" });
-      } else {
-        toast({ title: cfg.okTitle, description: lead.email });
-      }
-    } catch (e) {
-      toast({
-        title: cfg.failTitle,
-        description: e instanceof Error ? e.message : "Neznáma chyba",
-        variant: "destructive",
-      });
+    // Auto-send email when transitioning to a status with sendsEmail (see leadStatusSideEffects.ts)
+    const emailResult = await runLeadStatusSideEffects(lead.status, status, {
+      name: lead.name,
+      email: lead.email,
+      amount: lead.amount ?? null,
+    });
+    if (emailResult.action === "sent") {
+      toast(getLeadStatusEmailToast("inline", emailResult.kind, "sent", lead.email));
+    } else if (emailResult.action === "failed") {
+      toast(
+        getLeadStatusEmailToast(
+          "inline",
+          emailResult.kind,
+          "failed",
+          lead.email,
+          emailResult.error,
+        ),
+      );
     }
   };
 
   const bulkMove = async (target: "stale" | "archive") => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
+    // Status-only move (lost / reminder_silent) — no email side-effects (not in STATUS_CONFIG.sendsEmail).
     const update: any =
       target === "archive"
         ? { status: "lost" as LeadStatus }
@@ -543,6 +473,7 @@ const Admin = () => {
   const bulkSetStatus = async (status: LeadStatus) => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
+    // Bulk updates DB only — intentionally no runLeadStatusSideEffects (avoids mass emails).
     const { error } = await supabase.from("leads").update({ status }).in("id", ids);
     if (error) {
       toast({ title: "Zmena zlyhala", description: error.message, variant: "destructive" });
@@ -594,7 +525,6 @@ const Admin = () => {
   const bulkDelete = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    if (!window.confirm(`Naozaj vymazať ${ids.length} leadov? Túto akciu nie je možné vrátiť.`)) return;
     const { error } = await supabase.from("leads").delete().in("id", ids);
     if (error) {
       toast({ title: "Vymazanie zlyhalo", description: error.message, variant: "destructive" });
@@ -602,6 +532,7 @@ const Admin = () => {
     }
     setLeads((prev) => prev.filter((l) => !ids.includes(l.id)));
     setSelectedIds(new Set());
+    setBulkDeleteOpen(false);
     toast({ title: `Vymazaných ${ids.length} leadov` });
   };
 
@@ -878,6 +809,34 @@ const Admin = () => {
     return [...list].sort(cmp);
   }, [leads, viewMode, statusFilter, typeFilter, assigneeFilter, search, sortKey, sortDir]);
 
+  // Reset selection when dataset context changes (predictable bulk UX).
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [viewMode, statusFilter, typeFilter, assigneeFilter, search]);
+
+  const bulkOfferSelectedLeads = useMemo(
+    () => leads.filter((l) => selectedIds.has(l.id)),
+    [leads, selectedIds],
+  );
+
+  const bulkOfferEmailsReady = useMemo(
+    () =>
+      bulkOfferSelectedLeads.filter((l) => {
+        const e = l.email?.trim();
+        return !!e && e.includes("@");
+      }),
+    [bulkOfferSelectedLeads],
+  );
+
+  const bulkOfferEmailsMissing = useMemo(
+    () =>
+      bulkOfferSelectedLeads.filter((l) => {
+        const e = l.email?.trim();
+        return !e || !e.includes("@");
+      }),
+    [bulkOfferSelectedLeads],
+  );
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -905,6 +864,15 @@ const Admin = () => {
 
     return { total: leads.length, today, week, month, won, newCount };
   }, [leads]);
+
+  /** Re-fetch TodayMustDoSection when lead status/follow-up changes (not just count). */
+  const todayRefreshKey = useMemo(
+    () =>
+      leads
+        .map((l) => `${l.id}:${l.status}:${l.follow_up_date ?? ""}:${l.updated_at ?? ""}`)
+        .join("|"),
+    [leads],
+  );
 
   const exportCsv = () => {
     const headers = [
@@ -988,6 +956,14 @@ const Admin = () => {
           {/* Desktop nav */}
           <div className="hidden lg:flex items-center gap-2">
             <NotificationBell />
+            <Button
+              onClick={() => navigate("/admin/today")}
+              variant="outline"
+              size="sm"
+              className="border-primary/40 bg-primary/5"
+            >
+              <Sun className="w-4 h-4 mr-2" /> Dnes
+            </Button>
             <Button onClick={() => navigate("/admin/notes")} variant="outline" size="sm">
               <KanbanSquare className="w-4 h-4 mr-2" /> Poznámky
             </Button>
@@ -1027,6 +1003,10 @@ const Admin = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+                <DropdownMenuItem onClick={() => navigate("/admin/today")}>
+                  <Sun className="w-4 h-4 mr-2" /> Dnes
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/admin/notes")}>
                   <KanbanSquare className="w-4 h-4 mr-2" /> Poznámky
                 </DropdownMenuItem>
@@ -1062,6 +1042,32 @@ const Admin = () => {
       </header>
 
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
+        {/* Command center summary */}
+        <section className="space-y-3">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Command Center</p>
+              <p className="text-sm text-muted-foreground max-w-2xl">
+                Dnešné priority — klik na lead otvorí detail v pipeline nižšie.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/today")}>
+              <Sun className="w-4 h-4 mr-2" /> Otvoriť Dnes
+            </Button>
+          </div>
+          <TodayMustDoSection
+            refreshKey={todayRefreshKey}
+            onLeadClick={(id) => {
+              const lead = leads.find((l) => l.id === id);
+              if (lead) {
+                openLead(lead);
+                return;
+              }
+              setSearchParams({ lead: id }, { replace: true });
+            }}
+          />
+        </section>
+
         {/* Stats */}
         <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <StatCard icon={Users} label="Spolu" value={stats.total} />
@@ -1116,7 +1122,7 @@ const Admin = () => {
           assigneeFilter={assigneeFilter}
           onAssigneeFilterChange={setAssigneeFilter}
           onAddLead={() => setAddOpen(true)}
-          onBulkOffer={() => setBulkOfferOpen(true)}
+          onBulkOffer={openBulkOffer}
           onImportClick={() => fileInputRef.current?.click()}
           onExport={exportCsv}
         />
@@ -1126,15 +1132,6 @@ const Admin = () => {
           accept=".csv,text/csv"
           className="hidden"
           onChange={handleCsvImport}
-        />
-
-        {/* Today must-do */}
-        <TodayMustDoSection
-          refreshKey={leads.length}
-          onLeadClick={(id) => {
-            const lead = leads.find((l) => l.id === id);
-            if (lead) openLead(lead);
-          }}
         />
 
         {/* Bulk actions bar */}
@@ -1151,7 +1148,8 @@ const Admin = () => {
           onSetTemperature={bulkSetTemperature}
           onMoveStale={() => bulkMove("stale")}
           onMoveArchive={() => bulkMove("archive")}
-          onDelete={bulkDelete}
+          onBulkOffer={openBulkOffer}
+          onDelete={() => setBulkDeleteOpen(true)}
           onClear={() => setSelectedIds(new Set())}
         />
 
@@ -1325,9 +1323,43 @@ const Admin = () => {
       <Dialog open={bulkOfferOpen} onOpenChange={setBulkOfferOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Poslať ponuku na viacero adries</DialogTitle>
+            <DialogTitle>Poslať ponuku vybraným leadom</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Vybraných leadov: <strong>{bulkOfferSelectedLeads.length}</strong>
+              {" · "}
+              s e-mailom: <strong>{bulkOfferEmailsReady.length}</strong>
+              {bulkOfferEmailsMissing.length > 0 && (
+                <span className="text-destructive">
+                  {" · "}
+                  bez e-mailu: {bulkOfferEmailsMissing.length}
+                </span>
+              )}
+            </p>
+            {bulkOfferEmailsReady.length > 0 && (
+              <div className="rounded-md border border-border bg-muted/30 p-3 max-h-40 overflow-y-auto">
+                <p className="text-xs font-medium text-muted-foreground mb-2">Adresy na odoslanie</p>
+                <ul className="text-xs space-y-1">
+                  {bulkOfferEmailsReady.map((l) => (
+                    <li key={l.id}>
+                      <span className="font-medium">{l.name || "—"}</span>
+                      <span className="text-muted-foreground"> · {l.email}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {bulkOfferEmailsMissing.length > 0 && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 text-xs">
+                <p className="font-medium text-destructive mb-1">Preskočené (chýba e-mail)</p>
+                <ul className="space-y-0.5 text-muted-foreground">
+                  {bulkOfferEmailsMissing.map((l) => (
+                    <li key={l.id}>{l.name || l.id.slice(0, 8)}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div>
               <Label>Meno (voliteľné, použije sa v oslovení)</Label>
               <Input
@@ -1336,30 +1368,39 @@ const Admin = () => {
                 placeholder="napr. klient"
               />
             </div>
-            <div>
-              <Label>E-mailové adresy</Label>
-              <Textarea
-                value={bulkOfferEmails}
-                onChange={(e) => setBulkOfferEmails(e.target.value)}
-                placeholder="adresa1@firma.sk, adresa2@firma.sk&#10;adresa3@firma.sk"
-                rows={6}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Oddeľ čiarkou, bodkočiarkou, medzerou alebo novým riadkom.
-              </p>
-            </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setBulkOfferOpen(false)} disabled={bulkOfferSending}>
                 Zrušiť
               </Button>
-              <Button onClick={handleBulkOfferSend} disabled={bulkOfferSending} variant="gradient">
+              <Button
+                onClick={handleBulkOfferSend}
+                disabled={bulkOfferSending || bulkOfferEmailsReady.length === 0}
+                variant="gradient"
+              >
                 {bulkOfferSending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Mail className="w-4 h-4 mr-2" />}
-                Odoslať
+                Odoslať ({bulkOfferEmailsReady.length})
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Vymazať {selectedIds.size} leadov?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Táto akcia je nevratná. Vybrané leady budú trvalo odstránené z databázy.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Zrušiť</AlertDialogCancel>
+            <AlertDialogAction onClick={bulkDelete} className="bg-destructive hover:bg-destructive/90">
+              Vymazať {selectedIds.size}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>

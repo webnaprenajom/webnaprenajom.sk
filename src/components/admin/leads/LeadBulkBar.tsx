@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Archive, MailX, Move, Trash2, UserCog, Flame } from "lucide-react";
+import { Archive, Mail, MailX, Move, Trash2, UserCog, Flame } from "lucide-react";
 
 export interface StatusOption {
   value: string;
@@ -23,6 +23,7 @@ export interface LeadBulkBarProps {
   onSetTemperature: (temp: "hot" | "neutral" | "cold" | null) => void;
   onMoveStale: () => void;
   onMoveArchive: () => void;
+  onBulkOffer: () => void;
   onDelete: () => void;
   onClear: () => void;
 }
@@ -37,14 +38,19 @@ const LeadBulkBar = ({
   onSetTemperature,
   onMoveStale,
   onMoveArchive,
+  onBulkOffer,
   onDelete,
   onClear,
 }: LeadBulkBarProps) => {
   if (count <= 0) return null;
   return (
-    <section className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30">
-      <span className="text-sm font-semibold">{count} vybraných</span>
-
+    <section className="sticky top-0 z-30 flex flex-col gap-2 p-3 rounded-lg bg-primary/10 border border-primary/30 backdrop-blur-sm shadow-sm">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+        <span className="text-sm font-semibold text-foreground">{count} vybraných</span>
+        <span>Status / priradenie / teplota = iba zmena v DB, bez e-mailov</span>
+        <span>Ponuka = odoslanie e-mailu cez existujúci flow</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
       <Select onValueChange={(v) => onSetStatus(v)}>
         <SelectTrigger className="h-8 w-[200px] text-xs">
           <Move className="w-3.5 h-3.5 mr-1" />
@@ -105,12 +111,16 @@ const LeadBulkBar = ({
       <Button size="sm" variant="outline" onClick={onMoveArchive}>
         <Archive className="w-4 h-4 mr-2" /> Archív
       </Button>
+      <Button size="sm" variant="outline" onClick={onBulkOffer}>
+        <Mail className="w-4 h-4 mr-2" /> Poslať ponuku
+      </Button>
       <Button size="sm" variant="destructive" onClick={onDelete}>
         <Trash2 className="w-4 h-4 mr-2" /> Vymazať
       </Button>
       <Button size="sm" variant="ghost" onClick={onClear}>
         Zrušiť výber
       </Button>
+      </div>
     </section>
   );
 };

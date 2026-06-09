@@ -19,6 +19,7 @@ import AdminWheelLeads from "./pages/AdminWheelLeads";
 import AdminDebug from "./pages/AdminDebug";
 import AdminSignatures from "./pages/AdminSignatures";
 import AdminDesigns from "./pages/AdminDesigns";
+import AdminFinance from "./pages/AdminFinance";
 import OrderSignature from "./pages/OrderSignature";
 import OfferRedeemDialog from "./components/OfferRedeemDialog";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/admin/logs" element={<AdminLogs />} />
             <Route path="/admin/notes" element={<AdminProjectNotes />} />
             <Route path="/admin/commissions" element={<AdminCommissions />} />
+            <Route path="/admin/finance" element={<AdminFinance />} />
             <Route path="/admin/tasks" element={<AdminTasks />} />
             <Route path="/admin/rentals" element={<AdminRentals />} />
             <Route path="/admin/wheel-leads" element={<AdminWheelLeads />} />

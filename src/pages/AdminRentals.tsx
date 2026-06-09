@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -22,10 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import {
-  ArrowLeft,
   Loader2,
-  ShieldAlert,
-  Globe,
   Plus,
   Trash2,
   Pencil,
@@ -39,8 +37,10 @@ import {
   Euro,
   CalendarDays,
 } from "lucide-react";
-import { NotificationBell } from "@/components/admin/NotificationBell";
-import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { buildClientNameEmailMap, customerHrefByClientName } from "@/lib/adminNav";
+import { FINANCE_TRUTH_DISCLAIMER, RENTAL_MONTH_STATUS_LABELS } from "@/lib/finance/labels";
+import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
+import { type FactDraft, prefillFromRentalPayment } from "@/lib/finance/factDrafts";
 
 interface Implementer {
   name: string;
@@ -114,36 +114,26 @@ const normalizeImplementers = (raw: unknown): Implementer[] => {
 };
 
 export default function AdminRentals() {
-  const navigate = useNavigate();
-  const { authChecking, isAdmin, userId } = useAdminAccess();
   const [loading, setLoading] = useState(true);
-  const [authorized, setAuthorized] = useState(false);
   const [websites, setWebsites] = useState<RentalWebsite[]>([]);
   const [payments, setPayments] = useState<RentalPayment[]>([]);
   const [editing, setEditing] = useState<RentalWebsite | null>(null);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [pricesOpen, setPricesOpen] = useState<RentalWebsite | null>(null);
   const [pricesDraft, setPricesDraft] = useState<Record<number, string>>({});
+  const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
+  const [paymentFactDraft, setPaymentFactDraft] = useState<FactDraft | null>(null);
+  const [paymentFactOpen, setPaymentFactOpen] = useState(false);
 
   useEffect(() => {
-    if (authChecking) return;
-    if (!userId) {
-      navigate("/auth", { replace: true });
-      return;
-    }
-    if (!isAdmin) {
-      setAuthorized(false);
-      setLoading(false);
-      return;
-    }
-    setAuthorized(true);
     void loadAll().finally(() => setLoading(false));
-  }, [authChecking, isAdmin, navigate, userId]);
+  }, []);
 
   const loadAll = async () => {
-    const [w, p] = await Promise.all([
+    const [w, p, leadsRes] = await Promise.all([
       (supabase as any).from("rental_websites").select("*").order("created_at", { ascending: false }),
       (supabase as any).from("rental_payments").select("*"),
+      supabase.from("leads").select("name,email"),
     ]);
     if (w.data) {
       setWebsites(
@@ -154,6 +144,9 @@ export default function AdminRentals() {
       );
     }
     if (p.data) setPayments(p.data as RentalPayment[]);
+    if (!leadsRes.error && leadsRes.data) {
+      setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
+    }
   };
 
   const paymentMap = useMemo(() => {
@@ -277,7 +270,42 @@ export default function AdminRentals() {
         return;
       }
     }
-    await loadAll();
+
+    if (next === "paid") {
+      await loadAll();
+      const { data: paymentRow } = await (supabase as any)
+        .from("rental_payments")
+        .select("*")
+        .eq("website_id", website.id)
+        .eq("year", year)
+        .eq("month", month)
+        .maybeSingle();
+      if (paymentRow) {
+        const { data: linked } = await supabase
+          .from("payment_records")
+          .select("id")
+          .eq("source_table", "rental_payments")
+          .eq("source_id", paymentRow.id)
+          .maybeSingle();
+        if (!linked) {
+          const draft = prefillFromRentalPayment(paymentRow, website, {
+            commissions: [],
+            expenses: [],
+            websites: [],
+            payments: [],
+            paymentRecords: [],
+            payoutRecords: [],
+            costRecords: [],
+          });
+          if (draft) {
+            setPaymentFactDraft(draft);
+            setPaymentFactOpen(true);
+          }
+        }
+      }
+    } else {
+      await loadAll();
+    }
   };
 
   const openPrices = (w: RentalWebsite) => {
@@ -375,24 +403,6 @@ export default function AdminRentals() {
       .sort((a, b) => b.potential - a.potential);
   }, [websites, payments, year]);
 
-  if (loading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </main>
-    );
-  }
-
-  if (!authorized) {
-    return (
-      <main className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center">
-        <ShieldAlert className="w-12 h-12 text-destructive" />
-        <h1 className="text-2xl font-bold">Prístup zamietnutý</h1>
-        <Button onClick={() => navigate("/")}>Domov</Button>
-      </main>
-    );
-  }
-
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
   const statusStyle = (st: PaymentStatus) => {
@@ -416,38 +426,40 @@ export default function AdminRentals() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
-              <ArrowLeft className="w-4 h-4 mr-2" /> Späť
-            </Button>
-            <h1 className="text-base sm:text-xl font-bold flex items-center gap-2 min-w-0">
-              <Globe className="w-5 h-5 text-primary" /> Weby na prenájom
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <select
-              value={year}
-              onChange={(e) => setYear(Number(e.target.value))}
-              className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-            >
-              {years.map((y) => <option key={y} value={y}>{y}</option>)}
-            </select>
-            <Button onClick={() => setEditing(emptyWebsite())} size="sm">
-              <Plus className="w-4 h-4 mr-2" /> Pridať web
-            </Button>
-          </div>
+    <AdminShell
+      title="Weby na prenájom"
+      subtitle="Mesiac = interný workflow stav, nie bankový dôkaz"
+      backTo={{ label: "CRM", href: "/admin" }}
+      actions={
+        <>
+          <select
+            value={year}
+            onChange={(e) => setYear(Number(e.target.value))}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+          <Button onClick={() => setEditing(emptyWebsite())} size="sm">
+            <Plus className="w-4 h-4 mr-2" /> Pridať web
+          </Button>
+        </>
+      }
+    >
+      {loading ? (
+        <div className="py-16 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
-      </header>
-
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
+      ) : (
+      <div className="space-y-6">
+        <p className="text-xs text-muted-foreground">{FINANCE_TRUTH_DISCLAIMER}</p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
             <div className="flex items-center gap-2 text-green-500 text-xs font-medium uppercase tracking-wide">
-              <Wallet className="w-4 h-4" /> Uhradené ({year})
+              <Wallet className="w-4 h-4" /> {RENTAL_MONTH_STATUS_LABELS.paid} ({year})
             </div>
             <div className="text-2xl font-bold mt-1">{totals.paid.toFixed(0)}€</div>
           </div>
@@ -483,7 +495,7 @@ export default function AdminRentals() {
             <div className="flex items-center gap-2 mb-3">
               <TrendingUp className="w-4 h-4 text-primary" />
               <h2 className="font-semibold text-sm">Provízie realizátorov ({year})</h2>
-              <span className="text-xs text-muted-foreground">· z prenajatých webov podľa % podielu</span>
+              <span className="text-xs text-muted-foreground">· odvodené z % podielu — nie payout záznam</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {implementerStats.map((s) => (
@@ -555,7 +567,18 @@ export default function AdminRentals() {
                         </a>
                       )}
                       {w.client_name && (
-                        <div className="text-xs text-muted-foreground">{w.client_name}</div>
+                        <div className="text-xs text-muted-foreground space-y-0.5">
+                          <div>{w.client_name}</div>
+                          {customerHrefByClientName(w.client_name, clientEmailMap) ? (
+                            <Link
+                              to={customerHrefByClientName(w.client_name, clientEmailMap)!}
+                              className="text-primary hover:underline"
+                              title="Zhoda podľa mena klienta v pipeline"
+                            >
+                              Zákazník 360°
+                            </Link>
+                          ) : null}
+                        </div>
                       )}
                       {w.rental_start_date && (
                         <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1 mt-0.5">
@@ -635,6 +658,7 @@ export default function AdminRentals() {
           </Table>
         </div>
       </div>
+      )}
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
@@ -820,6 +844,16 @@ export default function AdminRentals() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </main>
+
+      <FactConfirmDialog
+        open={paymentFactOpen}
+        onOpenChange={setPaymentFactOpen}
+        draft={paymentFactDraft}
+        mode="workflow"
+        onSaved={() => {
+          toast({ title: "Payment fact vytvorený", description: "Workflow status zostáva nezmenený." });
+        }}
+      />
+    </AdminShell>
   );
 }

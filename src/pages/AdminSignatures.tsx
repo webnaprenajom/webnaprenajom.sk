@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -10,8 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, ShieldAlert, FileSignature, Trash2, Copy, Eye, Link as LinkIcon } from "lucide-react";
-import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { Loader2, Copy, Eye, Link as LinkIcon, Trash2 } from "lucide-react";
 
 interface Signature {
   id: string;
@@ -38,17 +36,14 @@ interface Signature {
 const ORDER_URL = `${window.location.origin}/objednavka`;
 
 export default function AdminSignatures() {
-  const navigate = useNavigate();
-  const { authChecking, isAdmin } = useAdminAccess();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Signature[]>([]);
   const [viewing, setViewing] = useState<Signature | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAdmin) return;
     void load();
-  }, [isAdmin]);
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -86,38 +81,17 @@ export default function AdminSignatures() {
     toast({ title: "Skopírované", description: "Link na objednávku" });
   };
 
-  if (authChecking) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin" /></div>;
-  }
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-        <ShieldAlert className="w-10 h-10 text-destructive" />
-        <p>Prístup zamietnutý</p>
-        <Button onClick={() => navigate("/auth")}>Prihlásiť</Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
-        <div className="container mx-auto px-3 py-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
-              <ArrowLeft className="w-4 h-4 mr-1" /> CRM
-            </Button>
-            <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2 truncate">
-              <FileSignature className="w-5 h-5 text-primary" /> Podpisy objednávok
-            </h1>
-          </div>
-          <Button size="sm" variant="outline" onClick={() => copyLink()}>
-            <LinkIcon className="w-4 h-4 mr-2" /> Skopírovať link
-          </Button>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-3 py-6 space-y-4">
+    <AdminShell
+      title="Podpisy objednávok"
+      backTo={{ label: "CRM", href: "/admin" }}
+      actions={
+        <Button size="sm" variant="outline" onClick={() => copyLink()}>
+          <LinkIcon className="w-4 h-4 mr-2" /> Skopírovať link
+        </Button>
+      }
+    >
+      <div className="space-y-4">
         <Card className="p-4 flex flex-wrap items-center gap-2 text-sm">
           <span className="font-semibold">Verejný link na objednávku:</span>
           <code className="px-2 py-1 rounded bg-muted text-xs break-all">{ORDER_URL}</code>
@@ -244,6 +218,6 @@ export default function AdminSignatures() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminShell>
   );
 }

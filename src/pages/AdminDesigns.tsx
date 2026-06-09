@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,8 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, ShieldAlert, Palette, Plus, Trash2, Pencil, ExternalLink } from "lucide-react";
-import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { Loader2, Plus, Trash2, Pencil, ExternalLink } from "lucide-react";
 
 interface Proposal {
   id: string;
@@ -36,8 +35,6 @@ const STATUSES = [
 const emptyForm = { client_name: "", email: "", design_url: "", sent_date: new Date().toISOString().slice(0, 10), status: "sent", notes: "" };
 
 export default function AdminDesigns() {
-  const navigate = useNavigate();
-  const { authChecking, isAdmin } = useAdminAccess();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Proposal[]>([]);
   const [editing, setEditing] = useState<Proposal | null>(null);
@@ -46,8 +43,8 @@ export default function AdminDesigns() {
   const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isAdmin) void load();
-  }, [isAdmin]);
+    void load();
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -97,82 +94,64 @@ export default function AdminDesigns() {
     setDeleting(null);
   };
 
-  if (authChecking) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin" /></div>;
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3">
-        <ShieldAlert className="w-10 h-10 text-destructive" /><p>Prístup zamietnutý</p>
-        <Button onClick={() => navigate("/auth")}>Prihlásiť</Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
-        <div className="container mx-auto px-3 py-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/admin")}>
-              <ArrowLeft className="w-4 h-4 mr-1" /> CRM
-            </Button>
-            <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2">
-              <Palette className="w-5 h-5 text-primary" /> Zaslané dizajny
-            </h1>
+    <AdminShell
+      title="Zaslané dizajny"
+      backTo={{ label: "CRM", href: "/admin" }}
+      actions={
+        <Button size="sm" onClick={openNew}>
+          <Plus className="w-4 h-4 mr-1" /> Nový
+        </Button>
+      }
+    >
+      <Card className="overflow-hidden">
+        {loading ? (
+          <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        ) : rows.length === 0 ? (
+          <div className="p-12 text-center text-muted-foreground text-sm">Zatiaľ žiadne zaslané dizajny.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table className="text-xs">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Dátum</TableHead>
+                  <TableHead>Klient</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>URL dizajnu</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((r) => {
+                  const st = STATUSES.find((s) => s.v === r.status);
+                  return (
+                    <TableRow key={r.id} className="hover:bg-muted/50">
+                      <TableCell className="whitespace-nowrap">{new Date(r.sent_date).toLocaleDateString("sk-SK")}</TableCell>
+                      <TableCell className="font-semibold">{r.client_name}</TableCell>
+                      <TableCell>{r.email || "—"}</TableCell>
+                      <TableCell>
+                        {r.design_url ? (
+                          <a href={r.design_url} target="_blank" rel="noopener noreferrer" className="text-primary inline-flex items-center gap-1 hover:underline max-w-[280px] truncate">
+                            {r.design_url} <ExternalLink className="w-3 h-3 shrink-0" />
+                          </a>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell><Badge className={st?.cls}>{st?.label || r.status}</Badge></TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="w-4 h-4" /></Button>
+                          <Button size="icon" variant="ghost" onClick={() => setDeleting(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
-          <Button size="sm" onClick={openNew}><Plus className="w-4 h-4 mr-1" /> Nový</Button>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-3 py-6">
-        <Card className="overflow-hidden">
-          {loading ? (
-            <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
-          ) : rows.length === 0 ? (
-            <div className="p-12 text-center text-muted-foreground text-sm">Zatiaľ žiadne zaslané dizajny.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table className="text-xs">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Dátum</TableHead>
-                    <TableHead>Klient</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>URL dizajnu</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((r) => {
-                    const st = STATUSES.find((s) => s.v === r.status);
-                    return (
-                      <TableRow key={r.id} className="hover:bg-muted/50">
-                        <TableCell className="whitespace-nowrap">{new Date(r.sent_date).toLocaleDateString("sk-SK")}</TableCell>
-                        <TableCell className="font-semibold">{r.client_name}</TableCell>
-                        <TableCell>{r.email || "—"}</TableCell>
-                        <TableCell>
-                          {r.design_url ? (
-                            <a href={r.design_url} target="_blank" rel="noopener noreferrer" className="text-primary inline-flex items-center gap-1 hover:underline max-w-[280px] truncate">
-                              {r.design_url} <ExternalLink className="w-3 h-3 shrink-0" />
-                            </a>
-                          ) : "—"}
-                        </TableCell>
-                        <TableCell><Badge className={st?.cls}>{st?.label || r.status}</Badge></TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" onClick={() => openEdit(r)}><Pencil className="w-4 h-4" /></Button>
-                            <Button size="icon" variant="ghost" onClick={() => setDeleting(r.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </Card>
-      </div>
+        )}
+      </Card>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -226,6 +205,6 @@ export default function AdminDesigns() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminShell>
   );
 }
