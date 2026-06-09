@@ -17,8 +17,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, Euro, Loader2 } from "lucide-react";
+import { CalendarIcon, Euro, Loader2, User } from "lucide-react";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   ASSIGNEES,
@@ -380,7 +381,18 @@ const LeadDetailDialog = ({
               />
             </div>
 
-            <div className="flex gap-2 justify-end pt-2">
+            <div className="flex gap-2 justify-end pt-2 flex-wrap">
+              {editEmail && (
+                <Link
+                  to={`/admin/customer/${encodeURIComponent(editEmail.trim().toLowerCase())}`}
+                  className="mr-auto"
+                >
+                  <Button variant="outline" type="button">
+                    <User className="w-4 h-4 mr-2" />
+                    Customer view
+                  </Button>
+                </Link>
+              )}
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Zrušiť
               </Button>

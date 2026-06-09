@@ -24,7 +24,9 @@ import {
   Mail,
   Phone,
   Trash2,
+  User,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   Lead,
   LeadStatus,
@@ -224,14 +226,30 @@ const LeadsTable = ({
                       </div>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => onRequestDelete(lead.id)}
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-0.5">
+                        {lead.email && (
+                          <Link
+                            to={`/admin/customer/${encodeURIComponent(lead.email.trim().toLowerCase())}`}
+                            title="Otvoriť customer view"
+                          >
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-7 w-7 text-muted-foreground hover:text-primary"
+                            >
+                              <User className="w-3.5 h-3.5" />
+                            </Button>
+                          </Link>
+                        )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => onRequestDelete(lead.id)}
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
