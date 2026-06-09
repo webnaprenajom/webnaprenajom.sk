@@ -9,6 +9,7 @@ import LocalizedPage from "./pages/LocalizedPage";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import AdminToday from "./pages/AdminToday";
+import AdminCustomer from "./pages/AdminCustomer";
 import AdminLogs from "./pages/AdminLogs";
 import AdminProjectNotes from "./pages/AdminProjectNotes";
 import AdminCommissions from "./pages/AdminCommissions";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/admin/today" element={<AdminToday />} />
+            <Route path="/admin/customer/:customerKey" element={<AdminCustomer />} />
             <Route path="/admin/logs" element={<AdminLogs />} />
             <Route path="/admin/notes" element={<AdminProjectNotes />} />
             <Route path="/admin/commissions" element={<AdminCommissions />} />
