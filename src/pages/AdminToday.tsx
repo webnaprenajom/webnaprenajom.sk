@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, LogOut, ShieldAlert, Sun } from "lucide-react";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import TodayMustDoSection from "@/components/admin/TodayMustDoSection";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { confirmAdminSignOut } from "@/lib/adminSignOut";
 
 const AdminToday = () => {
   const navigate = useNavigate();
@@ -20,10 +20,7 @@ const AdminToday = () => {
     if (!userId) navigate("/auth", { replace: true });
   }, [authChecking, userId, navigate]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth", { replace: true });
-  };
+  const handleSignOut = () => confirmAdminSignOut(navigate);
 
   if (authChecking) {
     return (

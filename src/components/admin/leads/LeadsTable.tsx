@@ -103,6 +103,14 @@ const LeadsTable = ({
                 <TableHead className="cursor-pointer select-none" onClick={() => onToggleSort("email")}>
                   Kontakt<SortIcon k="email" />
                 </TableHead>
+                <TableHead className="cursor-pointer select-none min-w-[170px]" onClick={() => onToggleSort("status")}>
+                  Status<SortIcon k="status" />
+                </TableHead>
+                <TableHead className="whitespace-nowrap text-[11px]">Stav od</TableHead>
+                <TableHead>Pozn.</TableHead>
+                <TableHead className="text-center cursor-pointer select-none whitespace-nowrap" onClick={() => onToggleSort("temperature")}>
+                  Tep.<SortIcon k="temperature" />
+                </TableHead>
                 <TableHead className="text-right whitespace-nowrap">Suma</TableHead>
                 <TableHead className="cursor-pointer select-none" onClick={() => onToggleSort("source")}>
                   Zdroj<SortIcon k="source" />
@@ -110,14 +118,6 @@ const LeadsTable = ({
                 <TableHead className="cursor-pointer select-none whitespace-nowrap" onClick={() => onToggleSort("type")}>
                   Typ<SortIcon k="type" />
                 </TableHead>
-                <TableHead className="cursor-pointer select-none min-w-[170px]" onClick={() => onToggleSort("status")}>
-                  Status<SortIcon k="status" />
-                </TableHead>
-                <TableHead className="whitespace-nowrap text-[11px]">Stav od</TableHead>
-                <TableHead className="text-center cursor-pointer select-none whitespace-nowrap" onClick={() => onToggleSort("temperature")}>
-                  Tep.<SortIcon k="temperature" />
-                </TableHead>
-                <TableHead>Pozn.</TableHead>
                 <TableHead className="w-[40px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -157,23 +157,6 @@ const LeadsTable = ({
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      {lead.amount != null ? (
-                        <span className="font-bold text-green-600 dark:text-green-500 text-xs">
-                          {Number(lead.amount).toLocaleString("sk-SK", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}&nbsp;€
-                        </span>
-                      ) : (
-                        <span className="italic text-muted-foreground opacity-60">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-[11px] max-w-[100px] truncate">
-                      {lead.source || <span className="italic text-muted-foreground opacity-60">—</span>}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                        {typeLabel(lead.type)}
-                      </Badge>
-                    </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Select
                         value={lead.status}
@@ -199,6 +182,11 @@ const LeadsTable = ({
                         <span className="italic opacity-60">—</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-[11px] text-muted-foreground max-w-[160px]">
+                      <div className="line-clamp-2 whitespace-pre-wrap">
+                        {lead.notes || <span className="italic opacity-60">—</span>}
+                      </div>
+                    </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-0">
                         {(["hot", "neutral", "cold"] as const).map((t) => {
@@ -220,10 +208,22 @@ const LeadsTable = ({
                         })}
                       </div>
                     </TableCell>
-                    <TableCell className="text-[11px] text-muted-foreground max-w-[160px]">
-                      <div className="line-clamp-2 whitespace-pre-wrap">
-                        {lead.notes || <span className="italic opacity-60">—</span>}
-                      </div>
+                    <TableCell className="text-right whitespace-nowrap">
+                      {lead.amount != null ? (
+                        <span className="font-bold text-green-600 dark:text-green-500 text-xs">
+                          {Number(lead.amount).toLocaleString("sk-SK", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}&nbsp;€
+                        </span>
+                      ) : (
+                        <span className="italic text-muted-foreground opacity-60">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-[11px] max-w-[100px] truncate">
+                      {lead.source || <span className="italic text-muted-foreground opacity-60">—</span>}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                        {typeLabel(lead.type)}
+                      </Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-0.5">

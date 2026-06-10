@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { CalendarIcon, Euro, Loader2, User } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -372,10 +373,10 @@ const LeadDetailDialog = ({
 
             <div className="space-y-2">
               <Label htmlFor="notes">Interné poznámky</Label>
-              <Textarea
+              <NoteTextarea
                 id="notes"
                 value={editNotes}
-                onChange={(e) => setEditNotes(e.target.value)}
+                onChange={setEditNotes}
                 placeholder="Doplň poznámky o klientovi, dohodách, follow-up..."
                 className="min-h-[120px]"
               />

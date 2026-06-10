@@ -1,6 +1,5 @@
 import { useEffect, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,7 +9,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NotificationBell } from "@/components/admin/NotificationBell";
+import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -37,7 +38,7 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/rentals", label: "Prenájmy", icon: Wallet },
   { href: "/admin/commissions", label: "Provízie", icon: Wallet },
   { href: "/admin/finance", label: "Finance", icon: BarChart3 },
-  { href: "/admin/notes", label: "Poznámky", icon: KanbanSquare },
+  { href: "/admin/notes", label: "Projekty & heslá", icon: KanbanSquare },
   { href: "/admin/wheel-leads", label: "Wheel", icon: Sparkles },
   { href: "/admin/logs", label: "Logy", icon: History },
   { href: "/admin/signatures", label: "Podpisy", icon: FileSignature },
@@ -62,10 +63,7 @@ export function AdminShell({ title, subtitle, actions, backTo, children }: Admin
     if (!userId) navigate("/auth", { replace: true });
   }, [authChecking, userId, navigate]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth", { replace: true });
-  };
+  const handleSignOut = () => confirmAdminSignOut(navigate);
 
   const isActive = (href: string) => {
     if (href === "/admin") return location.pathname === "/admin";
@@ -128,6 +126,7 @@ export function AdminShell({ title, subtitle, actions, backTo, children }: Admin
 
           <div className="hidden xl:flex items-center gap-1.5 flex-wrap justify-end max-w-[70%]">
             <NotificationBell />
+            <AdminThemeToggle />
             {ADMIN_NAV_ITEMS.map(({ href, label, icon: Icon }) => (
               <Button
                 key={href}
@@ -147,6 +146,7 @@ export function AdminShell({ title, subtitle, actions, backTo, children }: Admin
 
           <div className="flex xl:hidden items-center gap-1">
             <NotificationBell />
+            <AdminThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" aria-label="Menu">

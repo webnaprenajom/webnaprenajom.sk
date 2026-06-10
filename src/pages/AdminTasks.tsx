@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { LeadClientPicker, type LeadOption } from "@/components/admin/LeadClientPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,6 +102,7 @@ const emptyForm = () => ({
   title: "",
   description: "",
   client_name: "",
+  lead_id: "",
   assignee: "",
   status: "todo" as TaskStatus,
   priority: "normal" as TaskPriority,
@@ -119,6 +121,7 @@ const AdminTasks = () => {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm());
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
+  const [leadOptions, setLeadOptions] = useState<LeadOption[]>([]);
 
   useEffect(() => {
     document.title = "TO DO – aktívne zákazky | CRM";
@@ -129,7 +132,7 @@ const AdminTasks = () => {
     setLoading(true);
     const [tasksRes, leadsRes] = await Promise.all([
       supabase.from("tasks").select("*").order("created_at", { ascending: false }),
-      supabase.from("leads").select("name,email"),
+      supabase.from("leads").select("id,name,email"),
     ]);
     if (tasksRes.error) {
       toast({ title: "Chyba", description: tasksRes.error.message, variant: "destructive" });
@@ -138,6 +141,13 @@ const AdminTasks = () => {
     }
     if (!leadsRes.error && leadsRes.data) {
       setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
+      setLeadOptions(
+        leadsRes.data.map((l) => ({
+          id: l.id,
+          name: (l.name || "").trim() || l.email || "—",
+          email: l.email,
+        })),
+      );
     }
     setLoading(false);
   };
@@ -146,7 +156,8 @@ const AdminTasks = () => {
   const openEdit = (t: Task) => {
     setForm({
       id: t.id, title: t.title, description: t.description ?? "",
-      client_name: t.client_name ?? "", assignee: t.assignee ?? "",
+      client_name: t.client_name ?? "", lead_id: t.lead_id ?? "",
+      assignee: t.assignee ?? "",
       status: t.status, priority: t.priority,
       due_date: t.due_date ?? "",
       amount: String(t.amount ?? ""),
@@ -162,6 +173,7 @@ const AdminTasks = () => {
       title: form.title.trim(),
       description: form.description.trim() || null,
       client_name: form.client_name.trim() || null,
+      lead_id: form.lead_id || null,
       assignee: form.assignee || null,
       status: form.status,
       priority: form.priority,
@@ -401,7 +413,14 @@ const AdminTasks = () => {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground">Klient</label>
-                <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} placeholder="Meno klienta / firma" />
+                <LeadClientPicker
+                  leads={leadOptions}
+                  clientName={form.client_name}
+                  leadId={form.lead_id}
+                  onChange={({ client_name, lead_id }) =>
+                    setForm({ ...form, client_name, lead_id: lead_id ?? "" })
+                  }
+                />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Riešiteľ</label>

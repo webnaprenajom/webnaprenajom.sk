@@ -39,12 +39,16 @@ import {
 } from "lucide-react";
 import { buildClientNameEmailMap, customerHrefByClientName } from "@/lib/adminNav";
 import { FINANCE_TRUTH_DISCLAIMER, RENTAL_MONTH_STATUS_LABELS } from "@/lib/finance/labels";
+import { type PaymentFormValue } from "@/lib/paymentForm";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
 import { type FactDraft, prefillFromRentalPayment } from "@/lib/finance/factDrafts";
+import { ImplementerCommissionDetailDialog } from "@/components/admin/rentals/ImplementerCommissionDetailDialog";
 
 interface Implementer {
   name: string;
   percentage: number;
+  payment_form?: PaymentFormValue | "";
+  note?: string;
 }
 
 interface RentalWebsite {
@@ -87,6 +91,16 @@ const NEXT_STATUS: Record<PaymentStatus, PaymentStatus> = {
   unpaid: "none",
 };
 
+const PAYMENT_STATUS_RANK: Record<PaymentStatus, number> = {
+  none: 0,
+  invoice: 1,
+  unpaid: 2,
+  paid: 3,
+};
+
+const isPaymentDowngrade = (current: PaymentStatus, next: PaymentStatus) =>
+  PAYMENT_STATUS_RANK[next] < PAYMENT_STATUS_RANK[current];
+
 const emptyWebsite = (): RentalWebsite => ({
   id: "",
   name: "",
@@ -109,6 +123,8 @@ const normalizeImplementers = (raw: unknown): Implementer[] => {
     .map((r: any) => ({
       name: String(r?.name ?? "").trim(),
       percentage: Number(r?.percentage) || 0,
+      payment_form: (r?.payment_form as PaymentFormValue) || "",
+      note: String(r?.note ?? "").trim(),
     }))
     .filter((r) => r.name);
 };
@@ -124,16 +140,28 @@ export default function AdminRentals() {
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
   const [paymentFactDraft, setPaymentFactDraft] = useState<FactDraft | null>(null);
   const [paymentFactOpen, setPaymentFactOpen] = useState(false);
+  const [commissions, setCommissions] = useState<Array<{
+    id: string;
+    title: string;
+    date: string;
+    amount: number;
+    payment_status: string;
+    note: string | null;
+    payment_form: string | null;
+    implementer: string;
+  }>>([]);
+  const [detailImplementer, setDetailImplementer] = useState<string | null>(null);
 
   useEffect(() => {
     void loadAll().finally(() => setLoading(false));
   }, []);
 
   const loadAll = async () => {
-    const [w, p, leadsRes] = await Promise.all([
+    const [w, p, leadsRes, commRes] = await Promise.all([
       (supabase as any).from("rental_websites").select("*").order("created_at", { ascending: false }),
       (supabase as any).from("rental_payments").select("*"),
       supabase.from("leads").select("name,email"),
+      supabase.from("commissions").select("id,title,date,amount,payment_status,note,payment_form,implementer"),
     ]);
     if (w.data) {
       setWebsites(
@@ -146,6 +174,16 @@ export default function AdminRentals() {
     if (p.data) setPayments(p.data as RentalPayment[]);
     if (!leadsRes.error && leadsRes.data) {
       setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
+    }
+    if (!commRes.error && commRes.data) {
+      setCommissions(commRes.data as typeof commissions);
+    } else if (commRes.error) {
+      const fallback = await supabase.from("commissions").select("id,title,date,amount,payment_status,note,implementer");
+      if (!fallback.error && fallback.data) {
+        setCommissions(
+          fallback.data.map((r) => ({ ...r, payment_form: null })) as typeof commissions,
+        );
+      }
     }
   };
 
@@ -168,7 +206,15 @@ export default function AdminRentals() {
       return;
     }
     const cleanImplementers = (editing.implementers || [])
-      .map((i) => ({ name: i.name.trim(), percentage: Number(i.percentage) || 0 }))
+      .map((i) => {
+        const row: Record<string, unknown> = {
+          name: i.name.trim(),
+          percentage: Number(i.percentage) || 0,
+        };
+        if (i.payment_form) row.payment_form = i.payment_form;
+        if (i.note?.trim()) row.note = i.note.trim();
+        return row;
+      })
       .filter((i) => i.name);
     const payload = {
       name: editing.name,
@@ -239,6 +285,15 @@ export default function AdminRentals() {
     const existing = paymentMap.get(key);
     const current: PaymentStatus = (existing?.status as PaymentStatus) || "none";
     const next = NEXT_STATUS[current];
+
+    if (isPaymentDowngrade(current, next)) {
+      const from = RENTAL_MONTH_STATUS_LABELS[current] ?? current;
+      const to = RENTAL_MONTH_STATUS_LABELS[next] ?? next;
+      if (!confirm(`Zmeniť stav platby z „${from}" na „${to}"?\n\nIde o krok späť — overte, či je to zámer.`)) {
+        return;
+      }
+    }
+
     const price = monthPrice(website, month);
 
     if (existing) {
@@ -499,7 +554,12 @@ export default function AdminRentals() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {implementerStats.map((s) => (
-                <div key={s.name} className="rounded-md border border-border bg-background/60 p-3">
+                <button
+                  key={s.name}
+                  type="button"
+                  onClick={() => setDetailImplementer(s.name)}
+                  className="rounded-md border border-border bg-background/60 p-3 text-left hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                >
                   <div className="flex items-center justify-between">
                     <div className="font-semibold">{s.name}</div>
                     <Badge variant="outline" className="text-[10px]">{s.projects} projekt(ov)</Badge>
@@ -514,7 +574,8 @@ export default function AdminRentals() {
                       <div className="font-bold text-primary">{s.potential.toFixed(2)}€</div>
                     </div>
                   </div>
-                </div>
+                  <div className="text-[10px] text-primary mt-2">Klikni pre detail webov a zákaziek →</div>
+                </button>
               ))}
             </div>
           </div>
@@ -854,6 +915,20 @@ export default function AdminRentals() {
           toast({ title: "Payment fact vytvorený", description: "Workflow status zostáva nezmenený." });
         }}
       />
+
+      {detailImplementer && (
+        <ImplementerCommissionDetailDialog
+          open={!!detailImplementer}
+          onOpenChange={(o) => !o && setDetailImplementer(null)}
+          implementerName={detailImplementer}
+          year={year}
+          websites={websites}
+          commissions={commissions}
+          clientEmailMap={clientEmailMap}
+          yearStats={yearStats}
+          onSaved={() => void loadAll()}
+        />
+      )}
     </AdminShell>
   );
 }

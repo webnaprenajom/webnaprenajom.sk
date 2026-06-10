@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Trash2, Pencil, ExternalLink } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, ExternalLink, UserRound } from "lucide-react";
+import {
+  adminCustomerHref,
+  adminLeadHref,
+  buildEmailLeadIdMap,
+  buildNameLeadIdMap,
+  leadIdByClientName,
+  leadIdByEmail,
+} from "@/lib/adminNav";
 
 interface Proposal {
   id: string;
@@ -41,6 +50,8 @@ export default function AdminDesigns() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [emailLeadIdMap, setEmailLeadIdMap] = useState<Map<string, string>>(new Map());
+  const [nameLeadIdMap, setNameLeadIdMap] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     void load();
@@ -48,9 +59,16 @@ export default function AdminDesigns() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("design_proposals").select("*").order("sent_date", { ascending: false });
-    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else setRows((data || []) as Proposal[]);
+    const [designsRes, leadsRes] = await Promise.all([
+      supabase.from("design_proposals").select("*").order("sent_date", { ascending: false }),
+      supabase.from("leads").select("id,name,email"),
+    ]);
+    if (designsRes.error) toast({ title: "Chyba", description: designsRes.error.message, variant: "destructive" });
+    else setRows((designsRes.data || []) as Proposal[]);
+    if (!leadsRes.error && leadsRes.data) {
+      setEmailLeadIdMap(buildEmailLeadIdMap(leadsRes.data));
+      setNameLeadIdMap(buildNameLeadIdMap(leadsRes.data));
+    }
     setLoading(false);
   };
 
@@ -125,10 +143,36 @@ export default function AdminDesigns() {
               <TableBody>
                 {rows.map((r) => {
                   const st = STATUSES.find((s) => s.v === r.status);
+                  const leadId =
+                    leadIdByEmail(r.email, emailLeadIdMap) ??
+                    leadIdByClientName(r.client_name, nameLeadIdMap);
+                  const customerHref = r.email ? adminCustomerHref(r.email) : null;
                   return (
                     <TableRow key={r.id} className="hover:bg-muted/50">
                       <TableCell className="whitespace-nowrap">{new Date(r.sent_date).toLocaleDateString("sk-SK")}</TableCell>
-                      <TableCell className="font-semibold">{r.client_name}</TableCell>
+                      <TableCell className="font-semibold">
+                        <div>{r.client_name}</div>
+                        {(leadId || customerHref) && (
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {leadId && (
+                              <Link
+                                to={adminLeadHref(leadId)}
+                                className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5"
+                              >
+                                <UserRound className="w-3 h-3" /> Lead
+                              </Link>
+                            )}
+                            {customerHref && (
+                              <Link
+                                to={customerHref}
+                                className="text-[10px] text-primary hover:underline"
+                              >
+                                Zákazník 360°
+                              </Link>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>{r.email || "—"}</TableCell>
                       <TableCell>
                         {r.design_url ? (

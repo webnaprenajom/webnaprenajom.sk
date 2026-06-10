@@ -55,3 +55,25 @@ export function leadIdByEmail(
   if (!email) return null;
   return map.get(email.trim().toLowerCase()) ?? null;
 }
+
+/** First exact lead name → lead id (for client_name → pipeline links). */
+export function buildNameLeadIdMap(
+  leads: Array<{ id: string; name: string | null }>,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const lead of leads) {
+    const name = (lead.name || "").trim();
+    if (name && !map.has(name)) {
+      map.set(name, lead.id);
+    }
+  }
+  return map;
+}
+
+export function leadIdByClientName(
+  clientName: string | null | undefined,
+  map: Map<string, string>,
+): string | null {
+  if (!clientName) return null;
+  return map.get(clientName.trim()) ?? null;
+}

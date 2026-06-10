@@ -52,7 +52,7 @@ export interface Lead {
   import_batch?: string | null;
 }
 
-export const ASSIGNEES = ["Peter", "Maroš", "Matuš"] as const;
+export { CRM_ASSIGNEES as ASSIGNEES } from "@/lib/assignees";
 export const UNASSIGNED = "__unassigned__";
 
 export const STALE_DAYS = 14;

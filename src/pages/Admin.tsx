@@ -26,7 +26,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -71,11 +71,13 @@ import {
   FileSignature,
   Palette,
   Sun,
+  BarChart3,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/admin/NotificationBell";
-import TodayMustDoSection from "@/components/admin/TodayMustDoSection";
+import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
+import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import {
   DropdownMenu,
@@ -260,10 +262,7 @@ const Admin = () => {
     setLoading(false);
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth", { replace: true });
-  };
+  const handleSignOut = () => confirmAdminSignOut(navigate);
 
   const openLead = (lead: Lead) => {
     setSelected(lead);
@@ -865,15 +864,6 @@ const Admin = () => {
     return { total: leads.length, today, week, month, won, newCount };
   }, [leads]);
 
-  /** Re-fetch TodayMustDoSection when lead status/follow-up changes (not just count). */
-  const todayRefreshKey = useMemo(
-    () =>
-      leads
-        .map((l) => `${l.id}:${l.status}:${l.follow_up_date ?? ""}:${l.updated_at ?? ""}`)
-        .join("|"),
-    [leads],
-  );
-
   const exportCsv = () => {
     const headers = [
       "Dátum",
@@ -956,6 +946,7 @@ const Admin = () => {
           {/* Desktop nav */}
           <div className="hidden lg:flex items-center gap-2">
             <NotificationBell />
+            <AdminThemeToggle />
             <Button
               onClick={() => navigate("/admin/today")}
               variant="outline"
@@ -965,13 +956,16 @@ const Admin = () => {
               <Sun className="w-4 h-4 mr-2" /> Dnes
             </Button>
             <Button onClick={() => navigate("/admin/notes")} variant="outline" size="sm">
-              <KanbanSquare className="w-4 h-4 mr-2" /> Poznámky
+              <KanbanSquare className="w-4 h-4 mr-2" /> Projekty & heslá
             </Button>
             <Button onClick={() => navigate("/admin/tasks")} variant="outline" size="sm">
               <ListTodo className="w-4 h-4 mr-2" /> TO DO
             </Button>
             <Button onClick={() => navigate("/admin/commissions")} variant="outline" size="sm">
               <Wallet className="w-4 h-4 mr-2" /> Provízie
+            </Button>
+            <Button onClick={() => navigate("/admin/finance")} variant="outline" size="sm">
+              <BarChart3 className="w-4 h-4 mr-2" /> Finance
             </Button>
             <Button onClick={() => navigate("/admin/rentals")} variant="outline" size="sm">
               <Wallet className="w-4 h-4 mr-2" /> Prenájmy
@@ -996,6 +990,7 @@ const Admin = () => {
           {/* Mobile nav */}
           <div className="flex lg:hidden items-center gap-1">
             <NotificationBell />
+            <AdminThemeToggle />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" aria-label="Menu">
@@ -1008,13 +1003,16 @@ const Admin = () => {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/admin/notes")}>
-                  <KanbanSquare className="w-4 h-4 mr-2" /> Poznámky
+                  <KanbanSquare className="w-4 h-4 mr-2" /> Projekty & heslá
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/admin/tasks")}>
                   <ListTodo className="w-4 h-4 mr-2" /> TO DO
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/admin/commissions")}>
                   <Wallet className="w-4 h-4 mr-2" /> Provízie
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/admin/finance")}>
+                  <BarChart3 className="w-4 h-4 mr-2" /> Finance
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/admin/rentals")}>
                   <Wallet className="w-4 h-4 mr-2" /> Prenájmy
@@ -1042,31 +1040,11 @@ const Admin = () => {
       </header>
 
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
-        {/* Command center summary */}
-        <section className="space-y-3">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Command Center</p>
-              <p className="text-sm text-muted-foreground max-w-2xl">
-                Dnešné priority — klik na lead otvorí detail v pipeline nižšie.
-              </p>
-            </div>
-            <Button variant="outline" size="sm" onClick={() => navigate("/admin/today")}>
-              <Sun className="w-4 h-4 mr-2" /> Otvoriť Dnes
-            </Button>
-          </div>
-          <TodayMustDoSection
-            refreshKey={todayRefreshKey}
-            onLeadClick={(id) => {
-              const lead = leads.find((l) => l.id === id);
-              if (lead) {
-                openLead(lead);
-                return;
-              }
-              setSearchParams({ lead: id }, { replace: true });
-            }}
-          />
-        </section>
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/today")}>
+            <Sun className="w-4 h-4 mr-2" /> Dnes — Command Center
+          </Button>
+        </div>
 
         {/* Stats */}
         <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -1301,10 +1279,10 @@ const Admin = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="new-notes">Interné poznámky</Label>
-              <Textarea
+              <NoteTextarea
                 id="new-notes"
                 value={newLead.notes}
-                onChange={(e) => setNewLead({ ...newLead, notes: e.target.value })}
+                onChange={(v) => setNewLead({ ...newLead, notes: v })}
                 placeholder="Poznámky..."
                 className="min-h-[80px]"
               />

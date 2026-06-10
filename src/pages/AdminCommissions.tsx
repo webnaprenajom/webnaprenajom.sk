@@ -36,6 +36,9 @@ import {
 } from "@/lib/finance/labels";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
 import { type FactDraft, prefillFromCommission, prefillFromExpense } from "@/lib/finance/factDrafts";
+import { PAYMENT_FORM_OPTIONS, type PaymentFormValue } from "@/lib/paymentForm";
+import { assigneeSelectOptions, isKnownAssignee } from "@/lib/assignees";
+import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import {
   Loader2,
   Wallet,
@@ -56,6 +59,7 @@ interface Commission {
   amount: number;
   payment_status: PaymentStatus;
   note: string | null;
+  payment_form: string | null;
   created_at: string;
 }
 
@@ -85,6 +89,7 @@ const emptyCommission = () => ({
   amount: "",
   payment_status: "unpaid" as PaymentStatus,
   note: "",
+  payment_form: "" as PaymentFormValue | "",
 });
 
 const emptyExpense = () => ({
@@ -154,6 +159,7 @@ const AdminCommissions = () => {
     setForm({
       id: c.id, date: c.date, title: c.title, implementer: c.implementer,
       amount: String(c.amount ?? ""), payment_status: c.payment_status, note: c.note ?? "",
+      payment_form: (c.payment_form as PaymentFormValue) || "",
     });
     setDialogOpen(true);
   };
@@ -171,6 +177,7 @@ const AdminCommissions = () => {
       amount: parseFloat(form.amount.replace(",", ".")) || 0,
       payment_status: form.payment_status,
       note: form.note.trim() || null,
+      payment_form: form.payment_form || null,
     };
     const { error } = form.id
       ? await supabase.from("commissions").update(payload).eq("id", form.id)
@@ -533,7 +540,23 @@ const AdminCommissions = () => {
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Meno implementátora</label>
-              <Input value={form.implementer} onChange={(e) => setForm({ ...form, implementer: e.target.value })} placeholder="Meno a priezvisko" />
+              <Select
+                value={form.implementer || "__none__"}
+                onValueChange={(v) => setForm({ ...form, implementer: v === "__none__" ? "" : v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="— vyber —" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— vyber —</SelectItem>
+                  {assigneeSelectOptions(form.implementer).map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                      {!isKnownAssignee(name) ? " (legacy)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Stav vyplatenia</label>
@@ -546,8 +569,23 @@ const AdminCommissions = () => {
               </Select>
             </div>
             <div>
+              <label className="text-xs text-muted-foreground">Forma úhrady</label>
+              <Select
+                value={form.payment_form || "none"}
+                onValueChange={(v) => setForm({ ...form, payment_form: v === "none" ? "" : (v as PaymentFormValue) })}
+              >
+                <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">—</SelectItem>
+                  {PAYMENT_FORM_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <label className="text-xs text-muted-foreground">Poznámka</label>
-              <Textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} rows={3} />
+              <NoteTextarea value={form.note} onChange={(v) => setForm({ ...form, note: v })} rows={3} />
             </div>
           </div>
           <DialogFooter>

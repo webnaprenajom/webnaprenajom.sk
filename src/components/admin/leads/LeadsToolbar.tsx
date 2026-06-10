@@ -1,13 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Download, Mail, Plus, Search, Upload } from "lucide-react";
+import { Download, Mail, MoreHorizontal, Plus, Search, Upload } from "lucide-react";
 import {
   ASSIGNEES,
   STATUS_CONFIG,
@@ -95,12 +101,22 @@ const LeadsToolbar = ({
       <Button onClick={onBulkOffer} variant="outline" title="Vyžaduje výber leadov v tabuľke">
         <Mail className="w-4 h-4 mr-2" /> Poslať ponuku
       </Button>
-      <Button onClick={onImportClick} variant="outline">
-        <Upload className="w-4 h-4 mr-2" /> Import CSV
-      </Button>
-      <Button onClick={onExport} variant="outline">
-        <Download className="w-4 h-4 mr-2" /> Export CSV
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" aria-label="Ďalšie akcie">
+            <MoreHorizontal className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Viac</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onImportClick}>
+            <Upload className="w-4 h-4 mr-2" /> Import CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onExport}>
+            <Download className="w-4 h-4 mr-2" /> Export CSV
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </section>
   );
 };

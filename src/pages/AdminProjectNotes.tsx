@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -428,11 +428,11 @@ const AdminProjectNotes = () => {
                   <FileText className="w-3.5 h-3.5 text-muted-foreground" />
                   Poznámka projektu
                 </Label>
-                <Textarea
+                <NoteTextarea
                   rows={5}
                   placeholder="Postup, kontext, interné poznámky k projektu…"
                   value={editing.notes || ""}
-                  onChange={(e) => setEditing({ ...editing, notes: e.target.value })}
+                  onChange={(v) => setEditing({ ...editing, notes: v })}
                 />
               </div>
             </div>

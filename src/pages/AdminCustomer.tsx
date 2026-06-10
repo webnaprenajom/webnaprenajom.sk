@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { NotificationBell } from "@/components/admin/NotificationBell";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { STATUS_CONFIG, type LeadStatus } from "@/components/admin/leads/constants";
 
 type Lead = {
@@ -390,10 +391,7 @@ const AdminCustomer = () => {
     load();
   }, [isAdmin, decodedKey]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth", { replace: true });
-  };
+  const handleSignOut = () => confirmAdminSignOut(navigate);
 
   const primaryLead = leads[0];
   const displayName = primaryLead?.name || signatures[0]?.client_name || decodedKey;
