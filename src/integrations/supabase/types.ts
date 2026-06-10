@@ -22,7 +22,6 @@ export type Database = {
           id: string
           implementer: string
           note: string | null
-          payment_form: string | null
           payment_status: string
           title: string
           updated_at: string
@@ -95,7 +94,6 @@ export type Database = {
           date: string
           id: string
           note: string | null
-          payment_form: string | null
           payment_status: string
           title: string
           updated_at: string
