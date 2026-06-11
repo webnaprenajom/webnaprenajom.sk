@@ -1,5 +1,6 @@
 import { jsPDF } from "https://esm.sh/jspdf@2.5.1";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logEmailOutEvent } from "../_shared/communicationEvents.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -351,6 +352,22 @@ Deno.serve(async (req) => {
     }
 
     console.log("Order email sent", { resend_id: resendResult.id, to: data.email, amount: monthly });
+
+    const adminSb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const logResult = await logEmailOutEvent(adminSb, {
+      customer_email: data.email,
+      customer_id: (data as { customer_id?: string }).customer_id ?? null,
+      title: "Potvrdenie objednávky a návrh zmluvy – Web na prenájom",
+      subject: "Potvrdenie objednávky a návrh zmluvy – Web na prenájom",
+      body_text: text,
+      resend_id: resendResult.id,
+      edge_function: "send-order-email",
+      source_table: (data as { lead_id?: string }).lead_id ? "leads" : null,
+      source_id: (data as { lead_id?: string }).lead_id ?? null,
+      metadata: { amount: monthly },
+    });
+    if (!logResult.ok) console.warn("[communication_events] order log failed", logResult.error);
+
     return new Response(
       JSON.stringify({ success: true, id: resendResult.id }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

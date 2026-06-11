@@ -41,7 +41,9 @@ import {
   adminLeadHref,
   buildClientNameEmailMap,
   customerHrefByClientName,
+  adminCustomerHrefById,
 } from "@/lib/adminNav";
+import { resolveTaskCustomerFields, classifyTaskLink, TASK_LINK_STRENGTH_LABELS } from "@/lib/crmLookup/taskCustomerLink";
 
 type TaskStatus =
   | "todo"
@@ -59,6 +61,7 @@ interface Task {
   description: string | null;
   client_name: string | null;
   lead_id: string | null;
+  customer_id: string | null;
   assignee: string | null;
   status: TaskStatus;
   priority: TaskPriority;
@@ -69,7 +72,7 @@ interface Task {
 }
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; className: string }> = {
-  todo: { label: "TO DO", className: "bg-slate-500/15 text-slate-400 border-slate-500/30" },
+  todo: { label: "Na rade", className: "bg-slate-500/15 text-slate-400 border-slate-500/30" },
   in_progress: { label: "Prebieha", className: "bg-blue-500/15 text-blue-500 border-blue-500/30" },
   blocked: { label: "Blokované", className: "bg-red-500/15 text-red-500 border-red-500/30" },
   deposit_received: { label: "Prijatá záloha", className: "bg-cyan-500/15 text-cyan-500 border-cyan-500/30" },
@@ -103,6 +106,8 @@ const emptyForm = () => ({
   description: "",
   client_name: "",
   lead_id: "",
+  customer_id: "",
+  customer_email: "",
   assignee: "",
   status: "todo" as TaskStatus,
   priority: "normal" as TaskPriority,
@@ -124,7 +129,7 @@ const AdminTasks = () => {
   const [leadOptions, setLeadOptions] = useState<LeadOption[]>([]);
 
   useEffect(() => {
-    document.title = "TO DO – aktívne zákazky | CRM";
+    document.title = "Úlohy | CRM";
     void load();
   }, []);
 
@@ -157,6 +162,8 @@ const AdminTasks = () => {
     setForm({
       id: t.id, title: t.title, description: t.description ?? "",
       client_name: t.client_name ?? "", lead_id: t.lead_id ?? "",
+      customer_id: t.customer_id ?? "",
+      customer_email: "",
       assignee: t.assignee ?? "",
       status: t.status, priority: t.priority,
       due_date: t.due_date ?? "",
@@ -169,11 +176,18 @@ const AdminTasks = () => {
   const save = async () => {
     if (!form.title.trim()) { toast({ title: "Vyplň názov úlohy", variant: "destructive" }); return; }
     setSaving(true);
+    const linked = await resolveTaskCustomerFields({
+      customer_id: form.customer_id || null,
+      customer_email: form.customer_email || null,
+      client_name: form.client_name,
+      lead_id: form.lead_id || null,
+    });
     const payload = {
       title: form.title.trim(),
       description: form.description.trim() || null,
-      client_name: form.client_name.trim() || null,
-      lead_id: form.lead_id || null,
+      client_name: linked.client_name || null,
+      lead_id: linked.lead_id,
+      customer_id: linked.customer_id,
       assignee: form.assignee || null,
       status: form.status,
       priority: form.priority,
@@ -235,7 +249,7 @@ const AdminTasks = () => {
 
   return (
     <AdminShell
-      title="TO DO – aktívne zákazky"
+      title="Úlohy – aktívne zákazky"
       backTo={{ label: "CRM", href: "/admin" }}
       actions={
         <Button onClick={openNew} size="sm">
@@ -343,13 +357,26 @@ const AdminTasks = () => {
                           {t.client_name ? (
                             <div className="space-y-1">
                               <div>{t.client_name}</div>
-                              {!t.lead_id && customerHrefByClientName(t.client_name, clientEmailMap) && (
+                              {t.customer_id && (
+                                <Link
+                                  to={adminCustomerHrefById(t.customer_id)}
+                                  className="text-[10px] text-primary hover:underline"
+                                >
+                                  Zákazník 360°
+                                </Link>
+                              )}
+                              {!t.customer_id && t.status !== "done" && (
+                                <Badge variant="outline" className="text-[9px] text-amber-700 border-amber-500/30">
+                                  {TASK_LINK_STRENGTH_LABELS[classifyTaskLink(t)]}
+                                </Badge>
+                              )}
+                              {!t.customer_id && !t.lead_id && customerHrefByClientName(t.client_name, clientEmailMap) && (
                                 <Link
                                   to={customerHrefByClientName(t.client_name, clientEmailMap)!}
                                   className="text-[10px] text-primary hover:underline"
                                   title="Zhoda podľa mena klienta"
                                 >
-                                  Zákazník 360°
+                                  Zákazník 360° (heuristika)
                                 </Link>
                               )}
                             </div>
@@ -417,8 +444,16 @@ const AdminTasks = () => {
                   leads={leadOptions}
                   clientName={form.client_name}
                   leadId={form.lead_id}
-                  onChange={({ client_name, lead_id }) =>
-                    setForm({ ...form, client_name, lead_id: lead_id ?? "" })
+                  customerId={form.customer_id || null}
+                  customerEmail={form.customer_email || null}
+                  onChange={({ client_name, lead_id, customer_id, customer_email }) =>
+                    setForm({
+                      ...form,
+                      client_name,
+                      lead_id: lead_id ?? "",
+                      customer_id: customer_id ?? "",
+                      customer_email: customer_email ?? "",
+                    })
                   }
                 />
               </div>

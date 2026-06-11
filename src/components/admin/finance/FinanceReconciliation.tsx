@@ -107,7 +107,7 @@ export function FinanceReconciliation({
         dismissalType: dismissType,
         reason: dismissReason || undefined,
       });
-      toast({ title: "Issue dismissnutý" });
+      toast({ title: "Problém zamietnutý" });
       setDismissTarget(null);
       setDismissReason("");
       onSaved();
@@ -120,7 +120,7 @@ export function FinanceReconciliation({
   const handleRevoke = async (issueKey: string) => {
     try {
       await revokeDismissal(issueKey);
-      toast({ title: "Dismissal zrušený" });
+      toast({ title: "Zamietnutie zrušené" });
       onSaved();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Chyba";
@@ -131,7 +131,7 @@ export function FinanceReconciliation({
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Operatívny prehľad ({year} pre prenájmy). Active: {activeCount}, dismissed: {dismissals.length}.
+        Operatívny prehľad ({year} pre prenájmy). Aktívne: {activeCount}, zamietnuté: {dismissals.length}.
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -142,25 +142,25 @@ export function FinanceReconciliation({
             variant={filter === f ? "default" : "outline"}
             onClick={() => setFilter(f)}
           >
-            {f === "active" ? "Aktívne" : f === "dismissed" ? "Dismissnuté" : "Všetky"}
+            {f === "active" ? "Aktívne" : f === "dismissed" ? "Zamietnuté" : "Všetky"}
           </Button>
         ))}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <CountCard label="Aktívne issues" count={activeCount} highlight />
-        <CountCard label="Dismissnuté" count={dismissals.length} />
+        <CountCard label="Aktívne problémy" count={activeCount} highlight />
+        <CountCard label="Zamietnuté" count={dismissals.length} />
         <CountCard label="Možné duplicity" count={allIssues.filter((i) => i.kind === "potential_duplicate").length} />
         <CountCard label="Celkom raw" count={allIssues.length} />
       </div>
 
       <section className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="px-4 py-3 border-b border-border">
-          <h2 className="text-sm font-semibold">Issues ({visibleIssues.length})</h2>
+          <h2 className="text-sm font-semibold">Problémy ({visibleIssues.length})</h2>
         </div>
         {visibleIssues.length === 0 ? (
           <div className="py-10 text-center text-sm text-muted-foreground">
-            {filter === "active" ? "Žiadne aktívne issues." : "Žiadne issues v tomto filtri."}
+            {filter === "active" ? "Žiadne aktívne problémy." : "Žiadne problémy v tomto filtri."}
           </div>
         ) : (
           <div className="overflow-x-auto max-h-[480px]">
@@ -211,7 +211,7 @@ export function FinanceReconciliation({
                         )}
                         {dismissable && (
                           <Button size="sm" variant="ghost" className="text-[10px] h-7" onClick={() => setDismissTarget(issue)}>
-                            Dismiss
+                            Zamietnuť
                           </Button>
                         )}
                         {dismissed && (

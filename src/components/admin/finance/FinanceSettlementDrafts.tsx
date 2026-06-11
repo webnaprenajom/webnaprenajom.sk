@@ -123,14 +123,14 @@ export function FinanceSettlementDrafts({ ctx, rules, overrides, onSaved }: Fina
                 <TableHead className="w-8" />
                 <TableHead>Implementér</TableHead>
                 <TableHead>Obdobie</TableHead>
-                <TableHead className="text-right">Rate preview</TableHead>
-                <TableHead>Rule source</TableHead>
-                <TableHead className="text-right">Pending</TableHead>
+                <TableHead className="text-right">Náhľad sadzby</TableHead>
+                <TableHead>Zdroj pravidla</TableHead>
+                <TableHead className="text-right">Čakajúce</TableHead>
                 <TableHead className="text-right">Legacy import</TableHead>
-                <TableHead className="text-right">Confirmed payout</TableHead>
-                <TableHead className="text-right">Workflow only</TableHead>
-                <TableHead className="text-right">Suggested gap</TableHead>
-                <TableHead>Warnings / hints</TableHead>
+                <TableHead className="text-right">Potvrdená výplata</TableHead>
+                <TableHead className="text-right">Iba workflow</TableHead>
+                <TableHead className="text-right">Navrhovaný rozdiel</TableHead>
+                <TableHead>Upozornenia</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

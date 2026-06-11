@@ -259,7 +259,7 @@ const TodayMustDoSection = ({ refreshKey, onLeadClick }: Props) => {
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2 text-orange-500 font-semibold text-sm">
               <ListTodo className="w-4 h-4" />
-              TO DO termín ({tasks.length})
+              Úlohy na dnes ({tasks.length})
             </div>
             <button
               type="button"

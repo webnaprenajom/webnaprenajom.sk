@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { logEmailOutEvent } from '../_shared/communicationEvents.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -153,6 +154,19 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+    const subject = `🎡 Vaša zľava ${data.couponCode.toUpperCase()} na Vás stále čaká`
+    const logResult = await logEmailOutEvent(admin, {
+      customer_email: data.email,
+      title: subject,
+      subject,
+      body_text: buildText(data),
+      resend_id: result.id,
+      edge_function: 'send-wheel-reminder',
+    })
+    if (!logResult.ok) console.warn('[communication_events] wheel reminder log failed', logResult.error)
+
     return new Response(JSON.stringify({ success: true, id: result.id }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

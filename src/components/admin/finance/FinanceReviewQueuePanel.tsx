@@ -25,13 +25,20 @@ import type { SettlementDraft } from "@/lib/finance/types";
 import type { FinanceReviewStatusRow } from "@/lib/finance/buildReviewQueue";
 
 const TYPE_LABELS: Record<ReviewItemType, string> = {
-  dismissed_issue: "Dismissed issue",
-  commission_override: "Commission override",
-  hosting_commissionable: "Hosting commissionable",
-  settlement_warning: "Settlement warning",
+  dismissed_issue: "Zamietnutý problém",
+  commission_override: "Override provízie",
+  hosting_commissionable: "Hosting — provízny",
+  settlement_warning: "Upozornenie vyúčtovania",
 };
 
 type Filter = "pending" | "due_soon" | "overdue" | "reviewed" | "all";
+
+const REVIEW_STATUS_LABELS: Record<ReviewItemStatus, string> = {
+  pending: "Čaká",
+  reviewed: "Skontrolované",
+  still_valid: "Platí",
+  reopened: "Znovu otvorené",
+};
 
 interface Props {
   dismissals: IssueDismissalRow[];
@@ -45,13 +52,13 @@ interface Props {
 
 function dueBadge(item: ReviewQueueItem) {
   if (item.dueStatus === "overdue") {
-    return <Badge variant="destructive" className="text-[10px]">Overdue</Badge>;
+    return <Badge variant="destructive" className="text-[10px]">Po termíne</Badge>;
   }
   if (item.dueStatus === "due_soon") {
-    return <Badge variant="secondary" className="text-[10px] bg-amber-500/20">Due soon</Badge>;
+    return <Badge variant="secondary" className="text-[10px] bg-amber-500/20">Blíži sa termín</Badge>;
   }
   if (item.dueStatus === "snoozed") {
-    return <Badge variant="outline" className="text-[10px]">Snoozed</Badge>;
+    return <Badge variant="outline" className="text-[10px]">Odložené</Badge>;
   }
   return null;
 }
@@ -122,7 +129,7 @@ export function FinanceReviewQueuePanel({
         status,
         reviewNote: noteDraft[item.itemKey] || undefined,
       });
-      toast({ title: status === "reopened" ? "Re-opened" : "Review updated" });
+      toast({ title: status === "reopened" ? "Znovu otvorené" : "Kontrola aktualizovaná" });
       onSaved();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Chyba";
@@ -133,7 +140,7 @@ export function FinanceReviewQueuePanel({
   const snooze = async (item: ReviewQueueItem) => {
     try {
       await snoozeReviewItem({ itemKey: item.itemKey, itemType: item.itemType, days: 7 });
-      toast({ title: "Snoozed na 7 dní" });
+      toast({ title: "Odložené na 7 dní" });
       onSaved();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Chyba";
@@ -144,16 +151,16 @@ export function FinanceReviewQueuePanel({
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Governance queue — metadata only. Pending: {counts.pending}, due soon: {counts.dueSoon}, overdue: {counts.overdue}.
+        Fronta kontroly — iba metadáta. Čakajúce: {counts.pending}, blíži sa termín: {counts.dueSoon}, po termíne: {counts.overdue}.
       </p>
       <div className="flex flex-wrap gap-2">
         {(
           [
-            ["pending", `Pending (${counts.pending})`],
-            ["due_soon", `Due soon (${counts.dueSoon})`],
-            ["overdue", `Overdue (${counts.overdue})`],
-            ["reviewed", "Reviewed"],
-            ["all", "All"],
+            ["pending", `Čakajúce (${counts.pending})`],
+            ["due_soon", `Blíži sa (${counts.dueSoon})`],
+            ["overdue", `Po termíne (${counts.overdue})`],
+            ["reviewed", "Skontrolované"],
+            ["all", "Všetky"],
           ] as const
         ).map(([f, label]) => (
           <Button key={f} size="sm" variant={filter === f ? "default" : "outline"} onClick={() => setFilter(f)}>
@@ -162,7 +169,7 @@ export function FinanceReviewQueuePanel({
         ))}
       </div>
       {visible.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center border rounded-xl">Prázdna review queue.</p>
+        <p className="text-sm text-muted-foreground py-8 text-center border rounded-xl">Prázdna fronta kontroly.</p>
       ) : (
         <div className="rounded-xl border overflow-x-auto max-h-[480px]">
           <Table>
@@ -172,8 +179,8 @@ export function FinanceReviewQueuePanel({
                 <TableHead>Popis</TableHead>
                 <TableHead>Klient</TableHead>
                 <TableHead>Detail</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Termín</TableHead>
+                <TableHead>Stav</TableHead>
                 <TableHead>Akcie</TableHead>
               </TableRow>
             </TableHeader>
@@ -194,31 +201,31 @@ export function FinanceReviewQueuePanel({
                   </TableCell>
                   <TableCell>
                     <Badge variant={item.status === "pending" ? "destructive" : "secondary"} className="text-[10px]">
-                      {item.status}
+                      {REVIEW_STATUS_LABELS[item.status] ?? item.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="space-y-1">
                     <Input
                       className="h-7 text-xs"
-                      placeholder="Review note"
+                      placeholder="Poznámka ku kontrole"
                       value={noteDraft[item.itemKey] ?? item.reviewNote ?? ""}
                       onChange={(e) => setNoteDraft({ ...noteDraft, [item.itemKey]: e.target.value })}
                     />
                     <div className="flex flex-wrap gap-1">
                       <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={() => void setStatus(item, "reviewed")}>
-                        Reviewed
+                        Skontrolované
                       </Button>
                       <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={() => void setStatus(item, "still_valid")}>
-                        Still valid
+                        Stále platí
                       </Button>
                       {(item.status === "pending" || item.status === "reopened") && (
                         <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => void snooze(item)}>
-                          Snooze 7d
+                          Odložiť 7 dní
                         </Button>
                       )}
                       {(item.status === "reviewed" || item.status === "still_valid") && (
                         <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => void setStatus(item, "reopened")}>
-                          Re-open
+                          Znovu otvoriť
                         </Button>
                       )}
                     </div>

@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logEmailOutEvent } from "../_shared/communicationEvents.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -186,6 +187,21 @@ Deno.serve(async (req) => {
     }
 
     console.log("Instructions email sent", { resend_id: resendResult.id, to: data.email });
+
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const logResult = await logEmailOutEvent(admin, {
+      customer_email: data.email,
+      customer_id: (data as { customer_id?: string }).customer_id ?? null,
+      title: "Inštrukcie pred objednávkou – Web na prenájom",
+      subject: "Inštrukcie pred objednávkou – Web na prenájom",
+      body_text: buildText(data.name, monthly),
+      resend_id: resendResult.id,
+      edge_function: "send-instructions-email",
+      source_table: (data as { lead_id?: string }).lead_id ? "leads" : null,
+      source_id: (data as { lead_id?: string }).lead_id ?? null,
+    });
+    if (!logResult.ok) console.warn("[communication_events] instructions log failed", logResult.error);
+
     return new Response(
       JSON.stringify({ success: true, id: resendResult.id }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },

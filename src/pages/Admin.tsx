@@ -63,30 +63,13 @@ import {
   Bot,
   Mail,
   ShieldAlert,
-  History,
-  KanbanSquare,
-  Wallet,
-  ListTodo,
-  Sparkles,
-  Menu,
-  FileSignature,
-  Palette,
   Sun,
-  BarChart3,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { NotificationBell } from "@/components/admin/NotificationBell";
-import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { TYPE_OPTIONS } from "@/components/admin/leads/constants";
 
 // CSV parser supporting quoted fields with commas/newlines
@@ -342,6 +325,7 @@ const Admin = () => {
       name: editName.trim(),
       email: editEmail.trim(),
       amount: parsedAmount,
+      lead_id: selected.id,
     });
 
     if (emailResult.action === "skipped") {
@@ -433,6 +417,7 @@ const Admin = () => {
       name: lead.name,
       email: lead.email,
       amount: lead.amount ?? null,
+      lead_id: lead.id,
     });
     if (emailResult.action === "sent") {
       toast(getLeadStatusEmailToast("inline", emailResult.kind, "sent", lead.email));
@@ -934,119 +919,16 @@ const Admin = () => {
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-40">
-        <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="text-base sm:text-xl font-bold truncate">
-              <span className="text-primary">CRM</span> – Leady
-            </h1>
-            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{userEmail}</p>
-          </div>
-
-          {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-2">
-            <NotificationBell />
-            <AdminThemeToggle />
-            <Button
-              onClick={() => navigate("/admin/today")}
-              variant="outline"
-              size="sm"
-              className="border-primary/40 bg-primary/5"
-            >
-              <Sun className="w-4 h-4 mr-2" /> Dnes
-            </Button>
-            <Button onClick={() => navigate("/admin/notes")} variant="outline" size="sm">
-              <KanbanSquare className="w-4 h-4 mr-2" /> Projekty & heslá
-            </Button>
-            <Button onClick={() => navigate("/admin/tasks")} variant="outline" size="sm">
-              <ListTodo className="w-4 h-4 mr-2" /> TO DO
-            </Button>
-            <Button onClick={() => navigate("/admin/commissions")} variant="outline" size="sm">
-              <Wallet className="w-4 h-4 mr-2" /> Provízie
-            </Button>
-            <Button onClick={() => navigate("/admin/finance")} variant="outline" size="sm">
-              <BarChart3 className="w-4 h-4 mr-2" /> Finance
-            </Button>
-            <Button onClick={() => navigate("/admin/rentals")} variant="outline" size="sm">
-              <Wallet className="w-4 h-4 mr-2" /> Prenájmy
-            </Button>
-            <Button onClick={() => navigate("/admin/wheel-leads")} variant="outline" size="sm">
-              <Sparkles className="w-4 h-4 mr-2" /> Wheel
-            </Button>
-            <Button onClick={() => navigate("/admin/signatures")} variant="outline" size="sm">
-              <FileSignature className="w-4 h-4 mr-2" /> Podpisy
-            </Button>
-            <Button onClick={() => navigate("/admin/designs")} variant="outline" size="sm">
-              <Palette className="w-4 h-4 mr-2" /> Dizajny
-            </Button>
-            <Button onClick={() => navigate("/admin/logs")} variant="outline" size="sm">
-              <History className="w-4 h-4 mr-2" /> Logy
-            </Button>
-            <Button onClick={handleSignOut} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" /> Odhlásiť
-            </Button>
-          </div>
-
-          {/* Mobile nav */}
-          <div className="flex lg:hidden items-center gap-1">
-            <NotificationBell />
-            <AdminThemeToggle />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Menu">
-                  <Menu className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
-                <DropdownMenuItem onClick={() => navigate("/admin/today")}>
-                  <Sun className="w-4 h-4 mr-2" /> Dnes
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/admin/notes")}>
-                  <KanbanSquare className="w-4 h-4 mr-2" /> Projekty & heslá
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/tasks")}>
-                  <ListTodo className="w-4 h-4 mr-2" /> TO DO
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/commissions")}>
-                  <Wallet className="w-4 h-4 mr-2" /> Provízie
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/finance")}>
-                  <BarChart3 className="w-4 h-4 mr-2" /> Finance
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/rentals")}>
-                  <Wallet className="w-4 h-4 mr-2" /> Prenájmy
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/wheel-leads")}>
-                  <Sparkles className="w-4 h-4 mr-2" /> Wheel
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/signatures")}>
-                  <FileSignature className="w-4 h-4 mr-2" /> Podpisy
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/designs")}>
-                  <Palette className="w-4 h-4 mr-2" /> Dizajny
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/admin/logs")}>
-                  <History className="w-4 h-4 mr-2" /> Logy
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="w-4 h-4 mr-2" /> Odhlásiť
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-6">
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={() => navigate("/admin/today")}>
-            <Sun className="w-4 h-4 mr-2" /> Dnes — Command Center
-          </Button>
-        </div>
-
+    <AdminLayout
+      title="Leady"
+      subtitle="Pipeline — aktuálne leady"
+      actions={
+        <Button variant="outline" size="sm" onClick={() => navigate("/admin/today")}>
+          <Sun className="w-4 h-4 mr-2" /> Dnes
+        </Button>
+      }
+    >
+      <div className="space-y-6">
         {/* Stats */}
         <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <StatCard icon={Users} label="Spolu" value={stats.total} />
@@ -1397,7 +1279,7 @@ const Admin = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </main>
+    </AdminLayout>
   );
 };
 

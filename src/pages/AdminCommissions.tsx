@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,6 +38,22 @@ import { type FactDraft, prefillFromCommission, prefillFromExpense } from "@/lib
 import { PAYMENT_FORM_OPTIONS, type PaymentFormValue } from "@/lib/paymentForm";
 import { assigneeSelectOptions, isKnownAssignee } from "@/lib/assignees";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
+import { EntitySearchPicker } from "@/components/admin/lookup/EntitySearchPicker";
+import {
+  COMMISSION_SOURCE_LABELS,
+  type CommissionSourceType,
+  getCommissionLinkStatus,
+  resolveCommissionSourceLabel,
+  sanitizeCommissionSourceFields,
+  sourceDetailHref,
+  validateCommissionSourceFields,
+} from "@/lib/commissionSource";
+import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
+import { resolveCustomerLinkFields } from "@/lib/crmLookup/customers";
+import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
+import type { LookupResult } from "@/lib/crmLookup/types";
+import { Link } from "react-router-dom";
+import { CommissionLinkBadge } from "@/components/admin/lookup/LinkStatusBadge";
 import {
   Loader2,
   Wallet,
@@ -60,6 +75,10 @@ interface Commission {
   payment_status: PaymentStatus;
   note: string | null;
   payment_form: string | null;
+  source_type: CommissionSourceType | null;
+  source_id: string | null;
+  customer_email: string | null;
+  customer_id: string | null;
   created_at: string;
 }
 
@@ -90,6 +109,11 @@ const emptyCommission = () => ({
   payment_status: "unpaid" as PaymentStatus,
   note: "",
   payment_form: "" as PaymentFormValue | "",
+  source_type: "" as CommissionSourceType | "",
+  source_id: "",
+  customer_email: "",
+  customer_id: "",
+  sourceSelection: null as LookupResult | null,
 });
 
 const emptyExpense = () => ({
@@ -102,7 +126,7 @@ const emptyExpense = () => ({
   note: "",
 });
 
-const AdminCommissions = () => {
+export function CommissionsExpensesContent() {
   // Commissions
   const [items, setItems] = useState<Commission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,7 +148,6 @@ const AdminCommissions = () => {
   const [costFactOpen, setCostFactOpen] = useState(false);
 
   useEffect(() => {
-    document.title = "Provízie & Náklady | CRM";
     void load();
     void loadExpenses();
   }, []);
@@ -156,10 +179,19 @@ const AdminCommissions = () => {
   // ===== Commissions =====
   const openNew = () => { setForm(emptyCommission()); setDialogOpen(true); };
   const openEdit = (c: Commission) => {
+    const sourceSelection: LookupResult | null =
+      c.source_type && c.source_id && c.source_type !== "other"
+        ? { kind: c.source_type as any, id: c.source_id, label: c.title }
+        : null;
     setForm({
       id: c.id, date: c.date, title: c.title, implementer: c.implementer,
       amount: String(c.amount ?? ""), payment_status: c.payment_status, note: c.note ?? "",
       payment_form: (c.payment_form as PaymentFormValue) || "",
+      source_type: (c.source_type as CommissionSourceType) || "",
+      source_id: c.source_id || "",
+      customer_email: c.customer_email || "",
+      customer_id: c.customer_id || "",
+      sourceSelection,
     });
     setDialogOpen(true);
   };
@@ -169,6 +201,23 @@ const AdminCommissions = () => {
       toast({ title: "Vyplň názov a implementátora", variant: "destructive" });
       return;
     }
+
+    const validation = validateCommissionSourceFields(form.source_type, form.source_id);
+    if (!validation.valid) {
+      toast({ title: "Neplatné prepojenie", description: validation.error, variant: "destructive" });
+      return;
+    }
+    if (validation.warning) {
+      toast({ title: "Upozornenie", description: validation.warning });
+    }
+
+    const { source_type, source_id } = sanitizeCommissionSourceFields(form.source_type, form.source_id);
+    const linked = await resolveCustomerLinkFields({
+      customer_id: form.customer_id || null,
+      customer_email: form.customer_email,
+      client_name: form.title,
+    });
+
     setSaving(true);
     const payload = {
       date: form.date || todayISO(),
@@ -178,12 +227,30 @@ const AdminCommissions = () => {
       payment_status: form.payment_status,
       note: form.note.trim() || null,
       payment_form: form.payment_form || null,
+      source_type,
+      source_id,
+      customer_email: linked.customer_email,
+      customer_id: linked.customer_id,
     };
-    const { error } = form.id
-      ? await supabase.from("commissions").update(payload).eq("id", form.id)
-      : await supabase.from("commissions").insert(payload);
+    const { data: saved, error } = form.id
+      ? await supabase.from("commissions").update(payload).eq("id", form.id).select("id").maybeSingle()
+      : await supabase.from("commissions").insert(payload).select("id").maybeSingle();
     setSaving(false);
     if (error) { toast({ title: "Chyba uloženia", description: error.message, variant: "destructive" }); return; }
+    const recordId = saved?.id ?? form.id;
+    if (recordId && !form.id) {
+      logEntityCommunicationEventSafe({
+        kind: "commission",
+        title: payload.title,
+        body_preview: `${payload.amount.toFixed(2)} € · ${payload.payment_status === "paid" ? "vyplatené" : "nezaplatené"}`,
+        customer_id: linked.customer_id,
+        customer_email: linked.customer_email,
+        source_table: "commissions",
+        source_id: recordId,
+        idempotency_key: `commissions:${recordId}:created`,
+        metadata: { payment_status: payload.payment_status, action: "created" },
+      });
+    }
     toast({ title: form.id ? "Provízia upravená" : "Provízia pridaná" });
     setDialogOpen(false);
     load();
@@ -202,6 +269,19 @@ const AdminCommissions = () => {
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
       return;
+    }
+    if (next === "paid") {
+      logEntityCommunicationEventSafe({
+        kind: "payment",
+        title: c.title,
+        body_preview: `${Number(c.amount).toFixed(2)} € · vyplatené`,
+        customer_id: (c as { customer_id?: string | null }).customer_id ?? null,
+        customer_email: (c as { customer_email?: string | null }).customer_email ?? null,
+        source_table: "commissions",
+        source_id: c.id,
+        idempotency_key: `commissions:${c.id}:paid`,
+        metadata: { payment_status: "paid", action: "paid" },
+      });
     }
     load();
     if (next === "paid") {
@@ -339,13 +419,8 @@ const AdminCommissions = () => {
   }, [expenses]);
 
   return (
-    <AdminShell
-      title="Provízie & Náklady"
-      subtitle="Interné stavy — nie audit platieb"
-      backTo={{ label: "CRM", href: "/admin" }}
-    >
-      <div className="space-y-4">
-        <p className="text-xs text-muted-foreground">{FINANCE_TRUTH_DISCLAIMER}</p>
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">{FINANCE_TRUTH_DISCLAIMER}</p>
         <Tabs defaultValue="commissions" className="space-y-4">
           <TabsList>
             <TabsTrigger value="commissions"><Wallet className="w-4 h-4 mr-2" />Provízie</TabsTrigger>
@@ -393,6 +468,7 @@ const AdminCommissions = () => {
                       <TableRow>
                         <TableHead className="whitespace-nowrap">Dátum</TableHead>
                         <TableHead>Názov</TableHead>
+                        <TableHead>Zdroj</TableHead>
                         <TableHead>Implementátor</TableHead>
                         <TableHead className="text-right">Suma</TableHead>
                         <TableHead>Stav</TableHead>
@@ -408,7 +484,19 @@ const AdminCommissions = () => {
                             <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
                               {new Date(c.date).toLocaleDateString("sk-SK", { day: "numeric", month: "short", year: "numeric" })}
                             </TableCell>
-                            <TableCell className="text-sm font-medium">{c.title}</TableCell>
+                            <TableCell className="text-sm font-medium">{resolveCommissionSourceLabel(c)}</TableCell>
+                            <TableCell className="text-xs">
+                              <div className="flex flex-col gap-1 items-start">
+                                <CommissionLinkBadge status={getCommissionLinkStatus(c)} />
+                                {c.source_type && c.source_type !== "other" && sourceDetailHref(c.source_type, c.source_id) ? (
+                                  <Link to={sourceDetailHref(c.source_type, c.source_id)!} className="text-primary hover:underline">
+                                    {COMMISSION_SOURCE_LABELS[c.source_type as CommissionSourceType]}
+                                  </Link>
+                                ) : c.source_type === "other" ? (
+                                  <span>{COMMISSION_SOURCE_LABELS.other}</span>
+                                ) : null}
+                              </div>
+                            </TableCell>
                             <TableCell className="text-sm">{c.implementer}</TableCell>
                             <TableCell className="text-sm text-right font-semibold whitespace-nowrap">{Number(c.amount || 0).toFixed(2)} €</TableCell>
                             <TableCell>
@@ -517,12 +605,21 @@ const AdminCommissions = () => {
             </section>
           </TabsContent>
         </Tabs>
-      </div>
 
       {/* Commission dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{form.id ? "Upraviť províziu" : "Nová provízia"}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 flex-wrap">
+              {form.id ? "Upraviť províziu" : "Nová provízia"}
+              <CommissionLinkBadge
+                status={getCommissionLinkStatus({
+                  source_type: form.source_type || null,
+                  source_id: form.source_id || null,
+                })}
+              />
+            </DialogTitle>
+          </DialogHeader>
           <div className="grid gap-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -537,6 +634,66 @@ const AdminCommissions = () => {
             <div>
               <label className="text-xs text-muted-foreground">Názov</label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="napr. Web pre klienta XY" />
+            </div>
+            {getCommissionLinkStatus({ source_type: form.source_type || null, source_id: form.source_id || null }) === "partial" && (
+              <p className="text-xs text-amber-600 bg-amber-500/10 border border-amber-500/20 rounded-md px-2 py-1.5">
+                Neúplné prepojenie v databáze — vyberte entitu alebo zvoľte legacy režim pred uložením.
+              </p>
+            )}
+            <div>
+              <label className="text-xs text-muted-foreground">Typ zdroja (voliteľné)</label>
+              <Select
+                value={form.source_type || "none"}
+                onValueChange={(v) => {
+                  const type = v === "none" ? "" : (v as CommissionSourceType);
+                  setForm({
+                    ...form,
+                    source_type: type,
+                    source_id: "",
+                    sourceSelection: null,
+                  });
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="— legacy —" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— legacy (bez prepojenia) —</SelectItem>
+                  {(Object.keys(COMMISSION_SOURCE_LABELS) as CommissionSourceType[]).map((k) => (
+                    <SelectItem key={k} value={k}>{COMMISSION_SOURCE_LABELS[k]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {form.source_type && form.source_type !== "other" && (
+              <div>
+                <label className="text-xs text-muted-foreground">
+                  {COMMISSION_SOURCE_LABELS[form.source_type as CommissionSourceType]} *
+                </label>
+                <EntitySearchPicker
+                  kind={form.source_type === "project" ? "project" : form.source_type === "rental" ? "rental" : "hosting"}
+                  value={form.sourceSelection}
+                  onSelect={(result) =>
+                    setForm({
+                      ...form,
+                      sourceSelection: result,
+                      source_id: result?.id ?? "",
+                      customer_email: result?.email ?? form.customer_email,
+                      customer_id: result?.kind === "customer" ? result.id : form.customer_id,
+                      title: form.title || result?.label || form.title,
+                    })
+                  }
+                />
+                {!form.source_id && (
+                  <p className="text-[10px] text-amber-600 mt-1">Vyberte záznam pre uloženie prepojenia.</p>
+                )}
+              </div>
+            )}
+            <div>
+              <label className="text-xs text-muted-foreground">E-mail klienta (voliteľné)</label>
+              <Input
+                value={form.customer_email}
+                onChange={(e) => setForm({ ...form, customer_email: e.target.value })}
+                placeholder="pre Klient 360°"
+              />
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Meno implementátora</label>
@@ -663,8 +820,6 @@ const AdminCommissions = () => {
           toast({ title: "Cost fact vytvorený", description: "Workflow status zostáva nezmenený." });
         }}
       />
-    </AdminShell>
+    </div>
   );
-};
-
-export default AdminCommissions;
+}

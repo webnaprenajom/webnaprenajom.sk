@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { logEmailOutEvent } from '../_shared/communicationEvents.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -325,6 +326,7 @@ Deno.serve(async (req) => {
     }
 
     const results: Array<{ email: string; ok: boolean; id?: string; error?: string }> = []
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
     for (const r of finalList) {
       const html = buildHtml(r.name)
@@ -359,6 +361,16 @@ Deno.serve(async (req) => {
           results.push({ email: r.email, ok: false, error: resendResult?.message || 'send failed' })
         } else {
           results.push({ email: r.email, ok: true, id: resendResult.id })
+          const subject = r.name ? `${r.name}, môžem sa spýtať na Váš web?` : 'Krátka otázka ohľadom Vášho webu'
+          const logResult = await logEmailOutEvent(admin, {
+            customer_email: r.email,
+            title: subject,
+            subject,
+            body_text: text,
+            resend_id: resendResult.id,
+            edge_function: 'send-offer-email',
+          })
+          if (!logResult.ok) console.warn('[communication_events] offer log failed', r.email, logResult.error)
         }
       } catch (e) {
         results.push({ email: r.email, ok: false, error: e instanceof Error ? e.message : 'unknown' })

@@ -18,34 +18,187 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          customer_email: string | null
+          customer_id: string | null
           date: string
           id: string
           implementer: string
           note: string | null
           payment_status: string
+          source_id: string | null
+          source_type: string | null
           title: string
           updated_at: string
         }
         Insert: {
           amount?: number
           created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
           date?: string
           id?: string
           implementer: string
           note?: string | null
+          payment_form?: string | null
           payment_status?: string
+          source_id?: string | null
+          source_type?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           amount?: number
           created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
           date?: string
           id?: string
           implementer?: string
           note?: string | null
+          payment_form?: string | null
           payment_status?: string
+          source_id?: string | null
+          source_type?: string | null
           title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commissions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communication_events: {
+        Row: {
+          body_preview: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          id: string
+          in_reply_to: string | null
+          kind: string
+          message_id: string | null
+          metadata: Json
+          occurred_at: string
+          recipient_email: string | null
+          sender_email: string | null
+          source_id: string | null
+          source_table: string | null
+          thread_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body_preview?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          id?: string
+          in_reply_to?: string | null
+          kind: string
+          message_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          recipient_email?: string | null
+          sender_email?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          thread_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body_preview?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          id?: string
+          in_reply_to?: string | null
+          kind?: string
+          message_id?: string | null
+          metadata?: Json
+          occurred_at?: string
+          recipient_email?: string | null
+          sender_email?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          thread_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communication_webhook_incidents: {
+        Row: {
+          created_at: string
+          customer_email: string | null
+          id: string
+          incident_type: string
+          metadata: Json
+          occurred_at: string
+          provider_email_id: string | null
+          sender_email: string | null
+          summary: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email?: string | null
+          id?: string
+          incident_type: string
+          metadata?: Json
+          occurred_at?: string
+          provider_email_id?: string | null
+          sender_email?: string | null
+          summary: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string | null
+          id?: string
+          incident_type?: string
+          metadata?: Json
+          occurred_at?: string
+          provider_email_id?: string | null
+          sender_email?: string | null
+          summary?: string
+        }
+        Relationships: []
+      }
+      customers: {
+        Row: {
+          created_at: string
+          display_name: string
+          email: string | null
+          id: string
+          metadata: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          email?: string | null
+          id?: string
+          metadata?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          email?: string | null
+          id?: string
+          metadata?: Json
           updated_at?: string
         }
         Relationships: []
@@ -122,6 +275,71 @@ export type Database = {
         }
         Relationships: []
       }
+      hosting_records: {
+        Row: {
+          acquired_by: string | null
+          active: boolean
+          client_name: string | null
+          commission_rule_override_id: string | null
+          commissionable: boolean
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
+          domains_count: number | null
+          id: string
+          monthly_price: number | null
+          note: string | null
+          provider: string | null
+          rental_website_id: string | null
+          updated_at: string
+          yearly_price: number | null
+        }
+        Insert: {
+          acquired_by?: string | null
+          active?: boolean
+          client_name?: string | null
+          commission_rule_override_id?: string | null
+          commissionable?: boolean
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          domains_count?: number | null
+          id?: string
+          monthly_price?: number | null
+          note?: string | null
+          provider?: string | null
+          rental_website_id?: string | null
+          updated_at?: string
+          yearly_price?: number | null
+        }
+        Update: {
+          acquired_by?: string | null
+          active?: boolean
+          client_name?: string | null
+          commission_rule_override_id?: string | null
+          commissionable?: boolean
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
+          domains_count?: number | null
+          id?: string
+          monthly_price?: number | null
+          note?: string | null
+          provider?: string | null
+          rental_website_id?: string | null
+          updated_at?: string
+          yearly_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hosting_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_logs: {
         Row: {
           action: string
@@ -171,6 +389,7 @@ export type Database = {
           consultation_date: string | null
           consultation_time: string | null
           created_at: string
+          customer_id: string | null
           email: string
           follow_up_date: string | null
           id: string
@@ -194,6 +413,7 @@ export type Database = {
           consultation_date?: string | null
           consultation_time?: string | null
           created_at?: string
+          customer_id?: string | null
           email: string
           follow_up_date?: string | null
           id?: string
@@ -217,6 +437,7 @@ export type Database = {
           consultation_date?: string | null
           consultation_time?: string | null
           created_at?: string
+          customer_id?: string | null
           email?: string
           follow_up_date?: string | null
           id?: string
@@ -234,7 +455,15 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -345,9 +574,13 @@ export type Database = {
         Row: {
           client_name: string | null
           created_at: string
+          customer_email: string | null
+          customer_id: string | null
           id: string
+          lead_id: string | null
           notes: string | null
           password: string | null
+          project_type: string | null
           status: string
           title: string
           updated_at: string
@@ -357,9 +590,13 @@ export type Database = {
         Insert: {
           client_name?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
           id?: string
+          lead_id?: string | null
           notes?: string | null
           password?: string | null
+          project_type?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -369,16 +606,28 @@ export type Database = {
         Update: {
           client_name?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
           id?: string
+          lead_id?: string | null
           notes?: string | null
           password?: string | null
+          project_type?: string | null
           status?: string
           title?: string
           updated_at?: string
           url?: string | null
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "project_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rental_payments: {
         Row: {
@@ -435,6 +684,7 @@ export type Database = {
           client_name: string | null
           created_at: string
           credits_used: number
+          customer_id: string | null
           id: string
           implementers: Json
           monthly_price: number
@@ -450,6 +700,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
+          customer_id?: string | null
           id?: string
           implementers?: Json
           monthly_price?: number
@@ -465,6 +716,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
+          customer_id?: string | null
           id?: string
           implementers?: Json
           monthly_price?: number
@@ -476,7 +728,15 @@ export type Database = {
           url?: string | null
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rental_websites_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -484,6 +744,7 @@ export type Database = {
           assignee: string | null
           client_name: string | null
           created_at: string
+          customer_id: string | null
           deposit: number
           description: string | null
           due_date: string | null
@@ -499,6 +760,7 @@ export type Database = {
           assignee?: string | null
           client_name?: string | null
           created_at?: string
+          customer_id?: string | null
           deposit?: number
           description?: string | null
           due_date?: string | null
@@ -514,6 +776,7 @@ export type Database = {
           assignee?: string | null
           client_name?: string | null
           created_at?: string
+          customer_id?: string | null
           deposit?: number
           description?: string | null
           due_date?: string | null
@@ -524,7 +787,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

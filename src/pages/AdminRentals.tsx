@@ -38,6 +38,9 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { buildClientNameEmailMap, customerHrefByClientName } from "@/lib/adminNav";
+import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
+import { resolveCustomerLinkFields } from "@/lib/crmLookup/customers";
+import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 import { FINANCE_TRUTH_DISCLAIMER, RENTAL_MONTH_STATUS_LABELS } from "@/lib/finance/labels";
 import { type PaymentFormValue } from "@/lib/paymentForm";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
@@ -56,6 +59,7 @@ interface RentalWebsite {
   name: string;
   url: string | null;
   client_name: string | null;
+  customer_id?: string | null;
   source: string | null;
   monthly_price: number;
   year: number;
@@ -216,10 +220,15 @@ export default function AdminRentals() {
         return row;
       })
       .filter((i) => i.name);
+    const linked = await resolveCustomerLinkFields({
+      customer_id: editing.customer_id,
+      client_name: editing.client_name,
+    });
     const payload = {
       name: editing.name,
       url: editing.url || null,
-      client_name: editing.client_name || null,
+      client_name: linked.client_name || null,
+      customer_id: linked.customer_id,
       source: editing.source || null,
       monthly_price: Number(editing.monthly_price) || 0,
       year: Number(editing.year) || new Date().getFullYear(),
@@ -228,20 +237,35 @@ export default function AdminRentals() {
       credits_used: Number(editing.credits_used) || 0,
       implementers: cleanImplementers,
     };
-    const res = editing.id
-      ? await (supabase as any).from("rental_websites").update(payload).eq("id", editing.id)
-      : await (supabase as any).from("rental_websites").insert(payload);
+    const isCreate = !editing.id;
+    const res = isCreate
+      ? await supabase.from("rental_websites").insert(payload).select("id").maybeSingle()
+      : await supabase.from("rental_websites").update(payload).eq("id", editing.id!).select("id").maybeSingle();
     if (res.error) {
       toast({ title: "Chyba", description: res.error.message, variant: "destructive" });
       return;
+    }
+    const recordId = res.data?.id ?? editing.id;
+    if (isCreate && recordId) {
+      logEntityCommunicationEventSafe({
+        kind: "rental_event",
+        title: payload.name,
+        body_preview: payload.url ?? `${payload.monthly_price} €/mes`,
+        customer_id: linked.customer_id,
+        customer_email: null,
+        source_table: "rental_websites",
+        source_id: recordId,
+        idempotency_key: `rental_websites:${recordId}:created`,
+        metadata: { action: "created" },
+      });
     }
 
     // Sync credits as expense (one row per website per year)
     const credits = Number(editing.credits_used) || 0;
     const expenseAmount = credits * CREDIT_COST;
     const expenseTitle = `AI kredity — ${editing.name} (${editing.year})`;
-    const expenseNote = `rental_credits:${editing.id || res?.data?.[0]?.id || editing.name}:${editing.year}`;
-    if (credits > 0 && editing.id) {
+    const expenseNote = `rental_credits:${recordId || editing.name}:${editing.year}`;
+    if (credits > 0 && recordId) {
       const { data: existingExp } = await (supabase as any)
         .from("expenses")
         .select("id")
@@ -739,7 +763,13 @@ export default function AdminRentals() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-medium">Klient</label>
-                  <Input value={editing.client_name ?? ""} onChange={(e) => setEditing({ ...editing, client_name: e.target.value })} />
+                  <ClientPicker
+                    clientName={editing.client_name ?? ""}
+                    customerId={editing.customer_id}
+                    onChange={({ client_name, customer_id }) =>
+                      setEditing({ ...editing, client_name, customer_id })
+                    }
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">Zdroj</label>

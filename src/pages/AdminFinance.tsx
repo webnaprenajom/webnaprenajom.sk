@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FinanceRecordsCrud } from "@/components/admin/finance/FinanceRecordsCrud";
 import { FinanceReconciliation } from "@/components/admin/finance/FinanceReconciliation";
 import { FinanceSettlementDrafts } from "@/components/admin/finance/FinanceSettlementDrafts";
-import { PayrollExportPanel } from "@/components/admin/finance/PayrollExportPanel";
 import { FinanceGovernance } from "@/components/admin/finance/FinanceGovernance";
+import { CommissionsExpensesContent } from "@/pages/AdminCommissions";
 import { loadIssueDismissals, type IssueDismissalRow } from "@/lib/finance/dismissals";
 import { filterActiveIssues } from "@/lib/finance/issueKeys";
 import { buildSettlementDrafts } from "@/lib/finance/buildSettlementDrafts";
@@ -27,15 +27,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Download, ExternalLink } from "lucide-react";
-import {
-  buildFinanceSnapshot,
-  downloadFinanceCsv,
-} from "@/lib/finance/buildFinanceSnapshot";
-import { FINANCE_TRUTH_DISCLAIMER, TRUTH_LEVEL_LABELS } from "@/lib/finance/labels";
-import type { FinanceTruthLevel } from "@/lib/finance/types";
+import { Loader2, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { buildFinanceSnapshot } from "@/lib/finance/buildFinanceSnapshot";
+import { FINANCE_TRUTH_DISCLAIMER } from "@/lib/finance/labels";
+import { FinanceImplementerDetailDialog } from "@/components/admin/finance/FinanceImplementerDetailDialog";
+import type { CommissionRow } from "@/lib/commissionSource";
 
 const AdminFinance = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const advanced = searchParams.get("advanced") === "1";
+  const legacyCommissions = searchParams.get("legacy") === "commissions";
+
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
   const [raw, setRaw] = useState({
@@ -57,7 +59,7 @@ const AdminFinance = () => {
   const [govYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    document.title = "Finance prehľad | CRM";
+    document.title = "Financie | CRM";
     void load();
   }, []);
 
@@ -83,14 +85,6 @@ const AdminFinance = () => {
         title: "Chyba načítania",
         description: c.error?.message || e.error?.message,
         variant: "destructive",
-      });
-    }
-    if (pr.error || po.error || cr.error) {
-      toast({
-        title: "Canonical tabuľky ešte nie sú plne nasadené",
-        description:
-          pr.error?.message || po.error?.message || cr.error?.message ||
-          "Spustite DB migrácie Phase 2B/2C.",
       });
     }
     setRaw({
@@ -144,7 +138,33 @@ const AdminFinance = () => {
     return filterActiveIssues(snapshot.reconciliation.issues, keys).length;
   }, [snapshot, dismissals]);
 
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+  const dailyKpis = useMemo(() => {
+    const yearPayments = raw.payments.filter((p: any) => p.year === year);
+    const paidInvoices = yearPayments.filter((p: any) => p.status === "paid" || p.paid).length;
+    const unpaidInvoices = yearPayments.filter(
+      (p: any) => p.status === "unpaid" || p.status === "invoice",
+    ).length;
+    const receivedSum = snapshot.totals.paymentsConfirmed + snapshot.totals.paymentsLegacyImport;
+    const pendingSum = snapshot.totals.rentalMarkedUnpaid + snapshot.totals.rentalMarkedInvoiced;
+    return { paidInvoices, unpaidInvoices, receivedSum, pendingSum };
+  }, [raw.payments, snapshot, year]);
+
+  const implementerTotals = useMemo(() => {
+    const map = new Map<string, { paid: number; unpaid: number; count: number }>();
+    for (const c of raw.commissions) {
+      const key = (c.implementer || "").trim();
+      if (!key) continue;
+      const cur = map.get(key) || { paid: 0, unpaid: 0, count: 0 };
+      const amt = Number(c.amount || 0);
+      if (c.payment_status === "paid") cur.paid += amt;
+      else cur.unpaid += amt;
+      cur.count += 1;
+      map.set(key, cur);
+    }
+    return Array.from(map.entries()).sort(
+      (a, b) => b[1].paid + b[1].unpaid - (a[1].paid + a[1].unpaid),
+    );
+  }, [raw.commissions]);
 
   const settlementDraftsForGov = useMemo(
     () =>
@@ -173,13 +193,26 @@ const AdminFinance = () => {
     [dismissals, commissionOverrides, hostingRecords, settlementDraftsForGov, reviewStatuses, commissionRules],
   );
 
+  const toggleAdvanced = () => {
+    const next = new URLSearchParams(searchParams);
+    if (advanced) {
+      next.delete("advanced");
+      next.delete("legacy");
+      next.delete("tab");
+    } else {
+      next.set("advanced", "1");
+    }
+    setSearchParams(next, { replace: true });
+  };
+
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+
   return (
     <AdminShell
-      title="Finance prehľad"
-      subtitle="Canonical records, reconciliation a legacy workflow"
-      backTo={{ label: "CRM", href: "/admin" }}
+      title="Financie"
+      subtitle={advanced ? "Pokročilé nástroje a audit" : "Denný prehľad platieb a provízií"}
       actions={
-        <>
+        <div className="flex items-center gap-2 flex-wrap">
           <select
             value={year}
             onChange={(ev) => setYear(Number(ev.target.value))}
@@ -187,231 +220,300 @@ const AdminFinance = () => {
           >
             {years.map((y) => (
               <option key={y} value={y}>
-                Prenájmy {y}
+                Rok {y}
               </option>
             ))}
           </select>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={loading || snapshot.rows.length === 0}
-            onClick={() => downloadFinanceCsv(snapshot)}
-          >
-            <Download className="w-4 h-4 mr-2" /> Export CSV
+          <Button size="sm" variant={advanced ? "default" : "outline"} onClick={toggleAdvanced}>
+            {advanced ? (
+              <>
+                <ChevronUp className="w-4 h-4 mr-1" /> Skryť pokročilé
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-4 h-4 mr-1" /> Pokročilé
+              </>
+            )}
           </Button>
-        </>
+        </div>
       }
     >
       <div className="space-y-4">
-        <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
-          {FINANCE_TRUTH_DISCLAIMER}
-        </p>
-
-        <div className="flex flex-wrap gap-2 text-xs items-center">
-          <Button asChild size="sm" variant="outline">
-            <Link to="/admin/commissions">Provízie & náklady</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link to="/admin/rentals">Prenájmy</Link>
-          </Button>
-          {snapshot.meta.paymentRecordCount > 0 && (
-            <Badge variant="secondary" className="text-[10px]">
-              {snapshot.meta.paymentRecordCount} platieb
-            </Badge>
-          )}
-          {snapshot.meta.payoutRecordCount > 0 && (
-            <Badge variant="secondary" className="text-[10px]">
-              {snapshot.meta.payoutRecordCount} výplat
-            </Badge>
-          )}
-          {snapshot.meta.costRecordCount > 0 && (
-            <Badge variant="secondary" className="text-[10px]">
-              {snapshot.meta.costRecordCount} nákladov
-            </Badge>
-          )}
-          {activeIssueCount > 0 && (
-            <Badge variant="destructive" className="text-[10px]">
-              {activeIssueCount} issues
-            </Badge>
-          )}
-        </div>
+        {legacyCommissions && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">Provízie už nie sú samostatná sekcia v menu.</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Správa provízií a nákladov je v pokročilom režime Financií. Top-level route{" "}
+                <code className="text-[10px]">/admin/commissions</code> presmerováva sem.
+              </p>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="py-16 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
+        ) : advanced ? (
+          <AdvancedFinanceView
+            snapshot={snapshot}
+            financeCtx={financeCtx}
+            raw={raw}
+            year={year}
+            dismissals={dismissals}
+            commissionRules={commissionRules}
+            commissionOverrides={commissionOverrides}
+            hostingRecords={hostingRecords}
+            reviewStatuses={reviewStatuses}
+            policySettings={policySettings}
+            activeIssueCount={activeIssueCount}
+            pendingReviewCount={pendingReviewCount}
+            settlementDraftsForGov={settlementDraftsForGov}
+            legacyCommissions={legacyCommissions}
+            onSaved={() => void load()}
+          />
         ) : (
-          <Tabs defaultValue="overview">
-            <TabsList>
-              <TabsTrigger value="overview">Prehľad</TabsTrigger>
-              <TabsTrigger value="records">Záznamy</TabsTrigger>
-              <TabsTrigger value="reconciliation">
-                Reconciliation
-                {activeIssueCount > 0 && (
-                  <span className="ml-1 text-amber-500">({activeIssueCount})</span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="settlement">Settlement drafts</TabsTrigger>
-              <TabsTrigger value="governance">
-                Governance
-                {pendingReviewCount > 0 && (
-                  <span className="ml-1 text-amber-500">({pendingReviewCount})</span>
-                )}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-4 mt-4">
-              <section>
-                <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-                  Príjmy (platby)
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <StatCard label="Potvrdené platby" value={snapshot.totals.paymentsConfirmed} accent="text-green-600" />
-                  <StatCard label="Legacy import platieb" value={snapshot.totals.paymentsLegacyImport} accent="text-green-500/80" />
-                  <StatCard label={`Prenájmy iba workflow (${year})`} value={snapshot.totals.workflowOnlyIn} accent="text-muted-foreground" hint="Bez payment_records" />
-                </div>
-              </section>
-
-              <section>
-                <h2 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
-                  Výdavky (výplaty / náklady)
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <StatCard label="Potvrdené výplaty" value={snapshot.totals.payoutsConfirmed} accent="text-red-600" />
-                  <StatCard label="Legacy import výplat" value={snapshot.totals.payoutsLegacyImport} accent="text-red-500/80" />
-                  <StatCard label="Potvrdené náklady" value={snapshot.totals.costsConfirmed} accent="text-red-600" />
-                  <StatCard label="Legacy import nákladov" value={snapshot.totals.costsLegacyImport} accent="text-red-500/80" />
-                  <StatCard label="Iba workflow flag (out)" value={snapshot.totals.workflowOnlyOut} accent="text-muted-foreground" hint="Bez payout/cost records" />
-                </div>
-              </section>
-
-              <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <StatCard label={`Prenájmy faktúra (${year})`} value={snapshot.totals.rentalMarkedInvoiced} />
-                <StatCard label={`Prenájmy nezaplatené (${year})`} value={snapshot.totals.rentalMarkedUnpaid} />
-                <StatCard label={`Prenájmy potenciál (${year})`} value={snapshot.totals.rentalPotential} accent="text-primary" />
-                <StatCard label="AI kredity (odvodené)" value={snapshot.totals.rentalCreditsCostDerived} />
-              </section>
-
-              <LedgerTable snapshot={snapshot} />
-              <PayrollExportPanel payoutRecords={raw.payoutRecords} />
-            </TabsContent>
-
-            <TabsContent value="records" className="mt-4">
-              <FinanceRecordsCrud
-                paymentRecords={raw.paymentRecords}
-                payoutRecords={raw.payoutRecords}
-                costRecords={raw.costRecords}
-                onSaved={() => void load()}
-              />
-            </TabsContent>
-
-            <TabsContent value="reconciliation" className="mt-4">
-              <FinanceReconciliation
-                snapshot={snapshot}
-                ctx={financeCtx}
-                year={year}
-                dismissals={dismissals}
-                onSaved={() => void load()}
-              />
-            </TabsContent>
-
-            <TabsContent value="settlement" className="mt-4">
-              <FinanceSettlementDrafts
-                ctx={financeCtx}
-                rules={commissionRules}
-                overrides={commissionOverrides}
-                onSaved={() => void load()}
-              />
-            </TabsContent>
-
-            <TabsContent value="governance" className="mt-4">
-              <FinanceGovernance
-                rules={commissionRules}
-                overrides={commissionOverrides}
-                hostingRecords={hostingRecords}
-                dismissals={dismissals}
-                settlementDrafts={settlementDraftsForGov}
-                reviewStatuses={reviewStatuses as any}
-                policies={policySettings}
-                financeCtx={financeCtx}
-                pendingReviewCount={pendingReviewCount}
-                onSaved={() => void load()}
-              />
-            </TabsContent>
-          </Tabs>
+          <DailyFinanceView
+            dailyKpis={dailyKpis}
+            implementerTotals={implementerTotals}
+            commissions={raw.commissions as CommissionRow[]}
+            activeIssueCount={activeIssueCount}
+            onOpenAdvanced={() => {
+              const next = new URLSearchParams(searchParams);
+              next.set("advanced", "1");
+              setSearchParams(next, { replace: true });
+            }}
+          />
         )}
       </div>
     </AdminShell>
   );
 };
 
-function LedgerTable({ snapshot }: { snapshot: ReturnType<typeof buildFinanceSnapshot> }) {
+function DailyFinanceView({
+  dailyKpis,
+  implementerTotals,
+  commissions,
+  activeIssueCount,
+  onOpenAdvanced,
+}: {
+  dailyKpis: { paidInvoices: number; unpaidInvoices: number; receivedSum: number; pendingSum: number };
+  implementerTotals: [string, { paid: number; unpaid: number; count: number }][];
+  commissions: CommissionRow[];
+  activeIssueCount: number;
+  onOpenAdvanced: () => void;
+}) {
+  const [detailImplementer, setDetailImplementer] = useState<string | null>(null);
+
   return (
-    <section className="rounded-xl border border-border bg-card overflow-hidden">
-      <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold">Unified ledger view</h2>
-        <span className="text-xs text-muted-foreground">{snapshot.rows.length} riadkov</span>
-      </div>
-      {snapshot.rows.length === 0 ? (
-        <div className="py-12 text-center text-muted-foreground text-sm">Žiadne finance riadky</div>
-      ) : (
-        <div className="overflow-x-auto max-h-[520px]">
+    <div className="space-y-6">
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard label="Zaplatené faktúry" value={String(dailyKpis.paidInvoices)} hint="Prenájmy — mesačné záznamy" />
+        <KpiCard label="Nezaplatené / fakturované" value={String(dailyKpis.unpaidInvoices)} hint="Čaká na úhradu" accent="text-amber-600" />
+        <KpiCard label="Prijaté platby" value={`${dailyKpis.receivedSum.toFixed(0)} €`} accent="text-green-600" />
+        <KpiCard label="Čakajúce platby" value={`${dailyKpis.pendingSum.toFixed(0)} €`} accent="text-orange-500" />
+      </section>
+
+      <section className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold">Provízie podľa realizátora</h2>
+          <span className="text-xs text-muted-foreground">zo všetkých zdrojov (workflow)</span>
+        </div>
+        {implementerTotals.length === 0 ? (
+          <p className="p-6 text-sm text-muted-foreground text-center">Žiadne provízne záznamy.</p>
+        ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Dátum</TableHead>
-                <TableHead>Typ</TableHead>
-                <TableHead>Názov</TableHead>
-                <TableHead className="text-right">Suma</TableHead>
-                <TableHead>Stav</TableHead>
-                <TableHead>Truth</TableHead>
-                <TableHead>Zdroj</TableHead>
+                <TableHead>Realizátor</TableHead>
+                <TableHead className="text-right">Vyplatené</TableHead>
+                <TableHead className="text-right">Nezaplatené</TableHead>
+                <TableHead className="text-right">Počet</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {snapshot.rows.slice(0, 200).map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="text-xs whitespace-nowrap">{r.date}</TableCell>
-                  <TableCell className="text-xs">{r.kind}</TableCell>
-                  <TableCell className="text-sm max-w-[220px] truncate">{r.title}</TableCell>
-                  <TableCell className={`text-sm text-right font-medium ${r.direction === "out" ? "text-red-500" : "text-green-500"}`}>
-                    {r.direction === "out" ? "−" : "+"}
-                    {r.amount.toFixed(2)} €
-                  </TableCell>
-                  <TableCell className="text-xs max-w-[160px] truncate">{r.statusLabel}</TableCell>
-                  <TableCell>
-                    <TruthBadge level={r.truthLevel} />
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {r.sourceTable}
-                    <ExternalLink className="w-3 h-3 inline ml-1 opacity-40" />
-                  </TableCell>
+              {implementerTotals.map(([name, t]) => (
+                <TableRow
+                  key={name}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setDetailImplementer(name)}
+                >
+                  <TableCell className="font-medium">{name}</TableCell>
+                  <TableCell className="text-right text-green-600">{t.paid.toFixed(2)} €</TableCell>
+                  <TableCell className="text-right text-amber-600">{t.unpaid.toFixed(2)} €</TableCell>
+                  <TableCell className="text-right text-muted-foreground">{t.count}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
-      )}
-      {snapshot.rows.length > 200 && (
-        <p className="text-xs text-muted-foreground p-3 border-t border-border">
-          Zobrazených prvých 200 riadkov — plný export cez CSV.
-        </p>
-      )}
-    </section>
+        )}
+      </section>
+
+      <div className="flex flex-wrap gap-2 items-center">
+        <Button asChild size="sm" variant="outline">
+          <Link to="/admin/rentals">Prenájmy</Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link to="/admin/hosting">Hosting</Link>
+        </Button>
+        {activeIssueCount > 0 && (
+          <Badge variant="destructive" className="text-[10px]">
+            {activeIssueCount} nevyriešených položiek v audite
+          </Badge>
+        )}
+        <Button size="sm" variant="ghost" className="text-xs" onClick={onOpenAdvanced}>
+          Otvoriť pokročilé financie →
+        </Button>
+      </div>
+
+      <FinanceImplementerDetailDialog
+        open={!!detailImplementer}
+        onOpenChange={(o) => !o && setDetailImplementer(null)}
+        implementer={detailImplementer || ""}
+        commissions={commissions}
+      />
+    </div>
   );
 }
 
-function TruthBadge({ level }: { level: FinanceTruthLevel }) {
-  const variant =
-    level === "payment_fact" || level === "payout_fact" || level === "cost_fact"
-      ? "default"
-      : level === "legacy_import"
-        ? "secondary"
-        : "outline";
+function AdvancedFinanceView({
+  snapshot,
+  financeCtx,
+  raw,
+  year,
+  dismissals,
+  commissionRules,
+  commissionOverrides,
+  hostingRecords,
+  reviewStatuses,
+  policySettings,
+  activeIssueCount,
+  pendingReviewCount,
+  settlementDraftsForGov,
+  legacyCommissions,
+  onSaved,
+}: {
+  snapshot: ReturnType<typeof buildFinanceSnapshot>;
+  financeCtx: any;
+  raw: any;
+  year: number;
+  dismissals: IssueDismissalRow[];
+  commissionRules: CommissionRule[];
+  commissionOverrides: CommissionRuleOverride[];
+  hostingRecords: HostingRecordRow[];
+  reviewStatuses: any[];
+  policySettings: PayoutPolicySetting[];
+  activeIssueCount: number;
+  pendingReviewCount: number;
+  settlementDraftsForGov: ReturnType<typeof buildSettlementDrafts>;
+  legacyCommissions: boolean;
+  onSaved: () => void;
+}) {
+  const defaultTab = legacyCommissions ? "provizie" : "prehlad";
+
   return (
-    <Badge variant={variant} className="text-[10px]">
-      {TRUTH_LEVEL_LABELS[level] ?? level}
-    </Badge>
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
+        {FINANCE_TRUTH_DISCLAIMER}
+      </p>
+
+      <Tabs defaultValue={defaultTab}>
+        <TabsList className="flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="prehlad">Detailný prehľad</TabsTrigger>
+          <TabsTrigger value="provizie">Provízie & náklady</TabsTrigger>
+          <TabsTrigger value="records">Záznamy</TabsTrigger>
+          <TabsTrigger value="reconciliation">
+            Zladenie
+            {activeIssueCount > 0 && <span className="ml-1 text-amber-500">({activeIssueCount})</span>}
+          </TabsTrigger>
+          <TabsTrigger value="settlement">Vyúčtovanie</TabsTrigger>
+          <TabsTrigger value="governance">
+            Kontrola
+            {pendingReviewCount > 0 && <span className="ml-1 text-amber-500">({pendingReviewCount})</span>}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="prehlad" className="space-y-4 mt-4">
+          <section className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <StatCard label="Potvrdené platby" value={snapshot.totals.paymentsConfirmed} accent="text-green-600" />
+            <StatCard label="Potvrdené výplaty" value={snapshot.totals.payoutsConfirmed} accent="text-red-600" />
+            <StatCard label="Potvrdené náklady" value={snapshot.totals.costsConfirmed} accent="text-red-600" />
+            <StatCard label={`Prenájmy faktúra (${year})`} value={snapshot.totals.rentalMarkedInvoiced} />
+            <StatCard label={`Prenájmy nezaplatené (${year})`} value={snapshot.totals.rentalMarkedUnpaid} />
+            <StatCard label={`Prenájmy potenciál (${year})`} value={snapshot.totals.rentalPotential} accent="text-primary" />
+          </section>
+        </TabsContent>
+
+        <TabsContent value="provizie" className="mt-4">
+          <CommissionsExpensesContent />
+        </TabsContent>
+
+        <TabsContent value="records" className="mt-4">
+          <FinanceRecordsCrud
+            paymentRecords={raw.paymentRecords}
+            payoutRecords={raw.payoutRecords}
+            costRecords={raw.costRecords}
+            onSaved={onSaved}
+          />
+        </TabsContent>
+
+        <TabsContent value="reconciliation" className="mt-4">
+          <FinanceReconciliation
+            snapshot={snapshot}
+            ctx={financeCtx}
+            year={year}
+            dismissals={dismissals}
+            onSaved={onSaved}
+          />
+        </TabsContent>
+
+        <TabsContent value="settlement" className="mt-4">
+          <FinanceSettlementDrafts
+            ctx={financeCtx}
+            rules={commissionRules}
+            overrides={commissionOverrides}
+            onSaved={onSaved}
+          />
+        </TabsContent>
+
+        <TabsContent value="governance" className="mt-4">
+          <FinanceGovernance
+            rules={commissionRules}
+            overrides={commissionOverrides}
+            hostingRecords={hostingRecords}
+            dismissals={dismissals}
+            settlementDrafts={settlementDraftsForGov}
+            reviewStatuses={reviewStatuses}
+            policies={policySettings}
+            financeCtx={financeCtx}
+            pendingReviewCount={pendingReviewCount}
+            onSaved={onSaved}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function KpiCard({
+  label,
+  value,
+  hint,
+  accent = "text-foreground",
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  accent?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={`text-2xl font-bold mt-1 ${accent}`}>{value}</div>
+      {hint && <div className="text-[10px] text-muted-foreground mt-1">{hint}</div>}
+    </div>
   );
 }
 
@@ -419,18 +521,15 @@ function StatCard({
   label,
   value,
   accent = "text-foreground",
-  hint,
 }: {
   label: string;
   value: number;
   accent?: string;
-  hint?: string;
 }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`text-xl font-bold mt-1 ${accent}`}>{value.toFixed(2)} €</div>
-      {hint ? <div className="text-[10px] text-muted-foreground mt-1">{hint}</div> : null}
     </div>
   );
 }

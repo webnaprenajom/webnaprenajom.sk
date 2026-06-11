@@ -32,6 +32,10 @@ import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog"
 import { resolveCustomerIdentity, customerDisplayLabel } from "@/lib/finance/customerBridge";
 import { adminCustomerHref } from "@/lib/adminNav";
 import { Link } from "react-router-dom";
+import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
+import { normalizeEmail, normalizeClientName } from "@/lib/crmLookup/normalizeIdentity";
+import { resolveCustomerLinkFields } from "@/lib/crmLookup/customers";
+import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 
 interface Props {
   records: HostingRecordRow[];
@@ -42,6 +46,8 @@ interface Props {
 const emptyForm = () => ({
   client_name: "",
   customer_email: "",
+  customer_id: null as string | null,
+  lead_id: null as string | null,
   provider: "",
   domains_count: "",
   monthly_price: "",
@@ -69,9 +75,15 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
 
   const save = async () => {
     setSaving(true);
-    const { error } = await supabase.from("hosting_records").insert({
-      client_name: form.client_name || null,
-      customer_email: form.customer_email || null,
+    const linked = await resolveCustomerLinkFields({
+      customer_id: form.customer_id,
+      customer_email: form.customer_email,
+      client_name: form.client_name,
+    });
+    const { data: saved, error } = await supabase.from("hosting_records").insert({
+      client_name: linked.client_name || null,
+      customer_email: linked.customer_email,
+      customer_id: linked.customer_id,
       provider: form.provider || null,
       domains_count: form.domains_count ? Number(form.domains_count) : null,
       monthly_price: form.monthly_price ? Number(form.monthly_price) : null,
@@ -79,11 +91,24 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
       commissionable: form.commissionable,
       note: form.note || null,
       active: true,
-    });
+    }).select("id").maybeSingle();
     setSaving(false);
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
       return;
+    }
+    if (saved?.id) {
+      logEntityCommunicationEventSafe({
+        kind: "hosting_event",
+        title: linked.client_name || "Hosting záznam",
+        body_preview: form.provider || form.note || null,
+        customer_id: linked.customer_id,
+        customer_email: linked.customer_email,
+        source_table: "hosting_records",
+        source_id: saved.id,
+        idempotency_key: `hosting_records:${saved.id}:created`,
+        metadata: { action: "created" },
+      });
     }
     toast({ title: "Hosting record vytvorený" });
     setForm(emptyForm());
@@ -112,7 +137,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Hosting je oddelený od rental streamu. Payment fact je opt-in — bez auto-sync.
+        Hosting je oddelený od prenájmového streamu. Platobný fakt je voliteľný — bez auto-sync.
       </p>
       <div className="flex justify-end">
         <Button size="sm" onClick={() => setDialogOpen(true)}>
@@ -127,11 +152,11 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
             <TableHeader>
               <TableRow>
                 <TableHead>Klient</TableHead>
-                <TableHead>Provider</TableHead>
+                <TableHead>Poskytovateľ</TableHead>
                 <TableHead className="text-right">Mesiac</TableHead>
-                <TableHead>Commissionable</TableHead>
+                <TableHead>Provízny</TableHead>
                 <TableHead>Stav</TableHead>
-                <TableHead>Payment</TableHead>
+                <TableHead>Platba</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,12 +171,13 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                 return (
                   <TableRow key={r.id}>
                     <TableCell className="text-sm">
-                      {customerHref ? (
-                        <Link to={customerHref} className="text-primary hover:underline">
-                          {customerDisplayLabel(identity)}
+                      <Link to={`/admin/hosting/${r.id}`} className="text-primary hover:underline font-medium">
+                        {customerDisplayLabel(identity)}
+                      </Link>
+                      {customerHref && (
+                        <Link to={customerHref} className="block text-[10px] text-muted-foreground hover:underline">
+                          Klient 360°
                         </Link>
-                      ) : (
-                        customerDisplayLabel(identity)
                       )}
                     </TableCell>
                     <TableCell className="text-xs">{r.provider ?? "—"}</TableCell>
@@ -163,12 +189,12 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                     </TableCell>
                     <TableCell>
                       <Badge variant={r.active ? "secondary" : "outline"} className="text-[10px]">
-                        {r.active ? "active" : "off"}
+                        {r.active ? "aktívny" : "neaktívny"}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       {hasPayment ? (
-                        <Badge variant="secondary" className="text-[10px]">payment_fact</Badge>
+                        <Badge variant="secondary" className="text-[10px]">platobný fakt</Badge>
                       ) : (
                         <Button
                           size="sm"
@@ -176,7 +202,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                           className="h-7 text-[10px]"
                           onClick={() => openPaymentFact(r)}
                         >
-                          Vytvoriť payment
+                          Vytvoriť platbu
                         </Button>
                       )}
                     </TableCell>
@@ -191,19 +217,28 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nový hosting record</DialogTitle>
+            <DialogTitle>Nový hosting</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <Field label="Client name"><Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} /></Field>
-            <Field label="Email"><Input value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} /></Field>
-            <Field label="Provider"><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} /></Field>
-            <Field label="Domains"><Input type="number" value={form.domains_count} onChange={(e) => setForm({ ...form, domains_count: e.target.value })} /></Field>
-            <Field label="Monthly price €"><Input type="number" step="0.01" value={form.monthly_price} onChange={(e) => setForm({ ...form, monthly_price: e.target.value })} /></Field>
-            <Field label="Acquired by"><Input value={form.acquired_by} onChange={(e) => setForm({ ...form, acquired_by: e.target.value })} /></Field>
+            <Field label="Klient">
+              <ClientPicker
+                clientName={form.client_name}
+                customerEmail={form.customer_email}
+                customerId={form.customer_id}
+                leadId={form.lead_id}
+                onChange={({ client_name, customer_email, customer_id }) =>
+                  setForm({ ...form, client_name, customer_email: customer_email || "", customer_id })
+                }
+              />
+            </Field>
+            <Field label="Poskytovateľ"><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} /></Field>
+            <Field label="Počet domén"><Input type="number" value={form.domains_count} onChange={(e) => setForm({ ...form, domains_count: e.target.value })} /></Field>
+            <Field label="Mesačná cena €"><Input type="number" step="0.01" value={form.monthly_price} onChange={(e) => setForm({ ...form, monthly_price: e.target.value })} /></Field>
+            <Field label="Získal"><Input value={form.acquired_by} onChange={(e) => setForm({ ...form, acquired_by: e.target.value })} /></Field>
             <Field label="Poznámka"><Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox checked={form.commissionable} onCheckedChange={(v) => setForm({ ...form, commissionable: !!v })} />
-              Commissionable (vyžaduje review)
+              Provízny (vyžaduje review)
             </label>
           </div>
           <DialogFooter>

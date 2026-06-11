@@ -11,6 +11,8 @@ export interface LeadStatusEmailPayload {
   name: string;
   email: string;
   amount?: number | null;
+  lead_id?: string;
+  customer_id?: string | null;
 }
 
 type SideEffectResult =
@@ -24,19 +26,41 @@ const EMAIL_FN_MAP: Record<
 > = {
   reminder: {
     fn: "send-reminder-email",
-    body: (lead) => ({ name: lead.name, email: lead.email }),
+    body: (lead) => ({
+      name: lead.name,
+      email: lead.email,
+      lead_id: lead.lead_id,
+      customer_id: lead.customer_id ?? null,
+    }),
   },
   offer: {
     fn: "send-offer-email",
-    body: (lead) => ({ name: lead.name, email: lead.email }),
+    body: (lead) => ({
+      name: lead.name,
+      email: lead.email,
+      lead_id: lead.lead_id,
+      customer_id: lead.customer_id ?? null,
+    }),
   },
   order: {
     fn: "send-order-email",
-    body: (lead) => ({ name: lead.name, email: lead.email, amount: lead.amount ?? null }),
+    body: (lead) => ({
+      name: lead.name,
+      email: lead.email,
+      amount: lead.amount ?? null,
+      lead_id: lead.lead_id,
+      customer_id: lead.customer_id ?? null,
+    }),
   },
   instructions: {
     fn: "send-instructions-email",
-    body: (lead) => ({ name: lead.name, email: lead.email, amount: lead.amount ?? null }),
+    body: (lead) => ({
+      name: lead.name,
+      email: lead.email,
+      amount: lead.amount ?? null,
+      lead_id: lead.lead_id,
+      customer_id: lead.customer_id ?? null,
+    }),
   },
 };
 
