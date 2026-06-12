@@ -50,6 +50,7 @@ export interface Lead {
   status_changed_at: string | null;
   imported?: boolean;
   import_batch?: string | null;
+  customer_id?: string | null;
 }
 
 export { CRM_ASSIGNEES as ASSIGNEES } from "@/lib/assignees";

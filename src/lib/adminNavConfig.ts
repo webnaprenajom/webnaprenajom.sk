@@ -24,6 +24,8 @@ export type AdminNavItem = {
   icon: LucideIcon;
   /** Exact match only (e.g. /admin pipeline) */
   exact?: boolean;
+  /** Hidden from default sidebar — route remains accessible (internal/dev tools). */
+  devOnly?: boolean;
 };
 
 export type AdminNavGroup = {
@@ -64,8 +66,8 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
       { href: "/admin/designs", label: "Dizajny", icon: Palette },
       { href: "/admin/wheel-leads", label: "Koleso", icon: Sparkles },
       { href: "/admin/logs", label: "História", icon: History },
-      { href: "/admin/rollout-health", label: "Stav CRM", icon: ClipboardList },
-      { href: "/admin/communication-ops", label: "Komunikácia", icon: Inbox },
+      { href: "/admin/rollout-health", label: "Stav CRM", icon: ClipboardList, devOnly: true },
+      { href: "/admin/communication-ops", label: "Komunikácia", icon: Inbox, devOnly: true },
       { href: "/admin/passwords", label: "Heslá", icon: KeyRound },
     ],
   },
@@ -75,6 +77,14 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     items: [{ href: "/admin/settings", label: "Nastavenia", icon: Settings }],
   },
 ];
+
+/** Nav groups visible in production sidebar (excludes devOnly items). */
+export function visibleAdminNavGroups(): AdminNavGroup[] {
+  return ADMIN_NAV_GROUPS.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !item.devOnly),
+  })).filter((group) => group.items.length > 0);
+}
 
 export function isAdminNavActive(pathname: string, href: string, exact?: boolean): boolean {
   if (href === "/admin" || exact) {

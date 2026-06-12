@@ -47,6 +47,7 @@ import {
 import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
 import { normalizeClientName, normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
 import { resolveCustomerLinkFields } from "@/lib/crmLookup/customers";
+import { linkLeadAfterDelivery } from "@/lib/crmLookup/leadCustomerLifecycle";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 
 const VIEW_CONFIG: Record<
@@ -105,10 +106,20 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
       toast({ title: "Zadaj názov", variant: "destructive" });
       return;
     }
+    const rawEmail = editing.customer_email?.trim() || "";
+    if (rawEmail && !normalizeEmail(rawEmail)) {
+      toast({
+        title: "Neplatný e-mail klienta",
+        description: "Opravte e-mail alebo vyberte klienta z vyhľadávania.",
+        variant: "destructive",
+      });
+      return;
+    }
     const linked = await resolveCustomerLinkFields({
       customer_id: editing.customer_id,
-      customer_email: editing.customer_email,
+      customer_email: rawEmail || editing.customer_email,
       client_name: editing.client_name,
+      createIfMissing: !!normalizeEmail(rawEmail || undefined),
     });
     const payload = {
       title: editing.title!.trim(),
@@ -132,6 +143,9 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
     if (error) {
       toast({ title: "Uloženie zlyhalo", description: error.message, variant: "destructive" });
       return;
+    }
+    if (editing.lead_id && linked.customer_id) {
+      await linkLeadAfterDelivery(editing.lead_id, linked.customer_id);
     }
     const recordId = saved?.id ?? editing.id;
     if (recordId) {

@@ -74,46 +74,80 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
   );
 
   const save = async () => {
-    setSaving(true);
-    const linked = await resolveCustomerLinkFields({
-      customer_id: form.customer_id,
-      customer_email: form.customer_email,
-      client_name: form.client_name,
-    });
-    const { data: saved, error } = await supabase.from("hosting_records").insert({
-      client_name: linked.client_name || null,
-      customer_email: linked.customer_email,
-      customer_id: linked.customer_id,
-      provider: form.provider || null,
-      domains_count: form.domains_count ? Number(form.domains_count) : null,
-      monthly_price: form.monthly_price ? Number(form.monthly_price) : null,
-      acquired_by: form.acquired_by || null,
-      commissionable: form.commissionable,
-      note: form.note || null,
-      active: true,
-    }).select("id").maybeSingle();
-    setSaving(false);
-    if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    const clientLabel = form.client_name.trim();
+    const rawEmail = form.customer_email.trim();
+    if (!clientLabel && !form.customer_id && !normalizeEmail(rawEmail)) {
+      toast({
+        title: "Chýba klient",
+        description: "Zadajte meno klienta alebo vyberte zákazníka / lead z vyhľadávania.",
+        variant: "destructive",
+      });
       return;
     }
-    if (saved?.id) {
-      logEntityCommunicationEventSafe({
-        kind: "hosting_event",
-        title: linked.client_name || "Hosting záznam",
-        body_preview: form.provider || form.note || null,
-        customer_id: linked.customer_id,
-        customer_email: linked.customer_email,
-        source_table: "hosting_records",
-        source_id: saved.id,
-        idempotency_key: `hosting_records:${saved.id}:created`,
-        metadata: { action: "created" },
+    if (rawEmail && !normalizeEmail(rawEmail)) {
+      toast({
+        title: "Neplatný e-mail",
+        description: "Opravte e-mail klienta alebo ho odstráňte.",
+        variant: "destructive",
       });
+      return;
     }
-    toast({ title: "Hosting record vytvorený" });
-    setForm(emptyForm());
-    setDialogOpen(false);
-    onSaved();
+
+    setSaving(true);
+    try {
+      const linked = await resolveCustomerLinkFields({
+        customer_id: form.customer_id,
+        customer_email: rawEmail || form.customer_email,
+        client_name: form.client_name,
+        createIfMissing: !!normalizeEmail(rawEmail || undefined),
+      });
+
+      const { data: saved, error } = await supabase.from("hosting_records").insert({
+        client_name: linked.client_name || null,
+        customer_email: linked.customer_email,
+        customer_id: linked.customer_id,
+        provider: form.provider.trim() || null,
+        domains_count: form.domains_count ? Number(form.domains_count) : null,
+        monthly_price: form.monthly_price ? Number(form.monthly_price) : null,
+        acquired_by: form.acquired_by.trim() || null,
+        commissionable: form.commissionable,
+        note: form.note.trim() || null,
+        active: true,
+      }).select("id").maybeSingle();
+
+      if (error) {
+        toast({
+          title: "Hosting sa nepodarilo uložiť",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (form.lead_id && linked.customer_id) {
+        await linkLeadAfterDelivery(form.lead_id, linked.customer_id);
+      }
+
+      if (saved?.id) {
+        logEntityCommunicationEventSafe({
+          kind: "hosting_event",
+          title: linked.client_name || "Hosting záznam",
+          body_preview: form.provider || form.note || null,
+          customer_id: linked.customer_id,
+          customer_email: linked.customer_email,
+          source_table: "hosting_records",
+          source_id: saved.id,
+          idempotency_key: `hosting_records:${saved.id}:created`,
+          metadata: { action: "created" },
+        });
+      }
+      toast({ title: "Hosting vytvorený" });
+      setForm(emptyForm());
+      setDialogOpen(false);
+      onSaved();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const openPaymentFact = (record: HostingRecordRow) => {
@@ -226,8 +260,14 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                 customerEmail={form.customer_email}
                 customerId={form.customer_id}
                 leadId={form.lead_id}
-                onChange={({ client_name, customer_email, customer_id }) =>
-                  setForm({ ...form, client_name, customer_email: customer_email || "", customer_id })
+                onChange={({ client_name, customer_email, customer_id, lead_id }) =>
+                  setForm({
+                    ...form,
+                    client_name,
+                    customer_email: customer_email || "",
+                    customer_id,
+                    lead_id,
+                  })
                 }
               />
             </Field>

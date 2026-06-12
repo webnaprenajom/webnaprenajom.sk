@@ -18,6 +18,7 @@ import {
   ViewMode,
   isStale,
   typeLabel,
+  TYPE_OPTIONS,
 } from "@/components/admin/leads/constants";
 import {
   getLeadStatusEmailToast,
@@ -70,7 +71,7 @@ import { cn } from "@/lib/utils";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
-import { TYPE_OPTIONS } from "@/components/admin/leads/constants";
+import { ensureLeadCustomerLink } from "@/lib/crmLookup/leadCustomerLifecycle";
 
 // CSV parser supporting quoted fields with commas/newlines
 const parseCsv = (text: string): string[][] => {
@@ -321,6 +322,22 @@ const Admin = () => {
       return;
     }
 
+    const linkResult = await ensureLeadCustomerLink({
+      leadId: selected.id,
+      email: editEmail.trim(),
+      name: editName.trim(),
+      status: editStatus,
+      existingCustomerId: selected.customer_id,
+    });
+    const linkedCustomerId = linkResult.customer_id ?? selected.customer_id ?? null;
+
+    if (linkResult.reason === "created_customer" || linkResult.reason === "promoted") {
+      toast({
+        title: "Lead prepojený na klienta",
+        description: "Zrealizovaný lead bol automaticky prepojený na kanonického klienta.",
+      });
+    }
+
     const emailResult = await runLeadStatusSideEffects(selected.status, editStatus, {
       name: editName.trim(),
       email: editEmail.trim(),
@@ -329,7 +346,9 @@ const Admin = () => {
     });
 
     if (emailResult.action === "skipped") {
-      toast({ title: "Uložené" });
+      if (linkResult.reason !== "created_customer" && linkResult.reason !== "promoted") {
+        toast({ title: "Uložené" });
+      }
     } else if (emailResult.action === "sent") {
       toast(getLeadStatusEmailToast("detail", emailResult.kind, "sent", editEmail.trim()));
     } else {
@@ -363,6 +382,7 @@ const Admin = () => {
               consultation_time: editConsultTime.trim() || null,
               follow_up_date: editFollowUpDate ? format(editFollowUpDate, "yyyy-MM-dd") : null,
               created_at: editCreatedAt ? editCreatedAt.toISOString() : l.created_at,
+              customer_id: linkedCustomerId,
             }
           : l
       )
@@ -431,6 +451,27 @@ const Admin = () => {
           emailResult.error,
         ),
       );
+    }
+
+    const linkResult = await ensureLeadCustomerLink({
+      leadId: lead.id,
+      email: lead.email,
+      name: lead.name,
+      status,
+      existingCustomerId: lead.customer_id,
+    });
+    if (linkResult.customer_id) {
+      setLeads((ls) =>
+        ls.map((l) =>
+          l.id === lead.id ? { ...l, customer_id: linkResult.customer_id } : l,
+        ),
+      );
+    }
+    if (linkResult.reason === "created_customer" || linkResult.reason === "promoted") {
+      toast({
+        title: "Lead prepojený na klienta",
+        description: `${lead.name} · ${lead.email}`,
+      });
     }
   };
 

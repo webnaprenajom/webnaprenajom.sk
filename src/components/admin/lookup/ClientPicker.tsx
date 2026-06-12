@@ -131,10 +131,10 @@ export function ClientPicker({
       />
       <p className="text-[10px] text-muted-foreground">
         {isCanonical
-          ? "Kanónický zákazník — customer_id sa uloží spolu s e-mailom."
+          ? "Kanónický klient — uloží sa customer_id."
           : isLeadLinked
-            ? "Lead je prepojený — uloží sa lead_id + meno. Pre customer_id vyberte zákazníka z lookup."
-            : "Voľný text = legacy client_name. Vyhľadaj zákazníka alebo lead."}
+            ? "Lead — uloží sa lead_id. Po zrealizovaní sa prepojí na klienta."
+            : "Voľný text = len meno. Vyhľadajte klienta alebo lead."}
       </p>
     </div>
   );

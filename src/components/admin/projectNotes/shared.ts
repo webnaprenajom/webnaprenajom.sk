@@ -1,4 +1,4 @@
-export type ProjectType = "wordpress" | "shoptet" | "custom" | "other";
+export type ProjectType = "wordpress" | "shoptet" | "custom" | "other" | "ai";
 
 export interface ProjectNote {
   id: string;
@@ -19,6 +19,7 @@ export interface ProjectNote {
 export const PROJECT_TYPE_OPTIONS: { value: ProjectType; label: string }[] = [
   { value: "wordpress", label: "WordPress" },
   { value: "shoptet", label: "Shoptet" },
+  { value: "ai", label: "AI" },
   { value: "custom", label: "Zákazkový web" },
   { value: "other", label: "Iné" },
 ];

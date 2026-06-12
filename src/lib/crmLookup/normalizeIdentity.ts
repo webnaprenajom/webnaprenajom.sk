@@ -35,3 +35,17 @@ export function clientNamesMatch(
 export function lookupQueryTokens(query: string): string {
   return collapseWhitespace(query).toLowerCase();
 }
+
+/** Escape user input for PostgREST ilike patterns. */
+export function escapeIlikePattern(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
+}
+
+/** Build `.or()` filter for ilike across fields — handles commas in values. */
+export function buildPostgrestIlikeOr(fields: string[], rawQuery: string): string | null {
+  const q = escapeIlikePattern(collapseWhitespace(rawQuery));
+  if (!q) return null;
+  const pattern = `%${q}%`;
+  const value = /[,()]/.test(pattern) ? `"${pattern.replace(/"/g, '""')}"` : pattern;
+  return fields.map((f) => `${f}.ilike.${value}`).join(",");
+}

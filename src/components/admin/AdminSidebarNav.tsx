@@ -8,14 +8,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { ADMIN_NAV_GROUPS, isAdminNavActive } from "@/lib/adminNavConfig";
+import { visibleAdminNavGroups, isAdminNavActive } from "@/lib/adminNavConfig";
 
 export function AdminSidebarNav() {
   const { pathname } = useLocation();
 
   return (
     <SidebarContent>
-      {ADMIN_NAV_GROUPS.map((group) => (
+      {visibleAdminNavGroups().map((group) => (
         <SidebarGroup key={group.id}>
           {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
           <SidebarGroupContent>

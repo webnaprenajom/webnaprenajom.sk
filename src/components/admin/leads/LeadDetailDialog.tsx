@@ -18,10 +18,13 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
-import { CalendarIcon, Euro, Loader2, User } from "lucide-react";
+import { CalendarIcon, Euro, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { adminCustomerHrefPreferred } from "@/lib/adminNav";
+import { LeadCommunicationPanel } from "./LeadCommunicationPanel";
+import { LeadCustomerStatusBadge } from "./LeadCustomerStatusBadge";
 import {
   ASSIGNEES,
   Lead,
@@ -95,7 +98,16 @@ const LeadDetailDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Detail leadu</DialogTitle>
+          <DialogTitle className="flex flex-col gap-2 items-start">
+            <span>Detail leadu</span>
+            {selected && (
+              <LeadCustomerStatusBadge
+                customerId={selected.customer_id}
+                email={editEmail || selected.email}
+                status={editStatus}
+              />
+            )}
+          </DialogTitle>
         </DialogHeader>
         {selected && (
           <div className="space-y-4">
@@ -382,15 +394,25 @@ const LeadDetailDialog = ({
               />
             </div>
 
+            {selected && (
+              <LeadCommunicationPanel
+                leadId={selected.id}
+                email={editEmail || selected.email}
+                name={editName || selected.name}
+                customerId={selected.customer_id}
+                notes={editNotes}
+                updatedAt={selected.updated_at}
+              />
+            )}
+
             <div className="flex gap-2 justify-end pt-2 flex-wrap">
-              {editEmail && (
+              {editEmail && adminCustomerHrefPreferred(selected.customer_id, editEmail.trim()) && (
                 <Link
-                  to={`/admin/customer/${encodeURIComponent(editEmail.trim().toLowerCase())}`}
+                  to={adminCustomerHrefPreferred(selected.customer_id, editEmail.trim())!}
                   className="mr-auto"
                 >
                   <Button variant="outline" type="button">
-                    <User className="w-4 h-4 mr-2" />
-                    Customer view
+                    Klient 360°
                   </Button>
                 </Link>
               )}
