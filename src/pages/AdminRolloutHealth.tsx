@@ -4,11 +4,11 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  buildLegacyHealthChecklist,
-  fetchLegacyHealthCounts,
-  type LegacyHealthCounts,
-  type LegacyHealthItem,
-} from "@/lib/crmLookup/legacyHealthReport";
+  buildIdentityHealthChecklist,
+  fetchIdentityHealthCounts,
+  type IdentityHealthCounts,
+  type IdentityHealthItem,
+} from "@/lib/crmLookup/identityHealthReport";
 import { RC1_QA_CHECKLIST, RELEASE_NOTES_RC1 } from "@/lib/rollout/releaseNotesRc1";
 import {
   AlertTriangle,
@@ -19,22 +19,27 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-const SEVERITY_CLASS: Record<LegacyHealthItem["severity"], string> = {
+const SEVERITY_CLASS: Record<IdentityHealthItem["severity"], string> = {
   ok: "border-emerald-500/30 bg-emerald-500/5",
   info: "border-amber-500/30 bg-amber-500/5",
   warn: "border-red-500/30 bg-red-500/5",
 };
 
-const emptyCounts = (): LegacyHealthCounts => ({
+const emptyCounts = (): IdentityHealthCounts => ({
   legacyCommissions: 0,
   partialCommissions: 0,
   leadsWithoutCustomer: 0,
   unlinkedInboundComm: 0,
   openTasksWithoutCustomer: 0,
   tasksBackfillableViaLead: 0,
+  rentalsWithoutCustomer: 0,
+  rentalsBackfillableViaLead: 0,
+  commissionsWithoutCustomer: 0,
+  duplicateCustomerCandidates: 0,
+  customersWithoutEmail: 0,
 });
 
-function HealthRow({ item }: { item: LegacyHealthItem }) {
+function HealthRow({ item }: { item: IdentityHealthItem }) {
   return (
     <li
       className={`rounded-lg border p-4 flex flex-col sm:flex-row sm:items-center gap-3 ${SEVERITY_CLASS[item.severity]}`}
@@ -65,30 +70,30 @@ function HealthRow({ item }: { item: LegacyHealthItem }) {
 
 export default function AdminRolloutHealth() {
   const [loading, setLoading] = useState(true);
-  const [counts, setCounts] = useState<LegacyHealthCounts>(emptyCounts);
+  const [counts, setCounts] = useState<IdentityHealthCounts>(emptyCounts);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const { data, error: fetchError } = await fetchLegacyHealthCounts();
+    const { data, error: fetchError } = await fetchIdentityHealthCounts();
     if (fetchError) setError(fetchError);
     else if (data) setCounts(data);
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    document.title = "Stav CRM · RC1 | Admin";
+    document.title = "Stav CRM · identita | Admin";
     void load();
   }, [load]);
 
-  const checklist = buildLegacyHealthChecklist(counts);
+  const checklist = buildIdentityHealthChecklist(counts);
   const openIssues = checklist.filter((i) => i.count > 0).length;
 
   return (
     <AdminShell
-      title="Stav CRM · RC1"
-      subtitle="Release notes, legacy checklist a QA pre produkčný rollout"
+      title="Stav CRM · identita a dáta"
+      subtitle="Golden-record health, legacy checklist a QA (RC1–RC5)"
       actions={
         <Button size="sm" variant="outline" onClick={() => void load()} disabled={loading}>
           {loading ? (
@@ -104,10 +109,11 @@ export default function AdminRolloutHealth() {
         <section className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
           <div className="flex items-center gap-2 text-sm font-semibold">
             <FileText className="w-4 h-4 text-primary" />
-            Batch RC1 — produkčné spevnenie
+            Batch RC5 — identita klientov a kvalita dát
           </div>
           <p className="text-xs text-muted-foreground">
-            Bez hromadných auto-opráv. Checklist slúži na prioritizáciu manuálneho dopĺňania prepojení.
+            Golden-record pravidlá: customer_id → e-mail → manuálne prepojenie → obmedzená heuristika mena.
+            Duplicity sa nezlučujú automaticky — checklist slúži na review a budúci merge nástroj.
             Podrobná dokumentácia:{" "}
             <code className="text-[10px] bg-muted px-1 rounded">scripts/RELEASE_NOTES_RC1.md</code>
           </p>
@@ -127,7 +133,7 @@ export default function AdminRolloutHealth() {
         <section className="space-y-3">
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-amber-500" />
-            Legacy checklist
+            Identita a legacy checklist
           </h2>
           {error && (
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">

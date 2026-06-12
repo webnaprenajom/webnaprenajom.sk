@@ -51,6 +51,13 @@ import {
   parseInsertRowId,
   resolveFormCustomerLink,
 } from "@/lib/crmLookup/resolveFormCustomerLink";
+import { AccessCredentialsEditor } from "@/components/admin/projectNotes/AccessCredentialsEditor";
+import {
+  type AccessCredential,
+  createEmptyCredential,
+  credentialsForSave,
+  resolveProjectCredentials,
+} from "@/lib/projectCredentials";
 
 const VIEW_CONFIG: Record<
   ProjectNotesViewMode,
@@ -76,8 +83,8 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<ProjectNote> | null>(null);
+  const [editCredentials, setEditCredentials] = useState<AccessCredential[]>([]);
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
-  const [editPasswordVisible, setEditPasswordVisible] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
 
@@ -139,6 +146,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
       return;
     }
 
+    const credFields = credentialsForSave(editing, editCredentials);
     const payload = {
       title: editing.title!.trim(),
       client_name: linked.client_name || null,
@@ -146,9 +154,10 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
       customer_id: linked.customer_id,
       lead_id: linked.lead_id || editing.lead_id || null,
       project_type: editing.project_type || null,
-      url: editing.url || null,
-      username: editing.username || null,
-      password: editing.password || null,
+      url: credFields.url,
+      username: credFields.username,
+      password: credFields.password,
+      access_credentials: credFields.access_credentials,
       notes: editing.notes || null,
       status: editing.status || "in_progress",
     };
@@ -223,7 +232,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   };
 
   const openEdit = (item: Partial<ProjectNote>) => {
-    setEditPasswordVisible(false);
+    setEditCredentials(resolveProjectCredentials(item as ProjectNote));
     setEditing(item);
     setOpen(true);
   };
@@ -240,7 +249,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
         <Button
           size="sm"
           onClick={() => {
-            setEditPasswordVisible(false);
+            setEditCredentials([createEmptyCredential("Hlavný prístup")]);
             setEditing({ ...emptyProjectNote });
             setOpen(true);
           }}
@@ -403,8 +412,8 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
         onOpenChange={setOpen}
         editing={editing}
         setEditing={setEditing}
-        editPasswordVisible={editPasswordVisible}
-        setEditPasswordVisible={setEditPasswordVisible}
+        editCredentials={editCredentials}
+        setEditCredentials={setEditCredentials}
         onSave={save}
         mode={mode}
       />
@@ -454,42 +463,51 @@ function CredentialsBlock({
   onToggle: () => void;
   onCopy: (val: string | null, label: string) => void;
 }) {
+  const credentials = resolveProjectCredentials(item);
+  if (credentials.length === 0) return null;
+
   return (
-    <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-3 space-y-2">
-      {item.url && (
-        <div className="flex items-center gap-2 text-sm">
-          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-          <a
-            href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline truncate"
-          >
-            {item.url}
-          </a>
+    <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-3 space-y-3">
+      {credentials.map((cred) => (
+        <div key={cred.id} className="space-y-2 border-b border-amber-500/10 last:border-0 pb-2 last:pb-0">
+          <p className="text-xs font-medium text-amber-800 dark:text-amber-300">{cred.label}</p>
+          {cred.url && (
+            <div className="flex items-center gap-2 text-sm">
+              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <a
+                href={cred.url.startsWith("http") ? cred.url : `https://${cred.url}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline truncate"
+              >
+                {cred.url}
+              </a>
+            </div>
+          )}
+          {cred.login && (
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <span className="text-muted-foreground text-xs w-16 shrink-0">Login</span>
+              <span className="font-mono truncate flex-1">{cred.login}</span>
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onCopy(cred.login ?? null, "Login")}>
+                <Copy className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+          {cred.password && (
+            <div className="flex items-center justify-between gap-2 text-sm">
+              <span className="text-muted-foreground text-xs w-16 shrink-0">Heslo</span>
+              <span className="font-mono truncate flex-1">{shown ? cred.password : MASKED_PASSWORD}</span>
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onToggle}>
+                {shown ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+              </Button>
+              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onCopy(cred.password ?? null, "Heslo")}>
+                <Copy className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+          {cred.note && <p className="text-xs text-muted-foreground">{cred.note}</p>}
         </div>
-      )}
-      {item.username && (
-        <div className="flex items-center justify-between gap-2 text-sm">
-          <span className="text-muted-foreground text-xs w-16 shrink-0">Login</span>
-          <span className="font-mono truncate flex-1">{item.username}</span>
-          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onCopy(item.username, "Login")}>
-            <Copy className="w-3 h-3" />
-          </Button>
-        </div>
-      )}
-      {item.password && (
-        <div className="flex items-center justify-between gap-2 text-sm">
-          <span className="text-muted-foreground text-xs w-16 shrink-0">Heslo</span>
-          <span className="font-mono truncate flex-1">{shown ? item.password : MASKED_PASSWORD}</span>
-          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onToggle}>
-            {shown ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-          </Button>
-          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onCopy(item.password, "Heslo")}>
-            <Copy className="w-3 h-3" />
-          </Button>
-        </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -499,8 +517,8 @@ function EditDialog({
   onOpenChange,
   editing,
   setEditing,
-  editPasswordVisible,
-  setEditPasswordVisible,
+  editCredentials,
+  setEditCredentials,
   onSave,
   mode,
 }: {
@@ -508,21 +526,15 @@ function EditDialog({
   onOpenChange: (o: boolean) => void;
   editing: Partial<ProjectNote> | null;
   setEditing: (v: Partial<ProjectNote> | null) => void;
-  editPasswordVisible: boolean;
-  setEditPasswordVisible: (v: boolean) => void;
+  editCredentials: AccessCredential[];
+  setEditCredentials: (v: AccessCredential[]) => void;
   onSave: () => void;
   mode: ProjectNotesViewMode;
 }) {
   if (!editing) return null;
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        onOpenChange(o);
-        if (!o) setEditPasswordVisible(false);
-      }}
-    >
-      <DialogContent className="max-w-lg">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing.id ? "Upraviť záznam" : mode === "passwords" ? "Nový prístup" : "Nový projekt"}</DialogTitle>
         </DialogHeader>
@@ -532,8 +544,8 @@ function EditDialog({
               <Label>Názov projektu *</Label>
               <Input value={editing.title || ""} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5 col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5 sm:col-span-2">
                 <Label>Klient</Label>
                 <ClientPicker
                   clientName={editing.client_name || ""}
@@ -578,41 +590,7 @@ function EditDialog({
               <KeyRound className="w-3.5 h-3.5" />
               Prístupy {mode === "projects" && "(voliteľné)"}
             </p>
-            <div className="space-y-1.5">
-              <Label>URL</Label>
-              <Input
-                placeholder="https://..."
-                value={editing.url || ""}
-                onChange={(e) => setEditing({ ...editing, url: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Login / email</Label>
-                <Input value={editing.username || ""} onChange={(e) => setEditing({ ...editing, username: e.target.value })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Heslo</Label>
-                <div className="flex gap-1">
-                  <Input
-                    type={editPasswordVisible ? "text" : "password"}
-                    value={editing.password || ""}
-                    onChange={(e) => setEditing({ ...editing, password: e.target.value })}
-                    className="font-mono"
-                    autoComplete="off"
-                  />
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="outline"
-                    className="shrink-0"
-                    onClick={() => setEditPasswordVisible(!editPasswordVisible)}
-                  >
-                    {editPasswordVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <AccessCredentialsEditor credentials={editCredentials} onChange={setEditCredentials} />
           </div>
 
           {mode === "projects" && (
@@ -630,9 +608,9 @@ function EditDialog({
             </div>
           )}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Zrušiť</Button>
-          <Button onClick={onSave}>Uložiť</Button>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Zrušiť</Button>
+          <Button onClick={onSave} className="w-full sm:w-auto">Uložiť</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

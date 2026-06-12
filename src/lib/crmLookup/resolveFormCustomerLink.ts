@@ -92,6 +92,6 @@ export async function resolveFormCustomerLink(
     ...linked,
     client_name: linked.client_name || clientName,
     lead_id: leadId,
-    warnings,
+    warnings: [...warnings, ...(linked.warnings ?? [])],
   };
 }

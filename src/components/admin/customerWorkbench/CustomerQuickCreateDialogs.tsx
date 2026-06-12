@@ -23,6 +23,8 @@ import { Loader2 } from "lucide-react";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 import { resolveWorkbenchCustomerLink } from "@/lib/customerWorkbench/customerLink";
 import { resolveTaskCustomerFields } from "@/lib/crmLookup/taskCustomerLink";
+import { buildCommissionInsertPayload } from "@/lib/commissionCreateHelpers";
+import { assigneeSelectOptions } from "@/lib/assignees";
 import { parseInsertRowId } from "@/lib/crmLookup/resolveFormCustomerLink";
 import type { CustomerWorkbenchContext } from "@/lib/customerWorkbench/types";
 
@@ -57,6 +59,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
   const [hostingProvider, setHostingProvider] = useState("");
   const [commissionTitle, setCommissionTitle] = useState("");
   const [commissionAmount, setCommissionAmount] = useState("");
+  const [commissionImplementer, setCommissionImplementer] = useState("");
   const [rentalName, setRentalName] = useState("");
   const [rentalUrl, setRentalUrl] = useState("");
   const [rentalMonthlyPrice, setRentalMonthlyPrice] = useState("");
@@ -69,6 +72,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     setHostingProvider("");
     setCommissionTitle("");
     setCommissionAmount("");
+    setCommissionImplementer("");
     setRentalName("");
     setRentalUrl("");
     setRentalMonthlyPrice("");
@@ -239,20 +243,31 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
       toast({ title: "Zadaj názov provízie", variant: "destructive" });
       return;
     }
+    if (!commissionImplementer.trim()) {
+      toast({ title: "Vyber realizátora provízie", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     const linked = await resolveWorkbenchCustomerLink(ctx);
     const amount = parseFloat(commissionAmount.replace(",", ".")) || 0;
+    const built = buildCommissionInsertPayload({
+      title: commissionTitle.trim(),
+      amount,
+      date: todayISO(),
+      implementer: commissionImplementer.trim(),
+      payment_status: "unpaid",
+      customer_id: linked.customer_id,
+      customer_email: linked.customer_email,
+      source_type: "other",
+    });
+    if (!built.ok) {
+      setSaving(false);
+      toast({ title: "Provízia — chyba", description: built.error, variant: "destructive" });
+      return;
+    }
     const { data: saved, error } = await supabase
       .from("commissions")
-      .insert({
-        title: commissionTitle.trim(),
-        amount,
-        date: todayISO(),
-        implementer: "",
-        payment_status: "unpaid",
-        customer_id: linked.customer_id,
-        customer_email: linked.customer_email,
-      })
+      .insert(built.payload)
       .select("id")
       .maybeSingle();
     setSaving(false);
@@ -261,18 +276,22 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
       return;
     }
     if (saved?.id) {
+      if (built.warnings.length) {
+        toast({ title: "Provízia pridaná", description: built.warnings[0] });
+      } else {
+        toast({ title: "Provízia pridaná" });
+      }
       logEntityCommunicationEventSafe({
         kind: "commission",
         title: commissionTitle.trim(),
-        body_preview: `${amount.toFixed(2)} €`,
+        body_preview: `${amount.toFixed(2)} € · ${commissionImplementer.trim()}`,
         customer_id: linked.customer_id,
         customer_email: linked.customer_email,
         source_table: "commissions",
         source_id: saved.id,
         idempotency_key: `commissions:${saved.id}:created`,
-        metadata: { action: "created", payment_status: "unpaid" },
+        metadata: { action: "created", payment_status: "unpaid", source_type: "other" },
       });
-      toast({ title: "Provízia pridaná" });
       resetAndClose();
       onSaved();
     }
@@ -434,6 +453,25 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
               value={commissionAmount}
               onChange={(e) => setCommissionAmount(e.target.value)}
             />
+            <div className="space-y-1">
+              <Label className="text-xs">Realizátor *</Label>
+              <Select
+                value={commissionImplementer || "__none__"}
+                onValueChange={(v) => setCommissionImplementer(v === "__none__" ? "" : v)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="— vyber —" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— vyber —</SelectItem>
+                  {assigneeSelectOptions(commissionImplementer).map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={resetAndClose}>

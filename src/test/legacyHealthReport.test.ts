@@ -3,7 +3,7 @@ import {
   buildLegacyHealthChecklist,
   legacyHealthSeverity,
   type LegacyHealthCounts,
-} from "@/lib/crmLookup/legacyHealthReport";
+} from "@/lib/crmLookup/identityHealthChecklist";
 
 const sampleCounts = (): LegacyHealthCounts => ({
   legacyCommissions: 3,

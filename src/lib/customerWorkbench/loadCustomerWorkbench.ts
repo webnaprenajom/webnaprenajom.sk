@@ -1,3 +1,4 @@
+import { hasAnyCredentials } from "@/lib/projectCredentials";
 import { supabase } from "@/integrations/supabase/client";
 import { findCustomerById } from "@/lib/crmLookup/customers";
 import type { CommunicationEventRow } from "@/lib/communication/types";
@@ -122,12 +123,40 @@ export async function loadCustomerWorkbench(
   });
 
   let rentals: Rental[] = [];
+  const rentalQueries: Promise<{ data: Rental[] | null }>[] = [];
+  if (customerId) {
+    rentalQueries.push(
+      supabase
+        .from("rental_websites")
+        .select("id,name,url,monthly_price,implementers,client_name,created_at")
+        .eq("customer_id", customerId) as Promise<{ data: Rental[] | null }>,
+    );
+  }
   if (leadNames.length) {
-    const { data } = await supabase
-      .from("rental_websites")
-      .select("id,name,url,monthly_price,implementers,client_name,created_at")
-      .in("client_name", leadNames);
-    rentals = (data || []) as Rental[];
+    rentalQueries.push(
+      supabase
+        .from("rental_websites")
+        .select("id,name,url,monthly_price,implementers,client_name,created_at")
+        .in("client_name", leadNames) as Promise<{ data: Rental[] | null }>,
+    );
+  }
+  if (resolvedEmail) {
+    rentalQueries.push(
+      supabase
+        .from("rental_websites")
+        .select("id,name,url,monthly_price,implementers,client_name,created_at")
+        .ilike("customer_email", resolvedEmail) as Promise<{ data: Rental[] | null }>,
+    );
+  }
+  if (rentalQueries.length) {
+    const rentalResults = await Promise.all(rentalQueries);
+    const seenRentals = new Map<string, Rental>();
+    rentalResults.forEach((res) => {
+      (res.data || []).forEach((r) => {
+        if (!seenRentals.has(r.id)) seenRentals.set(r.id, r);
+      });
+    });
+    rentals = Array.from(seenRentals.values());
   }
 
   const { data: sigData } = resolvedEmail
@@ -146,7 +175,7 @@ export async function loadCustomerWorkbench(
     noteQueries.push(
       supabase
         .from("project_notes")
-        .select("id,title,client_name,url,status,username,password,updated_at")
+        .select("id,title,client_name,url,status,username,password,access_credentials,updated_at")
         .eq("customer_id", customerId) as Promise<{ data: Array<Record<string, unknown>> | null }>,
     );
   }
@@ -154,7 +183,7 @@ export async function loadCustomerWorkbench(
     noteQueries.push(
       supabase
         .from("project_notes")
-        .select("id,title,client_name,url,status,username,password,updated_at")
+        .select("id,title,client_name,url,status,username,password,access_credentials,updated_at")
         .ilike("customer_email", resolvedEmail) as Promise<{ data: Array<Record<string, unknown>> | null }>,
     );
   }
@@ -162,7 +191,7 @@ export async function loadCustomerWorkbench(
     noteQueries.push(
       supabase
         .from("project_notes")
-        .select("id,title,client_name,url,status,username,password,updated_at")
+        .select("id,title,client_name,url,status,username,password,access_credentials,updated_at")
         .in("client_name", leadNames) as Promise<{ data: Array<Record<string, unknown>> | null }>,
     );
   }
@@ -177,7 +206,12 @@ export async function loadCustomerWorkbench(
           client_name: (n.client_name as string) ?? null,
           url: (n.url as string) ?? null,
           status: n.status as string,
-          has_credentials: !!(n.username || n.password),
+          has_credentials: hasAnyCredentials({
+            url: (n.url as string) ?? null,
+            username: (n.username as string) ?? null,
+            password: (n.password as string) ?? null,
+            access_credentials: n.access_credentials,
+          }),
           updated_at: n.updated_at as string | undefined,
         });
       }

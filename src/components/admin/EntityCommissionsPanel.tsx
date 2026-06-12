@@ -18,18 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Pencil } from "lucide-react";
-import { assigneeSelectOptions } from "@/lib/assignees";
-import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import {
   COMMISSION_SOURCE_LABELS,
   type CommissionSourceType,
@@ -38,8 +28,14 @@ import {
   sourceDetailHref,
 } from "@/lib/commissionSource";
 import { COMMISSION_STATUS_LABELS } from "@/lib/finance/labels";
+import { paymentFormLabel } from "@/lib/paymentForm";
 import { resolveCustomerLinkFields } from "@/lib/crmLookup/customers";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
+import {
+  CommissionFormFields,
+  type CommissionFormState,
+} from "@/components/admin/commissions/CommissionFormFields";
+import type { PaymentFormValue } from "@/lib/paymentForm";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -56,20 +52,31 @@ interface Props {
   defaultTitle?: string;
 }
 
-export function EntityCommissionsPanel({ sourceType, sourceId, customerEmail, customerId, defaultTitle }: Props) {
+function emptyForm(defaultTitle?: string): CommissionFormState & { id: string } {
+  return {
+    id: "",
+    date: todayISO(),
+    title: defaultTitle || "",
+    implementer: "",
+    amount: "",
+    payment_status: "unpaid",
+    payment_form: "",
+    note: "",
+  };
+}
+
+export function EntityCommissionsPanel({
+  sourceType,
+  sourceId,
+  customerEmail,
+  customerId,
+  defaultTitle,
+}: Props) {
   const [rows, setRows] = useState<CommissionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    id: "",
-    date: todayISO(),
-    title: "",
-    implementer: "",
-    amount: "",
-    payment_status: "unpaid" as "paid" | "unpaid",
-    note: "",
-  });
+  const [form, setForm] = useState(emptyForm(defaultTitle));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -92,15 +99,7 @@ export function EntityCommissionsPanel({ sourceType, sourceId, customerEmail, cu
   }, [load]);
 
   const openNew = () => {
-    setForm({
-      id: "",
-      date: todayISO(),
-      title: defaultTitle || "",
-      implementer: "",
-      amount: "",
-      payment_status: "unpaid",
-      note: "",
-    });
+    setForm(emptyForm(defaultTitle));
     setDialogOpen(true);
   };
 
@@ -112,6 +111,7 @@ export function EntityCommissionsPanel({ sourceType, sourceId, customerEmail, cu
       implementer: c.implementer,
       amount: String(c.amount ?? ""),
       payment_status: c.payment_status as "paid" | "unpaid",
+      payment_form: (c.payment_form as PaymentFormValue) || "",
       note: c.note ?? "",
     });
     setDialogOpen(true);
@@ -134,6 +134,7 @@ export function EntityCommissionsPanel({ sourceType, sourceId, customerEmail, cu
       implementer: form.implementer.trim(),
       amount: parseFloat(form.amount.replace(",", ".")) || 0,
       payment_status: form.payment_status,
+      payment_form: form.payment_form || null,
       note: form.note.trim() || null,
       source_type: sourceType,
       source_id: sourceId,
@@ -173,14 +174,36 @@ export function EntityCommissionsPanel({ sourceType, sourceId, customerEmail, cu
     return { paid, unpaid };
   }, [rows]);
 
+  const renderRow = (c: CommissionRow) => (
+    <>
+      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+        {new Date(c.date).toLocaleDateString("sk-SK")}
+      </TableCell>
+      <TableCell className="text-sm">{resolveCommissionSourceLabel(c)}</TableCell>
+      <TableCell className="text-sm">{c.implementer}</TableCell>
+      <TableCell className="text-right font-medium">{Number(c.amount || 0).toFixed(2)} €</TableCell>
+      <TableCell className="text-xs hidden md:table-cell">{paymentFormLabel(c.payment_form)}</TableCell>
+      <TableCell>
+        <Badge variant="outline" className={`text-[10px] ${STATUS_CLASS[c.payment_status] ?? ""}`}>
+          {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-right">
+        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
+          <Pencil className="w-3.5 h-3.5" />
+        </Button>
+      </TableCell>
+    </>
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex gap-3 text-xs">
+        <div className="flex flex-wrap gap-3 text-xs">
           <span className="text-green-600">Vyplatené: {totals.paid.toFixed(2)} €</span>
           <span className="text-amber-600">Nezaplatené: {totals.unpaid.toFixed(2)} €</span>
         </div>
-        <Button size="sm" onClick={openNew}>
+        <Button size="sm" onClick={openNew} className="min-h-9">
           <Plus className="w-4 h-4 mr-1" /> Nová provízia
         </Button>
       </div>
@@ -194,88 +217,74 @@ export function EntityCommissionsPanel({ sourceType, sourceId, customerEmail, cu
           Žiadne provízie prepojené s týmto záznamom.
         </p>
       ) : (
-        <div className="rounded-xl border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Dátum</TableHead>
-                <TableHead>Názov</TableHead>
-                <TableHead>Realizátor</TableHead>
-                <TableHead className="text-right">Suma</TableHead>
-                <TableHead>Stav</TableHead>
-                <TableHead className="text-right">Akcie</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(c.date).toLocaleDateString("sk-SK")}
-                  </TableCell>
-                  <TableCell className="text-sm">{resolveCommissionSourceLabel(c)}</TableCell>
-                  <TableCell className="text-sm">{c.implementer}</TableCell>
-                  <TableCell className="text-right font-medium">{Number(c.amount || 0).toFixed(2)} €</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`text-[10px] ${STATUS_CLASS[c.payment_status] ?? ""}`}>
-                      {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(c)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                  </TableCell>
+        <>
+          {/* Desktop table */}
+          <div className="hidden sm:block rounded-xl border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Dátum</TableHead>
+                  <TableHead>Názov</TableHead>
+                  <TableHead>Realizátor</TableHead>
+                  <TableHead className="text-right">Suma</TableHead>
+                  <TableHead>Forma</TableHead>
+                  <TableHead>Stav</TableHead>
+                  <TableHead className="text-right">Akcie</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {rows.map((c) => (
+                  <TableRow key={c.id}>{renderRow(c)}</TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          {/* Mobile cards */}
+          <div className="sm:hidden space-y-2">
+            {rows.map((c) => (
+              <div key={c.id} className="rounded-xl border p-3 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-medium text-sm">{resolveCommissionSourceLabel(c)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(c.date).toLocaleDateString("sk-SK")} · {c.implementer}
+                    </p>
+                  </div>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => openEdit(c)}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-semibold">{Number(c.amount || 0).toFixed(2)} €</span>
+                  <Badge variant="outline" className={`text-[10px] ${STATUS_CLASS[c.payment_status] ?? ""}`}>
+                    {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">{paymentFormLabel(c.payment_form)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       <p className="text-[10px] text-muted-foreground">
-        Zdroj: {COMMISSION_SOURCE_LABELS[sourceType]}. Staršie riadky bez source_id zostávajú v legacy zobrazení financií.
+        Zdroj: {COMMISSION_SOURCE_LABELS[sourceType]}. Legacy riadky bez source_id sú len vo Financiách.
       </p>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg w-[calc(100vw-2rem)] sm:w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{form.id ? "Upraviť províziu" : "Nová provízia"}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground">Dátum</label>
-                <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Suma (€)</label>
-                <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Názov</label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Realizátor</label>
-              <Select value={form.implementer || "__none__"} onValueChange={(v) => setForm({ ...form, implementer: v === "__none__" ? "" : v })}>
-                <SelectTrigger><SelectValue placeholder="— vyber —" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">— vyber —</SelectItem>
-                  {assigneeSelectOptions(form.implementer).map((name) => (
-                    <SelectItem key={name} value={name}>{name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Poznámka</label>
-              <NoteTextarea value={form.note} onChange={(v) => setForm({ ...form, note: v })} rows={2} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
-            <Button onClick={save} disabled={saving}>
+          <CommissionFormFields
+            form={form}
+            onChange={(patch) => setForm({ ...form, ...patch })}
+          />
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
+              Zrušiť
+            </Button>
+            <Button onClick={save} disabled={saving} className="w-full sm:w-auto">
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>
           </DialogFooter>

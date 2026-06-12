@@ -30,6 +30,7 @@ export interface CommissionRow {
   source_type?: CommissionSourceType | string | null;
   source_id?: string | null;
   customer_email?: string | null;
+  payment_form?: string | null;
 }
 
 export interface SourceLabelContext {

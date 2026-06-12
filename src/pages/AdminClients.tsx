@@ -8,8 +8,22 @@ import { Badge } from "@/components/ui/badge";
 import { adminCustomerHref, adminCustomerHrefById, adminLeadHref } from "@/lib/adminNav";
 import { isCanonicalCustomerId } from "@/lib/crmLookup/customers";
 import { fetchLookupWithMeta } from "@/lib/crmLookup/fetchLookup";
+import {
+  loadUnifiedClientDirectory,
+  type UnifiedClientEntry,
+} from "@/lib/crmLookup/loadUnifiedClientDirectory";
+import { unifiedClientSectionSummary } from "@/lib/crmLookup/unifiedClientDedupe";
 import type { LookupResult } from "@/lib/crmLookup/types";
-import { AlertCircle, Loader2, Search, UserRound, Users } from "lucide-react";
+import {
+  AlertCircle,
+  FolderKanban,
+  Globe,
+  Loader2,
+  Search,
+  Server,
+  UserRound,
+  Users,
+} from "lucide-react";
 
 type ClientResult = LookupResult & { kind: "customer" | "lead" };
 
@@ -17,9 +31,26 @@ export default function AdminClients() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<ClientResult[]>([]);
+  const [directory, setDirectory] = useState<UnifiedClientEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [directoryLoading, setDirectoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+
+  const loadDirectory = useCallback(async () => {
+    setDirectoryLoading(true);
+    const { entries, error: dirError } = await loadUnifiedClientDirectory(24);
+    if (dirError) {
+      setError(dirError);
+    } else {
+      setDirectory(entries);
+    }
+    setDirectoryLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void loadDirectory();
+  }, [loadDirectory]);
 
   const runSearch = useCallback(async (q: string) => {
     const trimmed = q.trim();
@@ -79,33 +110,45 @@ export default function AdminClients() {
     navigate(adminLeadHref(row.id));
   };
 
+  const openDirectoryEntry = (entry: UnifiedClientEntry) => {
+    if (entry.customerId) {
+      navigate(adminCustomerHrefById(entry.customerId));
+      return;
+    }
+    if (entry.email) {
+      const href = adminCustomerHref(entry.email);
+      if (href) navigate(href);
+    }
+  };
+
   return (
     <AdminShell
       title="Klienti"
-      subtitle="Kanónickí klienti a leady — vyhľadajte podľa mena, e-mailu alebo ID"
+      subtitle="Jednotný zoznam klientov naprieč prenájmami, projektmi a hostingom"
     >
-      <div className="max-w-lg space-y-4">
+      <div className="max-w-3xl space-y-6">
         <div className="space-y-2">
           <Label htmlFor="client-search">Meno, e-mail, customer ID alebo lead</Label>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Input
               id="client-search"
+              className="flex-1"
               placeholder="napr. ACME s.r.o., klient@firma.sk"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && openCustomer()}
             />
-            <Button onClick={openCustomer} disabled={!query.trim() || loading}>
+            <Button onClick={openCustomer} disabled={!query.trim() || loading} className="min-h-10">
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Search className="w-4 h-4" />
               )}
-              <span className="ml-2 hidden sm:inline">Otvoriť</span>
+              <span className="ml-2">Otvoriť</span>
             </Button>
           </div>
           <p className="text-[10px] text-muted-foreground">
-            <strong>Lead</strong> = predajný kontakt. <strong>Klient</strong> = potvrdený vzťah (projekt, hosting, prenájom).
+            Deduplikácia: <strong>customer_id</strong> → e-mail → meno. Rovnaký klient sa nezobrazí dvakrát.
           </p>
         </div>
 
@@ -113,14 +156,14 @@ export default function AdminClients() {
           <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex gap-2 text-xs text-destructive">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium">Vyhľadávanie zlyhalo</p>
+              <p className="font-medium">Chyba</p>
               <p className="opacity-90">{error}</p>
             </div>
           </div>
         )}
 
         {loading && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
             <Loader2 className="w-4 h-4 animate-spin" />
             Hľadám…
           </div>
@@ -138,7 +181,7 @@ export default function AdminClients() {
               <li key={`${s.kind}-${s.id}`}>
                 <button
                   type="button"
-                  className="w-full text-left px-3 py-2.5 hover:bg-muted flex items-start gap-2"
+                  className="w-full text-left px-3 py-3 hover:bg-muted flex items-start gap-2 min-h-[44px]"
                   onClick={() => openResult(s)}
                 >
                   {s.kind === "customer" ? (
@@ -152,6 +195,9 @@ export default function AdminClients() {
                       <Badge variant="outline" className="text-[9px] h-4">
                         {s.kind === "customer" ? "Klient" : "Lead"}
                       </Badge>
+                      {s.meta?.promoted_from_lead && (
+                        <Badge variant="secondary" className="text-[9px] h-4">Z leadu</Badge>
+                      )}
                     </div>
                     {s.sublabel && (
                       <div className="text-xs text-muted-foreground truncate">{s.sublabel}</div>
@@ -163,10 +209,57 @@ export default function AdminClients() {
           </ul>
         )}
 
-        {!query.trim() && !loading && (
-          <p className="text-xs text-muted-foreground">
-            Začnite písať meno alebo e-mail — zobrazia sa kanónickí klienti aj neprepojené leady.
-          </p>
+        {!query.trim() && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold">Prehľad klientov</h2>
+              {directoryLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+            </div>
+            {!directoryLoading && directory.length === 0 && (
+              <p className="text-sm text-muted-foreground italic">Zatiaľ žiadni klienti v databáze.</p>
+            )}
+            <div className="grid gap-2 sm:grid-cols-2">
+              {directory.map((entry) => (
+                <button
+                  key={entry.customerId || entry.email || entry.nameKey || entry.displayName}
+                  type="button"
+                  className="text-left rounded-xl border p-3 hover:bg-muted/50 transition-colors min-h-[44px]"
+                  onClick={() => openDirectoryEntry(entry)}
+                  disabled={!entry.customerId && !entry.email}
+                >
+                  <div className="flex items-start gap-2">
+                    <UserRound className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm truncate">{entry.displayName}</p>
+                      {entry.email && (
+                        <p className="text-xs text-muted-foreground truncate">{entry.email}</p>
+                      )}
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {entry.projectCount > 0 && (
+                          <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
+                            <FolderKanban className="w-2.5 h-2.5" /> {entry.projectCount}
+                          </Badge>
+                        )}
+                        {entry.hostingCount > 0 && (
+                          <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
+                            <Server className="w-2.5 h-2.5" /> {entry.hostingCount}
+                          </Badge>
+                        )}
+                        {entry.rentalCount > 0 && (
+                          <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
+                            <Globe className="w-2.5 h-2.5" /> {entry.rentalCount}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {unifiedClientSectionSummary(entry)}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
         )}
       </div>
     </AdminShell>

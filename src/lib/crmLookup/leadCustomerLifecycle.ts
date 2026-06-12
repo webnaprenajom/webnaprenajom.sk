@@ -47,7 +47,10 @@ export async function ensureLeadCustomerLink(input: {
 
   const displayName = normalizeClientName(input.name) || input.name.trim() || email.split("@")[0];
   const existing = await findCustomerByEmail(email);
-  const customer = existing ?? (await ensureCustomerByEmail(email, displayName));
+  const ensured = existing
+    ? { row: existing }
+    : await ensureCustomerByEmail(email, displayName, { allowReviewCreate: true });
+  const customer = ensured.row;
 
   if (!customer) {
     adminDebugLog("leadLifecycle", "ensureCustomerByEmail failed", { leadId: input.leadId, email });

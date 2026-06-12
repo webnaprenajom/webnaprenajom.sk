@@ -60,6 +60,7 @@ interface RentalWebsite {
   url: string | null;
   client_name: string | null;
   customer_id?: string | null;
+  customer_email?: string | null;
   source: string | null;
   monthly_price: number;
   year: number;
@@ -153,6 +154,9 @@ export default function AdminRentals() {
     note: string | null;
     payment_form: string | null;
     implementer: string;
+    source_type?: string | null;
+    source_id?: string | null;
+    customer_email?: string | null;
   }>>([]);
   const [detailImplementer, setDetailImplementer] = useState<string | null>(null);
 
@@ -165,7 +169,7 @@ export default function AdminRentals() {
       (supabase as any).from("rental_websites").select("*").order("created_at", { ascending: false }),
       (supabase as any).from("rental_payments").select("*"),
       supabase.from("leads").select("name,email"),
-      supabase.from("commissions").select("id,title,date,amount,payment_status,note,payment_form,implementer"),
+      supabase.from("commissions").select("id,title,date,amount,payment_status,note,payment_form,implementer,source_type,source_id,customer_email"),
     ]);
     if (w.data) {
       setWebsites(
@@ -222,13 +226,19 @@ export default function AdminRentals() {
       .filter((i) => i.name);
     const linked = await resolveCustomerLinkFields({
       customer_id: editing.customer_id,
+      customer_email: editing.customer_email,
       client_name: editing.client_name,
+      manual_link: !!editing.customer_id,
     });
+    if (linked.warnings?.length) {
+      toast({ title: "Upozornenie klienta", description: linked.warnings[0] });
+    }
     const payload = {
       name: editing.name,
       url: editing.url || null,
       client_name: linked.client_name || null,
       customer_id: linked.customer_id,
+      customer_email: linked.customer_email,
       source: editing.source || null,
       monthly_price: Number(editing.monthly_price) || 0,
       year: Number(editing.year) || new Date().getFullYear(),
@@ -252,7 +262,7 @@ export default function AdminRentals() {
         title: payload.name,
         body_preview: payload.url ?? `${payload.monthly_price} €/mes`,
         customer_id: linked.customer_id,
-        customer_email: null,
+        customer_email: linked.customer_email,
         source_table: "rental_websites",
         source_id: recordId,
         idempotency_key: `rental_websites:${recordId}:created`,
@@ -765,9 +775,10 @@ export default function AdminRentals() {
                   <label className="text-sm font-medium">Klient</label>
                   <ClientPicker
                     clientName={editing.client_name ?? ""}
+                    customerEmail={editing.customer_email}
                     customerId={editing.customer_id}
-                    onChange={({ client_name, customer_id }) =>
-                      setEditing({ ...editing, client_name, customer_id })
+                    onChange={({ client_name, customer_id, customer_email }) =>
+                      setEditing({ ...editing, client_name, customer_id, customer_email })
                     }
                   />
                 </div>

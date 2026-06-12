@@ -21,6 +21,8 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { PAYMENT_FORM_OPTIONS, type PaymentFormValue } from "@/lib/paymentForm";
 import { customerHrefByClientName } from "@/lib/adminNav";
+import { bucketCommissionsBySection } from "@/lib/commissionFilters";
+import type { CommissionRow as SourceCommissionRow } from "@/lib/commissionSource";
 
 export type RentalImplementer = {
   name: string;
@@ -37,15 +39,8 @@ type RentalWebsite = {
   implementers: RentalImplementer[];
 };
 
-type CommissionRow = {
-  id: string;
-  title: string;
-  date: string;
-  amount: number;
-  payment_status: string;
-  note: string | null;
+type CommissionRow = SourceCommissionRow & {
   payment_form: string | null;
-  implementer: string;
 };
 
 interface Props {
@@ -108,13 +103,17 @@ export function ImplementerCommissionDetailDialog({
     return rows.sort((a, b) => b.potential - a.potential);
   }, [websites, implementerName, yearStats]);
 
+  const { section: rentalCommissionRows, legacy: legacyCommissionRows } = useMemo(() => {
+    const yearFiltered = commissions.filter(
+      (c) =>
+        c.implementer.trim().toLowerCase() === implementerName.trim().toLowerCase() &&
+        c.date.startsWith(String(year)),
+    );
+    return bucketCommissionsBySection(yearFiltered, "rental");
+  }, [commissions, implementerName, year]);
+
   const commissionRows = useMemo(() => {
-    return commissions
-      .filter(
-        (c) =>
-          c.implementer.trim().toLowerCase() === implementerName.trim().toLowerCase() &&
-          c.date.startsWith(String(year)),
-      )
+    return rentalCommissionRows
       .map((c) => ({
         id: c.id,
         title: c.title,
@@ -125,9 +124,27 @@ export function ImplementerCommissionDetailDialog({
         payment_form: (c.payment_form as PaymentFormValue) || "",
         note: c.note || "",
         payment_status: c.payment_status,
+        isLegacy: false,
       }))
       .sort((a, b) => b.potential - a.potential);
-  }, [commissions, implementerName, year]);
+  }, [rentalCommissionRows]);
+
+  const legacyRows = useMemo(() => {
+    return legacyCommissionRows
+      .map((c) => ({
+        id: c.id,
+        title: c.title,
+        date: c.date,
+        amount: Number(c.amount),
+        paid: c.payment_status === "paid" ? Number(c.amount) : 0,
+        potential: Number(c.amount),
+        payment_form: (c.payment_form as PaymentFormValue) || "",
+        note: c.note || "",
+        payment_status: c.payment_status,
+        isLegacy: true,
+      }))
+      .sort((a, b) => b.potential - a.potential);
+  }, [legacyCommissionRows]);
 
   const saveRentalRow = async (
     websiteId: string,
@@ -184,7 +201,7 @@ export function ImplementerCommissionDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Provízie — {implementerName} ({year})</DialogTitle>
         </DialogHeader>
@@ -210,7 +227,7 @@ export function ImplementerCommissionDetailDialog({
           </div>
         </div>
 
-        {rentalRows.length === 0 && commissionRows.length === 0 ? (
+        {rentalRows.length === 0 && commissionRows.length === 0 && legacyRows.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">Žiadne záznamy pre tohto realizátora.</p>
         ) : (
           <div className="rounded-lg border overflow-x-auto">
@@ -286,7 +303,59 @@ export function ImplementerCommissionDetailDialog({
                 {commissionRows.map((c) => (
                   <TableRow key={`comm-${c.id}`}>
                     <TableCell>
-                      <Badge variant="secondary" className="text-[10px]">Zákazka</Badge>
+                      <Badge variant="secondary" className="text-[10px]">Provízia · prenájom</Badge>
+                    </TableCell>
+                    <TableCell className="text-sm font-medium max-w-[140px] truncate" title={c.title}>
+                      {c.title}
+                      <div className="text-[10px] text-muted-foreground">{c.date}</div>
+                    </TableCell>
+                    <TableCell className="text-xs">—</TableCell>
+                    <TableCell className="text-right text-xs">—</TableCell>
+                    <TableCell className="text-right text-xs text-green-600">{c.paid.toFixed(2)} €</TableCell>
+                    <TableCell className="text-right text-xs">{c.potential.toFixed(2)} €</TableCell>
+                    <TableCell>
+                      <select
+                        className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
+                        value={c.payment_form}
+                        onChange={(e) =>
+                          void saveCommissionRow(c.id, {
+                            payment_form: e.target.value as PaymentFormValue,
+                          })
+                        }
+                      >
+                        <option value="">—</option>
+                        {PAYMENT_FORM_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        className="h-8 text-xs min-w-[120px]"
+                        defaultValue={c.note}
+                        placeholder="Poznámka"
+                        onBlur={(e) => {
+                          if (e.target.value !== c.note) {
+                            void saveCommissionRow(c.id, { note: e.target.value });
+                          }
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {legacyRows.length > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={8} className="bg-muted/40 text-[10px] font-medium text-muted-foreground py-2">
+                      Legacy / bez prepojenia na prenájom (nezapočítava sa do prenájmového zoznamu)
+                    </TableCell>
+                  </TableRow>
+                )}
+                {legacyRows.map((c) => (
+                  <TableRow key={`legacy-${c.id}`} className="bg-muted/20">
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-700 dark:text-amber-400">
+                        Legacy
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-sm font-medium max-w-[140px] truncate" title={c.title}>
                       {c.title}

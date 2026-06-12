@@ -11,6 +11,7 @@ export interface ProjectNote {
   url: string | null;
   username: string | null;
   password: string | null;
+  access_credentials?: unknown;
   notes: string | null;
   status: string;
   updated_at: string;
@@ -41,13 +42,13 @@ export const emptyProjectNote: Partial<ProjectNote> = {
   url: "",
   username: "",
   password: "",
+  access_credentials: [],
   notes: "",
   status: "in_progress",
 };
 
 export const MASKED_PASSWORD = "••••••••";
 
-export const hasCredentials = (item: Pick<ProjectNote, "url" | "username" | "password">) =>
-  !!(item.url?.trim() || item.username?.trim() || item.password?.trim());
+export { hasAnyCredentials as hasCredentials } from "@/lib/projectCredentials";
 
 export type ProjectNotesViewMode = "projects" | "passwords";
