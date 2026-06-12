@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,11 +31,14 @@ import {
 } from "@/lib/finance/factDrafts";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
 import { resolveCustomerIdentity, customerDisplayLabel } from "@/lib/finance/customerBridge";
-import { adminCustomerHref } from "@/lib/adminNav";
+import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import { Link } from "react-router-dom";
 import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
-import { normalizeEmail, normalizeClientName } from "@/lib/crmLookup/normalizeIdentity";
-import { resolveCustomerLinkFields } from "@/lib/crmLookup/customers";
+import { linkLeadAfterDelivery } from "@/lib/crmLookup/leadCustomerLifecycle";
+import {
+  parseInsertRowId,
+  resolveFormCustomerLink,
+} from "@/lib/crmLookup/resolveFormCustomerLink";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 
 interface Props {
@@ -57,6 +61,7 @@ const emptyForm = () => ({
 });
 
 export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm());
@@ -75,19 +80,10 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
 
   const save = async () => {
     const clientLabel = form.client_name.trim();
-    const rawEmail = form.customer_email.trim();
-    if (!clientLabel && !form.customer_id && !normalizeEmail(rawEmail)) {
+    if (!clientLabel && !form.customer_id && !form.customer_email.trim()) {
       toast({
         title: "Chýba klient",
-        description: "Zadajte meno klienta alebo vyberte zákazníka / lead z vyhľadávania.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (rawEmail && !normalizeEmail(rawEmail)) {
-      toast({
-        title: "Neplatný e-mail",
-        description: "Opravte e-mail klienta alebo ho odstráňte.",
+        description: "Zadajte meno klienta alebo vyberte klienta / lead z vyhľadávania.",
         variant: "destructive",
       });
       return;
@@ -95,56 +91,84 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
 
     setSaving(true);
     try {
-      const linked = await resolveCustomerLinkFields({
-        customer_id: form.customer_id,
-        customer_email: rawEmail || form.customer_email,
-        client_name: form.client_name,
-        createIfMissing: !!normalizeEmail(rawEmail || undefined),
-      });
-
-      const { data: saved, error } = await supabase.from("hosting_records").insert({
-        client_name: linked.client_name || null,
-        customer_email: linked.customer_email,
-        customer_id: linked.customer_id,
-        provider: form.provider.trim() || null,
-        domains_count: form.domains_count ? Number(form.domains_count) : null,
-        monthly_price: form.monthly_price ? Number(form.monthly_price) : null,
-        acquired_by: form.acquired_by.trim() || null,
-        commissionable: form.commissionable,
-        note: form.note.trim() || null,
-        active: true,
-      }).select("id").maybeSingle();
-
-      if (error) {
+      let linked;
+      try {
+        linked = await resolveFormCustomerLink({
+          customer_id: form.customer_id,
+          customer_email: form.customer_email,
+          client_name: form.client_name,
+          lead_id: form.lead_id,
+          createIfMissing: true,
+        });
+      } catch (e) {
         toast({
-          title: "Hosting sa nepodarilo uložiť",
-          description: error.message,
+          title: "Neplatný e-mail klienta",
+          description: e instanceof Error ? e.message : "Skontrolujte e-mail alebo vyberte klienta z lookup.",
           variant: "destructive",
         });
         return;
       }
 
-      if (form.lead_id && linked.customer_id) {
-        await linkLeadAfterDelivery(form.lead_id, linked.customer_id);
+      if (!linked.client_name && !linked.customer_id && !linked.customer_email) {
+        toast({
+          title: "Chýba identita klienta",
+          description: "Vyberte klienta z vyhľadávania alebo zadajte meno firmy.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      if (saved?.id) {
-        logEntityCommunicationEventSafe({
-          kind: "hosting_event",
-          title: linked.client_name || "Hosting záznam",
-          body_preview: form.provider || form.note || null,
-          customer_id: linked.customer_id,
+      const { data: saved, error } = await supabase
+        .from("hosting_records")
+        .insert({
+          client_name: linked.client_name || null,
           customer_email: linked.customer_email,
-          source_table: "hosting_records",
-          source_id: saved.id,
-          idempotency_key: `hosting_records:${saved.id}:created`,
-          metadata: { action: "created" },
+          customer_id: linked.customer_id,
+          provider: form.provider.trim() || null,
+          domains_count: form.domains_count ? Number(form.domains_count) : null,
+          monthly_price: form.monthly_price ? Number(form.monthly_price) : null,
+          acquired_by: form.acquired_by.trim() || null,
+          commissionable: form.commissionable,
+          note: form.note.trim() || null,
+          active: true,
+        })
+        .select("id")
+        .maybeSingle();
+
+      const insertResult = parseInsertRowId(saved, error, "Hosting");
+      if (!insertResult.ok) {
+        toast({
+          title: "Hosting sa nepodarilo uložiť",
+          description: insertResult.error,
+          variant: "destructive",
         });
+        return;
       }
-      toast({ title: "Hosting vytvorený" });
+
+      if (linked.lead_id && linked.customer_id) {
+        await linkLeadAfterDelivery(linked.lead_id, linked.customer_id);
+      }
+
+      logEntityCommunicationEventSafe({
+        kind: "hosting_event",
+        title: linked.client_name || "Hosting záznam",
+        body_preview: form.provider || form.note || null,
+        customer_id: linked.customer_id,
+        customer_email: linked.customer_email,
+        source_table: "hosting_records",
+        source_id: insertResult.id,
+        idempotency_key: `hosting_records:${insertResult.id}:created`,
+        metadata: { action: "created" },
+      });
+
+      toast({
+        title: "Hosting vytvorený",
+        description: "Otváram detail záznamu…",
+      });
       setForm(emptyForm());
       setDialogOpen(false);
       onSaved();
+      navigate(`/admin/hosting/${insertResult.id}`);
     } finally {
       setSaving(false);
     }
@@ -200,7 +224,10 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                   clientName: r.client_name,
                   rentalWebsiteId: r.rental_website_id,
                 });
-                const customerHref = identity.email ? adminCustomerHref(identity.email) : null;
+                const customerHref = adminCustomerHrefPreferred(
+                  (r as HostingRecordRow & { customer_id?: string | null }).customer_id,
+                  r.customer_email,
+                );
                 const hasPayment = linkedIds.has(r.id) || hasSourceLinkedRecord(ctx, "hosting_records", r.id);
                 return (
                   <TableRow key={r.id}>

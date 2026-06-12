@@ -9,6 +9,7 @@ import {
   isCanonicalCustomerId,
   type CustomerRow,
 } from "@/lib/crmLookup/customers";
+import { adminDebugLog } from "@/lib/admin/adminDebugLog";
 import { normalizeClientName, normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
 import {
   shouldPromoteLeadToCustomer,
@@ -49,6 +50,7 @@ export async function ensureLeadCustomerLink(input: {
   const customer = existing ?? (await ensureCustomerByEmail(email, displayName));
 
   if (!customer) {
+    adminDebugLog("leadLifecycle", "ensureCustomerByEmail failed", { leadId: input.leadId, email });
     return { customer_id: null, reason: "ensure_failed" };
   }
 
@@ -59,6 +61,11 @@ export async function ensureLeadCustomerLink(input: {
     .is("customer_id", null);
 
   if (error) {
+    adminDebugLog("leadLifecycle", "lead customer_id update failed", {
+      leadId: input.leadId,
+      customerId: customer.id,
+      message: error.message,
+    });
     return { customer_id: customer.id, reason: "update_failed", customer };
   }
 

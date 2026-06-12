@@ -57,6 +57,7 @@ const App = () => (
             <Route path="/admin/rollout-health" element={<AdminRolloutHealth />} />
             <Route path="/admin/notes" element={<AdminProjectNotes />} />
             <Route path="/admin/projects" element={<AdminProjects />} />
+            <Route path="/admin/projects/:id" element={<AdminProjectDetail />} />
             <Route path="/admin/passwords" element={<AdminPasswords />} />
             <Route path="/admin/hosting" element={<AdminHosting />} />
             <Route path="/admin/hosting/:id" element={<AdminHostingDetail />} />

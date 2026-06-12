@@ -45,10 +45,12 @@ import {
   hasCredentials,
 } from "./shared";
 import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
-import { normalizeClientName, normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
-import { resolveCustomerLinkFields } from "@/lib/crmLookup/customers";
 import { linkLeadAfterDelivery } from "@/lib/crmLookup/leadCustomerLifecycle";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
+import {
+  parseInsertRowId,
+  resolveFormCustomerLink,
+} from "@/lib/crmLookup/resolveFormCustomerLink";
 
 const VIEW_CONFIG: Record<
   ProjectNotesViewMode,
@@ -103,30 +105,46 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
 
   const save = async () => {
     if (!editing?.title?.trim()) {
-      toast({ title: "Zadaj názov", variant: "destructive" });
+      toast({ title: "Zadaj názov projektu", variant: "destructive" });
       return;
     }
-    const rawEmail = editing.customer_email?.trim() || "";
-    if (rawEmail && !normalizeEmail(rawEmail)) {
+
+    let linked;
+    try {
+      linked = await resolveFormCustomerLink({
+        customer_id: editing.customer_id,
+        customer_email: editing.customer_email,
+        client_name: editing.client_name,
+        lead_id: editing.lead_id,
+        createIfMissing: true,
+      });
+    } catch (e) {
       toast({
-        title: "Neplatný e-mail klienta",
-        description: "Opravte e-mail alebo vyberte klienta z vyhľadávania.",
+        title: "Klient — neplatný e-mail",
+        description:
+          e instanceof Error
+            ? e.message
+            : "Vyberte klienta z vyhľadávania alebo zadajte platný e-mail.",
         variant: "destructive",
       });
       return;
     }
-    const linked = await resolveCustomerLinkFields({
-      customer_id: editing.customer_id,
-      customer_email: rawEmail || editing.customer_email,
-      client_name: editing.client_name,
-      createIfMissing: !!normalizeEmail(rawEmail || undefined),
-    });
+
+    if (!linked.client_name && !linked.customer_id && !linked.customer_email) {
+      toast({
+        title: "Chýba klient",
+        description: "Vyberte klienta alebo lead z vyhľadávania, prípadne zadajte meno firmy.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const payload = {
       title: editing.title!.trim(),
       client_name: linked.client_name || null,
       customer_email: linked.customer_email,
       customer_id: linked.customer_id,
-      lead_id: editing.lead_id || null,
+      lead_id: linked.lead_id || editing.lead_id || null,
       project_type: editing.project_type || null,
       url: editing.url || null,
       username: editing.username || null,
@@ -140,42 +158,49 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
     const { data: saved, error } = editing.id
       ? await supabase.from("project_notes").update(payload).eq("id", editing.id).select("id").maybeSingle()
       : await supabase.from("project_notes").insert(payload).select("id").maybeSingle();
-    if (error) {
-      toast({ title: "Uloženie zlyhalo", description: error.message, variant: "destructive" });
+
+    const insertResult = parseInsertRowId(saved, error, "Projekt");
+    if (!insertResult.ok) {
+      toast({
+        title: editing.id ? "Aktualizácia zlyhala" : "Projekt sa nepodarilo vytvoriť",
+        description: insertResult.error,
+        variant: "destructive",
+      });
       return;
     }
-    if (editing.lead_id && linked.customer_id) {
-      await linkLeadAfterDelivery(editing.lead_id, linked.customer_id);
+
+    const recordId = insertResult.id;
+    if (linked.lead_id && linked.customer_id) {
+      await linkLeadAfterDelivery(linked.lead_id, linked.customer_id);
     }
-    const recordId = saved?.id ?? editing.id;
-    if (recordId) {
-      if (!editing.id) {
-        logEntityCommunicationEventSafe({
-          kind: "project_event",
-          title: payload.title,
-          body_preview: PROJECT_STATUSES.find((s) => s.value === payload.status)?.label ?? payload.status,
-          customer_id: linked.customer_id,
-          customer_email: linked.customer_email,
-          source_table: "project_notes",
-          source_id: recordId,
-          idempotency_key: `project_notes:${recordId}:created`,
-          metadata: { entity_status: payload.status, action: "created" },
-        });
-      } else if (statusChanged) {
-        logEntityCommunicationEventSafe({
-          kind: "project_event",
-          title: `Stav: ${payload.title}`,
-          body_preview: PROJECT_STATUSES.find((s) => s.value === payload.status)?.label ?? payload.status,
-          customer_id: linked.customer_id,
-          customer_email: linked.customer_email,
-          source_table: "project_notes",
-          source_id: recordId,
-          idempotency_key: `project_notes:${recordId}:status:${payload.status}`,
-          metadata: { entity_status: payload.status, action: "status_change" },
-        });
-      }
+
+    if (!editing.id) {
+      logEntityCommunicationEventSafe({
+        kind: "project_event",
+        title: payload.title,
+        body_preview: PROJECT_STATUSES.find((s) => s.value === payload.status)?.label ?? payload.status,
+        customer_id: linked.customer_id,
+        customer_email: linked.customer_email,
+        source_table: "project_notes",
+        source_id: recordId,
+        idempotency_key: `project_notes:${recordId}:created`,
+        metadata: { entity_status: payload.status, action: "created" },
+      });
+    } else if (statusChanged) {
+      logEntityCommunicationEventSafe({
+        kind: "project_event",
+        title: `Stav: ${payload.title}`,
+        body_preview: PROJECT_STATUSES.find((s) => s.value === payload.status)?.label ?? payload.status,
+        customer_id: linked.customer_id,
+        customer_email: linked.customer_email,
+        source_table: "project_notes",
+        source_id: recordId,
+        idempotency_key: `project_notes:${recordId}:status:${payload.status}`,
+        metadata: { entity_status: payload.status, action: "status_change" },
+      });
     }
-    toast({ title: editing.id ? "Aktualizované" : "Pridané" });
+
+    toast({ title: editing.id ? "Aktualizované" : "Projekt vytvorený" });
     setOpen(false);
     setEditing(null);
     void load();

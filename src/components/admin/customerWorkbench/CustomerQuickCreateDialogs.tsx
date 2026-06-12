@@ -23,6 +23,7 @@ import { Loader2 } from "lucide-react";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 import { resolveWorkbenchCustomerLink } from "@/lib/customerWorkbench/customerLink";
 import { resolveTaskCustomerFields } from "@/lib/crmLookup/taskCustomerLink";
+import { parseInsertRowId } from "@/lib/crmLookup/resolveFormCustomerLink";
 import type { CustomerWorkbenchContext } from "@/lib/customerWorkbench/types";
 
 export type QuickCreateKind = "task" | "project" | "hosting" | "commission" | "rental";
@@ -127,27 +128,26 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
       })
       .select("id")
       .maybeSingle();
+    const insertResult = parseInsertRowId(saved, error, "Projekt");
     setSaving(false);
-    if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    if (!insertResult.ok) {
+      toast({ title: "Projekt sa nepodarilo vytvoriť", description: insertResult.error, variant: "destructive" });
       return;
     }
-    if (saved?.id) {
-      logEntityCommunicationEventSafe({
-        kind: "project_event",
-        title: projectTitle.trim(),
-        customer_id: linked.customer_id,
-        customer_email: linked.customer_email,
-        source_table: "project_notes",
-        source_id: saved.id,
-        idempotency_key: `project_notes:${saved.id}:created`,
-        metadata: { action: "created" },
-      });
-      toast({ title: "Projekt vytvorený" });
-      resetAndClose();
-      onSaved();
-      navigate(`/admin/projects/${saved.id}`);
-    }
+    logEntityCommunicationEventSafe({
+      kind: "project_event",
+      title: projectTitle.trim(),
+      customer_id: linked.customer_id,
+      customer_email: linked.customer_email,
+      source_table: "project_notes",
+      source_id: insertResult.id,
+      idempotency_key: `project_notes:${insertResult.id}:created`,
+      metadata: { action: "created" },
+    });
+    toast({ title: "Projekt vytvorený" });
+    resetAndClose();
+    onSaved();
+    navigate(`/admin/projects/${insertResult.id}`);
   };
 
   const saveHosting = async () => {
@@ -165,28 +165,27 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
       })
       .select("id")
       .maybeSingle();
+    const insertResult = parseInsertRowId(saved, error, "Hosting");
     setSaving(false);
-    if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+    if (!insertResult.ok) {
+      toast({ title: "Hosting sa nepodarilo vytvoriť", description: insertResult.error, variant: "destructive" });
       return;
     }
-    if (saved?.id) {
-      logEntityCommunicationEventSafe({
-        kind: "hosting_event",
-        title: linked.client_name || "Hosting záznam",
-        body_preview: hostingProvider || null,
-        customer_id: linked.customer_id,
-        customer_email: linked.customer_email,
-        source_table: "hosting_records",
-        source_id: saved.id,
-        idempotency_key: `hosting_records:${saved.id}:created`,
-        metadata: { action: "created" },
-      });
-      toast({ title: "Hosting vytvorený" });
-      resetAndClose();
-      onSaved();
-      navigate(`/admin/hosting/${saved.id}`);
-    }
+    logEntityCommunicationEventSafe({
+      kind: "hosting_event",
+      title: linked.client_name || "Hosting záznam",
+      body_preview: hostingProvider || null,
+      customer_id: linked.customer_id,
+      customer_email: linked.customer_email,
+      source_table: "hosting_records",
+      source_id: insertResult.id,
+      idempotency_key: `hosting_records:${insertResult.id}:created`,
+      metadata: { action: "created" },
+    });
+    toast({ title: "Hosting vytvorený" });
+    resetAndClose();
+    onSaved();
+    navigate(`/admin/hosting/${insertResult.id}`);
   };
 
   const saveRental = async () => {

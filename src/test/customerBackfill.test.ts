@@ -6,7 +6,7 @@ import {
   type CustomerSeed,
   type LeadSeed,
 } from "@/lib/crmLookup/customerBackfill";
-import { isCanonicalCustomerId } from "@/lib/crmLookup/customers";
+import { isCanonicalCustomerId } from "@/lib/crmLookup/entityIds";
 
 describe("customers helpers", () => {
   it("detects UUID customer ids", () => {

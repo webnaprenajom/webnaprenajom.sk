@@ -7,5 +7,6 @@ export async function resolveWorkbenchCustomerLink(ctx: CustomerWorkbenchContext
     customer_id: ctx.resolvedCustomerId,
     customer_email: ctx.emailKey || null,
     client_name: ctx.clientName,
+    createIfMissing: !!ctx.emailKey,
   });
 }

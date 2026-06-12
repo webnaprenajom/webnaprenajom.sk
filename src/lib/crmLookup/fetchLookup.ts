@@ -6,6 +6,11 @@ import {
   normalizeClientName,
 } from "./normalizeIdentity";
 import { isCanonicalCustomerId } from "./customers";
+import {
+  mapCustomerSearchRow,
+  mapLeadSearchRow,
+  mergeClientSearchResults,
+} from "./clientSearch";
 import type { LookupKind, LookupResult } from "./types";
 
 const DEFAULT_LIMIT = 25;
@@ -54,15 +59,7 @@ async function searchCustomers(q: string, limit: number): Promise<LookupFetchRes
   if (!data) return { rows: [], error: null };
 
   return {
-    rows: (data as any[]).map((row) => ({
-      kind: "customer" as const,
-      id: row.id,
-      label: row.display_name,
-      sublabel: row.email || undefined,
-      email: normalizeEmail(row.email),
-      clientName: normalizeClientName(row.display_name),
-      meta: { customer_id: row.id },
-    })),
+    rows: (data as any[]).map((row) => mapCustomerSearchRow(row)),
     error: null,
   };
 }
@@ -79,17 +76,8 @@ async function searchClientsCombined(q: string, limit: number): Promise<LookupFe
     return { rows: [], error: customerRes.error };
   }
 
-  const seenEmails = new Set(
-    customerRes.rows.map((c) => c.email).filter(Boolean) as string[],
-  );
-
-  const dedupedLeads = leadRes.rows.filter((l) => {
-    if (!l.email) return true;
-    return !seenEmails.has(l.email);
-  });
-
   return {
-    rows: [...customerRes.rows, ...dedupedLeads].slice(0, limit),
+    rows: mergeClientSearchResults(customerRes.rows, leadRes.rows, limit),
     error: customerRes.error || leadRes.error,
   };
 }
@@ -132,7 +120,7 @@ export async function fetchLookupWithMeta(
 async function searchLeads(q: string, limit: number, kind: LookupKind): Promise<LookupFetchResult> {
   let req = supabase
     .from("leads")
-    .select("id,name,email")
+    .select("id,name,email,customer_id,status")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -144,14 +132,15 @@ async function searchLeads(q: string, limit: number, kind: LookupKind): Promise<
   if (!data) return { rows: [], error: null };
 
   return {
-    rows: data.map((row) => ({
-      kind: kind === "email" ? "email" : "lead",
-      id: row.id,
-      label: (row.name || row.email || "—").trim(),
-      sublabel: row.email || undefined,
-      email: normalizeEmail(row.email),
-      clientName: normalizeClientName(row.name),
-    })),
+    rows: data.map((row) =>
+      mapLeadSearchRow({
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        customer_id: row.customer_id,
+        status: row.status,
+      }),
+    ),
     error: null,
   };
 }

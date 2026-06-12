@@ -3,6 +3,7 @@ import { EntitySearchPicker } from "./EntitySearchPicker";
 import { ClientLinkBadge, CanonicalCustomerBadge } from "./LinkStatusBadge";
 import type { LookupResult } from "@/lib/crmLookup/types";
 import { normalizeClientName, normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
+import { isCanonicalCustomerId } from "@/lib/crmLookup/customers";
 
 export interface ClientPickerValue {
   client_name: string;
@@ -86,7 +87,7 @@ export function ClientPicker({
       onChange({
         client_name: normalizeClientName(result.clientName || result.label) || result.label,
         customer_email: normalizeEmail(result.email),
-        lead_id: null,
+        lead_id: (result.meta?.lead_id as string | undefined) ?? null,
         customer_id: result.id,
       });
       return;
@@ -95,8 +96,11 @@ export function ClientPicker({
     onChange({
       client_name: normalizeClientName(result.clientName || result.label) || result.label,
       customer_email: normalizeEmail(result.email),
-      lead_id: result.kind === "lead" || result.kind === "client" ? result.id : null,
-      customer_id: null,
+      lead_id: result.kind === "lead" ? result.id : null,
+      customer_id:
+        result.meta?.customer_id && isCanonicalCustomerId(String(result.meta.customer_id))
+          ? String(result.meta.customer_id)
+          : null,
     });
   };
 

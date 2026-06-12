@@ -14,16 +14,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "@/hooks/use-toast";
-import { adminCustomerHref, adminCustomerHrefPreferred } from "@/lib/adminNav";
+import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import {
   ConfirmedLinkBadge,
   EstimatedLinkBadge,
   StandaloneEntityBadge,
 } from "@/components/admin/lookup/LinkStatusBadge";
 import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
+import { isValidEntityId } from "@/lib/crmLookup/resolveFormCustomerLink";
+import { adminDebugLog } from "@/lib/admin/adminDebugLog";
 
 export default function AdminHostingDetail() {
   const { id = "" } = useParams();
@@ -32,6 +33,7 @@ export default function AdminHostingDetail() {
   const [record, setRecord] = useState<HostingRecordRow | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [linkedRental, setLinkedRental] = useState<{ id: string; name: string; url: string | null } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [estimatedProjects, setEstimatedProjects] = useState<Array<{ id: string; title: string }>>([]);
 
   useEffect(() => {
@@ -42,10 +44,27 @@ export default function AdminHostingDetail() {
 
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
+
+    if (!isValidEntityId(id)) {
+      setLoadError("Neplatné ID hostingu v adrese. Vráťte sa do zoznamu a otvorte záznam znova.");
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase.from("hosting_records").select("*").eq("id", id).maybeSingle();
-    if (error || !data) {
-      toast({ title: "Hosting nenájdený", variant: "destructive" });
-      navigate("/admin/hosting", { replace: true });
+    adminDebugLog("hostingDetail", "fetch", { id, found: !!data, error: error?.message });
+
+    if (error) {
+      setLoadError(`Hosting sa nepodarilo načítať: ${error.message}`);
+      setLoading(false);
+      return;
+    }
+    if (!data) {
+      setLoadError(
+        "Hosting záznam neexistuje alebo k nemu nemáte prístup. Ak ste práve vytvorili záznam, obnovte zoznam a skúste znova.",
+      );
+      setLoading(false);
       return;
     }
     const row = data as HostingRecordRow;
@@ -79,11 +98,35 @@ export default function AdminHostingDetail() {
     setLoading(false);
   };
 
-  if (loading || !record) {
+  if (loading) {
     return (
       <AdminShell title="Hosting" subtitle="Načítavam…">
         <div className="py-16 flex justify-center">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      </AdminShell>
+    );
+  }
+
+  if (loadError || !record) {
+    return (
+      <AdminShell
+        title="Hosting"
+        subtitle="Záznam sa nepodarilo načítať"
+        actions={
+          <Button size="sm" variant="outline" onClick={() => navigate("/admin/hosting")}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Späť na zoznam
+          </Button>
+        }
+      >
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 max-w-lg space-y-3">
+          <div className="flex gap-2 text-destructive">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-sm">{loadError ?? "Neznáma chyba"}</p>
+          </div>
+          <Button onClick={() => void load()} variant="outline" size="sm">
+            Skúsiť znova
+          </Button>
         </div>
       </AdminShell>
     );
