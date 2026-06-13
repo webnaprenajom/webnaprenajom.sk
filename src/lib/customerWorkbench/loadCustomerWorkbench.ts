@@ -1,6 +1,7 @@
 import { hasAnyCredentials } from "@/lib/projectCredentials";
 import { supabase } from "@/integrations/supabase/client";
 import { findCustomerById } from "@/lib/crmLookup/customers";
+import type { Json } from "@/integrations/supabase/types";
 import type { CommunicationEventRow } from "@/lib/communication/types";
 import type {
   CommissionBrief,
@@ -210,7 +211,7 @@ export async function loadCustomerWorkbench(
             url: (n.url as string) ?? null,
             username: (n.username as string) ?? null,
             password: (n.password as string) ?? null,
-            access_credentials: n.access_credentials,
+            access_credentials: n.access_credentials as Json,
           }),
           updated_at: n.updated_at as string | undefined,
         });
