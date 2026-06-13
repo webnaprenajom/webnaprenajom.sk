@@ -324,7 +324,7 @@ export function communicationEventToTimeline(row: CommunicationEventRow): Timeli
     detailParts.push(origin);
   } else {
     if (row.body_preview) detailParts.push(row.body_preview);
-    if (kind === "email_out" || kind === "note") {
+    if (kind === "note") {
       detailParts.push(origin);
     } else if (kind && origin !== COMMUNICATION_KIND_LABELS[kind]) {
       detailParts.push(origin);

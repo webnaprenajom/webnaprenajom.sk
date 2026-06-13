@@ -7,6 +7,9 @@ import {
   validateCommissionSourceFields,
   type CommissionSourceType,
 } from "@/lib/commissionSource";
+import type { Database } from "@/integrations/supabase/types";
+
+type CommissionInsertPayload = Database["public"]["Tables"]["commissions"]["Insert"];
 
 export type CommissionInsertInput = {
   title: string;
@@ -23,8 +26,8 @@ export type CommissionInsertInput = {
 };
 
 export type CommissionInsertBuildResult =
-  | { ok: true; payload: Record<string, unknown>; warnings: string[] }
-  | { ok: false; error: string; warnings: string[] };
+  | { ok: true; payload: CommissionInsertPayload; warnings: string[]; error?: never }
+  | { ok: false; payload?: never; error: string; warnings: string[] };
 
 export function buildCommissionInsertPayload(input: CommissionInsertInput): CommissionInsertBuildResult {
   const warnings: string[] = [];
