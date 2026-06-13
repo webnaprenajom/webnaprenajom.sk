@@ -6,7 +6,13 @@
 import type { Database, Json } from "@/integrations/supabase/types";
 
 export type CommunicationEventRow =
-  Database["public"]["Tables"]["communication_events"]["Row"];
+  Partial<Database["public"]["Tables"]["communication_events"]["Row"]> & {
+    id: string;
+    kind: string;
+    title: string;
+    occurred_at: string;
+    created_at: string;
+  };
 
 export type CommunicationEventInsert =
   Database["public"]["Tables"]["communication_events"]["Insert"];

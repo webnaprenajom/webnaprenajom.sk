@@ -57,7 +57,7 @@ export default function AdminProjectDetail() {
     const row = data as ProjectNote;
     setProject(row);
 
-    const tasks: Promise<void>[] = [];
+    const tasks: PromiseLike<void>[] = [];
 
     if (row.lead_id) {
       tasks.push(
