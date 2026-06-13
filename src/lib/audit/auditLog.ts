@@ -3,6 +3,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { buildAuditSummary } from "@/lib/audit/auditLogFormat";
 
 export { buildAuditSummary } from "@/lib/audit/auditLogFormat";
@@ -40,19 +41,22 @@ export type AuditLogInput = {
   before?: Record<string, unknown> | null;
   after?: Record<string, unknown> | null;
 };
+
+type AdminAuditInsert = Database["public"]["Tables"]["admin_audit_log"]["Insert"];
 
 /** Best-effort audit insert — failures are logged, never block primary action. */
 export async function logAdminAuditEvent(input: AuditLogInput): Promise<void> {
   try {
-    const { error } = await supabase.from("admin_audit_log").insert({
+    const payload: AdminAuditInsert = {
       actor_user_id: input.actorUserId,
       action_type: input.actionType,
       target_type: input.targetType,
       target_id: input.targetId ?? null,
       summary: input.summary ?? buildAuditSummary(input.actionType, input.targetId || input.targetType),
-      before_state: input.before ?? null,
-      after_state: input.after ?? null,
-    });
+      before_state: (input.before ?? null) as Json | null,
+      after_state: (input.after ?? null) as Json | null,
+    };
+    const { error } = await supabase.from("admin_audit_log").insert(payload);
     if (error) {
       console.error("[audit] insert failed", error.message);
     }

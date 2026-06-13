@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          actor_user_id: string | null
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string
+          id: string
+          summary: string | null
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          actor_user_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          id?: string
+          summary?: string | null
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          actor_user_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          id?: string
+          summary?: string | null
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       commission_rule_overrides: {
         Row: {
           active: boolean
@@ -1007,6 +1043,7 @@ export type Database = {
       }
       project_notes: {
         Row: {
+          access_credentials: Json
           client_name: string | null
           created_at: string
           customer_email: string | null
@@ -1024,6 +1061,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          access_credentials?: Json
           client_name?: string | null
           created_at?: string
           customer_email?: string | null
@@ -1041,6 +1079,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          access_credentials?: Json
           client_name?: string | null
           created_at?: string
           customer_email?: string | null
@@ -1378,7 +1417,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_list_auth_users: {
+        Args: never
+        Returns: {
+          auth_display_name: string
+          created_at: string
+          email: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"

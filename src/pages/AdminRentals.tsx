@@ -125,12 +125,17 @@ const ASSIGNEES = ["Peter", "Maroš", "Matuš"];
 const normalizeImplementers = (raw: unknown): Implementer[] => {
   if (!Array.isArray(raw)) return [];
   return raw
-    .map((r: any) => ({
-      name: String(r?.name ?? "").trim(),
-      percentage: Number(r?.percentage) || 0,
-      payment_form: (r?.payment_form as PaymentFormValue) || "",
-      note: String(r?.note ?? "").trim(),
-    }))
+    .map((r: any): Implementer => {
+      const paymentForm = ["cash", "iban", "crypto", "faktura", "ine"].includes(String(r?.payment_form))
+        ? (r.payment_form as PaymentFormValue)
+        : "";
+      return {
+        name: String(r?.name ?? "").trim(),
+        percentage: Number(r?.percentage) || 0,
+        payment_form: paymentForm,
+        note: String(r?.note ?? "").trim(),
+      };
+    })
     .filter((r) => r.name);
 };
 
@@ -249,8 +254,8 @@ export default function AdminRentals() {
     };
     const isCreate = !editing.id;
     const res = isCreate
-      ? await supabase.from("rental_websites").insert(payload).select("id").maybeSingle()
-      : await supabase.from("rental_websites").update(payload).eq("id", editing.id!).select("id").maybeSingle();
+      ? await (supabase as any).from("rental_websites").insert(payload).select("id").maybeSingle()
+      : await (supabase as any).from("rental_websites").update(payload).eq("id", editing.id!).select("id").maybeSingle();
     if (res.error) {
       toast({ title: "Chyba", description: res.error.message, variant: "destructive" });
       return;

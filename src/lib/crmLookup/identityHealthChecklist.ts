@@ -98,7 +98,7 @@ export interface IdentityHealthCounts extends LegacyHealthCounts {
   customersWithoutEmail: number;
 }
 
-export interface IdentityHealthItem extends LegacyHealthItem {
+export interface IdentityHealthItem extends Omit<LegacyHealthItem, "id"> {
   id: keyof IdentityHealthCounts;
 }
 

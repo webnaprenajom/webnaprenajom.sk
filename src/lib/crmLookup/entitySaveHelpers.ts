@@ -23,8 +23,8 @@ export function validateFormEmail(raw: string | null | undefined): {
 }
 
 export type InsertRowResult<T extends string = string> =
-  | { ok: true; id: T }
-  | { ok: false; error: string; code?: string };
+  | { ok: true; id: T; error?: never; code?: never }
+  | { ok: false; id?: never; error: string; code?: string };
 
 export function parseInsertRowId(
   data: { id?: string } | null | undefined,
