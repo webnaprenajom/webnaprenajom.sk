@@ -69,6 +69,10 @@ function HealthRow({ item }: { item: IdentityHealthItem }) {
 }
 
 export default function AdminRolloutHealth() {
+  return <AdminRolloutHealthPage />;
+}
+
+function AdminRolloutHealthPage() {
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState<IdentityHealthCounts>(emptyCounts);
   const [error, setError] = useState<string | null>(null);

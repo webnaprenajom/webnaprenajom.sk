@@ -32,6 +32,7 @@ import AdminFinance from "./pages/AdminFinance";
 import OrderSignature from "./pages/OrderSignature";
 import OfferRedeemDialog from "./components/OfferRedeemDialog";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { ProtectedAdminOutlet } from "./components/admin/rbac/ProtectedAdminOutlet";
 
 const queryClient = new QueryClient();
 
@@ -48,31 +49,32 @@ const App = () => (
             <Route path="/en" element={<LocalizedPage lang="en" />} />
             <Route path="/de" element={<LocalizedPage lang="de" />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/today" element={<AdminToday />} />
-            <Route path="/admin/customer/:customerKey" element={<AdminCustomer />} />
-            <Route path="/admin/customers/:customerId" element={<AdminCustomer />} />
-            <Route path="/admin/logs" element={<AdminLogs />} />
-            <Route path="/admin/communication-ops" element={<AdminCommunicationOps />} />
-            <Route path="/admin/rollout-health" element={<AdminRolloutHealth />} />
-            <Route path="/admin/notes" element={<AdminProjectNotes />} />
-            <Route path="/admin/projects" element={<AdminProjects />} />
-            <Route path="/admin/projects/:id" element={<AdminProjectDetail />} />
-            <Route path="/admin/passwords" element={<AdminPasswords />} />
-            <Route path="/admin/hosting" element={<AdminHosting />} />
-            <Route path="/admin/hosting/:id" element={<AdminHostingDetail />} />
-            <Route path="/admin/clients" element={<AdminClients />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/commissions" element={<AdminCommissionsRedirect />} />
-            <Route path="/admin/finance" element={<AdminFinance />} />
-            <Route path="/admin/tasks" element={<AdminTasks />} />
-            <Route path="/admin/rentals" element={<AdminRentals />} />
-            <Route path="/admin/wheel-leads" element={<AdminWheelLeads />} />
-            <Route path="/admin/debug" element={<AdminDebug />} />
-            <Route path="/admin/signatures" element={<AdminSignatures />} />
-            <Route path="/admin/designs" element={<AdminDesigns />} />
+            <Route path="/admin" element={<ProtectedAdminOutlet />}>
+              <Route index element={<Admin />} />
+              <Route path="today" element={<AdminToday />} />
+              <Route path="customer/:customerKey" element={<AdminCustomer />} />
+              <Route path="customers/:customerId" element={<AdminCustomer />} />
+              <Route path="logs" element={<AdminLogs />} />
+              <Route path="communication-ops" element={<AdminCommunicationOps />} />
+              <Route path="rollout-health" element={<AdminRolloutHealth />} />
+              <Route path="notes" element={<AdminProjectNotes />} />
+              <Route path="projects" element={<AdminProjects />} />
+              <Route path="projects/:id" element={<AdminProjectDetail />} />
+              <Route path="passwords" element={<AdminPasswords />} />
+              <Route path="hosting" element={<AdminHosting />} />
+              <Route path="hosting/:id" element={<AdminHostingDetail />} />
+              <Route path="clients" element={<AdminClients />} />
+              <Route path="settings" element={<AdminSettings />} />
+              <Route path="commissions" element={<AdminCommissionsRedirect />} />
+              <Route path="finance" element={<AdminFinance />} />
+              <Route path="tasks" element={<AdminTasks />} />
+              <Route path="rentals" element={<AdminRentals />} />
+              <Route path="wheel-leads" element={<AdminWheelLeads />} />
+              <Route path="debug" element={<AdminDebug />} />
+              <Route path="signatures" element={<AdminSignatures />} />
+              <Route path="designs" element={<AdminDesigns />} />
+            </Route>
             <Route path="/objednavka" element={<OrderSignature />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>

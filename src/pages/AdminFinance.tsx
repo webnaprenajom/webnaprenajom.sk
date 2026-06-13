@@ -32,10 +32,23 @@ import { buildFinanceSnapshot } from "@/lib/finance/buildFinanceSnapshot";
 import { FINANCE_TRUTH_DISCLAIMER } from "@/lib/finance/labels";
 import { FinanceImplementerDetailDialog } from "@/components/admin/finance/FinanceImplementerDetailDialog";
 import type { CommissionRow } from "@/lib/commissionSource";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import {
+  canAccessFinanceAdvanced,
+  canAccessOperationalCrm,
+  filterCommissionsForUser,
+  implementerTotalsFromCommissions,
+  resolveScopedCommissionEmpty,
+  type AccessContext,
+} from "@/lib/rbac/permissions";
+import { Navigate } from "react-router-dom";
+import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
+import { ScopedEmptyState } from "@/components/admin/rbac/ScopedEmptyState";
 
 const AdminFinance = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const advanced = searchParams.get("advanced") === "1";
+  const access = useAdminAccess();
+  const advanced = searchParams.get("advanced") === "1" && canAccessFinanceAdvanced(access.role);
   const legacyCommissions = searchParams.get("legacy") === "commissions";
 
   const [loading, setLoading] = useState(true);
@@ -149,22 +162,25 @@ const AdminFinance = () => {
     return { paidInvoices, unpaidInvoices, receivedSum, pendingSum };
   }, [raw.payments, snapshot, year]);
 
+  const accessCtx: AccessContext = useMemo(
+    () => ({
+      role: access.role,
+      userId: access.userId,
+      implementerName: access.implementerName,
+    }),
+    [access.role, access.userId, access.implementerName],
+  );
+
+  const scopedCommissions = useMemo(
+    () => filterCommissionsForUser(raw.commissions, accessCtx),
+    [raw.commissions, accessCtx],
+  );
+
   const implementerTotals = useMemo(() => {
-    const map = new Map<string, { paid: number; unpaid: number; count: number }>();
-    for (const c of raw.commissions) {
-      const key = (c.implementer || "").trim();
-      if (!key) continue;
-      const cur = map.get(key) || { paid: 0, unpaid: 0, count: 0 };
-      const amt = Number(c.amount || 0);
-      if (c.payment_status === "paid") cur.paid += amt;
-      else cur.unpaid += amt;
-      cur.count += 1;
-      map.set(key, cur);
-    }
-    return Array.from(map.entries()).sort(
+    return Array.from(implementerTotalsFromCommissions(scopedCommissions).entries()).sort(
       (a, b) => b[1].paid + b[1].unpaid - (a[1].paid + a[1].unpaid),
     );
-  }, [raw.commissions]);
+  }, [scopedCommissions]);
 
   const settlementDraftsForGov = useMemo(
     () =>
@@ -194,6 +210,7 @@ const AdminFinance = () => {
   );
 
   const toggleAdvanced = () => {
+    if (!canAccessFinanceAdvanced(access.role)) return;
     const next = new URLSearchParams(searchParams);
     if (advanced) {
       next.delete("advanced");
@@ -206,6 +223,13 @@ const AdminFinance = () => {
   };
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+
+  const scopedEmpty = useMemo(() => resolveScopedCommissionEmpty(accessCtx), [accessCtx]);
+  const showOrgFinance = canAccessOperationalCrm(access.role);
+
+  if (!access.authChecking && searchParams.get("advanced") === "1" && !canAccessFinanceAdvanced(access.role)) {
+    return <Navigate to="/admin/finance" replace />;
+  }
 
   return (
     <AdminShell
@@ -224,22 +248,30 @@ const AdminFinance = () => {
               </option>
             ))}
           </select>
-          <Button size="sm" variant={advanced ? "default" : "outline"} onClick={toggleAdvanced}>
-            {advanced ? (
-              <>
-                <ChevronUp className="w-4 h-4 mr-1" /> Skryť pokročilé
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-4 h-4 mr-1" /> Pokročilé
-              </>
-            )}
-          </Button>
+          {canAccessFinanceAdvanced(access.role) && (
+            <Button size="sm" variant={advanced ? "default" : "outline"} onClick={toggleAdvanced}>
+              {advanced ? (
+                <>
+                  <ChevronUp className="w-4 h-4 mr-1" /> Skryť pokročilé
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4 mr-1" /> Pokročilé
+                </>
+              )}
+            </Button>
+          )}
+          {canAccessFinanceAdvanced(access.role) ? null : (
+            <Badge variant="outline" className="text-[10px]">
+              {access.implementerName || "Vlastné provízie"}
+            </Badge>
+          )}
         </div>
       }
     >
       <div className="space-y-4">
-        {legacyCommissions && (
+        <TeamProfileNotice />
+        {legacyCommissions && showOrgFinance && (
           <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
@@ -278,13 +310,18 @@ const AdminFinance = () => {
           <DailyFinanceView
             dailyKpis={dailyKpis}
             implementerTotals={implementerTotals}
-            commissions={raw.commissions as CommissionRow[]}
+            commissions={scopedCommissions as CommissionRow[]}
             activeIssueCount={activeIssueCount}
+            scopedEmpty={scopedEmpty}
+            showOrgKpis={showOrgFinance}
+            implementerLabel={access.implementerName}
             onOpenAdvanced={() => {
+              if (!canAccessFinanceAdvanced(access.role)) return;
               const next = new URLSearchParams(searchParams);
               next.set("advanced", "1");
               setSearchParams(next, { replace: true });
             }}
+            showAdvancedLink={canAccessFinanceAdvanced(access.role)}
           />
         )}
       </div>
@@ -297,34 +334,61 @@ function DailyFinanceView({
   implementerTotals,
   commissions,
   activeIssueCount,
+  scopedEmpty,
+  showOrgKpis,
+  implementerLabel,
   onOpenAdvanced,
+  showAdvancedLink = true,
 }: {
   dailyKpis: { paidInvoices: number; unpaidInvoices: number; receivedSum: number; pendingSum: number };
   implementerTotals: [string, { paid: number; unpaid: number; count: number }][];
   commissions: CommissionRow[];
   activeIssueCount: number;
+  scopedEmpty: ReturnType<typeof resolveScopedCommissionEmpty>;
+  showOrgKpis: boolean;
+  implementerLabel: string | null;
   onOpenAdvanced: () => void;
+  showAdvancedLink?: boolean;
 }) {
   const [detailImplementer, setDetailImplementer] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard label="Zaplatené faktúry" value={String(dailyKpis.paidInvoices)} hint="Prenájmy — mesačné záznamy" />
-        <KpiCard label="Nezaplatené / fakturované" value={String(dailyKpis.unpaidInvoices)} hint="Čaká na úhradu" accent="text-amber-600" />
-        <KpiCard label="Prijaté platby" value={`${dailyKpis.receivedSum.toFixed(0)} €`} accent="text-green-600" />
-        <KpiCard label="Čakajúce platby" value={`${dailyKpis.pendingSum.toFixed(0)} €`} accent="text-orange-500" />
-      </section>
+      {!showOrgKpis && implementerLabel && (
+        <p className="text-xs text-muted-foreground border border-border rounded-lg px-3 py-2 bg-muted/20">
+          Zobrazujú sa provízie pre realizátora <strong>{implementerLabel}</strong>.
+        </p>
+      )}
+
+      {showOrgKpis && (
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <KpiCard label="Zaplatené faktúry" value={String(dailyKpis.paidInvoices)} hint="Prenájmy — mesačné záznamy" />
+          <KpiCard label="Nezaplatené / fakturované" value={String(dailyKpis.unpaidInvoices)} hint="Čaká na úhradu" accent="text-amber-600" />
+          <KpiCard label="Prijaté platby" value={`${dailyKpis.receivedSum.toFixed(0)} €`} accent="text-green-600" />
+          <KpiCard label="Čakajúce platby" value={`${dailyKpis.pendingSum.toFixed(0)} €`} accent="text-orange-500" />
+        </section>
+      )}
 
       <section className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold">Provízie podľa realizátora</h2>
-          <span className="text-xs text-muted-foreground">zo všetkých zdrojov (workflow)</span>
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2 flex-wrap">
+          <h2 className="text-sm font-semibold">
+            {showOrgKpis ? "Provízie podľa realizátora" : "Vaše provízie"}
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {showOrgKpis ? "zo všetkých zdrojov (workflow)" : "len váš implementer záznam"}
+          </span>
         </div>
         {implementerTotals.length === 0 ? (
-          <p className="p-6 text-sm text-muted-foreground text-center">Žiadne provízne záznamy.</p>
+          <div className="p-4">
+            <ScopedEmptyState
+              reason={scopedEmpty.reason}
+              title={scopedEmpty.title}
+              body={scopedEmpty.body}
+            />
+          </div>
         ) : (
-          <Table>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Realizátor</TableHead>
@@ -348,24 +412,31 @@ function DailyFinanceView({
               ))}
             </TableBody>
           </Table>
+          </div>
         )}
       </section>
 
       <div className="flex flex-wrap gap-2 items-center">
-        <Button asChild size="sm" variant="outline">
-          <Link to="/admin/rentals">Prenájmy</Link>
-        </Button>
-        <Button asChild size="sm" variant="outline">
-          <Link to="/admin/hosting">Hosting</Link>
-        </Button>
-        {activeIssueCount > 0 && (
+        {showOrgKpis && (
+          <>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/admin/rentals">Prenájmy</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/admin/hosting">Hosting</Link>
+            </Button>
+          </>
+        )}
+        {showOrgKpis && activeIssueCount > 0 && (
           <Badge variant="destructive" className="text-[10px]">
             {activeIssueCount} nevyriešených položiek v audite
           </Badge>
         )}
-        <Button size="sm" variant="ghost" className="text-xs" onClick={onOpenAdvanced}>
-          Otvoriť pokročilé financie →
-        </Button>
+        {showAdvancedLink && (
+          <Button size="sm" variant="ghost" className="text-xs" onClick={onOpenAdvanced}>
+            Otvoriť pokročilé financie →
+          </Button>
+        )}
       </div>
 
       <FinanceImplementerDetailDialog

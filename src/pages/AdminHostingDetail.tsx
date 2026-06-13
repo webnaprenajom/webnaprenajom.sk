@@ -25,10 +25,16 @@ import {
 import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
 import { isValidEntityId } from "@/lib/crmLookup/resolveFormCustomerLink";
 import { adminDebugLog } from "@/lib/admin/adminDebugLog";
+import { OperatingCostField } from "@/components/admin/OperatingCostField";
+import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
+import { toast } from "@/hooks/use-toast";
+import { useAccessContext } from "@/hooks/useAccessContext";
+import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 
 export default function AdminHostingDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const access = useAccessContext();
   const [loading, setLoading] = useState(true);
   const [record, setRecord] = useState<HostingRecordRow | null>(null);
   const [payments, setPayments] = useState<any[]>([]);
@@ -174,6 +180,43 @@ export default function AdminHostingDetail() {
             </Field>
             <Field label="Poskytovateľ" value={record.provider || "—"} />
             <Field label="Cena / mesiac" value={record.monthly_price != null ? `${record.monthly_price} €` : "—"} />
+            <div className="sm:col-span-2">
+              <OperatingCostField
+                value={Number((record as any).operating_cost ?? 0)}
+                onSave={async (next) => {
+                  const prev = Number((record as any).operating_cost ?? 0);
+                  const { error } = await supabase
+                    .from("hosting_records")
+                    .update({ operating_cost: next })
+                    .eq("id", record.id);
+                  if (error) {
+                    toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                    throw error;
+                  }
+                  setRecord({ ...record, operating_cost: next } as HostingRecordRow);
+                  if (access.userId) {
+                    await logAdminAuditEvent({
+                      actorUserId: access.userId,
+                      actionType: AUDIT_ACTION_TYPES.operating_cost_changed,
+                      targetType: "hosting_records",
+                      targetId: record.id,
+                      summary: `Prevádzkové náklady hostingu: ${prev} → ${next} €`,
+                      before: { operating_cost: prev },
+                      after: { operating_cost: next },
+                    });
+                  }
+                  toast({ title: "Náklady uložené" });
+                }}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <EntityProfitBanner
+                entityKind="hosting"
+                revenue={Number(record.monthly_price ?? 0)}
+                operatingCost={Number((record as any).operating_cost ?? 0)}
+                revenueKnown={record.monthly_price != null}
+              />
+            </div>
             <Field label="Domény" value={record.domains_count != null ? String(record.domains_count) : "—"} />
             <Field label="Získal" value={record.acquired_by || "—"} />
             <Field label="Provízny">
@@ -226,6 +269,9 @@ export default function AdminHostingDetail() {
             customerEmail={record.customer_email}
             customerId={(record as any).customer_id}
             defaultTitle={`Hosting — ${label}`}
+            revenueAmount={Number(record.monthly_price ?? 0)}
+            operatingCost={Number((record as any).operating_cost ?? 0)}
+            revenueKnown={record.monthly_price != null}
           />
         </TabsContent>
 

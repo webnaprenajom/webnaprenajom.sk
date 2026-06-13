@@ -10,6 +10,7 @@ import { computeWorkbenchSummary } from "@/lib/customerWorkbench/summary";
 import { parseCustomerRouteKey } from "@/lib/adminNav";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { canAccessOperationalCrm, isCrmUser } from "@/lib/rbac/permissions";
 
 const emptyData = (): CustomerWorkbenchData => ({
   canonicalCustomer: null,
@@ -32,7 +33,7 @@ const AdminCustomer = () => {
   const navigate = useNavigate();
   const { customerKey = "", customerId: customerIdParam = "" } = useParams();
   const route = parseCustomerRouteKey(customerIdParam || customerKey);
-  const { authChecking, isAdmin, userEmail, userId } = useAdminAccess();
+  const { authChecking, isCrmUser, role, userEmail, userId } = useAdminAccess();
 
   const [data, setData] = useState<CustomerWorkbenchData>(emptyData);
   const [loading, setLoading] = useState(true);
@@ -50,7 +51,11 @@ const AdminCustomer = () => {
   }, [authChecking, userId, navigate]);
 
   useEffect(() => {
-    if (!isAdmin || (!route.value && !customerIdParam && !customerKey)) return;
+    if (!canAccessOperationalCrm(role)) {
+      setLoading(false);
+      return;
+    }
+    if (!route.value && !customerIdParam && !customerKey) return;
     let cancelled = false;
 
     const load = async () => {
@@ -70,7 +75,7 @@ const AdminCustomer = () => {
     return () => {
       cancelled = true;
     };
-  }, [isAdmin, route.value, route.mode, customerIdParam, customerKey, reloadToken]);
+  }, [role, route.value, route.mode, customerIdParam, customerKey, reloadToken]);
 
   const handleSignOut = () => confirmAdminSignOut(navigate);
   const handleReload = () => setReloadToken((n) => n + 1);
@@ -83,7 +88,7 @@ const AdminCustomer = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!isCrmUser) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md text-center space-y-4">

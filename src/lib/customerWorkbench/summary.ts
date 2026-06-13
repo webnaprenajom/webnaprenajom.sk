@@ -117,9 +117,9 @@ export function computeRecommendedActions(
   if (summary.unlinkedInboundCount > 0) {
     actions.push({
       id: "reconcile",
-      label: "Prepojiť neznáme e-maily",
-      detail: `${summary.unlinkedInboundCount} neprepojených`,
-      href: "/admin/communication-ops",
+      label: "Skontrolovať neprepojenú komunikáciu",
+      detail: `${summary.unlinkedInboundCount} prichádzajúcich bez customer_id`,
+      tab: "komunikacia",
       tone: "warning",
     });
   }

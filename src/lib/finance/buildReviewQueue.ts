@@ -49,6 +49,7 @@ export interface HostingRecordRow {
   note: string | null;
   active: boolean;
   created_at: string;
+  operating_cost?: number;
 }
 
 export interface FinanceReviewStatusRow {

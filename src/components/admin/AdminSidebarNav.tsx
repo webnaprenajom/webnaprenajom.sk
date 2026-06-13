@@ -8,14 +8,35 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { visibleAdminNavGroups, isAdminNavActive } from "@/lib/adminNavConfig";
+import { ADMIN_NAV_GROUPS, isAdminNavActive } from "@/lib/adminNavConfig";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { canAccessOperationalCrm, canAccessSettings } from "@/lib/rbac/permissions";
+import { BarChart3 } from "lucide-react";
 
 export function AdminSidebarNav() {
   const { pathname } = useLocation();
+  const { role } = useAdminAccess();
+
+  const groups = canAccessOperationalCrm(role)
+    ? ADMIN_NAV_GROUPS.map((group) => ({
+        ...group,
+        items: group.items.filter((item) => {
+          if (item.devOnly) return false;
+          if (item.href === "/admin/settings" && !canAccessSettings(role)) return false;
+          return true;
+        }),
+      })).filter((g) => g.items.length > 0)
+    : [
+        {
+          id: "finance",
+          label: "Prehľad",
+          items: [{ href: "/admin/finance", label: "Financie", icon: BarChart3 }],
+        },
+      ];
 
   return (
     <SidebarContent>
-      {visibleAdminNavGroups().map((group) => (
+      {groups.map((group) => (
         <SidebarGroup key={group.id}>
           {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
           <SidebarGroupContent>

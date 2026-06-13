@@ -20,8 +20,13 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { PAYMENT_FORM_OPTIONS, type PaymentFormValue } from "@/lib/paymentForm";
+import { COMMISSION_STATUS_LABELS } from "@/lib/finance/labels";
 import { customerHrefByClientName } from "@/lib/adminNav";
 import { bucketCommissionsBySection } from "@/lib/commissionFilters";
+import { detectRentalDualModelWarning } from "@/lib/finance/commissionConsistency";
+import { useAccessContext } from "@/hooks/useAccessContext";
+import { canToggleCommissionPaymentStatus } from "@/lib/rbac/writePermissions";
+import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import type { CommissionRow as SourceCommissionRow } from "@/lib/commissionSource";
 
 export type RentalImplementer = {
@@ -66,6 +71,8 @@ export function ImplementerCommissionDetailDialog({
   yearStats,
   onSaved,
 }: Props) {
+  const access = useAccessContext();
+
   const rentalRows = useMemo(() => {
     const rows: Array<{
       websiteId: string;
@@ -169,13 +176,14 @@ export function ImplementerCommissionDetailDialog({
 
   const saveCommissionRow = async (
     id: string,
-    patch: { payment_form?: PaymentFormValue | ""; note?: string },
+    patch: { payment_form?: PaymentFormValue | ""; note?: string; payment_status?: "paid" | "unpaid" },
   ) => {
     const { error } = await supabase
       .from("commissions")
       .update({
-        payment_form: patch.payment_form || null,
-        note: patch.note?.trim() || null,
+        ...(patch.payment_form !== undefined ? { payment_form: patch.payment_form || null } : {}),
+        ...(patch.note !== undefined ? { note: patch.note?.trim() || null } : {}),
+        ...(patch.payment_status !== undefined ? { payment_status: patch.payment_status } : {}),
       })
       .eq("id", id);
     if (error) {
@@ -185,6 +193,31 @@ export function ImplementerCommissionDetailDialog({
     toast({ title: "Uložené" });
     onSaved();
   };
+
+  const toggleCommissionPaid = async (id: string, current: string) => {
+    if (!canToggleCommissionPaymentStatus(access, implementerName)) {
+      toast({ title: "Úpravu môže len administrátor", variant: "destructive" });
+      return;
+    }
+    const next = current === "paid" ? "unpaid" : "paid";
+    await saveCommissionRow(id, { payment_status: next });
+    if (access.userId) {
+      void logAdminAuditEvent({
+        actorUserId: access.userId,
+        actionType: AUDIT_ACTION_TYPES.commission_status_changed,
+        targetType: "commission",
+        targetId: id,
+        summary: `Provízia ${implementerName}: ${current} → ${next}`,
+        before: { payment_status: current },
+        after: { payment_status: next },
+      });
+    }
+  };
+
+  const dualModelWarning = useMemo(
+    () => detectRentalDualModelWarning(implementerName, commissionRows.length, rentalRows.length),
+    [implementerName, commissionRows.length, rentalRows.length],
+  );
 
   const totals = useMemo(() => {
     const rentalPaid = rentalRows.reduce((s, r) => s + r.paid, 0);
@@ -208,6 +241,11 @@ export function ImplementerCommissionDetailDialog({
         <p className="text-xs text-muted-foreground">
           Presný zoznam webov (prenájmy) a zákaziek (provízie modul). Suma prenájmov je odvodená z % podielu a stavu mesačných platieb.
         </p>
+        {dualModelWarning && (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
+            {dualModelWarning}
+          </div>
+        )}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
           <div className="rounded border p-2">
             <div className="text-[10px] text-muted-foreground">Weby</div>
@@ -240,6 +278,7 @@ export function ImplementerCommissionDetailDialog({
                   <TableHead className="text-right">%</TableHead>
                   <TableHead className="text-right">Vypl.</TableHead>
                   <TableHead className="text-right">Potenc.</TableHead>
+                  <TableHead>Stav úhrady</TableHead>
                   <TableHead>Forma úhrady</TableHead>
                   <TableHead>Poznámka</TableHead>
                 </TableRow>
@@ -270,6 +309,7 @@ export function ImplementerCommissionDetailDialog({
                     <TableCell className="text-right text-xs">{r.percentage}%</TableCell>
                     <TableCell className="text-right text-xs text-green-600">{r.paid.toFixed(2)} €</TableCell>
                     <TableCell className="text-right text-xs">{r.potential.toFixed(2)} €</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">—</TableCell>
                     <TableCell>
                       <select
                         className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
@@ -314,6 +354,22 @@ export function ImplementerCommissionDetailDialog({
                     <TableCell className="text-right text-xs text-green-600">{c.paid.toFixed(2)} €</TableCell>
                     <TableCell className="text-right text-xs">{c.potential.toFixed(2)} €</TableCell>
                     <TableCell>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`h-7 text-[10px] ${
+                          c.payment_status === "paid"
+                            ? "border-green-500/40 text-green-600"
+                            : "border-amber-500/40 text-amber-600"
+                        }`}
+                        onClick={() => void toggleCommissionPaid(c.id, c.payment_status)}
+                      >
+                        {c.payment_status === "paid"
+                          ? COMMISSION_STATUS_LABELS.paid
+                          : COMMISSION_STATUS_LABELS.unpaid}
+                      </Button>
+                    </TableCell>
+                    <TableCell>
                       <select
                         className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
                         value={c.payment_form}
@@ -345,7 +401,7 @@ export function ImplementerCommissionDetailDialog({
                 ))}
                 {legacyRows.length > 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="bg-muted/40 text-[10px] font-medium text-muted-foreground py-2">
+                    <TableCell colSpan={9} className="bg-muted/40 text-[10px] font-medium text-muted-foreground py-2">
                       Legacy / bez prepojenia na prenájom (nezapočítava sa do prenájmového zoznamu)
                     </TableCell>
                   </TableRow>
@@ -365,6 +421,22 @@ export function ImplementerCommissionDetailDialog({
                     <TableCell className="text-right text-xs">—</TableCell>
                     <TableCell className="text-right text-xs text-green-600">{c.paid.toFixed(2)} €</TableCell>
                     <TableCell className="text-right text-xs">{c.potential.toFixed(2)} €</TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className={`h-7 text-[10px] ${
+                          c.payment_status === "paid"
+                            ? "border-green-500/40 text-green-600"
+                            : "border-amber-500/40 text-amber-600"
+                        }`}
+                        onClick={() => void toggleCommissionPaid(c.id, c.payment_status)}
+                      >
+                        {c.payment_status === "paid"
+                          ? COMMISSION_STATUS_LABELS.paid
+                          : COMMISSION_STATUS_LABELS.unpaid}
+                      </Button>
+                    </TableCell>
                     <TableCell>
                       <select
                         className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"

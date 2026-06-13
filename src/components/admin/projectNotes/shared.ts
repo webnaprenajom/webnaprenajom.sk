@@ -15,6 +15,7 @@ export interface ProjectNote {
   notes: string | null;
   status: string;
   updated_at: string;
+  operating_cost?: number;
 }
 
 export const PROJECT_TYPE_OPTIONS: { value: ProjectType; label: string }[] = [

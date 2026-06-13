@@ -10,6 +10,8 @@ import {
   CustomerQuickCreateDialogs,
   type QuickCreateKind,
 } from "@/components/admin/customerWorkbench/CustomerQuickCreateDialogs";
+import { CommunicationSummaryPanel } from "@/components/admin/customerWorkbench/CommunicationSummaryPanel";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import {
   COMMUNICATION_TIMELINE_FILTER_LABELS,
   type CommunicationTimelineFilter,
@@ -130,6 +132,7 @@ function EntityRow({
 
 export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { isAdmin } = useAdminAccess();
   const activeTab = parseWorkbenchTab(searchParams);
   const commFilter = parseWorkbenchCommFilter(searchParams);
 
@@ -479,6 +482,10 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
               error={data.commLoadError}
             />
 
+            {resolvedCustomerId && (
+              <CommunicationSummaryPanel customerId={resolvedCustomerId} />
+            )}
+
             <div className="grid gap-4 sm:grid-cols-3 text-xs">
               <QuickStatCard
                 label="Aktívne projekty"
@@ -501,6 +508,9 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
 
           {/* Komunikácia */}
           <TabsContent value="komunikacia" className="space-y-4 mt-4" id="workbench-communication">
+            {resolvedCustomerId && (
+              <CommunicationSummaryPanel customerId={resolvedCustomerId} />
+            )}
             <CustomerTimeline
               events={timelineEvents}
               limit={20}
@@ -850,10 +860,10 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
             </section>
           )}
 
-          {usageTotal > 0 && (
+          {usageTotal > 0 && isAdmin && (
             <section className="rounded-xl border border-border bg-card p-4 space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Adopcia workspace
+                Adopcia workspace (admin)
               </h3>
               <p className="text-[10px] text-muted-foreground">
                 Lokálne počítadlo v tomto prehliadači · {usageTotal} akcií
@@ -873,27 +883,33 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
             </section>
           )}
 
-          <section className="rounded-xl border border-border bg-card p-4 space-y-2 text-xs">
-            <h3 className="font-semibold">Rýchle odkazy</h3>
-            <div className="flex flex-col gap-1">
-              <Link to="/admin/rollout-health" className="text-primary hover:underline">
-                Stav CRM (RC1)
-              </Link>
-              <Link to="/admin/communication-ops" className="text-primary hover:underline">
-                Diagnostika komunikácie
-              </Link>
-              {data.signatures.length > 0 && (
-                <Link to="/admin/signatures" className="text-primary hover:underline">
-                  Podpisy ({data.signatures.length})
-                </Link>
-              )}
-              {data.designs.length > 0 && (
-                <Link to="/admin/designs" className="text-primary hover:underline">
-                  Dizajny ({data.designs.length})
-                </Link>
-              )}
-            </div>
-          </section>
+          {(data.signatures.length > 0 || data.designs.length > 0 || isAdmin) && (
+            <section className="rounded-xl border border-border bg-card p-4 space-y-2 text-xs">
+              <h3 className="font-semibold">Súvisiace moduly</h3>
+              <div className="flex flex-col gap-1">
+                {isAdmin && (
+                  <>
+                    <Link to="/admin/rollout-health" className="text-primary hover:underline">
+                      Diagnostika identity (admin)
+                    </Link>
+                    <Link to="/admin/communication-ops" className="text-primary hover:underline">
+                      Diagnostika e-mail sync (admin)
+                    </Link>
+                  </>
+                )}
+                {data.signatures.length > 0 && (
+                  <Link to="/admin/signatures" className="text-primary hover:underline">
+                    Podpisy ({data.signatures.length})
+                  </Link>
+                )}
+                {data.designs.length > 0 && (
+                  <Link to="/admin/designs" className="text-primary hover:underline">
+                    Dizajny ({data.designs.length})
+                  </Link>
+                )}
+              </div>
+            </section>
+          )}
         </aside>
       </div>
 

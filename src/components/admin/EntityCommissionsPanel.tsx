@@ -11,13 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Pencil } from "lucide-react";
 import {
@@ -36,6 +29,12 @@ import {
   type CommissionFormState,
 } from "@/components/admin/commissions/CommissionFormFields";
 import type { PaymentFormValue } from "@/lib/paymentForm";
+import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
+import { AdminDialog } from "@/components/admin/AdminDialog";
+import { useAccessContext } from "@/hooks/useAccessContext";
+import { filterCommissionsForUser } from "@/lib/rbac/permissions";
+import { canWriteCommissions, writeDeniedMessage } from "@/lib/rbac/writePermissions";
+import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -50,6 +49,11 @@ interface Props {
   customerEmail?: string | null;
   customerId?: string | null;
   defaultTitle?: string;
+  /** Revenue base for profit-aware commission context (hosting monthly / project payments). */
+  revenueAmount?: number;
+  operatingCost?: number;
+  revenueKnown?: boolean;
+  paymentRecordCount?: number;
 }
 
 function emptyForm(defaultTitle?: string): CommissionFormState & { id: string } {
@@ -71,7 +75,13 @@ export function EntityCommissionsPanel({
   customerEmail,
   customerId,
   defaultTitle,
+  revenueAmount,
+  operatingCost = 0,
+  revenueKnown = true,
+  paymentRecordCount,
 }: Props) {
+  const access = useAccessContext();
+  const canWrite = canWriteCommissions(access);
   const [rows, setRows] = useState<CommissionRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -89,10 +99,10 @@ export function EntityCommissionsPanel({
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
     } else {
-      setRows((data || []) as CommissionRow[]);
+      setRows(filterCommissionsForUser((data || []) as CommissionRow[], access));
     }
     setLoading(false);
-  }, [sourceType, sourceId]);
+  }, [sourceType, sourceId, access.role, access.implementerName]);
 
   useEffect(() => {
     void load();
@@ -118,6 +128,10 @@ export function EntityCommissionsPanel({
   };
 
   const save = async () => {
+    if (!canWrite) {
+      toast({ title: writeDeniedMessage("Úpravu provízií"), variant: "destructive" });
+      return;
+    }
     if (!form.title.trim() || !form.implementer.trim()) {
       toast({ title: "Vyplň názov a realizátora", variant: "destructive" });
       return;
@@ -150,6 +164,16 @@ export function EntityCommissionsPanel({
       return;
     }
     const recordId = saved?.id ?? form.id;
+    if (recordId && access.userId && form.payment_status) {
+      void logAdminAuditEvent({
+        actorUserId: access.userId,
+        actionType: form.id ? AUDIT_ACTION_TYPES.commission_status_changed : AUDIT_ACTION_TYPES.commission_status_changed,
+        targetType: "commission",
+        targetId: recordId,
+        summary: `Provízia ${payload.title}: ${payload.payment_status}`,
+        after: { payment_status: payload.payment_status, amount: payload.amount, implementer: payload.implementer },
+      });
+    }
     if (recordId && !form.id) {
       logEntityCommunicationEventSafe({
         kind: "commission",
@@ -189,24 +213,42 @@ export function EntityCommissionsPanel({
         </Badge>
       </TableCell>
       <TableCell className="text-right">
-        <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
-          <Pencil className="w-3.5 h-3.5" />
-        </Button>
+        {canWrite ? (
+          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
+            <Pencil className="w-3.5 h-3.5" />
+          </Button>
+        ) : null}
       </TableCell>
     </>
   );
 
+  const showProfit = sourceType === "hosting" || sourceType === "project";
+
   return (
     <div className="space-y-4">
+      {showProfit && (
+        <EntityProfitBanner
+          entityKind={sourceType}
+          revenue={revenueAmount ?? 0}
+          operatingCost={operatingCost}
+          revenueKnown={revenueKnown}
+          paymentRecordCount={paymentRecordCount}
+        />
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-3 text-xs">
           <span className="text-green-600">Vyplatené: {totals.paid.toFixed(2)} €</span>
           <span className="text-amber-600">Nezaplatené: {totals.unpaid.toFixed(2)} €</span>
         </div>
-        <Button size="sm" onClick={openNew} className="min-h-9">
+        <Button size="sm" onClick={openNew} className="min-h-9" disabled={!canWrite}>
           <Plus className="w-4 h-4 mr-1" /> Nová provízia
         </Button>
       </div>
+      {!canWrite && (
+        <p className="text-[10px] text-muted-foreground italic">
+          Úpravy provízií môže vykonať len administrátor. Zobrazené záznamy podliehajú vášmu rozsahu prístupu.
+        </p>
+      )}
 
       {loading ? (
         <div className="py-8 flex justify-center">
@@ -250,9 +292,11 @@ export function EntityCommissionsPanel({
                       {new Date(c.date).toLocaleDateString("sk-SK")} · {c.implementer}
                     </p>
                   </div>
-                  <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => openEdit(c)}>
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
+                  {canWrite && (
+                    <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => openEdit(c)}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="font-semibold">{Number(c.amount || 0).toFixed(2)} €</span>
@@ -271,25 +315,23 @@ export function EntityCommissionsPanel({
         Zdroj: {COMMISSION_SOURCE_LABELS[sourceType]}. Legacy riadky bez source_id sú len vo Financiách.
       </p>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg w-[calc(100vw-2rem)] sm:w-full max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{form.id ? "Upraviť províziu" : "Nová provízia"}</DialogTitle>
-          </DialogHeader>
-          <CommissionFormFields
-            form={form}
-            onChange={(patch) => setForm({ ...form, ...patch })}
-          />
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+      <AdminDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title={form.id ? "Upraviť províziu" : "Nová provízia"}
+        footer={
+          <>
             <Button variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
               Zrušiť
             </Button>
             <Button onClick={save} disabled={saving} className="w-full sm:w-auto">
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <CommissionFormFields form={form} onChange={(patch) => setForm({ ...form, ...patch })} />
+      </AdminDialog>
     </div>
   );
 }

@@ -71,6 +71,7 @@ import { cn } from "@/lib/utils";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { canAccessOperationalCrm, isCrmUser } from "@/lib/rbac/permissions";
 import { ensureLeadCustomerLink } from "@/lib/crmLookup/leadCustomerLifecycle";
 
 // CSV parser supporting quoted fields with commas/newlines
@@ -103,7 +104,7 @@ const Admin = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { authChecking, isAdmin, userEmail, userId } = useAdminAccess();
+  const { authChecking, isAdmin, isCrmUser, role, userEmail, userId } = useAdminAccess();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -224,13 +225,13 @@ const Admin = () => {
       return;
     }
 
-    if (isAdmin) {
+    if (canAccessOperationalCrm(role)) {
       void loadLeads();
       return;
     }
 
     setLoading(false);
-  }, [authChecking, isAdmin, navigate, userId]);
+  }, [authChecking, role, navigate, userId]);
 
   const loadLeads = async () => {
     setLoading(true);
@@ -942,14 +943,14 @@ const Admin = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!isCrmUser) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md text-center space-y-4">
           <ShieldAlert className="w-16 h-16 text-destructive mx-auto" />
           <h1 className="text-2xl font-bold">Nemáte prístup</h1>
           <p className="text-muted-foreground">
-            Účet <strong>{userEmail}</strong> nemá pridelenú admin rolu. Kontaktujte správcu.
+            Účet <strong>{userEmail}</strong> nemá pridelenú rolu admin ani user. Kontaktujte správcu.
           </p>
           <Button onClick={handleSignOut} variant="outline">
             <LogOut className="w-4 h-4 mr-2" /> Odhlásiť

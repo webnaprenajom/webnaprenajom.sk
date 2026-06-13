@@ -1,37 +1,66 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { AppRole } from "@/lib/rbac/permissions";
+import { isCrmUser } from "@/lib/rbac/permissions";
 
-interface AdminAccessState {
+export interface AppAccessState {
   authChecking: boolean;
   isAdmin: boolean;
+  isUser: boolean;
+  isCrmUser: boolean;
+  role: AppRole | null;
   userEmail: string;
   userId: string | null;
+  implementerName: string | null;
+  displayName: string | null;
 }
 
-const initialState: AdminAccessState = {
+const initialState: AppAccessState = {
   authChecking: true,
   isAdmin: false,
+  isUser: false,
+  isCrmUser: false,
+  role: null,
   userEmail: "",
   userId: null,
+  implementerName: null,
+  displayName: null,
 };
 
-export const useAdminAccess = () => {
-  const [state, setState] = useState<AdminAccessState>(initialState);
+export const useAdminAccess = (): AppAccessState => {
+  const [state, setState] = useState<AppAccessState>(initialState);
 
-  const resolveAdminAccess = useCallback(async (user: { id: string; email?: string | null }) => {
-    // Direct table read (covered by RLS: users can view their own roles)
-    const { data: roleData, error: roleError } = await supabase
+  const resolveAccess = useCallback(async (user: { id: string; email?: string | null }) => {
+    const { data: roles, error: roleError } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle();
+      .eq("user_id", user.id);
 
     if (roleError) {
-      console.error("[useAdminAccess] role table read failed", roleError);
+      console.error("[useAdminAccess] role read failed", roleError);
     }
 
-    return !!roleData;
+    const roleList = (roles || []).map((r) => r.role as AppRole);
+    const isAdmin = roleList.includes("admin");
+    const isUser = roleList.includes("user");
+    const role: AppRole | null = isAdmin ? "admin" : isUser ? "user" : null;
+
+    let implementerName: string | null = null;
+    let displayName: string | null = null;
+
+    if (role) {
+      const { data: profile } = await supabase
+        .from("team_profiles")
+        .select("implementer_name,display_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile) {
+        implementerName = profile.implementer_name;
+        displayName = profile.display_name;
+      }
+    }
+
+    return { isAdmin, isUser, role, implementerName, displayName };
   }, []);
 
   useEffect(() => {
@@ -39,16 +68,10 @@ export const useAdminAccess = () => {
 
     const applySession = async (session: { user: { id: string; email?: string | null } } | null) => {
       if (!active) return;
-
       const user = session?.user;
 
       if (!user) {
-        setState({
-          authChecking: false,
-          isAdmin: false,
-          userEmail: "",
-          userId: null,
-        });
+        setState({ ...initialState, authChecking: false });
         return;
       }
 
@@ -59,41 +82,46 @@ export const useAdminAccess = () => {
         userId: user.id,
       }));
 
-      let admin = false;
-
       try {
-        admin = await resolveAdminAccess(user);
+        const access = await resolveAccess(user);
+        if (!active) return;
+        setState({
+          authChecking: false,
+          isAdmin: access.isAdmin,
+          isUser: access.isUser,
+          isCrmUser: isCrmUser(access.role),
+          role: access.role,
+          userEmail: user.email ?? "",
+          userId: user.id,
+          implementerName: access.implementerName,
+          displayName: access.displayName,
+        });
       } catch (error) {
-        console.error("[useAdminAccess] admin resolution failed", error);
+        console.error("[useAdminAccess] resolution failed", error);
+        if (active) {
+          setState({
+            authChecking: false,
+            isAdmin: false,
+            isUser: false,
+            isCrmUser: false,
+            role: null,
+            userEmail: user.email ?? "",
+            userId: user.id,
+            implementerName: null,
+            displayName: null,
+          });
+        }
       }
-
-      if (!active) return;
-
-      console.info("[useAdminAccess] resolved", {
-        userId: user.id,
-        email: user.email,
-        isAdmin: admin,
-      });
-
-      setState({
-        authChecking: false,
-        isAdmin: admin,
-        userEmail: user.email ?? "",
-        userId: user.id,
-      });
     };
 
     void supabase.auth.getSession().then(({ data, error }) => {
-      if (error) {
-        console.error("Admin session restore failed", error);
-      }
-
+      if (error) console.error("Session restore failed", error);
       void applySession(data.session ?? null);
     });
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       window.setTimeout(() => {
         if (!active) return;
         void applySession(session as { user: { id: string; email?: string | null } } | null);
@@ -104,7 +132,7 @@ export const useAdminAccess = () => {
       active = false;
       subscription.unsubscribe();
     };
-  }, [resolveAdminAccess]);
+  }, [resolveAccess]);
 
   return state;
 };

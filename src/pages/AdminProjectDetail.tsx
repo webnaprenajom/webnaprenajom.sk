@@ -16,6 +16,10 @@ import {
   EstimatedLinkBadge,
 } from "@/components/admin/lookup/LinkStatusBadge";
 import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
+import { OperatingCostField } from "@/components/admin/OperatingCostField";
+import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
+import { useAccessContext } from "@/hooks/useAccessContext";
+import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
   wordpress: "WordPress",
@@ -26,12 +30,15 @@ const PROJECT_TYPE_LABELS: Record<string, string> = {
 
 export default function AdminProjectDetail() {
   const { id = "" } = useParams();
+  const access = useAccessContext();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [project, setProject] = useState<ProjectNote | null>(null);
   const [lead, setLead] = useState<{ id: string; name: string; email: string | null } | null>(null);
   const [relatedHosting, setRelatedHosting] = useState<any[]>([]);
   const [relatedRentals, setRelatedRentals] = useState<any[]>([]);
+  const [projectRevenue, setProjectRevenue] = useState(0);
+  const [projectPaymentCount, setProjectPaymentCount] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -86,6 +93,19 @@ export default function AdminProjectDetail() {
           .then(({ data: r }: any) => setRelatedRentals(r || [])),
       );
     }
+
+    tasks.push(
+      supabase
+        .from("payment_records")
+        .select("amount")
+        .eq("source_table", "project_notes")
+        .eq("source_id", id)
+        .then(({ data: pays }) => {
+          const list = pays || [];
+          setProjectPaymentCount(list.length);
+          setProjectRevenue(list.reduce((s, p) => s + Number(p.amount || 0), 0));
+        }),
+    );
 
     await Promise.all(tasks);
     setLoading(false);
@@ -185,6 +205,44 @@ export default function AdminProjectDetail() {
               )}
             </Field>
             <Field label="Aktualizované" value={new Date(project.updated_at).toLocaleString("sk-SK")} />
+            <div className="sm:col-span-2">
+              <OperatingCostField
+                value={Number(project.operating_cost ?? 0)}
+                onSave={async (next) => {
+                  const prev = Number(project.operating_cost ?? 0);
+                  const { error } = await supabase
+                    .from("project_notes")
+                    .update({ operating_cost: next })
+                    .eq("id", project.id);
+                  if (error) {
+                    toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                    throw error;
+                  }
+                  setProject({ ...project, operating_cost: next });
+                  if (access.userId) {
+                    await logAdminAuditEvent({
+                      actorUserId: access.userId,
+                      actionType: AUDIT_ACTION_TYPES.operating_cost_changed,
+                      targetType: "project_notes",
+                      targetId: project.id,
+                      summary: `Prevádzkové náklady projektu: ${prev} → ${next} €`,
+                      before: { operating_cost: prev },
+                      after: { operating_cost: next },
+                    });
+                  }
+                  toast({ title: "Náklady uložené" });
+                }}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <EntityProfitBanner
+                entityKind="project"
+                revenue={projectRevenue}
+                operatingCost={Number(project.operating_cost ?? 0)}
+                revenueKnown
+                paymentRecordCount={projectPaymentCount}
+              />
+            </div>
           </section>
         </TabsContent>
 
@@ -205,6 +263,10 @@ export default function AdminProjectDetail() {
             customerEmail={customerEmail}
             customerId={project.customer_id}
             defaultTitle={project.title}
+            revenueAmount={projectRevenue}
+            operatingCost={Number(project.operating_cost ?? 0)}
+            revenueKnown
+            paymentRecordCount={projectPaymentCount}
           />
         </TabsContent>
 

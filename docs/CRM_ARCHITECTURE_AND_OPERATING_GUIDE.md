@@ -297,6 +297,28 @@ AI nesmie:
 - normalized commission insert payload,
 - rollout health identity metriky.
 
+### RC6
+- **Profit model:** `operating_cost` on `hosting_records` and `project_notes`; profit = max(0, revenue − operating_cost). Hosting revenue base = `monthly_price`; project revenue base = sum of linked `payment_records`.
+- **RBAC:** roles `admin` | `user` via `user_roles`; `team_profiles` maps auth user → `implementer_name` for commission/finance scoping. Settings and user management are admin-only. Role `user` sees only own commissions (RLS + UI filter).
+- **Email integration contract:** `user_email_accounts` per user with status `connected` | `disconnected` | `error` | `pending`; Settings UI ready; provider sync is stub (`manual` / pending).
+- **Communication handoff:** `customer_communication_summaries` with rolling summary, decisions, open topics, next steps; deterministic rebuild from `communication_events` (LLM can replace builder later).
+- **Paid/unpaid:** rental implementer dialog toggles `commissions.payment_status`; Finance totals use shared `payment_status` field.
+- **Workbench UX:** communication summary panel replaces user-facing rollout/comm-ops links (admin diagnostics remain dev/admin routes).
+
+### RC6.5
+- **Route access helpers:** `routeAccess.ts` + `useAccessContext`; `AdminOnlyGate` on critical routes (superseded by `ProtectedAdminOutlet` in RC6.6).
+- **Finance scope:** role=user sees only own commission totals; org-wide rental KPIs hidden.
+- **Profit fallbacks:** `profitContext.ts` — safe display when revenue/cost basis missing.
+- **Team profile guardrails:** `TeamProfileNotice`, scoped empty states, `TeamSetupDiagnostics`.
+- **Commission consistency:** `commissionConsistency.ts` — dual-model warnings.
+
+### RC6.6
+- **Route model:** all `/admin/*` routes under `ProtectedAdminOutlet`; `canAccessRoute()` is single enforcement point.
+- **Audit trail:** `admin_audit_log` — role/profile/commission status changes; admin-only read in Settings.
+- **Write helpers:** `writePermissions.ts` — UI aligned with admin-only commission RLS.
+- **Governance:** Access review panel + confirm dialogs for privileged changes.
+- ADR: `docs/adr/RC66-audit-trail-access-governance.md`
+
 Tieto rozhodnutia sa považujú za stabilné a nové zmeny ich nemajú obchádzať, ale rozvíjať.
 
 ## Budúci odporúčaný smer
@@ -305,6 +327,8 @@ Tieto rozhodnutia sa považujú za stabilné a nové zmeny ich nemajú obchádza
 - FK repointingu na canonical customer,
 - ďalšej redukcie legacy commission creation,
 - postupnej normalizácie rental špecifík,
+- **IMAP/OAuth email provider sync** a automatic summary updates,
+- **commission write RLS** for role=user if needed,
 - data quality governance a health metrík,
 - bezpečného production rollout procesu.
 
