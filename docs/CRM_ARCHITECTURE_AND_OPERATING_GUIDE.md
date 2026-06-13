@@ -317,6 +317,7 @@ AI nesmie:
 - **Audit trail:** `admin_audit_log` — role/profile/commission status changes; admin-only read in Settings.
 - **Write helpers:** `writePermissions.ts` — UI aligned with admin-only commission RLS.
 - **Governance:** Access review panel + confirm dialogs for privileged changes.
+- **User directory UX:** admin RPC `admin_list_auth_users` — Settings shows name + email; UUID only in collapsible technical detail; search/filter by name, email, role, mapping status.
 - ADR: `docs/adr/RC66-audit-trail-access-governance.md`
 
 Tieto rozhodnutia sa považujú za stabilné a nové zmeny ich nemajú obchádzať, ale rozvíjať.

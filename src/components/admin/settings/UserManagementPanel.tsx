@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,58 +15,68 @@ import { toast } from "@/hooks/use-toast";
 import { CRM_ASSIGNEES } from "@/lib/assignees";
 import { Loader2, Plus, Trash2, AlertTriangle, UserPlus } from "lucide-react";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { useCrmUserDirectory } from "@/hooks/useCrmUserDirectory";
 import { ConfirmSensitiveActionDialog } from "@/components/admin/rbac/ConfirmSensitiveActionDialog";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
+import { CrmUserIdentity } from "@/components/admin/settings/CrmUserIdentity";
+import { CrmUserDirectoryFilters } from "@/components/admin/settings/CrmUserDirectoryFilters";
+import {
+  DEFAULT_USER_DIRECTORY_FILTERS,
+  duplicateDisplayNameKeys,
+  filterManagedUsers,
+  sortUsersForManagement,
+  userActionLabel,
+  userMatchesSearch,
+  type CrmManagedUser,
+} from "@/lib/admin/crmUserDirectory";
 
 type PendingAction =
-  | { kind: "add"; userId: string; role: "admin" | "user"; implementer: string; displayName: string }
-  | { kind: "remove"; roleRowId: string; userId: string; role: string }
-  | { kind: "assign"; userId: string; implementer: string; previous: string | null };
-
-type RoleRow = {
-  id: string;
-  user_id: string;
-  role: "admin" | "user";
-};
-
-type ProfileRow = {
-  user_id: string;
-  display_name: string;
-  implementer_name: string;
-  active: boolean;
-};
+  | {
+      kind: "add";
+      userId: string;
+      userLabel: string;
+      email: string;
+      role: "admin" | "user";
+      implementer: string;
+      displayName: string;
+    }
+  | { kind: "remove"; roleRowId: string; userId: string; userLabel: string; role: string }
+  | {
+      kind: "assign";
+      userId: string;
+      userLabel: string;
+      implementer: string;
+      previous: string | null;
+    };
 
 export function UserManagementPanel() {
   const { userId: actorId } = useAdminAccess();
-  const [loading, setLoading] = useState(true);
+  const { loading, error, withRole, withoutRole, reload } = useCrmUserDirectory();
   const [pending, setPending] = useState<PendingAction | null>(null);
-  const [roles, setRoles] = useState<RoleRow[]>([]);
-  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
-  const [newUserId, setNewUserId] = useState("");
+  const [filters, setFilters] = useState(DEFAULT_USER_DIRECTORY_FILTERS);
   const [newRole, setNewRole] = useState<"admin" | "user">("user");
   const [newImplementer, setNewImplementer] = useState<string>(CRM_ASSIGNEES[0]);
   const [newDisplayName, setNewDisplayName] = useState("");
+  const [selectedAddUserId, setSelectedAddUserId] = useState<string | null>(null);
+  const [addSearch, setAddSearch] = useState("");
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const [rolesRes, profilesRes] = await Promise.all([
-      supabase.from("user_roles").select("id,user_id,role").order("created_at"),
-      supabase.from("team_profiles").select("user_id,display_name,implementer_name,active"),
-    ]);
-    if (rolesRes.error) {
-      toast({ title: "Chyba", description: rolesRes.error.message, variant: "destructive" });
-    } else {
-      setRoles((rolesRes.data || []) as RoleRow[]);
-    }
-    if (!profilesRes.error) {
-      setProfiles((profilesRes.data || []) as ProfileRow[]);
-    }
-    setLoading(false);
-  }, []);
+  const filteredManaged = useMemo(() => {
+    const list = filterManagedUsers(withRole, filters).sort(sortUsersForManagement);
+    return list;
+  }, [withRole, filters]);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const duplicateNames = useMemo(() => duplicateDisplayNameKeys(withRole), [withRole]);
+
+  const addCandidates = useMemo(() => {
+    const q = addSearch.trim();
+    return withoutRole
+      .filter((u) => userMatchesSearch(u, q))
+      .sort((a, b) => `${a.displayName} ${a.email}`.localeCompare(`${b.displayName} ${b.email}`, "sk"));
+  }, [withoutRole, addSearch]);
+
+  const selectedAddUser = withoutRole.find((u) => u.userId === selectedAddUserId) ?? null;
+
+  const usersMissingProfile = withRole.filter((u) => u.missingProfile);
 
   const executeAddUser = async (action: Extract<PendingAction, { kind: "add" }>) => {
     const { error: roleErr } = await supabase
@@ -90,24 +100,27 @@ export function UserManagementPanel() {
         actionType: AUDIT_ACTION_TYPES.role_assigned,
         targetType: "user",
         targetId: action.userId,
-        summary: `Rola ${action.role} pre ${action.userId.slice(0, 8)}…`,
+        summary: `Rola ${action.role} pre ${action.userLabel}`,
         after: { role: action.role, implementer: action.implementer || null },
       });
     }
     toast({ title: "Používateľ pridaný" });
-    setNewUserId("");
-    void load();
+    setSelectedAddUserId(null);
+    setAddSearch("");
+    setNewDisplayName("");
+    void reload();
   };
 
   const addUser = () => {
-    const uid = newUserId.trim();
-    if (!uid) {
-      toast({ title: "Zadaj user UUID", variant: "destructive" });
+    if (!selectedAddUser) {
+      toast({ title: "Vyberte používateľa zo zoznamu", variant: "destructive" });
       return;
     }
     setPending({
       kind: "add",
-      userId: uid,
+      userId: selectedAddUser.userId,
+      userLabel: userActionLabel(selectedAddUser),
+      email: selectedAddUser.email,
       role: newRole,
       implementer: newImplementer,
       displayName: newDisplayName,
@@ -126,16 +139,23 @@ export function UserManagementPanel() {
         actionType: AUDIT_ACTION_TYPES.role_removed,
         targetType: "user",
         targetId: action.userId,
-        summary: `Odstránená rola ${action.role}`,
+        summary: `Odstránená rola ${action.role} pre ${action.userLabel}`,
         before: { role: action.role },
       });
     }
     toast({ title: "Rola odstránená" });
-    void load();
+    void reload();
   };
 
-  const removeRole = (roleRowId: string, userId: string, role: string) => {
-    setPending({ kind: "remove", roleRowId, userId, role });
+  const removeRole = (user: CrmManagedUser) => {
+    if (!user.roleRowId) return;
+    setPending({
+      kind: "remove",
+      roleRowId: user.roleRowId,
+      userId: user.userId,
+      userLabel: userActionLabel(user),
+      role: user.role!,
+    });
   };
 
   const executeAssignProfile = async (action: Extract<PendingAction, { kind: "assign" }>) => {
@@ -157,13 +177,23 @@ export function UserManagementPanel() {
           : AUDIT_ACTION_TYPES.team_profile_assigned,
         targetType: "user",
         targetId: action.userId,
-        summary: `Team profile → ${action.implementer}`,
+        summary: `${action.userLabel}: team profile → ${action.implementer}`,
         before: action.previous ? { implementer_name: action.previous } : null,
         after: { implementer_name: action.implementer },
       });
     }
     toast({ title: "Team profile priradený" });
-    void load();
+    void reload();
+  };
+
+  const assignProfile = (user: CrmManagedUser, implementerName: string) => {
+    setPending({
+      kind: "assign",
+      userId: user.userId,
+      userLabel: userActionLabel(user),
+      implementer: implementerName,
+      previous: user.implementerName,
+    });
   };
 
   const confirmPending = async () => {
@@ -175,17 +205,6 @@ export function UserManagementPanel() {
     if (p.kind === "assign") await executeAssignProfile(p);
   };
 
-  const profileFor = (userId: string) => profiles.find((p) => p.user_id === userId);
-
-  const assignProfile = (userId: string, implementerName: string) => {
-    const prev = profileFor(userId)?.implementer_name ?? null;
-    setPending({ kind: "assign", userId, implementer: implementerName, previous: prev });
-  };
-
-  const usersMissingProfile = roles.filter(
-    (r) => r.role === "user" && !profileFor(r.user_id)?.active,
-  );
-
   if (loading) {
     return (
       <div className="flex justify-center py-8">
@@ -194,12 +213,23 @@ export function UserManagementPanel() {
     );
   }
 
+  if (error) {
+    return (
+      <p className="text-xs text-destructive">
+        Adresár používateľov sa nepodarilo načítať: {error}. Skontrolujte migráciu{" "}
+        <code className="text-[10px]">admin_list_auth_users</code>.
+      </p>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
         Admin vidí celé CRM a financie. User vidí len vlastné provízie — musí mať team profile s menom
-        realizátora (rovnaké ako v províziách). UUID nájdete v Supabase Auth alebo debug stránke.
+        realizátora (rovnaké ako v províziách). Spravujte účty podľa mena a e-mailu; interné ID zostáva
+        len v technických detailoch.
       </p>
+
       {usersMissingProfile.length > 0 && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs flex gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
@@ -209,69 +239,119 @@ export function UserManagementPanel() {
           </p>
         </div>
       )}
+
+      <CrmUserDirectoryFilters filters={filters} onChange={setFilters} />
+
       <ul className="divide-y rounded-xl border text-sm">
-        {roles.length === 0 && (
-          <li className="p-4 text-muted-foreground italic">Žiadni používatelia s rolou.</li>
+        {filteredManaged.length === 0 && (
+          <li className="p-4 text-muted-foreground italic text-center">
+            {withRole.length === 0
+              ? "Žiadni používatelia s rolou."
+              : "Žiadni používatelia nezodpovedajú filtru. Skúste iné meno alebo e-mail."}
+          </li>
         )}
-        {roles.map((r) => {
-          const prof = profileFor(r.user_id);
-          const missingProfile = r.role === "user" && !prof?.active;
-          return (
-            <li key={r.id} className="p-3 flex flex-wrap items-center gap-2 justify-between">
-              <div className="min-w-0 flex-1">
-                <p className="font-mono text-xs truncate">{r.user_id}</p>
-                <div className="flex gap-2 mt-1 flex-wrap items-center">
-                  <Badge variant="outline">{r.role}</Badge>
-                  {prof && (
-                    <Badge variant="secondary" className="text-[10px]">
-                      {prof.implementer_name}
-                    </Badge>
-                  )}
-                  {missingProfile && (
-                    <Badge variant="destructive" className="text-[10px]">
-                      Chýba team profile
-                    </Badge>
-                  )}
-                </div>
-                {missingProfile && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {CRM_ASSIGNEES.map((name) => (
-                      <Button
-                        key={name}
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-[10px]"
-                        onClick={() => assignProfile(r.user_id, name)}
-                      >
-                        <UserPlus className="w-3 h-3 mr-0.5" /> {name}
-                      </Button>
-                    ))}
-                  </div>
+        {filteredManaged.map((user) => (
+          <li key={user.roleRowId ?? user.userId} className="p-3 flex flex-wrap items-start gap-2 justify-between">
+            <CrmUserIdentity user={user} duplicateNames={duplicateNames} />
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <div className="flex gap-2 flex-wrap items-center justify-end">
+                <Badge variant="outline">{user.role}</Badge>
+                {user.implementerName && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    {user.implementerName}
+                  </Badge>
+                )}
+                {user.missingProfile && (
+                  <Badge variant="destructive" className="text-[10px]">
+                    Chýba team profile
+                  </Badge>
                 )}
               </div>
+              {user.missingProfile && (
+                <div className="flex flex-wrap gap-1 justify-end">
+                  {CRM_ASSIGNEES.map((name) => (
+                    <Button
+                      key={name}
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[10px]"
+                      onClick={() => assignProfile(user, name)}
+                    >
+                      <UserPlus className="w-3 h-3 mr-0.5" /> {name}
+                    </Button>
+                  ))}
+                </div>
+              )}
               <Button
                 size="icon"
                 variant="ghost"
-                className="text-destructive shrink-0"
-                onClick={() => removeRole(r.id, r.user_id, r.role)}
+                className="text-destructive"
+                onClick={() => removeRole(user)}
+                aria-label={`Odstrániť rolu ${user.displayName}`}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
-            </li>
-          );
-        })}
+            </div>
+          </li>
+        ))}
       </ul>
+
       <div className="rounded-xl border p-4 space-y-3 bg-muted/20">
-        <h3 className="text-sm font-semibold">Pridať používateľa</h3>
+        <h3 className="text-sm font-semibold">Pridať používateľa do CRM</h3>
+        <p className="text-xs text-muted-foreground">
+          Vyberte existujúci auth účet (podľa mena alebo e-mailu). Nový účet musí byť najprv vytvorený
+          prihlásením alebo pozvánkou — tu len priraďujete CRM rolu.
+        </p>
         <div className="space-y-1.5">
-          <Label className="text-xs">User UUID (auth.users)</Label>
-          <Input value={newUserId} onChange={(e) => setNewUserId(e.target.value)} placeholder="550e8400-..." />
+          <Label className="text-xs">Hľadať účet bez CRM role</Label>
+          <Input
+            value={addSearch}
+            onChange={(e) => setAddSearch(e.target.value)}
+            placeholder="Meno alebo e-mail…"
+          />
         </div>
+        <ul className="max-h-40 overflow-y-auto divide-y rounded-lg border text-xs">
+          {addCandidates.length === 0 && (
+            <li className="p-3 text-muted-foreground italic text-center">
+              {withoutRole.length === 0
+                ? "Všetky auth účty už majú priradenú CRM rolu."
+                : "Žiadny účet nezodpovedá hľadaniu."}
+            </li>
+          )}
+          {addCandidates.map((user) => {
+            const selected = selectedAddUserId === user.userId;
+            return (
+              <li key={user.userId}>
+                <button
+                  type="button"
+                  className={`w-full text-left p-2.5 hover:bg-muted/50 transition-colors ${
+                    selected ? "bg-primary/10 ring-1 ring-primary/30" : ""
+                  }`}
+                  onClick={() => {
+                    setSelectedAddUserId(user.userId);
+                    if (!newDisplayName) {
+                      setNewDisplayName(user.displayName);
+                    }
+                  }}
+                >
+                  <CrmUserIdentity user={user} compact />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        {selectedAddUser && (
+          <p className="text-xs text-muted-foreground">
+            Vybrané: <strong>{userActionLabel(selectedAddUser)}</strong>
+          </p>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs">Rola</Label>
             <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "user")}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="user">User</SelectItem>
@@ -282,10 +362,14 @@ export function UserManagementPanel() {
             <div className="space-y-1.5">
               <Label className="text-xs">Implementer (provízie)</Label>
               <Select value={newImplementer} onValueChange={setNewImplementer}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {CRM_ASSIGNEES.map((a) => (
-                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                    <SelectItem key={a} value={a}>
+                      {a}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -294,12 +378,16 @@ export function UserManagementPanel() {
         </div>
         {newRole === "user" && (
           <div className="space-y-1.5">
-            <Label className="text-xs">Zobrazované meno</Label>
-            <Input value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} placeholder={newImplementer} />
+            <Label className="text-xs">Zobrazované meno v CRM</Label>
+            <Input
+              value={newDisplayName}
+              onChange={(e) => setNewDisplayName(e.target.value)}
+              placeholder={newImplementer}
+            />
           </div>
         )}
-        <Button size="sm" onClick={addUser}>
-          <Plus className="w-4 h-4 mr-1" /> Pridať
+        <Button size="sm" onClick={addUser} disabled={!selectedAddUser}>
+          <Plus className="w-4 h-4 mr-1" /> Pridať do CRM
         </Button>
       </div>
 
@@ -317,8 +405,7 @@ export function UserManagementPanel() {
           pending?.kind === "add" ? (
             <>
               <p>
-                Používateľ <code className="text-xs">{pending.userId}</code> dostane rolu{" "}
-                <strong>{pending.role}</strong>.
+                <strong>{pending.userLabel}</strong> dostane rolu <strong>{pending.role}</strong>.
               </p>
               {pending.role === "user" && (
                 <p>
@@ -332,14 +419,16 @@ export function UserManagementPanel() {
             </>
           ) : pending?.kind === "remove" ? (
             <>
-              <p>Odstránite rolu {pending.role} pre účet {pending.userId.slice(0, 8)}…</p>
+              <p>
+                Odstránite rolu {pending.role} pre <strong>{pending.userLabel}</strong>.
+              </p>
               <p>Používateľ stratí prístup k CRM, ak nemá inú rolu.</p>
             </>
           ) : pending?.kind === "assign" ? (
             <>
               <p>
-                Mapovanie účtu na implementera <strong>{pending.implementer}</strong> určuje, ktoré
-                provízie uvidí v Financiách.
+                <strong>{pending.userLabel}</strong> bude mapovaný na implementera{" "}
+                <strong>{pending.implementer}</strong> — určuje, ktoré provízie uvidí v Financiách.
               </p>
               {pending.previous && <p>Predtým: {pending.previous}</p>}
             </>

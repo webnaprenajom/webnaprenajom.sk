@@ -38,6 +38,14 @@ Security completion: centralized route guards, audit trail, write permission hel
 - `rc66RouteGuards.test.ts`
 - `rc66WritePermissions.test.ts`
 - `rc66FinanceScope.test.ts`
+- `crmUserDirectory.test.ts`
+
+## User management UX (post-RC6.6)
+
+- Migration `20260617000000_admin_auth_user_directory_rpc.sql` — admin-only `admin_list_auth_users()` RPC
+- Human-readable user list (name + email); UUID hidden in collapsible technical row
+- Search/filter in User Management + Access Review panels
+- Add-user flow: select auth account from searchable list (no manual UUID paste)
 
 ## QA checklist
 

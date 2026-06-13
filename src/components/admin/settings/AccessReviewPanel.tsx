@@ -1,75 +1,50 @@
-import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { CRM_ASSIGNEES } from "@/lib/assignees";
 import { loadRecentAuditLog, type AuditLogEntry } from "@/lib/audit/auditLog";
-
-type RoleRow = { user_id: string; role: string };
-type ProfileRow = { user_id: string; implementer_name: string; active: boolean };
-
-type ReviewRow = {
-  userId: string;
-  role: string;
-  implementerName: string | null;
-  profileOk: boolean;
-  lastAudit: AuditLogEntry | null;
-  riskFlags: string[];
-};
+import { useCrmUserDirectory } from "@/hooks/useCrmUserDirectory";
+import { CrmUserIdentity } from "@/components/admin/settings/CrmUserIdentity";
+import { CrmUserDirectoryFilters } from "@/components/admin/settings/CrmUserDirectoryFilters";
+import {
+  DEFAULT_USER_DIRECTORY_FILTERS,
+  duplicateDisplayNameKeys,
+  filterManagedUsers,
+  sortUsersForAccessReview,
+} from "@/lib/admin/crmUserDirectory";
 
 /** Admin-only periodic access review (RC6.6). */
 export function AccessReviewPanel() {
-  const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState<ReviewRow[]>([]);
+  const { loading, error, withRole, reload } = useCrmUserDirectory();
+  const [filters, setFilters] = useState(DEFAULT_USER_DIRECTORY_FILTERS);
+  const [auditByUser, setAuditByUser] = useState<Map<string, AuditLogEntry>>(new Map());
+  const [auditLoading, setAuditLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    const [rolesRes, profilesRes, audit] = await Promise.all([
-      supabase.from("user_roles").select("user_id,role"),
-      supabase.from("team_profiles").select("user_id,implementer_name,active"),
-      loadRecentAuditLog(100),
-    ]);
-    const roles = (rolesRes.data || []) as RoleRow[];
-    const profiles = (profilesRes.data || []) as ProfileRow[];
-
-    const auditByTarget = new Map<string, AuditLogEntry>();
+  const loadAudit = useCallback(async () => {
+    setAuditLoading(true);
+    const audit = await loadRecentAuditLog(100);
+    const map = new Map<string, AuditLogEntry>();
     for (const a of audit) {
-      if (a.target_type === "user" && a.target_id && !auditByTarget.has(a.target_id)) {
-        auditByTarget.set(a.target_id, a);
+      if (a.target_type === "user" && a.target_id && !map.has(a.target_id)) {
+        map.set(a.target_id, a);
       }
     }
-
-    const mapped: ReviewRow[] = roles.map((r) => {
-      const prof = profiles.find((p) => p.user_id === r.user_id && p.active);
-      const riskFlags: string[] = [];
-      if (r.role === "user" && !prof) {
-        riskFlags.push("Chýba team profile — provízie neuvidí");
-      }
-      if (r.role === "admin" && !prof) {
-        riskFlags.push("Admin bez team profile (OK pre plný prístup)");
-      }
-      if (r.role === "user" && prof && !CRM_ASSIGNEES.includes(prof.implementer_name as any)) {
-        riskFlags.push("Implementer mimo štandardného zoznamu");
-      }
-      return {
-        userId: r.user_id,
-        role: r.role,
-        implementerName: prof?.implementer_name ?? null,
-        profileOk: r.role === "admin" || !!prof,
-        lastAudit: auditByTarget.get(r.user_id) ?? null,
-        riskFlags,
-      };
-    });
-
-    setRows(mapped.sort((a, b) => b.riskFlags.length - a.riskFlags.length));
-    setLoading(false);
+    setAuditByUser(map);
+    setAuditLoading(false);
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void loadAudit();
+  }, [loadAudit]);
 
-  if (loading) {
+  const filtered = useMemo(() => {
+    return filterManagedUsers(withRole, filters).sort(sortUsersForAccessReview);
+  }, [withRole, filters]);
+
+  const duplicateNames = useMemo(() => duplicateDisplayNameKeys(withRole), [withRole]);
+
+  const risky = withRole.filter((r) => r.missingProfile);
+
+  if (loading || auditLoading) {
     return (
       <div className="flex justify-center py-6">
         <Loader2 className="w-5 h-5 animate-spin text-primary" />
@@ -77,11 +52,13 @@ export function AccessReviewPanel() {
     );
   }
 
-  if (rows.length === 0) {
-    return <p className="text-xs text-muted-foreground italic">Žiadni používatelia s rolou.</p>;
+  if (error) {
+    return <p className="text-xs text-destructive">Chyba načítania: {error}</p>;
   }
 
-  const risky = rows.filter((r) => r.riskFlags.some((f) => f.includes("Chýba team profile")));
+  if (withRole.length === 0) {
+    return <p className="text-xs text-muted-foreground italic">Žiadni používatelia s rolou.</p>;
+  }
 
   return (
     <div className="space-y-3">
@@ -91,41 +68,67 @@ export function AccessReviewPanel() {
           {risky.length} účet(ov) vyžaduje kontrolu mapovania
         </p>
       )}
-      <ul className="divide-y rounded-xl border text-xs">
-        {rows.map((r) => (
-          <li key={r.userId} className="p-3 space-y-1.5">
-            <div className="flex flex-wrap items-center gap-2 justify-between">
-              <code className="text-[10px] truncate max-w-[200px]">{r.userId}</code>
-              <div className="flex gap-1 flex-wrap">
-                <Badge variant="outline">{r.role}</Badge>
-                {r.implementerName && (
-                  <Badge variant="secondary" className="text-[10px]">
-                    {r.implementerName}
-                  </Badge>
+
+      <CrmUserDirectoryFilters filters={filters} onChange={setFilters} />
+
+      {filtered.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic text-center py-4 border rounded-xl">
+          Žiadni používatelia nezodpovedajú filtru. Skúste iné meno, e-mail alebo zmeňte filter role.
+        </p>
+      ) : (
+        <ul className="divide-y rounded-xl border text-xs">
+          {filtered.map((user) => {
+            const lastAudit = auditByUser.get(user.userId) ?? null;
+            return (
+              <li key={user.userId} className="p-3 space-y-2">
+                <div className="flex flex-wrap items-start gap-3 justify-between">
+                  <CrmUserIdentity user={user} duplicateNames={duplicateNames} compact />
+                  <div className="flex gap-1 flex-wrap items-center shrink-0">
+                    <Badge variant="outline">{user.role}</Badge>
+                    {user.implementerName && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        {user.implementerName}
+                      </Badge>
+                    )}
+                    {user.profileActive && !user.missingProfile ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600" aria-label="Mapovanie OK" />
+                    ) : user.missingProfile ? (
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600" aria-label="Chýba mapovanie" />
+                    ) : null}
+                  </div>
+                </div>
+                {user.riskFlags.length > 0 && (
+                  <ul className="text-[10px] text-amber-800 dark:text-amber-200 space-y-0.5 pl-0.5">
+                    {user.riskFlags.map((f) => (
+                      <li key={f}>• {f}</li>
+                    ))}
+                  </ul>
                 )}
-                {r.profileOk ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                ) : (
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                {lastAudit && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Posledná zmena: {lastAudit.summary} ·{" "}
+                    {new Date(lastAudit.created_at).toLocaleString("sk-SK")}
+                  </p>
                 )}
-              </div>
-            </div>
-            {r.riskFlags.length > 0 && (
-              <ul className="text-[10px] text-amber-800 dark:text-amber-200 space-y-0.5">
-                {r.riskFlags.map((f) => (
-                  <li key={f}>• {f}</li>
-                ))}
-              </ul>
-            )}
-            {r.lastAudit && (
-              <p className="text-[10px] text-muted-foreground">
-                Posledná zmena: {r.lastAudit.summary} ·{" "}
-                {new Date(r.lastAudit.created_at).toLocaleString("sk-SK")}
-              </p>
-            )}
-          </li>
-        ))}
-      </ul>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      <ButtonRefresh onRefresh={() => void Promise.all([reload(), loadAudit()])} />
     </div>
+  );
+}
+
+function ButtonRefresh({ onRefresh }: { onRefresh: () => void }) {
+  return (
+    <button
+      type="button"
+      className="text-[10px] text-muted-foreground hover:text-foreground underline"
+      onClick={onRefresh}
+    >
+      Obnoviť prehľad
+    </button>
   );
 }
