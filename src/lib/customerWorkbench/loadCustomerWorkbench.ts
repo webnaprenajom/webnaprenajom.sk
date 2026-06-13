@@ -41,7 +41,7 @@ export async function loadCustomerWorkbench(
       .eq("email", input.routeValue)
       .maybeSingle();
     if (custRow) {
-      canonicalCustomer = custRow;
+      canonicalCustomer = custRow as unknown as CustomerWorkbenchData["canonicalCustomer"];
       customerId = custRow.id;
     }
   }
