@@ -78,7 +78,7 @@ export function buildReviewQueue(input: {
   const enrich = (
     base: Omit<
       ReviewQueueItem,
-      "reviewDueAt" | "reviewCadenceDays" | "snoozedUntil" | "dueStatus" | "customerLabel"
+      "reviewDueAt" | "reviewCadenceDays" | "snoozedUntil" | "dueStatus"
     >,
   ): ReviewQueueItem => {
     const st = statusMap.get(base.itemKey);

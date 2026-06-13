@@ -1,5 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import type { ReviewItemStatus, ReviewItemType } from "./buildReviewQueue";
+
+type FinanceReviewInsert = Database["public"]["Tables"]["finance_review_items"]["Insert"];
+type FinanceReviewUpdate = Database["public"]["Tables"]["finance_review_items"]["Update"];
 
 export const REVIEW_CADENCE_DAYS: Record<ReviewItemType, number> = {
   dismissed_issue: 90,
@@ -116,7 +120,7 @@ export async function upsertReviewStatus(input: {
   }
 
   if (existing?.id) {
-    const { error } = await supabase.from("finance_review_items").update(payload).eq("id", existing.id);
+    const { error } = await supabase.from("finance_review_items").update(payload as FinanceReviewUpdate).eq("id", existing.id);
     if (error) throw error;
   } else {
     const insertPayload = {
@@ -126,7 +130,7 @@ export async function upsertReviewStatus(input: {
         : computeNextDueAt(cadence),
       snoozed_until: null,
     };
-    const { error } = await supabase.from("finance_review_items").insert(insertPayload);
+    const { error } = await supabase.from("finance_review_items").insert(insertPayload as FinanceReviewInsert);
     if (error) throw error;
   }
 }
@@ -154,13 +158,13 @@ export async function snoozeReviewItem(input: {
   };
 
   if (existing?.id) {
-    const { error } = await supabase.from("finance_review_items").update(payload).eq("id", existing.id);
+    const { error } = await supabase.from("finance_review_items").update(payload as FinanceReviewUpdate).eq("id", existing.id);
     if (error) throw error;
   } else {
     const { error } = await supabase.from("finance_review_items").insert({
       ...payload,
       review_due_at: computeNextDueAt(REVIEW_CADENCE_DAYS[input.itemType]),
-    });
+    } as FinanceReviewInsert);
     if (error) throw error;
   }
 }

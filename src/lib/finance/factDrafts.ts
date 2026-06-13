@@ -1,5 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import type { ReconciliationIssue } from "./types";
+
+type PaymentRecordInsert = Database["public"]["Tables"]["payment_records"]["Insert"];
+type PayoutRecordInsert = Database["public"]["Tables"]["payout_records"]["Insert"];
+type CostRecordInsert = Database["public"]["Tables"]["cost_records"]["Insert"];
 
 export type FactKind = "payment" | "payout" | "cost";
 
@@ -324,7 +329,7 @@ export async function saveFactDraft(draft: FactDraft): Promise<void> {
       payload.source_table = draft.source_table;
       payload.source_id = draft.source_id;
     }
-    const { error } = await supabase.from("payment_records").insert(payload);
+    const { error } = await supabase.from("payment_records").insert(payload as PaymentRecordInsert);
     if (error) throw error;
     return;
   }
@@ -343,7 +348,7 @@ export async function saveFactDraft(draft: FactDraft): Promise<void> {
       payload.source_table = draft.source_table;
       payload.source_id = draft.source_id;
     }
-    const { error } = await supabase.from("payout_records").insert(payload);
+    const { error } = await supabase.from("payout_records").insert(payload as PayoutRecordInsert);
     if (error) throw error;
     return;
   }
@@ -367,6 +372,6 @@ export async function saveFactDraft(draft: FactDraft): Promise<void> {
     payload.source_table = draft.source_table;
     payload.source_id = draft.source_id;
   }
-  const { error } = await supabase.from("cost_records").insert(payload);
+  const { error } = await supabase.from("cost_records").insert(payload as CostRecordInsert);
   if (error) throw error;
 }
