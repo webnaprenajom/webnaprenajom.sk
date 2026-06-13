@@ -3,6 +3,7 @@
  */
 
 import type { ProjectNote } from "@/components/admin/projectNotes/shared";
+import type { Json } from "@/integrations/supabase/types";
 
 export type AccessCredential = {
   id: string;
@@ -110,7 +111,7 @@ export function syncLegacyCredentialColumns(credentials: AccessCredential[]): {
 }
 
 export function credentialsForSave(
-  editing: Pick<ProjectNote, "url" | "username" | "password" | "access_credentials">,
+  editing: Partial<Pick<ProjectNote, "url" | "username" | "password" | "access_credentials">>,
   credentials: AccessCredential[],
 ): Pick<ProjectNote, "url" | "username" | "password" | "access_credentials"> {
   const synced = syncLegacyCredentialColumns(credentials);
@@ -118,6 +119,6 @@ export function credentialsForSave(
     url: synced.url,
     username: synced.username,
     password: synced.password,
-    access_credentials: synced.access_credentials,
+    access_credentials: synced.access_credentials as Json,
   };
 }

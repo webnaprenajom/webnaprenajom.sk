@@ -1,3 +1,5 @@
+import type { Json } from "@/integrations/supabase/types";
+
 export type ProjectType = "wordpress" | "shoptet" | "custom" | "other" | "ai";
 
 export interface ProjectNote {
@@ -11,7 +13,7 @@ export interface ProjectNote {
   url: string | null;
   username: string | null;
   password: string | null;
-  access_credentials?: unknown;
+  access_credentials?: Json;
   notes: string | null;
   status: string;
   updated_at: string;
