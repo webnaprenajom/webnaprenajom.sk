@@ -26,7 +26,7 @@ export async function loadCustomerWorkbench(
 ): Promise<CustomerWorkbenchData> {
   let customerId: string | null = null;
   let resolvedEmail = input.routeMode === "email" ? input.routeValue : "";
-  let canonicalCustomer = null as CustomerWorkbenchData["canonicalCustomer"];
+  let canonicalCustomer = null as unknown as CustomerWorkbenchData["canonicalCustomer"];
   const viewMode = input.routeMode;
 
   if (input.routeMode === "id") {
@@ -79,7 +79,7 @@ export async function loadCustomerWorkbench(
       supabase
         .from("tasks")
         .select(taskSelect)
-        .eq("customer_id", customerId) as Promise<{ data: Task[] | null }>,
+        .eq("customer_id", customerId) as unknown as Promise<{ data: Task[] | null }>,
     );
   }
   if (leadIds.length) {
@@ -87,7 +87,7 @@ export async function loadCustomerWorkbench(
       supabase
         .from("tasks")
         .select(taskSelect)
-        .in("lead_id", leadIds) as Promise<{ data: Task[] | null }>,
+        .in("lead_id", leadIds) as unknown as Promise<{ data: Task[] | null }>,
     );
   }
   if (leadNames.length) {
@@ -95,7 +95,7 @@ export async function loadCustomerWorkbench(
       supabase
         .from("tasks")
         .select(taskSelect)
-        .in("client_name", leadNames) as Promise<{ data: Task[] | null }>,
+        .in("client_name", leadNames) as unknown as Promise<{ data: Task[] | null }>,
     );
   }
   const taskResults = await Promise.all(taskQueries);
@@ -129,7 +129,7 @@ export async function loadCustomerWorkbench(
       supabase
         .from("rental_websites")
         .select("id,name,url,monthly_price,implementers,client_name,created_at")
-        .eq("customer_id", customerId) as Promise<{ data: Rental[] | null }>,
+        .eq("customer_id", customerId) as unknown as Promise<{ data: Rental[] | null }>,
     );
   }
   if (leadNames.length) {
@@ -137,7 +137,7 @@ export async function loadCustomerWorkbench(
       supabase
         .from("rental_websites")
         .select("id,name,url,monthly_price,implementers,client_name,created_at")
-        .in("client_name", leadNames) as Promise<{ data: Rental[] | null }>,
+        .in("client_name", leadNames) as unknown as Promise<{ data: Rental[] | null }>,
     );
   }
   if (resolvedEmail) {
@@ -145,7 +145,7 @@ export async function loadCustomerWorkbench(
       supabase
         .from("rental_websites")
         .select("id,name,url,monthly_price,implementers,client_name,created_at")
-        .ilike("customer_email", resolvedEmail) as Promise<{ data: Rental[] | null }>,
+        .ilike("customer_email", resolvedEmail) as unknown as Promise<{ data: Rental[] | null }>,
     );
   }
   if (rentalQueries.length) {
@@ -176,7 +176,7 @@ export async function loadCustomerWorkbench(
       supabase
         .from("project_notes")
         .select("id,title,client_name,url,status,username,password,access_credentials,updated_at")
-        .eq("customer_id", customerId) as Promise<{ data: Array<Record<string, unknown>> | null }>,
+        .eq("customer_id", customerId) as unknown as Promise<{ data: Array<Record<string, unknown>> | null }>,
     );
   }
   if (resolvedEmail) {
@@ -184,7 +184,7 @@ export async function loadCustomerWorkbench(
       supabase
         .from("project_notes")
         .select("id,title,client_name,url,status,username,password,access_credentials,updated_at")
-        .ilike("customer_email", resolvedEmail) as Promise<{ data: Array<Record<string, unknown>> | null }>,
+        .ilike("customer_email", resolvedEmail) as unknown as Promise<{ data: Array<Record<string, unknown>> | null }>,
     );
   }
   if (leadNames.length) {
@@ -192,7 +192,7 @@ export async function loadCustomerWorkbench(
       supabase
         .from("project_notes")
         .select("id,title,client_name,url,status,username,password,access_credentials,updated_at")
-        .in("client_name", leadNames) as Promise<{ data: Array<Record<string, unknown>> | null }>,
+        .in("client_name", leadNames) as unknown as Promise<{ data: Array<Record<string, unknown>> | null }>,
     );
   }
   const noteResults = await Promise.all(noteQueries);
@@ -226,7 +226,7 @@ export async function loadCustomerWorkbench(
         .from("hosting_records")
         .select("id,client_name,provider,monthly_price,yearly_price,domains_count,active,created_at")
         .eq("customer_id", customerId)
-        .order("created_at", { ascending: false }) as Promise<{ data: HostingBrief[] | null }>,
+        .order("created_at", { ascending: false }) as unknown as Promise<{ data: HostingBrief[] | null }>,
     );
   }
   if (resolvedEmail) {
@@ -235,7 +235,7 @@ export async function loadCustomerWorkbench(
         .from("hosting_records")
         .select("id,client_name,provider,monthly_price,yearly_price,domains_count,active,created_at")
         .ilike("customer_email", resolvedEmail)
-        .order("created_at", { ascending: false }) as Promise<{ data: HostingBrief[] | null }>,
+        .order("created_at", { ascending: false }) as unknown as Promise<{ data: HostingBrief[] | null }>,
     );
   }
   if (leadNames.length) {
@@ -244,7 +244,7 @@ export async function loadCustomerWorkbench(
         .from("hosting_records")
         .select("id,client_name,provider,monthly_price,yearly_price,domains_count,active,created_at")
         .in("client_name", leadNames)
-        .order("created_at", { ascending: false }) as Promise<{ data: HostingBrief[] | null }>,
+        .order("created_at", { ascending: false }) as unknown as Promise<{ data: HostingBrief[] | null }>,
     );
   }
   const hostingResults = await Promise.all(hostingQueries);
@@ -264,7 +264,7 @@ export async function loadCustomerWorkbench(
         .select("id,title,amount,payment_status,date,source_type,source_id,customer_id")
         .eq("customer_id", customerId)
         .order("date", { ascending: false })
-        .limit(20) as Promise<{ data: CommissionBrief[] | null }>,
+        .limit(20) as unknown as Promise<{ data: CommissionBrief[] | null }>,
     );
   }
   if (resolvedEmail) {
@@ -274,7 +274,7 @@ export async function loadCustomerWorkbench(
         .select("id,title,amount,payment_status,date,source_type,source_id,customer_id")
         .ilike("customer_email", resolvedEmail)
         .order("date", { ascending: false })
-        .limit(20) as Promise<{ data: CommissionBrief[] | null }>,
+        .limit(20) as unknown as Promise<{ data: CommissionBrief[] | null }>,
     );
   }
   const commResults = await Promise.all(commQueries);
@@ -329,7 +329,7 @@ export async function loadCustomerWorkbench(
         )
         .in("lead_id", leadIds)
         .order("created_at", { ascending: false })
-        .limit(25) as Promise<{ data: LeadLog[] | null }>,
+        .limit(25) as unknown as Promise<{ data: LeadLog[] | null }>,
     );
   }
   logQueries.push(
@@ -341,7 +341,7 @@ export async function loadCustomerWorkbench(
           )
           .ilike("lead_email", resolvedEmail)
           .order("created_at", { ascending: false })
-          .limit(25) as Promise<{ data: LeadLog[] | null }>)
+          .limit(25) as unknown as Promise<{ data: LeadLog[] | null }>)
       : Promise.resolve({ data: [] }),
   );
   const logResults = await Promise.all(logQueries);
