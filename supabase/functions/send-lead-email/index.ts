@@ -262,7 +262,7 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : 'Unknown error'
     console.error('Error:', message)
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: 'Could not submit your request. Please try again later.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
