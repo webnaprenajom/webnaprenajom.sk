@@ -22,6 +22,8 @@ import packageStartImg from "@/assets/package-start.png";
 import packageBiznisImg from "@/assets/package-biznis.png";
 import packageProcrmImg from "@/assets/package-procrm.png";
 
+const OFFER_PDF_URL = "/__l5e/assets-v1/76c1f796-a0f1-458d-9a72-17b349ef38e5/Web-na-prenajom-ponuka.pdf";
+
 // ── Packages ──
 const packages = [
   {
@@ -767,7 +769,7 @@ const ModelSelectionSection = () => {
                     Navrhnúť riešenie <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                   <a
-                    href="/Web-na-prenajom-ponuka.pdf"
+                    href={OFFER_PDF_URL}
                     download
                     className="inline-flex items-center justify-center gap-1 text-[11px] text-muted-foreground/70 hover:text-primary transition-colors mt-1"
                   >
