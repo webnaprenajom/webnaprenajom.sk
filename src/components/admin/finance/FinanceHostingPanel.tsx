@@ -21,7 +21,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
+import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
 import {
   hasSourceLinkedRecord,
@@ -62,6 +63,7 @@ const emptyForm = () => ({
 
 export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
   const navigate = useNavigate();
+  const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({ onSuccess: onSaved });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm());
@@ -215,6 +217,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                 <TableHead>Provízny</TableHead>
                 <TableHead>Stav</TableHead>
                 <TableHead>Platba</TableHead>
+                <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -266,6 +269,23 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                           Vytvoriť platbu
                         </Button>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8"
+                        title="Zmazať hosting"
+                        onClick={() =>
+                          void requestDelete({
+                            entityType: "hosting",
+                            entityId: r.id,
+                            entityLabel: customerDisplayLabel(identity),
+                          })
+                        }
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );
@@ -328,6 +348,8 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
           onSaved();
         }}
       />
+
+      <DestructiveModal {...modalProps} />
     </div>
   );
 }

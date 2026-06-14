@@ -64,6 +64,19 @@
 
 ---
 
+## Fáza 2c — Safe Destructive Delete ✅ DONE
+**Cieľ**: Bezpečné mazanie klientov, hostingu a prenájmov s finance integrity guard, impact precheck a shared modal.
+
+| # | Úloha | Súbory | Stav |
+|---|---|---|---|
+| 2c.1 | RPC `admin_precheck_destructive_delete` + `admin_execute_destructive_delete` | `20260619000000_destructive_delete_rpcs.sql` | ✅ DONE |
+| 2c.2 | Shared `ConfirmDestructiveActionModal` + `useDestructiveAction` + blocking list + CTA links | `src/components/admin/destructive/*`, `src/lib/destructive/*`, `useDestructiveAction.ts` | ✅ DONE |
+| 2c.3 | Delete hosting + rental (nahradenie slepého confirm) | `FinanceHostingPanel`, `AdminHostingDetail`, `AdminRentals` | ✅ DONE |
+| 2c.4 | Delete customer | `AdminClients`, `CustomerHubHeader`, `CustomerWorkbench` | ✅ DONE |
+| 2c.5 | Audit `entity_deleted` + testy | `auditLog.ts`, `destructiveDelete.test.ts` | ✅ DONE |
+
+---
+
 ## Fáza 3 — Finance Coherence
 **Cieľ**: truth-level badge pri každom finančnom čísle (aj v daily view), KPI above the fold pre všetky role, reconciliation flow plne funkčný a viditeľný.
 

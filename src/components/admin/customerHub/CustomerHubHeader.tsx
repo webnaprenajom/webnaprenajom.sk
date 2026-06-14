@@ -28,6 +28,7 @@ import {
   Server,
   User,
   Wallet,
+  Trash2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -39,6 +40,8 @@ interface Props {
   onOpenTab: (tab: WorkbenchTabId) => void;
   onQuickCreate: (kind: QuickCreateKind) => void;
   onOpenCommunication: () => void;
+  canDeleteCustomer?: boolean;
+  onDeleteCustomer?: () => void;
 }
 
 function getCustomerCompany(metadata: unknown): string | null {
@@ -57,6 +60,8 @@ export function CustomerHubHeader({
   onOpenTab,
   onQuickCreate,
   onOpenCommunication,
+  canDeleteCustomer,
+  onDeleteCustomer,
 }: Props) {
   const primaryLead = data.leads[0];
   const company = getCustomerCompany(data.canonicalCustomer?.metadata);
@@ -202,6 +207,16 @@ export function CustomerHubHeader({
           <Button size="sm" variant="ghost" className="shrink-0 h-8 text-xs" onClick={() => void copyCustomerInfo()}>
             <Copy className="w-3.5 h-3.5 mr-1" /> Kopírovať
           </Button>
+          {canDeleteCustomer && onDeleteCustomer && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 h-8 text-xs text-destructive border-destructive/40 hover:bg-destructive/5"
+              onClick={onDeleteCustomer}
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1" /> Zmazať klienta
+            </Button>
+          )}
         </div>
       </section>
     </div>

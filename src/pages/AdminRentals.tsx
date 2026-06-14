@@ -46,6 +46,7 @@ import { type PaymentFormValue } from "@/lib/paymentForm";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
 import { type FactDraft, prefillFromRentalPayment } from "@/lib/finance/factDrafts";
 import { ImplementerCommissionDetailDialog } from "@/components/admin/rentals/ImplementerCommissionDetailDialog";
+import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 
 interface Implementer {
   name: string;
@@ -164,6 +165,9 @@ export default function AdminRentals() {
     customer_email?: string | null;
   }>>([]);
   const [detailImplementer, setDetailImplementer] = useState<string | null>(null);
+  const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({
+    onSuccess: () => void loadAll(),
+  });
 
   useEffect(() => {
     void loadAll().finally(() => setLoading(false));
@@ -306,16 +310,6 @@ export default function AdminRentals() {
 
     toast({ title: editing.id ? "Aktualizované" : "Pridané" });
     setEditing(null);
-    await loadAll();
-  };
-
-  const deleteWebsite = async (id: string) => {
-    if (!confirm("Naozaj zmazať tento web?")) return;
-    const { error } = await (supabase as any).from("rental_websites").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
-      return;
-    }
     await loadAll();
   };
 
@@ -746,7 +740,18 @@ export default function AdminRentals() {
                         <Button size="icon" variant="ghost" onClick={() => setEditing(w)}>
                           <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => deleteWebsite(w.id)}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          title="Zmazať prenájom"
+                          onClick={() =>
+                            void requestDelete({
+                              entityType: "rental_website",
+                              entityId: w.id,
+                              entityLabel: w.name,
+                            })
+                          }
+                        >
                           <Trash2 className="w-4 h-4 text-destructive" />
                         </Button>
                       </div>
@@ -975,6 +980,8 @@ export default function AdminRentals() {
           onSaved={() => void loadAll()}
         />
       )}
+
+      <DestructiveModal {...modalProps} />
     </AdminShell>
   );
 }

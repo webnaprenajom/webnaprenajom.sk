@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/table";
 import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
-import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Trash2 } from "lucide-react";
 import {
   ConfirmedLinkBadge,
   EstimatedLinkBadge,
@@ -30,6 +30,7 @@ import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import { toast } from "@/hooks/use-toast";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
+import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 
 export default function AdminHostingDetail() {
   const { id = "" } = useParams();
@@ -41,6 +42,7 @@ export default function AdminHostingDetail() {
   const [linkedRental, setLinkedRental] = useState<{ id: string; name: string; url: string | null } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [estimatedProjects, setEstimatedProjects] = useState<Array<{ id: string; title: string }>>([]);
+  const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction();
 
   useEffect(() => {
     if (!id) return;
@@ -146,9 +148,26 @@ export default function AdminHostingDetail() {
       title={label}
       subtitle={record.provider || "Hosting záznam"}
       actions={
-        <Button size="sm" variant="outline" onClick={() => navigate("/admin/hosting")}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Späť
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive border-destructive/40 hover:bg-destructive/5"
+            onClick={() =>
+              void requestDelete({
+                entityType: "hosting",
+                entityId: record.id,
+                entityLabel: label,
+                redirectTo: "/admin/hosting",
+              })
+            }
+          >
+            <Trash2 className="w-4 h-4 mr-1" /> Zmazať
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => navigate("/admin/hosting")}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Späť
+          </Button>
+        </div>
       }
     >
       <Tabs defaultValue="prehlad" className="space-y-4">
@@ -316,6 +335,7 @@ export default function AdminHostingDetail() {
           )}
         </TabsContent>
       </Tabs>
+      <DestructiveModal {...modalProps} />
     </AdminShell>
   );
 }

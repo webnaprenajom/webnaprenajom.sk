@@ -21,9 +21,11 @@ import {
   Loader2,
   Search,
   Server,
+  Trash2,
   UserRound,
   Users,
 } from "lucide-react";
+import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 
 type ClientResult = LookupResult & { kind: "customer" | "lead" };
 
@@ -36,6 +38,9 @@ export default function AdminClients() {
   const [directoryLoading, setDirectoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+  const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({
+    onSuccess: () => void loadDirectory(),
+  });
 
   const loadDirectory = useCallback(async () => {
     setDirectoryLoading(true);
@@ -220,48 +225,71 @@ export default function AdminClients() {
             )}
             <div className="grid gap-2 sm:grid-cols-2">
               {directory.map((entry) => (
-                <button
+                <div
                   key={entry.customerId || entry.email || entry.nameKey || entry.displayName}
-                  type="button"
-                  className="text-left rounded-xl border p-3 hover:bg-muted/50 transition-colors min-h-[44px]"
-                  onClick={() => openDirectoryEntry(entry)}
-                  disabled={!entry.customerId && !entry.email}
+                  className="relative rounded-xl border p-3 hover:bg-muted/50 transition-colors min-h-[44px]"
                 >
-                  <div className="flex items-start gap-2">
-                    <UserRound className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm truncate">{entry.displayName}</p>
-                      {entry.email && (
-                        <p className="text-xs text-muted-foreground truncate">{entry.email}</p>
-                      )}
-                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        {entry.projectCount > 0 && (
-                          <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
-                            <FolderKanban className="w-2.5 h-2.5" /> {entry.projectCount}
-                          </Badge>
+                  <button
+                    type="button"
+                    className="w-full text-left pr-8"
+                    onClick={() => openDirectoryEntry(entry)}
+                    disabled={!entry.customerId && !entry.email}
+                  >
+                    <div className="flex items-start gap-2">
+                      <UserRound className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm truncate">{entry.displayName}</p>
+                        {entry.email && (
+                          <p className="text-xs text-muted-foreground truncate">{entry.email}</p>
                         )}
-                        {entry.hostingCount > 0 && (
-                          <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
-                            <Server className="w-2.5 h-2.5" /> {entry.hostingCount}
-                          </Badge>
-                        )}
-                        {entry.rentalCount > 0 && (
-                          <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
-                            <Globe className="w-2.5 h-2.5" /> {entry.rentalCount}
-                          </Badge>
-                        )}
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {entry.projectCount > 0 && (
+                            <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
+                              <FolderKanban className="w-2.5 h-2.5" /> {entry.projectCount}
+                            </Badge>
+                          )}
+                          {entry.hostingCount > 0 && (
+                            <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
+                              <Server className="w-2.5 h-2.5" /> {entry.hostingCount}
+                            </Badge>
+                          )}
+                          {entry.rentalCount > 0 && (
+                            <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
+                              <Globe className="w-2.5 h-2.5" /> {entry.rentalCount}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {unifiedClientSectionSummary(entry)}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        {unifiedClientSectionSummary(entry)}
-                      </p>
                     </div>
-                  </div>
-                </button>
+                  </button>
+                  {entry.customerId && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="absolute top-2 right-2 h-8 w-8"
+                      title="Zmazať klienta"
+                      onClick={() =>
+                        void requestDelete({
+                          entityType: "customer",
+                          entityId: entry.customerId!,
+                          entityLabel: entry.displayName,
+                        })
+                      }
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
           </section>
         )}
       </div>
+      <DestructiveModal {...modalProps} />
     </AdminShell>
   );
 }

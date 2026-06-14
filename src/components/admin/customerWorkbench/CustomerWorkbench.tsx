@@ -16,6 +16,7 @@ import { CustomerFlowTimeline } from "@/components/admin/customerHub/CustomerFlo
 import { CustomerHubFinanceSnapshot } from "@/components/admin/customerHub/CustomerHubFinanceSnapshot";
 import { CustomerHubHeader } from "@/components/admin/customerHub/CustomerHubHeader";
 import { CustomerHubServicesPanel } from "@/components/admin/customerHub/CustomerHubServicesPanel";
+import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import {
   COMMUNICATION_TIMELINE_FILTER_LABELS,
@@ -135,6 +136,9 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
   const commFilter = parseWorkbenchCommFilter(searchParams);
 
   const [quickCreate, setQuickCreate] = useState<QuickCreateKind | null>(null);
+  const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({
+    onSuccess: onReload,
+  });
 
   const summary = useMemo(() => computeWorkbenchSummary(data, routeValue), [data, routeValue]);
   const financeSummary = useMemo(() => computeCustomerFinanceSummary(data), [data]);
@@ -285,6 +289,18 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
         onOpenTab={setTab}
         onQuickCreate={openQuickCreate}
         onOpenCommunication={openCommunicationTab}
+        canDeleteCustomer={isAdmin && !!resolvedCustomerId}
+        onDeleteCustomer={
+          resolvedCustomerId
+            ? () =>
+                void requestDelete({
+                  entityType: "customer",
+                  entityId: resolvedCustomerId,
+                  entityLabel: summary.displayName,
+                  redirectTo: "/admin/clients",
+                })
+            : undefined
+        }
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_260px] gap-4 items-start">
@@ -835,6 +851,7 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
         onClose={() => setQuickCreate(null)}
         onSaved={onReload}
       />
+      <DestructiveModal {...modalProps} />
     </div>
   );
 }
