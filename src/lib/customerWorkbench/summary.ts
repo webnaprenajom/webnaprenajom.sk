@@ -1,5 +1,8 @@
 import { summarizeOpenTasks } from "@/lib/crmLookup/taskCustomerLink";
+import { resolveProfitDisplayContext } from "@/lib/profit/profitContext";
 import type {
+  CommissionPayout,
+  CustomerFinanceSummary,
   CustomerWorkbenchData,
   RecommendedAction,
   WorkbenchSummary,
@@ -195,6 +198,85 @@ export function computeRecommendedActions(
   }
 
   return sortActions(actions).slice(0, 5);
+}
+
+/**
+ * Per-customer financial summary (Fáza 2.3). Reuses resolveProfitDisplayContext (src/lib/profit)
+ * so "no revenue yet" / "cost without revenue" cases stay safe.
+ *
+ * Truth levels (CLAUDE.md): *_fact = potvrdené (zelená), legacy_import = historický import (oranžová),
+ * workflow_only = nepotvrdený pracovný záznam (sivá) — rental_payments (očakávané platby) majú vždy
+ * workflow_only.
+ */
+export function computeCustomerFinanceSummary(
+  data: CustomerWorkbenchData,
+): CustomerFinanceSummary {
+  let paymentsReceivedFactTotal = 0;
+  let paymentsReceivedLegacyTotal = 0;
+  let paymentsReceivedTotal = 0;
+  data.paymentRecords.forEach((p) => {
+    const amount = Number(p.amount) || 0;
+    paymentsReceivedTotal += amount;
+    if (p.truth_level === "payment_fact") paymentsReceivedFactTotal += amount;
+    else if (p.truth_level === "legacy_import") paymentsReceivedLegacyTotal += amount;
+  });
+
+  const paymentsExpectedTotal = data.rentalPayments
+    .filter((rp) => !rp.paid)
+    .reduce((sum, rp) => sum + (Number(rp.custom_price ?? rp.amount) || 0), 0);
+
+  let costsFactTotal = 0;
+  let costsLegacyTotal = 0;
+  let costsTotal = 0;
+  data.costRecords.forEach((c) => {
+    const amount = Number(c.amount) || 0;
+    costsTotal += amount;
+    if (c.truth_level === "cost_fact") costsFactTotal += amount;
+    else if (c.truth_level === "legacy_import") costsLegacyTotal += amount;
+  });
+
+  const grossProfit = resolveProfitDisplayContext({
+    entityKind: "customer",
+    revenueKnown: true,
+    revenue: paymentsReceivedTotal,
+    operatingCost: costsTotal,
+  });
+
+  const payoutByImplementer = new Map<string, CommissionPayout>();
+  let paidCommissionsTotal = 0;
+  data.payoutRecords.forEach((p) => {
+    const amount = Number(p.amount) || 0;
+    paidCommissionsTotal += amount;
+    const key = p.implementer || "Neznámy";
+    const existing = payoutByImplementer.get(key);
+    if (existing) {
+      existing.total += amount;
+      existing.count += 1;
+    } else {
+      payoutByImplementer.set(key, { implementer: key, total: amount, count: 1 });
+    }
+  });
+  const paidCommissionsByImplementer = Array.from(payoutByImplementer.values()).sort(
+    (a, b) => b.total - a.total,
+  );
+
+  const netProfitCanShow = grossProfit.canShowProfit;
+  const netProfit = netProfitCanShow ? (grossProfit.profit ?? 0) - paidCommissionsTotal : null;
+
+  return {
+    paymentsReceivedTotal,
+    paymentsReceivedFactTotal,
+    paymentsReceivedLegacyTotal,
+    paymentsExpectedTotal,
+    costsTotal,
+    costsFactTotal,
+    costsLegacyTotal,
+    grossProfit,
+    paidCommissionsTotal,
+    paidCommissionsByImplementer,
+    netProfit,
+    netProfitCanShow,
+  };
 }
 
 export function computeUnresolvedIssues(

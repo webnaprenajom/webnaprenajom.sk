@@ -30,6 +30,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { buildFinanceSnapshot } from "@/lib/finance/buildFinanceSnapshot";
 import { FINANCE_TRUTH_DISCLAIMER } from "@/lib/finance/labels";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { FinanceImplementerDetailDialog } from "@/components/admin/finance/FinanceImplementerDetailDialog";
 import type { CommissionRow } from "@/lib/commissionSource";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
@@ -193,9 +194,11 @@ const AdminFinance = () => {
     const unpaidInvoices = yearPayments.filter(
       (p: any) => p.status === "unpaid" || p.status === "invoice",
     ).length;
-    const receivedSum = snapshot.totals.paymentsConfirmed + snapshot.totals.paymentsLegacyImport;
+    const paymentsConfirmed = snapshot.totals.paymentsConfirmed;
+    const paymentsLegacyImport = snapshot.totals.paymentsLegacyImport;
+    const receivedSum = paymentsConfirmed + paymentsLegacyImport;
     const pendingSum = snapshot.totals.rentalMarkedUnpaid + snapshot.totals.rentalMarkedInvoiced;
-    return { paidInvoices, unpaidInvoices, receivedSum, pendingSum };
+    return { paidInvoices, unpaidInvoices, receivedSum, pendingSum, paymentsConfirmed, paymentsLegacyImport };
   }, [raw.payments, snapshot, year]);
 
   const accessCtx: AccessContext = useMemo(
@@ -396,7 +399,14 @@ function DailyFinanceView({
   onOpenAdvanced,
   showAdvancedLink = true,
 }: {
-  dailyKpis: { paidInvoices: number; unpaidInvoices: number; receivedSum: number; pendingSum: number };
+  dailyKpis: {
+    paidInvoices: number;
+    unpaidInvoices: number;
+    receivedSum: number;
+    pendingSum: number;
+    paymentsConfirmed: number;
+    paymentsLegacyImport: number;
+  };
   implementerTotals: [string, { paid: number; unpaid: number; count: number }][];
   commissions: CommissionRow[];
   activeIssueCount: number;
@@ -417,36 +427,49 @@ function DailyFinanceView({
       )}
 
       {/*
-        AUDIT (Fáza 1, bod 3) — Daily Finance view sa tvári ako finálny zdroj pravdy (above-the-fold KPI),
-        ale žiadna z týchto kariet nezobrazuje truth-level badge (fact / legacy_import / workflow_only)
-        podľa CLAUDE.md "VŽDY zobrazuj truth level badge pri každom finančnom zázname". Konkrétne:
-          - "Zaplatené faktúry" / "Nezaplatené / fakturované": počítané z `rental_payments` (legacy tabuľka,
-            žiadny truth_level; v buildFinanceSnapshot je príslušný ledger riadok "rental_receivable"
-            s truthLevel="workflow_only").
-          - "Prijaté platby" (dailyKpis.receivedSum): súčet `paymentsConfirmed` (truth_level="payment_fact")
-            + `paymentsLegacyImport` (truth_level="legacy_import") — DVA rôzne truth-levely sú zlúčené
-            do jedného zeleného čísla bez rozlíšenia.
-          - "Čakajúce platby" (dailyKpis.pendingSum): `rentalMarkedUnpaid` + `rentalMarkedInvoiced`,
-            oboje z `rental_payments` → truthLevel="workflow_only", ale zobrazené ako bežné číslo.
-        → Fáza 3 (Finance Coherence): rozdeliť tieto súčty podľa truth-levelu a/alebo doplniť badge
-        s farbami z CLAUDE.md (zelená=fact, žltá/oranžová=legacy_import, sivá=workflow_only).
-        Toto je len audit-marker, žiadna vizuálna zmena (zámerne, podľa zadania Fázy 1).
+        Fáza 3 (Finance Coherence) — RESOLVED gap z AUDIT_FINDINGS.md #4 (pôvodne `// AUDIT (Fáza 1, bod 3)`).
+        Disclaimer je teraz viditeľný aj v dennom pohľade (predtým len v Pokročilom), pretože KPI nižšie
+        kombinujú viacero truth-levelov (fact/legacy_import/workflow_only).
       */}
+      <p className="text-[11px] text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
+        {FINANCE_TRUTH_DISCLAIMER}
+      </p>
+
       {showOrgKpis && (
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard label="Zaplatené faktúry" value={String(dailyKpis.paidInvoices)} hint="Prenájmy — mesačné záznamy" />
-          <KpiCard label="Nezaplatené / fakturované" value={String(dailyKpis.unpaidInvoices)} hint="Čaká na úhradu" accent="text-amber-600" />
-          <KpiCard label="Prijaté platby" value={`${dailyKpis.receivedSum.toFixed(0)} €`} accent="text-green-600" />
-          <KpiCard label="Čakajúce platby" value={`${dailyKpis.pendingSum.toFixed(0)} €`} accent="text-orange-500" />
+          <KpiCard
+            label="Zaplatené faktúry"
+            value={String(dailyKpis.paidInvoices)}
+            hint="Prenájmy — mesačné záznamy (rental_payments)"
+            truthLevel="workflow_only"
+          />
+          <KpiCard
+            label="Nezaplatené / fakturované"
+            value={String(dailyKpis.unpaidInvoices)}
+            hint="Čaká na úhradu"
+            accent="text-amber-600"
+            truthLevel="workflow_only"
+          />
+          <KpiCard
+            label="Prijaté platby"
+            value={`${dailyKpis.receivedSum.toFixed(0)} €`}
+            accent="text-green-600"
+            hint="Súčet potvrdených platieb a legacy importu — rozpis nižšie"
+            breakdown={[
+              { level: "payment_fact", amount: dailyKpis.paymentsConfirmed },
+              { level: "legacy_import", amount: dailyKpis.paymentsLegacyImport },
+            ]}
+          />
+          <KpiCard
+            label="Čakajúce platby"
+            value={`${dailyKpis.pendingSum.toFixed(0)} €`}
+            accent="text-orange-500"
+            hint="Faktúra + nezaplatené (rental_payments)"
+            truthLevel="workflow_only"
+          />
         </section>
       )}
 
-      {/*
-        AUDIT (Fáza 1, bod 3) — "Provízie podľa realizátora" / "Vaše provízie": dáta z `commissions`,
-        v buildFinanceSnapshot majú truthLevel="workflow_only" (pracovný, nepotvrdený záznam podľa
-        CLAUDE.md), ale tabuľka to nezobrazuje žiadnym badge — vyzerá ako finálne číslo.
-        → Fáza 3: doplniť badge "workflow_only" / odkaz na payout_records ak existuje (hasPayoutFact).
-      */}
       <section className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2 flex-wrap">
           <h2 className="text-sm font-semibold">
@@ -473,6 +496,7 @@ function DailyFinanceView({
                 <TableHead className="text-right">Vyplatené</TableHead>
                 <TableHead className="text-right">Nezaplatené</TableHead>
                 <TableHead className="text-right">Počet</TableHead>
+                <TableHead>Truth</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -486,11 +510,21 @@ function DailyFinanceView({
                   <TableCell className="text-right text-green-600">{t.paid.toFixed(2)} €</TableCell>
                   <TableCell className="text-right text-amber-600">{t.unpaid.toFixed(2)} €</TableCell>
                   <TableCell className="text-right text-muted-foreground">{t.count}</TableCell>
+                  <TableCell>
+                    <TruthLevelBadge level="workflow_only" />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
           </div>
+        )}
+        {implementerTotals.length > 0 && (
+          <p className="text-[10px] text-muted-foreground px-4 py-2 border-t border-border/60">
+            Zdroj: <code className="text-[10px]">commissions</code> (interný stav „vyplatené" / „nevyplatené",
+            workflow flag). Auditované, potvrdené výplaty s referenciou nájdete v Pokročilé → Záznamy →
+            Výplaty (<code className="text-[10px]">payout_records</code>).
+          </p>
         )}
       </section>
 
@@ -651,16 +685,39 @@ function KpiCard({
   value,
   hint,
   accent = "text-foreground",
+  truthLevel,
+  breakdown,
 }: {
   label: string;
   value: string;
   hint?: string;
   accent?: string;
+  /** Jediný truth-level pre celú kartu (napr. "workflow_only"). */
+  truthLevel?: string;
+  /** Pre kartu, ktorá je z princípu mixovaná — rozpis súm podľa truth-levelu. */
+  breakdown?: { level: string; amount: number }[];
 }) {
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-muted-foreground">{label}</div>
+        {truthLevel && <TruthLevelBadge level={truthLevel} />}
+      </div>
       <div className={`text-2xl font-bold mt-1 ${accent}`}>{value}</div>
+      {breakdown && breakdown.filter((b) => b.amount > 0).length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-1.5">
+          {breakdown
+            .filter((b) => b.amount > 0)
+            .map((b) => (
+              <span key={b.level} className="inline-flex items-center gap-1">
+                <TruthLevelBadge level={b.level} />
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {b.amount.toFixed(0)} €
+                </span>
+              </span>
+            ))}
+        </div>
+      )}
       {hint && <div className="text-[10px] text-muted-foreground mt-1">{hint}</div>}
     </div>
   );

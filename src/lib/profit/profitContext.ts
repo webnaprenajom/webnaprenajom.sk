@@ -5,7 +5,7 @@
 
 import { computeProfit } from "@/lib/profit/profitCalculator";
 
-export type ProfitEntityKind = "hosting" | "project";
+export type ProfitEntityKind = "hosting" | "project" | "customer";
 
 export type ProfitRevenueBasis = "hosting_monthly" | "project_payments" | "unknown";
 
@@ -36,9 +36,9 @@ export type ResolveProfitInput = {
 };
 
 export function profitRevenueBasisLabel(kind: ProfitEntityKind): string {
-  return kind === "hosting"
-    ? "mesačná cena hostingu"
-    : "súčet platieb (payment_records) na projekte";
+  if (kind === "hosting") return "mesačná cena hostingu";
+  if (kind === "customer") return "súčet platieb (payment_records) klienta";
+  return "súčet platieb (payment_records) na projekte";
 }
 
 export function resolveProfitDisplayContext(input: ResolveProfitInput): ProfitDisplayContext {
@@ -57,7 +57,9 @@ export function resolveProfitDisplayContext(input: ResolveProfitInput): ProfitDi
       detail:
         input.entityKind === "project"
           ? "Projekt nemá zaznamenané platby — zisk sa nezobrazuje, aby nevznikol falošný dojem."
-          : "Chýba mesačná cena hostingu — doplnite ju v prehľade.",
+          : input.entityKind === "customer"
+            ? "Klient nemá zaznamenané platby — zisk sa nezobrazuje, aby nevznikol falošný dojem."
+            : "Chýba mesačná cena hostingu — doplnite ju v prehľade.",
       revenueBasisLabel: basis,
     };
   }

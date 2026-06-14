@@ -5,6 +5,7 @@ import {
   parseWorkbenchTab,
 } from "@/lib/customerWorkbench/urlState";
 import {
+  computeCustomerFinanceSummary,
   computeRecommendedActions,
   computeUnresolvedIssues,
   computeWorkbenchSummary,
@@ -26,6 +27,10 @@ const emptyData = (overrides: Partial<CustomerWorkbenchData> = {}): CustomerWork
   commEvents: [],
   commissions: [],
   commLoadError: null,
+  paymentRecords: [],
+  costRecords: [],
+  payoutRecords: [],
+  rentalPayments: [],
   ...overrides,
 });
 
@@ -272,6 +277,131 @@ describe("computeRecommendedActions", () => {
     expect(actions.some((a) => a.id === "reconcile")).toBe(true);
     expect(actions.some((a) => a.id === "all-clear")).toBe(false);
     expect(actions.some((a) => a.id === "add-note")).toBe(false);
+  });
+});
+
+describe("computeCustomerFinanceSummary", () => {
+  it("splits payments and costs by truth level and computes gross/net profit", () => {
+    const data = emptyData({
+      rentals: [
+        { id: "r1", name: "web1.sk", url: null, monthly_price: 30, implementers: null, client_name: "X" },
+      ],
+      paymentRecords: [
+        {
+          id: "p1",
+          source_table: "rental_payments",
+          source_id: "rp1",
+          customer_email: "client@test.sk",
+          client_name: "X",
+          rental_website_id: "r1",
+          amount: 100,
+          currency: "EUR",
+          paid_at: "2026-05-01",
+          method: "bank",
+          reference: null,
+          note: null,
+          truth_level: "payment_fact",
+        },
+        {
+          id: "p2",
+          source_table: "legacy",
+          source_id: null,
+          customer_email: "client@test.sk",
+          client_name: "X",
+          rental_website_id: "r1",
+          amount: 50,
+          currency: "EUR",
+          paid_at: "2026-04-01",
+          method: null,
+          reference: null,
+          note: null,
+          truth_level: "legacy_import",
+        },
+      ],
+      costRecords: [
+        {
+          id: "c1",
+          source_table: "cost_records",
+          source_id: null,
+          category: "hosting",
+          vendor: "Wedos",
+          client_name: "X",
+          rental_website_id: "r1",
+          amount: 20,
+          currency: "EUR",
+          paid_at: "2026-05-01",
+          incurred_at: "2026-05-01",
+          reference: null,
+          note: null,
+          truth_level: "cost_fact",
+        },
+      ],
+      rentalPayments: [
+        {
+          id: "rp1",
+          website_id: "r1",
+          month: 5,
+          year: 2026,
+          amount: 30,
+          custom_price: null,
+          paid: true,
+          status: "paid",
+          paid_at: "2026-05-01",
+        },
+        {
+          id: "rp2",
+          website_id: "r1",
+          month: 6,
+          year: 2026,
+          amount: 30,
+          custom_price: null,
+          paid: false,
+          status: "unpaid",
+          paid_at: null,
+        },
+      ],
+      payoutRecords: [
+        {
+          id: "po1",
+          source_table: "commissions",
+          source_id: "comm1",
+          implementer: "Realizator A",
+          amount: 15,
+          currency: "EUR",
+          paid_at: "2026-05-05",
+          reference: null,
+          note: null,
+          truth_level: "payout_fact",
+        },
+      ],
+    });
+
+    const finance = computeCustomerFinanceSummary(data);
+    expect(finance.paymentsReceivedTotal).toBe(150);
+    expect(finance.paymentsReceivedFactTotal).toBe(100);
+    expect(finance.paymentsReceivedLegacyTotal).toBe(50);
+    expect(finance.paymentsExpectedTotal).toBe(30);
+    expect(finance.costsTotal).toBe(20);
+    expect(finance.costsFactTotal).toBe(20);
+    expect(finance.grossProfit.canShowProfit).toBe(true);
+    expect(finance.grossProfit.profit).toBe(130);
+    expect(finance.paidCommissionsTotal).toBe(15);
+    expect(finance.paidCommissionsByImplementer).toEqual([
+      { implementer: "Realizator A", total: 15, count: 1 },
+    ]);
+    expect(finance.netProfitCanShow).toBe(true);
+    expect(finance.netProfit).toBe(115);
+  });
+
+  it("does not show profit when there is no revenue and no cost", () => {
+    const data = emptyData();
+    const finance = computeCustomerFinanceSummary(data);
+    expect(finance.paymentsReceivedTotal).toBe(0);
+    expect(finance.grossProfit.canShowProfit).toBe(false);
+    expect(finance.grossProfit.status).toBe("no_revenue_yet");
+    expect(finance.netProfitCanShow).toBe(false);
+    expect(finance.netProfit).toBeNull();
+    expect(finance.paidCommissionsByImplementer).toEqual([]);
   });
 });
 

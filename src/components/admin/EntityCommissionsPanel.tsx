@@ -35,6 +35,12 @@ import { useAccessContext } from "@/hooks/useAccessContext";
 import { filterCommissionsForUser } from "@/lib/rbac/permissions";
 import { canWriteCommissions, writeDeniedMessage } from "@/lib/rbac/writePermissions";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
+import {
+  resolveCommissionPayoutInfo,
+  COMMISSION_PAYOUT_STATUS_LABELS,
+  type PayoutRecordLike,
+} from "@/lib/finance/commissionPayoutStatus";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -83,6 +89,7 @@ export function EntityCommissionsPanel({
   const access = useAccessContext();
   const canWrite = canWriteCommissions(access);
   const [rows, setRows] = useState<CommissionRow[]>([]);
+  const [payoutRecords, setPayoutRecords] = useState<PayoutRecordLike[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -98,8 +105,26 @@ export function EntityCommissionsPanel({
       .order("date", { ascending: false });
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      setRows([]);
+      setPayoutRecords([]);
+      setLoading(false);
+      return;
+    }
+    const visibleRows = filterCommissionsForUser((data || []) as CommissionRow[], access);
+    setRows(visibleRows);
+
+    // Fáza 5: audit (payout_records) pre zobrazené provízie — pri chybe ticho [] (Stav stĺpec
+    // funguje ako predtým, len bez "Výplata" badge).
+    const ids = visibleRows.map((r) => r.id);
+    if (ids.length === 0) {
+      setPayoutRecords([]);
     } else {
-      setRows(filterCommissionsForUser((data || []) as CommissionRow[], access));
+      const { data: payoutData, error: payoutError } = await supabase
+        .from("payout_records")
+        .select("source_table,source_id,amount,paid_at,truth_level")
+        .eq("source_table", "commissions")
+        .in("source_id", ids);
+      setPayoutRecords(payoutError ? [] : ((payoutData || []) as PayoutRecordLike[]));
     }
     setLoading(false);
   }, [sourceType, sourceId, access.role, access.implementerName]);
@@ -198,6 +223,32 @@ export function EntityCommissionsPanel({
     return { paid, unpaid };
   }, [rows]);
 
+  // Fáza 5: "Výplata" — audit stav z payout_records (oddelene od workflow stĺpca "Stav").
+  const renderPayoutBadge = (c: CommissionRow) => {
+    const info = resolveCommissionPayoutInfo(c, payoutRecords);
+    if (info.status === "audited_payout_fact" || info.status === "audited_legacy_import") {
+      return (
+        <div className="flex flex-col gap-1 items-start">
+          <TruthLevelBadge level={info.truthLevel!} />
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+            {info.auditedAmount.toFixed(2)} €
+            {info.auditedPaidAt
+              ? ` · ${new Date(info.auditedPaidAt).toLocaleDateString("sk-SK", { day: "numeric", month: "short", year: "numeric" })}`
+              : ""}
+          </span>
+        </div>
+      );
+    }
+    if (info.status === "paid_workflow_unaudited") {
+      return (
+        <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground whitespace-nowrap">
+          {COMMISSION_PAYOUT_STATUS_LABELS.paid_workflow_unaudited}
+        </Badge>
+      );
+    }
+    return <span className="text-xs text-muted-foreground">—</span>;
+  };
+
   const renderRow = (c: CommissionRow) => (
     <>
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
@@ -212,6 +263,7 @@ export function EntityCommissionsPanel({
           {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
         </Badge>
       </TableCell>
+      <TableCell className="text-xs">{renderPayoutBadge(c)}</TableCell>
       <TableCell className="text-right">
         {canWrite ? (
           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
@@ -271,6 +323,7 @@ export function EntityCommissionsPanel({
                   <TableHead className="text-right">Suma</TableHead>
                   <TableHead>Forma</TableHead>
                   <TableHead>Stav</TableHead>
+                  <TableHead>Výplata</TableHead>
                   <TableHead className="text-right">Akcie</TableHead>
                 </TableRow>
               </TableHeader>
@@ -305,6 +358,7 @@ export function EntityCommissionsPanel({
                   </Badge>
                   <span className="text-xs text-muted-foreground">{paymentFormLabel(c.payment_form)}</span>
                 </div>
+                <div className="text-xs">{renderPayoutBadge(c)}</div>
               </div>
             ))}
           </div>

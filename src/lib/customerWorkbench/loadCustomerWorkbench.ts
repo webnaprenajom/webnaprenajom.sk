@@ -5,13 +5,17 @@ import type { Json } from "@/integrations/supabase/types";
 import type { CommunicationEventRow } from "@/lib/communication/types";
 import type {
   CommissionBrief,
+  CostRecord,
   CustomerWorkbenchData,
   Design,
   HostingBrief,
   Lead,
   LeadLog,
+  PaymentRecord,
+  PayoutRecord,
   ProjectNote,
   Rental,
+  RentalPaymentBrief,
   Signature,
   Task,
   Wheel,
@@ -287,6 +291,98 @@ export async function loadCustomerWorkbench(
   });
   const commissions = Array.from(seenComm.values());
 
+  const rentalIds = rentals.map((r) => r.id);
+  const commissionIds = commissions.map((c) => c.id);
+
+  // payment_records (Golden Path: rental_websites -> payment_records)
+  const paymentSelect =
+    "id,source_table,source_id,customer_email,client_name,rental_website_id,amount,currency,paid_at,method,reference,note,truth_level" as const;
+  const paymentQueries: Promise<{ data: PaymentRecord[] | null }>[] = [];
+  if (rentalIds.length) {
+    paymentQueries.push(
+      supabase
+        .from("payment_records")
+        .select(paymentSelect)
+        .in("rental_website_id", rentalIds) as Promise<{ data: PaymentRecord[] | null }>,
+    );
+  }
+  if (resolvedEmail) {
+    paymentQueries.push(
+      supabase
+        .from("payment_records")
+        .select(paymentSelect)
+        .ilike("customer_email", resolvedEmail) as Promise<{ data: PaymentRecord[] | null }>,
+    );
+  }
+  if (leadNames.length) {
+    paymentQueries.push(
+      supabase
+        .from("payment_records")
+        .select(paymentSelect)
+        .in("client_name", leadNames) as Promise<{ data: PaymentRecord[] | null }>,
+    );
+  }
+  const seenPayments = new Map<string, PaymentRecord>();
+  (await Promise.all(paymentQueries)).forEach((res) => {
+    (res.data || []).forEach((p) => {
+      if (!seenPayments.has(p.id)) seenPayments.set(p.id, p);
+    });
+  });
+  const paymentRecords = Array.from(seenPayments.values()).sort(
+    (a, b) => new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime(),
+  );
+
+  // cost_records (Golden Path: rental_websites -> cost_records). No customer_email column.
+  const costSelect =
+    "id,source_table,source_id,category,vendor,client_name,rental_website_id,amount,currency,paid_at,incurred_at,reference,note,truth_level" as const;
+  const costQueries: Promise<{ data: CostRecord[] | null }>[] = [];
+  if (rentalIds.length) {
+    costQueries.push(
+      supabase
+        .from("cost_records")
+        .select(costSelect)
+        .in("rental_website_id", rentalIds) as Promise<{ data: CostRecord[] | null }>,
+    );
+  }
+  if (leadNames.length) {
+    costQueries.push(
+      supabase
+        .from("cost_records")
+        .select(costSelect)
+        .in("client_name", leadNames) as Promise<{ data: CostRecord[] | null }>,
+    );
+  }
+  const seenCosts = new Map<string, CostRecord>();
+  (await Promise.all(costQueries)).forEach((res) => {
+    (res.data || []).forEach((c) => {
+      if (!seenCosts.has(c.id)) seenCosts.set(c.id, c);
+    });
+  });
+  const costRecords = Array.from(seenCosts.values()).sort((a, b) => {
+    const ad = new Date(a.paid_at || a.incurred_at || a.id).getTime();
+    const bd = new Date(b.paid_at || b.incurred_at || b.id).getTime();
+    return bd - ad;
+  });
+
+  // rental_payments — per-month invoice rows (truth_level=workflow_only); unpaid = "očakávané platby"
+  const { data: rentalPaymentsData } = rentalIds.length
+    ? await supabase
+        .from("rental_payments")
+        .select("id,website_id,month,year,amount,custom_price,paid,status,paid_at")
+        .in("website_id", rentalIds)
+    : { data: [] };
+  const rentalPayments = (rentalPaymentsData || []) as RentalPaymentBrief[];
+
+  // payout_records — commission payouts, linked via source_table='commissions' + source_id
+  const { data: payoutData } = commissionIds.length
+    ? await supabase
+        .from("payout_records")
+        .select("id,source_table,source_id,implementer,amount,currency,paid_at,reference,note,truth_level")
+        .eq("source_table", "commissions")
+        .in("source_id", commissionIds.map(String))
+    : { data: [] };
+  const payoutRecords = (payoutData || []) as PayoutRecord[];
+
   const { data: wheelData } = resolvedEmail
     ? await supabase
         .from("wheel_spins")
@@ -408,5 +504,9 @@ export async function loadCustomerWorkbench(
     commEvents,
     commissions,
     commLoadError,
+    paymentRecords,
+    costRecords,
+    payoutRecords,
+    rentalPayments,
   };
 }

@@ -57,6 +57,13 @@
     (zelená=fact, žltá/oranžová=legacy_import, sivá=workflow_only). Fáza 1 = len audit-markery v kóde,
     bez vizuálnej zmeny (item 4 zadania: "Nevylepšuj ešte dizajn").
 
+- **✅ RESOLVED (Fáza 3, 2026-06-14)**: `DailyFinanceView` teraz zobrazuje `FINANCE_TRUTH_DISCLAIMER` aj
+  mimo "Pokročilé". KPI "Prijaté platby" má rozpis `payment_fact` / `legacy_import` (`TruthLevelBadge` + suma
+  pri každom). KPI "Zaplatené faktúry" / "Nezaplatené / fakturované" / "Čakajúce platby" majú badge
+  `workflow_only`. Tabuľka "Provízie podľa realizátora" / "Vaše provízie" má nový stĺpec "Truth"
+  (`workflow_only`, zdroj `commissions`) + pätičku vysvetľujúcu vzťah k auditovaným `payout_records`.
+  Viď `src/components/admin/finance/TruthLevelBadge.tsx` a `ROADMAP.md` Fáza 3.
+
 ### 5. KPI karty v daily Finance view sú len pre admina
 - **Lokalizácia**: `src/pages/AdminFinance.tsx`, `showOrgKpis = canAccessOperationalCrm(access.role)`
 - **Problém**: KPI karty ("Zaplatené faktúry", "Prijaté platby" atď.) sú v kóde *above the fold* — to je v poriadku —
@@ -95,6 +102,11 @@
   mesačné prenájmy) a Customer Hub ju nemajú.
 - **Business dopad**: Najdôležitejšie číslo ("čistý zisk", ktoré priamo definuje CLAUDE.md ako kľúčovú potrebu)
   chýba presne tam, kde je revenue najväčší (rentals) a kde ho Maroš najčastejšie potrebuje (Customer Hub).
+- **✅ ČIASTOČNE RESOLVED (Fáza 5 "Commission Clarity", 2026-06-14)** — pre províziovú časť tohto nálezu:
+  `/admin/commissions` a `EntityCommissionsPanel` (hosting/project) teraz jasne rozlišujú workflow flag
+  (`commissions.payment_status`) od auditovanej výplaty (`payout_records`, nový stĺpec "Výplata" + 3-bucket
+  totals breakdown). Nový shared modul `src/lib/finance/commissionPayoutStatus.ts`. `EntityProfitBanner` pre
+  `AdminRentals.tsx`/rentals (zvyšok nálezu #8, ROADMAP 5.1/5.2) ostáva otvorené ako follow-up.
 
 ## 🟢 VYLEPŠENIA
 
@@ -120,6 +132,10 @@
   zelená/oranžová/červená/sivá z CLAUDE.md UI/UX pravidiel.
 - **Business dopad**: Nízky — funguje, ale pri rozšírení truth badges do daily view (nález #4) bude treba
   zjednotiť farebnú mapu.
+- **✅ RESOLVED (Fáza 3, 2026-06-14)**: nový shared `src/components/admin/finance/TruthLevelBadge.tsx`
+  mapuje `*_fact` → zelená (#22c55e), `legacy_import` → oranžová (#f97316), `workflow_only`/`derived` → sivá
+  (#6b7280) — presne CLAUDE.md konvencia. `truthBadge()` v `FinanceRecordsCrud.tsx` aj
+  `CustomerFinancePanel.tsx` (Fáza 2) ho teraz používajú namiesto lokálnych `variant`-based badge.
 
 ## ✅ ČO FUNGUJE DOBRE
 

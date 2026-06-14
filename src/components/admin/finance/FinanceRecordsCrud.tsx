@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -21,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { TRUTH_LEVEL_LABELS } from "@/lib/finance/labels";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { resolveCustomerIdentity, customerDisplayLabel } from "@/lib/finance/customerBridge";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
 import {
@@ -246,11 +245,7 @@ export function FinanceRecordsCrud({
     onSaved();
   };
 
-  const truthBadge = (tl: string) => (
-    <Badge variant={isLegacy(tl) ? "secondary" : "default"} className="text-[10px]">
-      {TRUTH_LEVEL_LABELS[tl] ?? tl}
-    </Badge>
-  );
+  const truthBadge = (tl: string) => <TruthLevelBadge level={tl} />;
 
   return (
     <div className="space-y-3">

@@ -27,6 +27,10 @@ const emptyData = (): CustomerWorkbenchData => ({
   commEvents: [],
   commissions: [],
   commLoadError: null,
+  paymentRecords: [],
+  costRecords: [],
+  payoutRecords: [],
+  rentalPayments: [],
 });
 
 const AdminCustomer = () => {

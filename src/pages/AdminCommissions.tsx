@@ -54,6 +54,15 @@ import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 import type { LookupResult } from "@/lib/crmLookup/types";
 import { Link } from "react-router-dom";
 import { CommissionLinkBadge } from "@/components/admin/lookup/LinkStatusBadge";
+import { useAccessContext } from "@/hooks/useAccessContext";
+import { adminCustomerHrefPreferred } from "@/lib/adminNav";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
+import {
+  resolveCommissionPayoutInfo,
+  summarizeCommissionPayoutTotals,
+  COMMISSION_PAYOUT_STATUS_LABELS,
+  type PayoutRecordLike,
+} from "@/lib/finance/commissionPayoutStatus";
 import {
   Loader2,
   Wallet,
@@ -127,8 +136,11 @@ const emptyExpense = () => ({
 });
 
 export function CommissionsExpensesContent() {
+  const access = useAccessContext();
+
   // Commissions
   const [items, setItems] = useState<Commission[]>([]);
+  const [payoutRecords, setPayoutRecords] = useState<PayoutRecordLike[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -154,13 +166,34 @@ export function CommissionsExpensesContent() {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("commissions")
-      .select("*")
-      .order("date", { ascending: false })
-      .order("created_at", { ascending: false });
-    if (error) toast({ title: "Chyba načítania", description: error.message, variant: "destructive" });
-    else setItems((data || []) as Commission[]);
+    const [commissionsRes, payoutRecordsRes] = await Promise.all([
+      supabase
+        .from("commissions")
+        .select("*")
+        .order("date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("payout_records")
+        .select("source_table,source_id,amount,paid_at,truth_level")
+        .eq("source_table", "commissions"),
+    ]);
+    if (commissionsRes.error) {
+      toast({ title: "Chyba načítania", description: commissionsRes.error.message, variant: "destructive" });
+    } else {
+      setItems((commissionsRes.data || []) as Commission[]);
+    }
+    // payout_records sú zdroj pravdy pre "auditovaná výplata" (Fáza 5). Pri chybe sa provízie
+    // stále zobrazia (payment_status funguje ako predtým), len bez audit badge — upozorníme.
+    if (payoutRecordsRes.error) {
+      toast({
+        title: "Audit výplat sa nenačítal",
+        description: `Stĺpec "Výplata" nemusí byť presný: ${payoutRecordsRes.error.message}`,
+        variant: "destructive",
+      });
+      setPayoutRecords([]);
+    } else {
+      setPayoutRecords((payoutRecordsRes.data || []) as PayoutRecordLike[]);
+    }
     setLoading(false);
   };
 
@@ -412,6 +445,10 @@ export function CommissionsExpensesContent() {
     return { paid, unpaid, total: paid + unpaid };
   }, [items]);
 
+  // Fáza 5: "paid vs not yet paid" bez miešania workflow stavu (commissions.payment_status)
+  // a auditovaných výplat (payout_records).
+  const payoutTotals = useMemo(() => summarizeCommissionPayoutTotals(items, payoutRecords), [items, payoutRecords]);
+
   const expTotals = useMemo(() => {
     const paid = expenses.filter((i) => i.payment_status === "paid").reduce((s, i) => s + Number(i.amount || 0), 0);
     const unpaid = expenses.filter((i) => i.payment_status === "unpaid").reduce((s, i) => s + Number(i.amount || 0), 0);
@@ -444,6 +481,31 @@ export function CommissionsExpensesContent() {
               </div>
             </section>
 
+            <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs text-muted-foreground">Vyplatené (workflow) — neauditované</div>
+                  <TruthLevelBadge level="workflow_only" />
+                </div>
+                <div className="text-2xl font-bold text-muted-foreground">{payoutTotals.paidWorkflowUnaudited.toFixed(2)} €</div>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Označené ako vyplatené, ale bez záznamu v payout_records — interný stav, nie audit.
+                </p>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs text-muted-foreground">Auditované výplaty (payout_records)</div>
+                  <TruthLevelBadge level="payout_fact" />
+                </div>
+                <div className="text-2xl font-bold text-green-500">{payoutTotals.auditedTotal.toFixed(2)} €</div>
+                <p className="text-[11px] text-muted-foreground mt-1 flex flex-wrap items-center gap-2">
+                  <span>z toho:</span>
+                  <span className="inline-flex items-center gap-1"><TruthLevelBadge level="payout_fact" />{payoutTotals.auditedFact.toFixed(2)} €</span>
+                  <span className="inline-flex items-center gap-1"><TruthLevelBadge level="legacy_import" />{payoutTotals.auditedLegacyImport.toFixed(2)} €</span>
+                </p>
+              </div>
+            </section>
+
             <section className="flex flex-col sm:flex-row gap-3 justify-between">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full sm:w-[220px]"><SelectValue placeholder="Stav" /></SelectTrigger>
@@ -470,8 +532,10 @@ export function CommissionsExpensesContent() {
                         <TableHead>Názov</TableHead>
                         <TableHead>Zdroj</TableHead>
                         <TableHead>Implementátor</TableHead>
+                        {access.isAdmin && <TableHead>Klient</TableHead>}
                         <TableHead className="text-right">Suma</TableHead>
                         <TableHead>Stav</TableHead>
+                        <TableHead>Výplata</TableHead>
                         <TableHead>Poznámka</TableHead>
                         <TableHead className="text-right">Akcie</TableHead>
                       </TableRow>
@@ -498,11 +562,53 @@ export function CommissionsExpensesContent() {
                               </div>
                             </TableCell>
                             <TableCell className="text-sm">{c.implementer}</TableCell>
+                            {access.isAdmin && (
+                              <TableCell className="text-xs whitespace-nowrap">
+                                {c.customer_email ? (
+                                  (() => {
+                                    const href = adminCustomerHrefPreferred(c.customer_id, c.customer_email);
+                                    return href ? (
+                                      <Link to={href} className="text-primary hover:underline">{c.customer_email}</Link>
+                                    ) : (
+                                      <span>{c.customer_email}</span>
+                                    );
+                                  })()
+                                ) : (
+                                  <span className="text-muted-foreground italic">—</span>
+                                )}
+                              </TableCell>
+                            )}
                             <TableCell className="text-sm text-right font-semibold whitespace-nowrap">{Number(c.amount || 0).toFixed(2)} €</TableCell>
                             <TableCell>
                               <button onClick={() => togglePaid(c)} title="Prepnúť stav">
                                 <Badge variant="outline" className={`text-xs cursor-pointer ${cfg.className}`}>{cfg.label}</Badge>
                               </button>
+                            </TableCell>
+                            <TableCell className="text-xs">
+                              {(() => {
+                                const info = resolveCommissionPayoutInfo(c, payoutRecords);
+                                if (info.status === "audited_payout_fact" || info.status === "audited_legacy_import") {
+                                  return (
+                                    <div className="flex flex-col gap-1 items-start">
+                                      <TruthLevelBadge level={info.truthLevel!} />
+                                      <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                                        {info.auditedAmount.toFixed(2)} €
+                                        {info.auditedPaidAt
+                                          ? ` · ${new Date(info.auditedPaidAt).toLocaleDateString("sk-SK", { day: "numeric", month: "short", year: "numeric" })}`
+                                          : ""}
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                                if (info.status === "paid_workflow_unaudited") {
+                                  return (
+                                    <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground whitespace-nowrap">
+                                      {COMMISSION_PAYOUT_STATUS_LABELS.paid_workflow_unaudited}
+                                    </Badge>
+                                  );
+                                }
+                                return <span className="text-muted-foreground">—</span>;
+                              })()}
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground max-w-[260px]">
                               <div className="line-clamp-2 break-words">{c.note || <span className="italic opacity-60">—</span>}</div>

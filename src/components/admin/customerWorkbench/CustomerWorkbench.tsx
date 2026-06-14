@@ -11,6 +11,7 @@ import {
   type QuickCreateKind,
 } from "@/components/admin/customerWorkbench/CustomerQuickCreateDialogs";
 import { CommunicationSummaryPanel } from "@/components/admin/customerWorkbench/CommunicationSummaryPanel";
+import { CustomerFinancePanel } from "@/components/admin/customerWorkbench/CustomerFinancePanel";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import {
   COMMUNICATION_TIMELINE_FILTER_LABELS,
@@ -25,6 +26,7 @@ import {
 } from "@/lib/customerWorkbench/urlState";
 import { buildCustomerTimelineEvents } from "@/lib/customerWorkbench/timeline";
 import {
+  computeCustomerFinanceSummary,
   computeRecommendedActions,
   computeUnresolvedIssues,
   computeWorkbenchSummary,
@@ -99,6 +101,15 @@ function MetricChip({
   );
 }
 
+/** Defensive read of optional company name from customers.metadata (no schema change). */
+function getCustomerCompany(metadata: unknown): string | null {
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
+    const company = (metadata as Record<string, unknown>).company;
+    if (typeof company === "string" && company.trim()) return company.trim();
+  }
+  return null;
+}
+
 function EntityRow({
   title,
   subtitle,
@@ -139,6 +150,7 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
   const [quickCreate, setQuickCreate] = useState<QuickCreateKind | null>(null);
 
   const summary = useMemo(() => computeWorkbenchSummary(data, routeValue), [data, routeValue]);
+  const financeSummary = useMemo(() => computeCustomerFinanceSummary(data), [data]);
   const timelineEvents = useMemo(() => buildCustomerTimelineEvents(data), [data]);
   const recommendedActions = useMemo(
     () => computeRecommendedActions(data, summary),
@@ -225,6 +237,8 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
 
   const usageRows = useMemo(() => getWorkbenchUsageRows().slice(0, 5), [activeTab, quickCreate]);
   const usageTotal = useMemo(() => getWorkbenchUsageTotal(), [activeTab, quickCreate]);
+
+  const company = getCustomerCompany(data.canonicalCustomer?.metadata);
 
   const formatLastComm = summary.lastCommunicationAt
     ? new Date(summary.lastCommunicationAt).toLocaleDateString("sk-SK")
@@ -315,6 +329,11 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
               {summary.phone && (
                 <span className="flex items-center gap-1">
                   <Phone className="w-3 h-3" /> {summary.phone}
+                </span>
+              )}
+              {company && (
+                <span className="flex items-center gap-1">
+                  <Building2 className="w-3 h-3" /> {company}
                 </span>
               )}
               {clientName !== summary.displayName && (
@@ -651,6 +670,7 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
 
           {/* Financie */}
           <TabsContent value="financie" className="space-y-4 mt-4">
+            <CustomerFinancePanel data={data} finance={financeSummary} />
             <div className="grid gap-3 sm:grid-cols-3">
               <MetricChip label="Vyplatené" value={paidCommissions.length} tone="success" />
               <MetricChip
@@ -883,33 +903,40 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
             </section>
           )}
 
-          {(data.signatures.length > 0 || data.designs.length > 0 || isAdmin) && (
-            <section className="rounded-xl border border-border bg-card p-4 space-y-2 text-xs">
-              <h3 className="font-semibold">Súvisiace moduly</h3>
-              <div className="flex flex-col gap-1">
-                {isAdmin && (
-                  <>
-                    <Link to="/admin/rollout-health" className="text-primary hover:underline">
-                      Diagnostika identity (admin)
-                    </Link>
-                    <Link to="/admin/communication-ops" className="text-primary hover:underline">
-                      Diagnostika e-mail sync (admin)
-                    </Link>
-                  </>
-                )}
-                {data.signatures.length > 0 && (
-                  <Link to="/admin/signatures" className="text-primary hover:underline">
-                    Podpisy ({data.signatures.length})
+          <section className="rounded-xl border border-border bg-card p-4 space-y-2 text-xs">
+            <h3 className="font-semibold">Súvisiace moduly</h3>
+            <div className="flex flex-col gap-1">
+              <Link to="/admin/finance?advanced=1&legacy=payments" className="text-primary hover:underline">
+                Finance — platby a náklady
+              </Link>
+              <Link to="/admin/rentals" className="text-primary hover:underline">
+                Prenájmy ({summary.activeRentalsCount})
+              </Link>
+              <Link to="/admin/commissions" className="text-primary hover:underline">
+                Provízie
+              </Link>
+              {isAdmin && (
+                <>
+                  <Link to="/admin/rollout-health" className="text-primary hover:underline">
+                    Diagnostika identity (admin)
                   </Link>
-                )}
-                {data.designs.length > 0 && (
-                  <Link to="/admin/designs" className="text-primary hover:underline">
-                    Dizajny ({data.designs.length})
+                  <Link to="/admin/communication-ops" className="text-primary hover:underline">
+                    Diagnostika e-mail sync (admin)
                   </Link>
-                )}
-              </div>
-            </section>
-          )}
+                </>
+              )}
+              {data.signatures.length > 0 && (
+                <Link to="/admin/signatures" className="text-primary hover:underline">
+                  Podpisy ({data.signatures.length})
+                </Link>
+              )}
+              {data.designs.length > 0 && (
+                <Link to="/admin/designs" className="text-primary hover:underline">
+                  Dizajny ({data.designs.length})
+                </Link>
+              )}
+            </div>
+          </section>
         </aside>
       </div>
 
