@@ -372,20 +372,20 @@ export async function loadCustomerHubAggregate(
 
   const paymentSelect =
     "id,source_table,source_id,customer_email,client_name,rental_website_id,amount,currency,paid_at,method,reference,note,truth_level" as const;
-  const paymentQueries: Promise<{ data: PaymentRecord[] | null; error: { message: string } | null }>[] = [];
+  const paymentQueries: Array<PromiseLike<{ data: PaymentRecord[] | null; error: { message: string } | null }>> = [];
   if (rentalIds.length) {
     paymentQueries.push(
-      supabase.from("payment_records").select(paymentSelect).in("rental_website_id", rentalIds),
+      supabase.from("payment_records").select(paymentSelect).in("rental_website_id", rentalIds) as never,
     );
   }
   if (resolvedEmail) {
     paymentQueries.push(
-      supabase.from("payment_records").select(paymentSelect).ilike("customer_email", resolvedEmail),
+      supabase.from("payment_records").select(paymentSelect).ilike("customer_email", resolvedEmail) as never,
     );
   }
   if (leadNames.length) {
     paymentQueries.push(
-      supabase.from("payment_records").select(paymentSelect).in("client_name", leadNames),
+      supabase.from("payment_records").select(paymentSelect).in("client_name", leadNames) as never,
     );
   }
   let paymentRecords: PaymentRecord[] = [];
@@ -405,14 +405,14 @@ export async function loadCustomerHubAggregate(
 
   const costSelect =
     "id,source_table,source_id,category,vendor,client_name,rental_website_id,amount,currency,paid_at,incurred_at,reference,note,truth_level" as const;
-  const costQueries: Promise<{ data: CostRecord[] | null; error: { message: string } | null }>[] = [];
+  const costQueries: Array<PromiseLike<{ data: CostRecord[] | null; error: { message: string } | null }>> = [];
   if (rentalIds.length) {
     costQueries.push(
-      supabase.from("cost_records").select(costSelect).in("rental_website_id", rentalIds),
+      supabase.from("cost_records").select(costSelect).in("rental_website_id", rentalIds) as never,
     );
   }
   if (leadNames.length) {
-    costQueries.push(supabase.from("cost_records").select(costSelect).in("client_name", leadNames));
+    costQueries.push(supabase.from("cost_records").select(costSelect).in("client_name", leadNames) as never);
   }
   let costRecords: CostRecord[] = [];
   let costsError: string | null = null;
