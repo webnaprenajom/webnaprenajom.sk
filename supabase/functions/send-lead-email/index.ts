@@ -247,8 +247,8 @@ Deno.serve(async (req) => {
     if (!resendResponse.ok) {
       console.error('Resend API error:', resendResult)
       return new Response(
-        JSON.stringify({ error: 'Email send failed', details: resendResult }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Could not submit your request. Please try again later.' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -262,7 +262,7 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : 'Unknown error'
     console.error('Error:', message)
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: 'Could not submit your request. Please try again later.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
