@@ -78,7 +78,7 @@ export function AdminLayout({
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon">
+      <Sidebar collapsible="icon" forceStatic>
         <SidebarHeader className="border-b border-sidebar-border p-3">
           <button
             type="button"
