@@ -68,6 +68,7 @@ const AdminFinance = () => {
   const [hostingRecords, setHostingRecords] = useState<HostingRecordRow[]>([]);
   const [reviewStatuses, setReviewStatuses] = useState<Array<{ item_key: string; item_type: string; status: string; review_note: string | null; reviewed_at: string | null }>>([]);
   const [policySettings, setPolicySettings] = useState<PayoutPolicySetting[]>([]);
+  const [loadErrors, setLoadErrors] = useState<{ table: string; message: string }[]>([]);
   const [govMonth] = useState(new Date().getMonth() + 1);
   const [govYear] = useState(new Date().getFullYear());
 
@@ -78,6 +79,11 @@ const AdminFinance = () => {
 
   const load = async () => {
     setLoading(true);
+    // Fáza 1 (stabilizácia): každý z 13 paralelných zdrojov sa hlási samostatne do `errors`,
+    // namiesto tichého `error ? [] : data`. Dáta sa stále degradujú na [] (stránka nespadne),
+    // ale chyba sa nestratí — zobrazí sa konsolidovaný toast + banner (pozri loadErrors nižšie).
+    const errors: { table: string; message: string }[] = [];
+
     const [c, e, w, p, pr, po, cr, dis, rules, overrides, hosting, reviews, policies] = await Promise.all([
       supabase.from("commissions").select("*").order("date", { ascending: false }),
       supabase.from("expenses").select("*").order("date", { ascending: false }),
@@ -86,35 +92,65 @@ const AdminFinance = () => {
       supabase.from("payment_records").select("*").order("paid_at", { ascending: false }),
       supabase.from("payout_records").select("*").order("paid_at", { ascending: false }),
       supabase.from("cost_records").select("*").order("paid_at", { ascending: false }),
-      loadIssueDismissals().catch(() => [] as IssueDismissalRow[]),
+      loadIssueDismissals().catch((err) => {
+        errors.push({ table: "finance_issue_dismissals", message: err?.message || String(err) });
+        return [] as IssueDismissalRow[];
+      }),
       supabase.from("commission_rules").select("*").order("revenue_stream_kind"),
       supabase.from("commission_rule_overrides").select("*").order("created_at", { ascending: false }),
       supabase.from("hosting_records").select("*").order("created_at", { ascending: false }),
-      loadReviewStatuses().catch(() => []),
+      loadReviewStatuses().catch((err) => {
+        errors.push({ table: "finance_review_items", message: err?.message || String(err) });
+        return [];
+      }),
       supabase.from("finance_policy_settings").select("*").order("policy_key"),
     ]);
-    if (c.error || e.error) {
-      toast({
-        title: "Chyba načítania",
-        description: c.error?.message || e.error?.message,
-        variant: "destructive",
-      });
+
+    // Priame supabase.from(...) výsledky — každý sa skontroluje samostatne, žiadny sa nezahodí tichom.
+    const directResults: { table: string; result: { data: any; error: any } }[] = [
+      { table: "commissions", result: c },
+      { table: "expenses", result: e },
+      { table: "rental_websites", result: w },
+      { table: "rental_payments", result: p },
+      { table: "payment_records", result: pr },
+      { table: "payout_records", result: po },
+      { table: "cost_records", result: cr },
+      { table: "commission_rules", result: rules },
+      { table: "commission_rule_overrides", result: overrides },
+      { table: "hosting_records", result: hosting },
+      { table: "finance_policy_settings", result: policies },
+    ];
+    for (const { table, result } of directResults) {
+      if (result.error) {
+        errors.push({ table, message: result.error.message });
+      }
     }
+
     setRaw({
       commissions: c.data || [],
       expenses: e.data || [],
       websites: w.data || [],
       payments: p.data || [],
-      paymentRecords: pr.error ? [] : pr.data || [],
-      payoutRecords: po.error ? [] : po.data || [],
-      costRecords: cr.error ? [] : cr.data || [],
+      paymentRecords: pr.data || [],
+      payoutRecords: po.data || [],
+      costRecords: cr.data || [],
     });
     setDismissals(dis);
-    setCommissionRules(rules.error ? [] : (rules.data as CommissionRule[]) ?? []);
-    setCommissionOverrides(overrides.error ? [] : (overrides.data as CommissionRuleOverride[]) ?? []);
-    setHostingRecords(hosting.error ? [] : (hosting.data as HostingRecordRow[]) ?? []);
+    setCommissionRules((rules.data as CommissionRule[]) ?? []);
+    setCommissionOverrides((overrides.data as CommissionRuleOverride[]) ?? []);
+    setHostingRecords((hosting.data as HostingRecordRow[]) ?? []);
     setReviewStatuses(reviews);
-    setPolicySettings(policies.error ? [] : (policies.data as PayoutPolicySetting[]) ?? []);
+    setPolicySettings((policies.data as PayoutPolicySetting[]) ?? []);
+    setLoadErrors(errors);
+
+    if (errors.length > 0) {
+      toast({
+        title: `Chyba načítania (${errors.length} ${errors.length === 1 ? "zdroj zlyhal" : "zdrojov zlyhalo"})`,
+        description: errors.map((er) => `${er.table}: ${er.message}`).join(" · "),
+        variant: "destructive",
+      });
+    }
+
     setLoading(false);
   };
 
@@ -271,6 +307,26 @@ const AdminFinance = () => {
     >
       <div className="space-y-4">
         <TeamProfileNotice />
+        {loadErrors.length > 0 && (
+          <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm">
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium">
+                {loadErrors.length === 1
+                  ? "1 finančný zdroj sa nepodarilo načítať."
+                  : `${loadErrors.length} finančných zdrojov sa nepodarilo načítať.`}{" "}
+                Zobrazené súčty môžu byť neúplné.
+              </p>
+              <ul className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                {loadErrors.map((er) => (
+                  <li key={er.table}>
+                    <code className="text-[10px]">{er.table}</code>: {er.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
         {legacyCommissions && showOrgFinance && (
           <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
@@ -360,6 +416,22 @@ function DailyFinanceView({
         </p>
       )}
 
+      {/*
+        AUDIT (Fáza 1, bod 3) — Daily Finance view sa tvári ako finálny zdroj pravdy (above-the-fold KPI),
+        ale žiadna z týchto kariet nezobrazuje truth-level badge (fact / legacy_import / workflow_only)
+        podľa CLAUDE.md "VŽDY zobrazuj truth level badge pri každom finančnom zázname". Konkrétne:
+          - "Zaplatené faktúry" / "Nezaplatené / fakturované": počítané z `rental_payments` (legacy tabuľka,
+            žiadny truth_level; v buildFinanceSnapshot je príslušný ledger riadok "rental_receivable"
+            s truthLevel="workflow_only").
+          - "Prijaté platby" (dailyKpis.receivedSum): súčet `paymentsConfirmed` (truth_level="payment_fact")
+            + `paymentsLegacyImport` (truth_level="legacy_import") — DVA rôzne truth-levely sú zlúčené
+            do jedného zeleného čísla bez rozlíšenia.
+          - "Čakajúce platby" (dailyKpis.pendingSum): `rentalMarkedUnpaid` + `rentalMarkedInvoiced`,
+            oboje z `rental_payments` → truthLevel="workflow_only", ale zobrazené ako bežné číslo.
+        → Fáza 3 (Finance Coherence): rozdeliť tieto súčty podľa truth-levelu a/alebo doplniť badge
+        s farbami z CLAUDE.md (zelená=fact, žltá/oranžová=legacy_import, sivá=workflow_only).
+        Toto je len audit-marker, žiadna vizuálna zmena (zámerne, podľa zadania Fázy 1).
+      */}
       {showOrgKpis && (
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <KpiCard label="Zaplatené faktúry" value={String(dailyKpis.paidInvoices)} hint="Prenájmy — mesačné záznamy" />
@@ -369,6 +441,12 @@ function DailyFinanceView({
         </section>
       )}
 
+      {/*
+        AUDIT (Fáza 1, bod 3) — "Provízie podľa realizátora" / "Vaše provízie": dáta z `commissions`,
+        v buildFinanceSnapshot majú truthLevel="workflow_only" (pracovný, nepotvrdený záznam podľa
+        CLAUDE.md), ale tabuľka to nezobrazuje žiadnym badge — vyzerá ako finálne číslo.
+        → Fáza 3: doplniť badge "workflow_only" / odkaz na payout_records ak existuje (hasPayoutFact).
+      */}
       <section className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between gap-2 flex-wrap">
           <h2 className="text-sm font-semibold">
