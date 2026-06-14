@@ -1,16 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2, LogOut, ShieldAlert } from "lucide-react";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { CustomerWorkbench } from "@/components/admin/customerWorkbench/CustomerWorkbench";
-import { loadCustomerWorkbench } from "@/lib/customerWorkbench/loadCustomerWorkbench";
 import type { CustomerWorkbenchData } from "@/lib/customerWorkbench/types";
 import { computeWorkbenchSummary } from "@/lib/customerWorkbench/summary";
 import { parseCustomerRouteKey } from "@/lib/adminNav";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
-import { canAccessOperationalCrm, isCrmUser } from "@/lib/rbac/permissions";
+import { useCustomerHub } from "@/hooks/useCustomerHub";
+import { canAccessOperationalCrm } from "@/lib/rbac/permissions";
 
 const emptyData = (): CustomerWorkbenchData => ({
   canonicalCustomer: null,
@@ -39,10 +39,13 @@ const AdminCustomer = () => {
   const route = parseCustomerRouteKey(customerIdParam || customerKey);
   const { authChecking, isCrmUser, role, userEmail, userId } = useAdminAccess();
 
-  const [data, setData] = useState<CustomerWorkbenchData>(emptyData);
-  const [loading, setLoading] = useState(true);
-  const [reloadToken, setReloadToken] = useState(0);
+  const canLoad = canAccessOperationalCrm(role) && !!route.value;
+  const { data: hubData, loading, reload, sectionErrors } = useCustomerHub(
+    canLoad ? { routeMode: route.mode, routeValue: route.value } : null,
+    canLoad,
+  );
 
+  const data = hubData ?? emptyData();
   const summary = computeWorkbenchSummary(data, route.value);
 
   useEffect(() => {
@@ -54,35 +57,7 @@ const AdminCustomer = () => {
     if (!userId) navigate("/auth", { replace: true });
   }, [authChecking, userId, navigate]);
 
-  useEffect(() => {
-    if (!canAccessOperationalCrm(role)) {
-      setLoading(false);
-      return;
-    }
-    if (!route.value && !customerIdParam && !customerKey) return;
-    let cancelled = false;
-
-    const load = async () => {
-      setLoading(true);
-      try {
-        const result = await loadCustomerWorkbench({
-          routeMode: route.mode,
-          routeValue: route.value,
-        });
-        if (!cancelled) setData(result);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [role, route.value, route.mode, customerIdParam, customerKey, reloadToken]);
-
   const handleSignOut = () => confirmAdminSignOut(navigate);
-  const handleReload = () => setReloadToken((n) => n + 1);
 
   if (authChecking) {
     return (
@@ -119,7 +94,8 @@ const AdminCustomer = () => {
         data={data}
         routeValue={route.value}
         loading={loading}
-        onReload={handleReload}
+        onReload={reload}
+        sectionErrors={sectionErrors}
       />
     </AdminLayout>
   );

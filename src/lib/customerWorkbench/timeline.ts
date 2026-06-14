@@ -118,5 +118,44 @@ export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): Timeli
     });
   });
 
+  data.paymentRecords.forEach((p) => {
+    items.push({
+      id: `payment-${p.id}`,
+      at: p.paid_at,
+      label: `Platba · ${Number(p.amount).toFixed(2)} €`,
+      detail: p.method || p.reference || p.truth_level,
+      href: "/admin/finance?advanced=1&legacy=payments",
+      category: "finance",
+      meta: p.rental_website_id ? { source_id: p.rental_website_id } : undefined,
+    });
+  });
+
+  data.payoutRecords.forEach((p) => {
+    items.push({
+      id: `payout-${p.id}`,
+      at: p.paid_at,
+      label: `Výplata provízie · ${p.implementer || "Neznámy"}`,
+      detail: `${Number(p.amount).toFixed(2)} €`,
+      href: "/admin/finance?advanced=1&legacy=payouts",
+      category: "finance",
+      meta: p.source_id ? { source_id: p.source_id, source_table: p.source_table ?? undefined } : undefined,
+    });
+  });
+
+  data.rentalPayments.forEach((rp) => {
+    const at = rp.paid_at || `${rp.year}-${String(rp.month).padStart(2, "0")}-01`;
+    items.push({
+      id: `rental-pay-${rp.id}`,
+      at,
+      label: `Faktúra prenájmu · ${rp.month}/${rp.year}`,
+      detail: rp.paid
+        ? `Uhradené ${Number(rp.custom_price ?? rp.amount).toFixed(2)} €`
+        : `Neuhradené ${Number(rp.custom_price ?? rp.amount).toFixed(2)} €`,
+      href: "/admin/rentals",
+      category: "finance",
+      meta: { source_id: rp.website_id },
+    });
+  });
+
   return items;
 }

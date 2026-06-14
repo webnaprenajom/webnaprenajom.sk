@@ -320,6 +320,11 @@ AI nesmie:
 - **User directory UX:** admin RPC `admin_list_auth_users` — Settings shows name + email; UUID only in collapsible technical detail; search/filter by name, email, role, mapping status.
 - ADR: `docs/adr/RC66-audit-trail-access-governance.md`
 
+### Legacy import (Phase 1)
+- Staging tables: `legacy_import_batches`, `legacy_import_rows`, `legacy_id_map`, `migration_review_queue`, `legacy_finance_staging`
+- CLI: `npm run migrate:legacy:staging` — CSV → staging only; promote phase not yet implemented
+- See `scripts/migration/README.md`
+
 Tieto rozhodnutia sa považujú za stabilné a nové zmeny ich nemajú obchádzať, ale rozvíjať.
 
 ## Budúci odporúčaný smer

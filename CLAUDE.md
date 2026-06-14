@@ -36,7 +36,7 @@ supabase db push → deploy migrácií
 
 CRM: leads, rental_websites, commissions, rental_payments, expenses
 Finance (po migrácii): payment_records, payout_records, cost_records, finance_issue_dismissals, finance_rules, finance_hosting_records, finance_review_items, finance_review_cadence
-Customer identity: tabuľka `customers` EXISTUJE a je aktívna (migrácie 20260611100000_customers_foundation, 20260611100100_customers_email_backfill, 20260614000000_rc5_rental_customer_identity). customer_id FK je na leads, project_notes, rental_websites, hosting_records, commissions + rental_websites.customer_email backfill. Identity bridge cez email/name ostáva ako fallback pre záznamy bez customer_id (src/lib/customerWorkbench/loadCustomerWorkbench.ts).
+Customer identity: tabuľka `customers` EXISTUJE a je aktívna (migrácie 20260611100000_customers_foundation, 20260611100100_customers_email_backfill, 20260614000000_rc5_rental_customer_identity). customer_id FK je na leads, project_notes, rental_websites, hosting_records, commissions + rental_websites.customer_email backfill. Identity bridge cez email/name ostáva ako fallback pre záznamy bez customer_id. Loader: `loadCustomerHubAggregate` (Fáza 2b) vracia `CustomerHubAggregate` so sekčnými error stavmi cez `sectionFetch` — nikdy tichý `[]` bez `error`.
 
 ## FINANCE TRUTH LEVELS (NIKDY neignorovať)
 

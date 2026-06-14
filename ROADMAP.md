@@ -50,6 +50,20 @@
 
 ---
 
+## Fáza 2b — Customer Hub Executive Cockpit ✅ DONE
+**Cieľ**: Executive cockpit layout na `/admin/customer/:key` — above-the-fold financie, unified služby, sekčné error stavy, aggregate loader.
+
+| # | Úloha | Súbory | Stav |
+|---|---|---|---|
+| 2b.1 | Refaktor loader → `loadCustomerHubAggregate` + `sectionFetch` + `resolveCustomerIdentity` | `loadCustomerHubAggregate.ts`, `sectionFetch.ts`, `resolveCustomerIdentity.ts` | ✅ DONE |
+| 2b.2 | Fix `hasAnyData` (payment/cost/payout záznamy), `computeCustomerMrr`, `computeCustomerRiskBadges` | `summary.ts` | ✅ DONE |
+| 2b.3 | Hub komponenty: Header, FinanceSnapshot, ServicesPanel, FlowTimeline, CommissionsAuditStrip | `src/components/admin/customerHub/*` | ✅ DONE |
+| 2b.4 | `useCustomerHub` hook + reštruktúra Prehľad tabu | `useCustomerHub.ts`, `CustomerWorkbench.tsx`, `AdminCustomer.tsx` | ✅ DONE |
+| 2b.5 | Timeline rozšírenie (payment/payout/rental_payment udalosti) | `timeline.ts` | ✅ DONE |
+| 2b.6 | Testy + dokumentácia | `customerHubAggregate.test.ts`, `CLAUDE.md` | ✅ DONE |
+
+---
+
 ## Fáza 3 — Finance Coherence
 **Cieľ**: truth-level badge pri každom finančnom čísle (aj v daily view), KPI above the fold pre všetky role, reconciliation flow plne funkčný a viditeľný.
 

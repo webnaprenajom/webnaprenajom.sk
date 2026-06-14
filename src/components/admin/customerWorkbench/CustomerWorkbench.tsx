@@ -5,13 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CustomerTimeline, type TimelineEvent } from "@/components/admin/CustomerTimeline";
 import { CustomerCommunicationNote } from "@/components/admin/CustomerCommunicationNote";
-import { CanonicalCustomerBadge, HeuristicDataBadge } from "@/components/admin/lookup/LinkStatusBadge";
 import {
   CustomerQuickCreateDialogs,
   type QuickCreateKind,
 } from "@/components/admin/customerWorkbench/CustomerQuickCreateDialogs";
 import { CommunicationSummaryPanel } from "@/components/admin/customerWorkbench/CommunicationSummaryPanel";
 import { CustomerFinancePanel } from "@/components/admin/customerWorkbench/CustomerFinancePanel";
+import { CustomerCommissionsAuditStrip } from "@/components/admin/customerHub/CustomerCommissionsAuditStrip";
+import { CustomerFlowTimeline } from "@/components/admin/customerHub/CustomerFlowTimeline";
+import { CustomerHubFinanceSnapshot } from "@/components/admin/customerHub/CustomerHubFinanceSnapshot";
+import { CustomerHubHeader } from "@/components/admin/customerHub/CustomerHubHeader";
+import { CustomerHubServicesPanel } from "@/components/admin/customerHub/CustomerHubServicesPanel";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import {
   COMMUNICATION_TIMELINE_FILTER_LABELS,
@@ -46,12 +50,8 @@ import {
   recordWorkbenchUsage,
 } from "@/lib/customerWorkbench/usageTracking";
 import { STATUS_CONFIG, type LeadStatus } from "@/components/admin/leads/constants";
-import { toast } from "@/hooks/use-toast";
 import {
   AlertTriangle,
-  Building2,
-  Calendar,
-  Copy,
   ExternalLink,
   Filter,
   FolderKanban,
@@ -59,12 +59,7 @@ import {
   ListTodo,
   Loader2,
   Lock,
-  Mail,
-  MessageSquarePlus,
-  Phone,
   Plus,
-  Server,
-  Wallet,
 } from "lucide-react";
 
 interface Props {
@@ -72,6 +67,7 @@ interface Props {
   routeValue: string;
   loading: boolean;
   onReload: () => void;
+  sectionErrors?: Record<string, string | null>;
 }
 
 function MetricChip({
@@ -99,15 +95,6 @@ function MetricChip({
       <div className="text-base sm:text-lg font-semibold tabular-nums">{value}</div>
     </div>
   );
-}
-
-/** Defensive read of optional company name from customers.metadata (no schema change). */
-function getCustomerCompany(metadata: unknown): string | null {
-  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
-    const company = (metadata as Record<string, unknown>).company;
-    if (typeof company === "string" && company.trim()) return company.trim();
-  }
-  return null;
 }
 
 function EntityRow({
@@ -141,7 +128,7 @@ function EntityRow({
   );
 }
 
-export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props) {
+export function CustomerWorkbench({ data, routeValue, loading, onReload, sectionErrors = {} }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin } = useAdminAccess();
   const activeTab = parseWorkbenchTab(searchParams);
@@ -216,16 +203,10 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
     );
   }, [setSearchParams]);
 
-  const copyCustomerInfo = async () => {
-    const lines = [
-      summary.displayName,
-      summary.emailKey ? `E-mail: ${summary.emailKey}` : null,
-      summary.phone ? `Tel: ${summary.phone}` : null,
-      resolvedCustomerId ? `Customer ID: ${resolvedCustomerId}` : null,
-    ].filter(Boolean);
-    await navigator.clipboard.writeText(lines.join("\n"));
-    toast({ title: "Skopírované do schránky" });
-  };
+  const sectionError = (key: string) => sectionErrors[key] ?? null;
+
+  const mergeErrors = (...keys: string[]) =>
+    keys.map(sectionError).filter(Boolean).join("; ") || null;
 
   const leadStatusLabel = (status: string) =>
     STATUS_CONFIG[status as LeadStatus]?.label || status;
@@ -237,12 +218,6 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
 
   const usageRows = useMemo(() => getWorkbenchUsageRows().slice(0, 5), [activeTab, quickCreate]);
   const usageTotal = useMemo(() => getWorkbenchUsageTotal(), [activeTab, quickCreate]);
-
-  const company = getCustomerCompany(data.canonicalCustomer?.metadata);
-
-  const formatLastComm = summary.lastCommunicationAt
-    ? new Date(summary.lastCommunicationAt).toLocaleDateString("sk-SK")
-    : "—";
 
   if (loading) {
     return (
@@ -302,112 +277,15 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
 
   return (
     <div className="space-y-4">
-      {/* Header summary */}
-      <section className="rounded-xl border border-border bg-card p-4 sm:p-5 space-y-3">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="space-y-1 min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">
-              Klientsky workspace
-            </p>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-xl sm:text-2xl font-bold truncate">{summary.displayName}</h1>
-              {data.viewMode === "id" && data.canonicalCustomer ? (
-                <CanonicalCustomerBadge />
-              ) : (
-                <HeuristicDataBadge />
-              )}
-              <Badge className={`text-[10px] ${summary.lifecycle.tone}`} variant="outline">
-                {summary.lifecycle.label}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
-              {summary.emailKey && (
-                <span className="flex items-center gap-1">
-                  <Mail className="w-3 h-3" /> {summary.emailKey}
-                </span>
-              )}
-              {summary.phone && (
-                <span className="flex items-center gap-1">
-                  <Phone className="w-3 h-3" /> {summary.phone}
-                </span>
-              )}
-              {company && (
-                <span className="flex items-center gap-1">
-                  <Building2 className="w-3 h-3" /> {company}
-                </span>
-              )}
-              {clientName !== summary.displayName && (
-                <span className="flex items-center gap-1">
-                  <Building2 className="w-3 h-3" /> {clientName}
-                </span>
-              )}
-              <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" /> Posledná komunikácia: {formatLastComm}
-              </span>
-            </div>
-          </div>
-          {primaryLead && (
-            <Button size="sm" variant="default" asChild>
-              <Link to={`/admin?lead=${primaryLead.id}`}>Hlavný lead</Link>
-            </Button>
-          )}
-        </div>
-
-        {/* Metrics row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap gap-2 pt-2 border-t border-border/60">
-          <MetricChip label="Projekty" value={summary.activeProjectsCount} />
-          <MetricChip label="Prenájmy" value={summary.activeRentalsCount} />
-          <MetricChip label="Hosting" value={summary.hostingCount} />
-          <MetricChip
-            label="Otvorené úlohy"
-            value={
-              summary.openTasksCount > 0
-                ? `${summary.openTasksCount} (${summary.openTasksCustomerLinked} prep.)`
-                : "0"
-            }
-            tone={summary.openTasksLegacyOnly > 0 ? "warning" : "default"}
-          />
-          <MetricChip
-            label="Neuhradené"
-            value={
-              summary.unpaidCommissionsCount > 0
-                ? `${summary.unpaidCommissionsCount} · ${summary.unpaidCommissionsTotal.toFixed(0)} €`
-                : "0"
-            }
-            tone={summary.unpaidCommissionsCount > 0 ? "warning" : "default"}
-          />
-        </div>
-      </section>
-
-      {/* Action bar */}
-      <section className="rounded-xl border border-border bg-card/80 px-2 py-2 sm:px-3">
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mx-0.5 px-0.5 scrollbar-thin">
-        <Button size="sm" variant="secondary" className="shrink-0 h-8 text-xs" onClick={openCommunicationTab}>
-          <MessageSquarePlus className="w-3.5 h-3.5 mr-1" /> Poznámka
-        </Button>
-        <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => openQuickCreate("task")}>
-          <ListTodo className="w-3.5 h-3.5 mr-1" /> Úloha
-        </Button>
-        <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => openQuickCreate("project")}>
-          <FolderKanban className="w-3.5 h-3.5 mr-1" /> Projekt
-        </Button>
-        <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => openQuickCreate("rental")}>
-          <Globe className="w-3.5 h-3.5 mr-1" /> Prenájom
-        </Button>
-        <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => openQuickCreate("hosting")}>
-          <Server className="w-3.5 h-3.5 mr-1" /> Hosting
-        </Button>
-        <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => openQuickCreate("commission")}>
-          <Wallet className="w-3.5 h-3.5 mr-1" /> Provízia
-        </Button>
-        <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={openCommunicationTab}>
-          <Filter className="w-3.5 h-3.5 mr-1" /> Komunikácia
-        </Button>
-        <Button size="sm" variant="ghost" className="shrink-0 h-8 text-xs" onClick={() => void copyCustomerInfo()}>
-          <Copy className="w-3.5 h-3.5 mr-1" /> Kopírovať
-        </Button>
-        </div>
-      </section>
+      <CustomerHubHeader
+        data={data}
+        summary={summary}
+        finance={financeSummary}
+        ctx={workbenchCtx}
+        onOpenTab={setTab}
+        onQuickCreate={openQuickCreate}
+        onOpenCommunication={openCommunicationTab}
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_260px] gap-4 items-start">
         <Tabs value={activeTab} onValueChange={(v) => setTab(v as WorkbenchTabId)} className="min-w-0">
@@ -434,8 +312,19 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
             </p>
           )}
 
-          {/* Prehľad */}
+          {/* Prehľad — executive cockpit */}
           <TabsContent value="prehlad" className="space-y-4 mt-4">
+            <CustomerHubFinanceSnapshot finance={financeSummary} onOpenTab={setTab} />
+
+            <CustomerHubServicesPanel data={data} />
+
+            <CustomerCommissionsAuditStrip data={data} />
+
+            <CustomerFlowTimeline
+              events={timelineEvents}
+              error={sectionError("communication") || data.commLoadError}
+            />
+
             <div className="grid gap-4 md:grid-cols-2">
               <section className="rounded-xl border border-border bg-card p-4">
                 <h3 className="text-sm font-semibold mb-3">Odporúčané kroky</h3>
@@ -493,14 +382,6 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
               </section>
             </div>
 
-            <CustomerTimeline
-              events={timelineEvents}
-              limit={8}
-              title="Posledná aktivita"
-              loading={false}
-              error={data.commLoadError}
-            />
-
             {resolvedCustomerId && (
               <CommunicationSummaryPanel customerId={resolvedCustomerId} />
             )}
@@ -550,7 +431,8 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
           </TabsContent>
 
           {/* Projekty */}
-          <TabsContent value="projekty" className="mt-4">
+          <TabsContent value="projekty" className="mt-4 space-y-3">
+            <SectionErrorBanner error={sectionError("notes")} onRetry={onReload} />
             <TabPanel
               title="Projekty"
               count={data.notes.length}
@@ -588,7 +470,8 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
           </TabsContent>
 
           {/* Prenájmy */}
-          <TabsContent value="prenajmy" className="mt-4">
+          <TabsContent value="prenajmy" className="mt-4 space-y-3">
+            <SectionErrorBanner error={sectionError("rentals")} onRetry={onReload} />
             <TabPanel
               title="Prenájmy webov"
               count={data.rentals.length}
@@ -631,7 +514,8 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
           </TabsContent>
 
           {/* Hosting */}
-          <TabsContent value="hosting" className="mt-4">
+          <TabsContent value="hosting" className="mt-4 space-y-3">
+            <SectionErrorBanner error={sectionError("hosting")} onRetry={onReload} />
             <TabPanel
               title="Hosting"
               count={data.hosting.length}
@@ -670,6 +554,10 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
 
           {/* Financie */}
           <TabsContent value="financie" className="space-y-4 mt-4">
+            <SectionErrorBanner
+              error={mergeErrors("payments", "costs", "commissions", "payouts", "rentalPayments")}
+              onRetry={onReload}
+            />
             <CustomerFinancePanel data={data} finance={financeSummary} />
             <div className="grid gap-3 sm:grid-cols-3">
               <MetricChip label="Vyplatené" value={paidCommissions.length} tone="success" />
@@ -725,7 +613,8 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
           </TabsContent>
 
           {/* Úlohy */}
-          <TabsContent value="ulohy" className="mt-4">
+          <TabsContent value="ulohy" className="mt-4 space-y-3">
+            <SectionErrorBanner error={sectionError("tasks")} onRetry={onReload} />
             <TabPanel
               title="Úlohy"
               count={data.tasks.length}
@@ -946,6 +835,26 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload }: Props
         onClose={() => setQuickCreate(null)}
         onSaved={onReload}
       />
+    </div>
+  );
+}
+
+function SectionErrorBanner({
+  error,
+  onRetry,
+}: {
+  error: string | null;
+  onRetry?: () => void;
+}) {
+  if (!error) return null;
+  return (
+    <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 flex items-start justify-between gap-2">
+      <p className="text-xs text-destructive">{error}</p>
+      {onRetry && (
+        <Button size="sm" variant="outline" className="h-7 text-xs shrink-0" onClick={onRetry}>
+          Skúsiť znova
+        </Button>
+      )}
     </div>
   );
 }

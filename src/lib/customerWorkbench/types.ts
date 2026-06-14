@@ -1,6 +1,7 @@
 import type { CustomerRow } from "@/lib/crmLookup/customers";
 import type { CommunicationEventRow } from "@/lib/communication/types";
 import type { ProfitDisplayContext } from "@/lib/profit/profitContext";
+import type { ResolvedCustomerIdentity } from "./resolveCustomerIdentity";
 
 export type Lead = {
   id: string;
@@ -273,3 +274,42 @@ export type CustomerWorkbenchContext = {
   primaryLeadId: string | null;
   onReload: () => void;
 };
+
+export type SectionResult<T> = {
+  data: T;
+  error: string | null;
+  loaded: boolean;
+};
+
+export type CustomerHubSections = {
+  leads: SectionResult<Lead[]>;
+  tasks: SectionResult<Task[]>;
+  rentals: SectionResult<Rental[]>;
+  hosting: SectionResult<HostingBrief[]>;
+  notes: SectionResult<ProjectNote[]>;
+  commissions: SectionResult<CommissionBrief[]>;
+  payments: SectionResult<PaymentRecord[]>;
+  costs: SectionResult<CostRecord[]>;
+  payouts: SectionResult<PayoutRecord[]>;
+  rentalPayments: SectionResult<RentalPaymentBrief[]>;
+  communication: SectionResult<CommunicationEventRow[]>;
+  signatures: SectionResult<Signature[]>;
+  designs: SectionResult<Design[]>;
+  wheels: SectionResult<Wheel[]>;
+  leadLogs: SectionResult<LeadLog[]>;
+};
+
+export type CustomerHubAggregate = {
+  identity: ResolvedCustomerIdentity;
+  sections: CustomerHubSections;
+  workbench: CustomerWorkbenchData;
+};
+
+export type CustomerRiskBadge = {
+  id: string;
+  label: string;
+  tone: "warning" | "danger" | "default";
+  tab?: WorkbenchTabId;
+};
+
+export type CustomerTypeLabel = "rental_only" | "project" | "mixed" | "lead_only" | "unknown";

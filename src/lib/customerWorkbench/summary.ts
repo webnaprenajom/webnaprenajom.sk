@@ -3,6 +3,8 @@ import { resolveProfitDisplayContext } from "@/lib/profit/profitContext";
 import type {
   CommissionPayout,
   CustomerFinanceSummary,
+  CustomerRiskBadge,
+  CustomerTypeLabel,
   CustomerWorkbenchData,
   RecommendedAction,
   WorkbenchSummary,
@@ -68,7 +70,12 @@ export function computeWorkbenchSummary(
       data.hosting.length +
       data.wheels.length +
       data.designs.length +
-      data.commEvents.length >
+      data.commEvents.length +
+      data.paymentRecords.length +
+      data.costRecords.length +
+      data.payoutRecords.length +
+      data.rentalPayments.length +
+      data.commissions.length >
     0;
 
   const taskStats = summarizeOpenTasks(data.tasks);
@@ -306,4 +313,104 @@ export function computeUnresolvedIssues(
     issues.push("Niektoré dizajny spárované len podľa mena");
   }
   return issues;
+}
+
+/** Monthly recurring revenue from active rentals + active hosting. */
+export function computeCustomerMrr(data: CustomerWorkbenchData): number {
+  const rentalMrr = data.rentals.reduce((sum, r) => sum + (Number(r.monthly_price) || 0), 0);
+  const hostingMrr = data.hosting
+    .filter((h) => h.active)
+    .reduce((sum, h) => sum + (Number(h.monthly_price) || 0), 0);
+  return rentalMrr + hostingMrr;
+}
+
+export function computeCustomerType(data: CustomerWorkbenchData): CustomerTypeLabel {
+  const hasRentals = data.rentals.length > 0;
+  const hasProjects = data.notes.length > 0;
+  const hasLeads = data.leads.length > 0;
+
+  if (hasRentals && !hasProjects) return "rental_only";
+  if (hasProjects && !hasRentals) return "project";
+  if (hasRentals && hasProjects) return "mixed";
+  if (hasLeads) return "lead_only";
+  return "unknown";
+}
+
+const CUSTOMER_TYPE_LABELS: Record<CustomerTypeLabel, string> = {
+  rental_only: "Prenájom",
+  project: "Projekt",
+  mixed: "Mixed",
+  lead_only: "Lead",
+  unknown: "Neznámy",
+};
+
+export function customerTypeLabel(type: CustomerTypeLabel): string {
+  return CUSTOMER_TYPE_LABELS[type];
+}
+
+export function computeCustomerRiskBadges(
+  data: CustomerWorkbenchData,
+  summary: WorkbenchSummary,
+  finance?: CustomerFinanceSummary,
+): CustomerRiskBadge[] {
+  const badges: CustomerRiskBadge[] = [];
+
+  const overdueRentals = data.rentalPayments.filter((rp) => !rp.paid && rp.status !== "paid");
+  if (overdueRentals.length > 0) {
+    badges.push({
+      id: "overdue-rental",
+      label: `${overdueRentals.length} neuhradených mesiacov`,
+      tone: "danger",
+      tab: "financie",
+    });
+  }
+
+  if (finance && finance.paymentsExpectedTotal > 0) {
+    badges.push({
+      id: "expected-payments",
+      label: `Očakávané ${finance.paymentsExpectedTotal.toFixed(0)} €`,
+      tone: "warning",
+      tab: "financie",
+    });
+  }
+
+  if (summary.unpaidCommissionsCount > 0) {
+    badges.push({
+      id: "unpaid-commissions",
+      label: `${summary.unpaidCommissionsCount} nevyplatených provízií`,
+      tone: "warning",
+      tab: "financie",
+    });
+  }
+
+  if (summary.overdueTasksCount > 0) {
+    badges.push({
+      id: "overdue-tasks",
+      label: `${summary.overdueTasksCount} úloh po termíne`,
+      tone: "warning",
+      tab: "ulohy",
+    });
+  }
+
+  if (summary.unlinkedInboundCount > 0) {
+    badges.push({
+      id: "unlinked-inbound",
+      label: "Neprepojená komunikácia",
+      tone: "warning",
+      tab: "komunikacia",
+    });
+  }
+
+  const orphanPayments = data.paymentRecords.filter((p) => !p.rental_website_id).length;
+  const orphanCosts = data.costRecords.filter((c) => !c.rental_website_id).length;
+  if (orphanPayments + orphanCosts > 0) {
+    badges.push({
+      id: "orphan-finance",
+      label: `${orphanPayments + orphanCosts} fin. záznamov bez prenájmu`,
+      tone: "default",
+      tab: "financie",
+    });
+  }
+
+  return badges;
 }
