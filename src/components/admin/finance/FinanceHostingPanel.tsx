@@ -56,6 +56,7 @@ const emptyForm = () => ({
   provider: "",
   domains_count: "",
   monthly_price: "",
+  yearly_price: "",
   acquired_by: "",
   commissionable: false,
   note: "",
