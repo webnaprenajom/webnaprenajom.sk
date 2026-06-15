@@ -631,6 +631,10 @@ export type Database = {
           monthly_price: number | null
           note: string | null
           operating_cost: number
+          payment_note: string | null
+          payment_status: string | null
+          period_from: string | null
+          period_to: string | null
           provider: string | null
           rental_website_id: string | null
           updated_at: string
@@ -650,6 +654,10 @@ export type Database = {
           monthly_price?: number | null
           note?: string | null
           operating_cost?: number
+          payment_note?: string | null
+          payment_status?: string | null
+          period_from?: string | null
+          period_to?: string | null
           provider?: string | null
           rental_website_id?: string | null
           updated_at?: string
@@ -669,6 +677,10 @@ export type Database = {
           monthly_price?: number | null
           note?: string | null
           operating_cost?: number
+          payment_note?: string | null
+          payment_status?: string | null
+          period_from?: string | null
+          period_to?: string | null
           provider?: string | null
           rental_website_id?: string | null
           updated_at?: string
