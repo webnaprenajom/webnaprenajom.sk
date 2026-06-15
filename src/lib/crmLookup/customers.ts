@@ -28,6 +28,7 @@ export interface CustomerRow {
   metadata?: Record<string, unknown> | null;
   created_at?: string;
   updated_at?: string;
+  active: boolean;
 }
 
 export { isCanonicalCustomerId } from "./entityIds";
@@ -41,7 +42,7 @@ export function isCustomerEmailKey(value: string | null | undefined): boolean {
 export async function findCustomerById(id: string): Promise<CustomerRow | null> {
   const { data, error } = await supabase
     .from("customers")
-    .select("id,email,display_name,metadata,created_at,updated_at")
+    .select("id,email,display_name,metadata,created_at,updated_at,active")
     .eq("id", id)
     .maybeSingle();
   if (error || !data) return null;
@@ -53,7 +54,7 @@ export async function findCustomerByEmail(email: string): Promise<CustomerRow | 
   if (!normalized) return null;
   const { data, error } = await supabase
     .from("customers")
-    .select("id,email,display_name,metadata,created_at,updated_at")
+    .select("id,email,display_name,metadata,created_at,updated_at,active")
     .eq("email", normalized)
     .maybeSingle();
   if (error || !data) return null;
@@ -65,7 +66,7 @@ async function findCustomersByDisplayName(displayName: string): Promise<Customer
   if (!compareKey) return [];
   const { data, error } = await supabase
     .from("customers")
-    .select("id,email,display_name,metadata,created_at,updated_at")
+    .select("id,email,display_name,metadata,created_at,updated_at,active")
     .limit(300);
   if (error || !data) return [];
   return (data as CustomerRow[]).filter(
@@ -111,7 +112,7 @@ export async function ensureCustomerByEmail(
       display_name: name,
       metadata: { source: "app_ensure", created_via: "ensureCustomerByEmail" },
     })
-    .select("id,email,display_name,metadata,created_at,updated_at")
+    .select("id,email,display_name,metadata,created_at,updated_at,active")
     .maybeSingle();
 
   if (error) {

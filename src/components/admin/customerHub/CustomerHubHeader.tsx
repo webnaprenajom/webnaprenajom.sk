@@ -68,6 +68,7 @@ export function CustomerHubHeader({
   const customerType = computeCustomerType(data);
   const mrr = computeCustomerMrr(data);
   const riskBadges = computeCustomerRiskBadges(data, summary, finance);
+  const isInactiveCustomer = data.canonicalCustomer?.active === false;
 
   const formatLastComm = summary.lastCommunicationAt
     ? new Date(summary.lastCommunicationAt).toLocaleDateString("sk-SK")
@@ -102,6 +103,15 @@ export function CustomerHubHeader({
               <Badge className={`text-[10px] ${summary.lifecycle.tone}`} variant="outline">
                 {summary.lifecycle.label}
               </Badge>
+              {isInactiveCustomer && (
+                <Badge
+                  variant="outline"
+                  className="text-[10px] border-gray-400 text-gray-600 dark:text-gray-400"
+                  title="Účet klienta je označený ako neaktívny — historické dáta zostávajú dostupné na čítanie."
+                >
+                  Neaktívny klient
+                </Badge>
+              )}
               <Badge variant="secondary" className="text-[10px]">
                 {customerTypeLabel(customerType)}
               </Badge>
@@ -189,21 +199,25 @@ export function CustomerHubHeader({
           <Button size="sm" variant="secondary" className="shrink-0 h-8 text-xs" onClick={onOpenCommunication}>
             <MessageSquarePlus className="w-3.5 h-3.5 mr-1" /> Poznámka
           </Button>
-          <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("task")}>
-            <ListTodo className="w-3.5 h-3.5 mr-1" /> Úloha
-          </Button>
-          <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("project")}>
-            <Globe className="w-3.5 h-3.5 mr-1" /> Projekt
-          </Button>
-          <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("rental")}>
-            <Globe className="w-3.5 h-3.5 mr-1" /> Prenájom
-          </Button>
-          <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("hosting")}>
-            <Server className="w-3.5 h-3.5 mr-1" /> Hosting
-          </Button>
-          <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("commission")}>
-            <Wallet className="w-3.5 h-3.5 mr-1" /> Provízia
-          </Button>
+          {!isInactiveCustomer && (
+            <>
+              <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("task")}>
+                <ListTodo className="w-3.5 h-3.5 mr-1" /> Úloha
+              </Button>
+              <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("project")}>
+                <Globe className="w-3.5 h-3.5 mr-1" /> Projekt
+              </Button>
+              <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("rental")}>
+                <Globe className="w-3.5 h-3.5 mr-1" /> Prenájom
+              </Button>
+              <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("hosting")}>
+                <Server className="w-3.5 h-3.5 mr-1" /> Hosting
+              </Button>
+              <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("commission")}>
+                <Wallet className="w-3.5 h-3.5 mr-1" /> Provízia
+              </Button>
+            </>
+          )}
           <Button size="sm" variant="ghost" className="shrink-0 h-8 text-xs" onClick={() => void copyCustomerInfo()}>
             <Copy className="w-3.5 h-3.5 mr-1" /> Kopírovať
           </Button>

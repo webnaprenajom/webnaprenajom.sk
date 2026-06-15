@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { adminCustomerHref, adminCustomerHrefById, adminLeadHref } from "@/lib/adminNav";
 import { isCanonicalCustomerId } from "@/lib/crmLookup/customers";
 import { fetchLookupWithMeta } from "@/lib/crmLookup/fetchLookup";
 import {
   loadUnifiedClientDirectory,
+  type ClientDirectoryMode,
   type UnifiedClientEntry,
 } from "@/lib/crmLookup/loadUnifiedClientDirectory";
 import { unifiedClientSectionSummary } from "@/lib/crmLookup/unifiedClientDedupe";
@@ -38,13 +40,14 @@ export default function AdminClients() {
   const [directoryLoading, setDirectoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+  const [directoryMode, setDirectoryMode] = useState<ClientDirectoryMode>("active");
   const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({
-    onSuccess: () => void loadDirectory(),
+    onSuccess: () => void loadDirectory(directoryMode),
   });
 
-  const loadDirectory = useCallback(async () => {
+  const loadDirectory = useCallback(async (mode: ClientDirectoryMode) => {
     setDirectoryLoading(true);
-    const { entries, error: dirError } = await loadUnifiedClientDirectory(24);
+    const { entries, error: dirError } = await loadUnifiedClientDirectory(24, mode);
     if (dirError) {
       setError(dirError);
     } else {
@@ -54,8 +57,8 @@ export default function AdminClients() {
   }, []);
 
   useEffect(() => {
-    void loadDirectory();
-  }, [loadDirectory]);
+    void loadDirectory(directoryMode);
+  }, [directoryMode, loadDirectory]);
 
   const runSearch = useCallback(async (q: string) => {
     const trimmed = q.trim();
@@ -216,12 +219,35 @@ export default function AdminClients() {
 
         {!query.trim() && (
           <section className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <h2 className="text-sm font-semibold">Prehľad klientov</h2>
-              {directoryLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+              <div className="flex items-center gap-2">
+                {directoryLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                <ToggleGroup
+                  type="single"
+                  size="sm"
+                  value={directoryMode}
+                  onValueChange={(v) => v && setDirectoryMode(v as ClientDirectoryMode)}
+                  className="border rounded-lg p-0.5"
+                >
+                  <ToggleGroupItem value="active" className="text-xs h-7 px-2.5 data-[state=on]:bg-muted">
+                    Aktívni
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="inactive" className="text-xs h-7 px-2.5 data-[state=on]:bg-muted">
+                    Neaktívni
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="all" className="text-xs h-7 px-2.5 data-[state=on]:bg-muted">
+                    Všetci
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
             </div>
             {!directoryLoading && directory.length === 0 && (
-              <p className="text-sm text-muted-foreground italic">Zatiaľ žiadni klienti v databáze.</p>
+              <p className="text-sm text-muted-foreground italic">
+                {directoryMode === "active" && "Žiadni aktívni klienti."}
+                {directoryMode === "inactive" && "Žiadni neaktívni klienti."}
+                {directoryMode === "all" && "Zatiaľ žiadni klienti v databáze."}
+              </p>
             )}
             <div className="grid gap-2 sm:grid-cols-2">
               {directory.map((entry) => (
