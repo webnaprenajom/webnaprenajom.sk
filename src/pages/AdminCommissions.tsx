@@ -19,13 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -713,19 +707,31 @@ export function CommissionsExpensesContent() {
         </Tabs>
 
       {/* Commission dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 flex-wrap">
-              {form.id ? "Upraviť províziu" : "Nová provízia"}
-              <CommissionLinkBadge
-                status={getCommissionLinkStatus({
-                  source_type: form.source_type || null,
-                  source_id: form.source_id || null,
-                })}
-              />
-            </DialogTitle>
-          </DialogHeader>
+      <AdminDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        size="lg"
+        stickyFooter
+        title={
+          <span className="flex items-center gap-2 flex-wrap">
+            {form.id ? "Upraviť províziu" : "Nová provízia"}
+            <CommissionLinkBadge
+              status={getCommissionLinkStatus({
+                source_type: form.source_type || null,
+                source_id: form.source_id || null,
+              })}
+            />
+          </span>
+        }
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
+            <Button onClick={save} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
+            </Button>
+          </>
+        }
+      >
           <div className="grid gap-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -851,19 +857,23 @@ export function CommissionsExpensesContent() {
               <NoteTextarea value={form.note} onChange={(v) => setForm({ ...form, note: v })} rows={3} />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
-            <Button onClick={save} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </AdminDialog>
 
       {/* Expense dialog */}
-      <Dialog open={expDialogOpen} onOpenChange={setExpDialogOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{expForm.id ? "Upraviť náklad" : "Nový náklad"}</DialogTitle></DialogHeader>
+      <AdminDialog
+        open={expDialogOpen}
+        onOpenChange={setExpDialogOpen}
+        size="md"
+        title={expForm.id ? "Upraviť náklad" : "Nový náklad"}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setExpDialogOpen(false)}>Zrušiť</Button>
+            <Button onClick={saveExp} disabled={savingExp}>
+              {savingExp && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
+            </Button>
+          </>
+        }
+      >
           <div className="grid gap-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -898,14 +908,7 @@ export function CommissionsExpensesContent() {
               <Textarea value={expForm.note} onChange={(e) => setExpForm({ ...expForm, note: e.target.value })} rows={3} />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setExpDialogOpen(false)}>Zrušiť</Button>
-            <Button onClick={saveExp} disabled={savingExp}>
-              {savingExp && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </AdminDialog>
 
       <FactConfirmDialog
         open={payoutFactOpen}

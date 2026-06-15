@@ -43,6 +43,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -1223,11 +1224,12 @@ const Admin = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={bulkOfferOpen} onOpenChange={setBulkOfferOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Poslať ponuku vybraným leadom</DialogTitle>
-          </DialogHeader>
+      <AdminDialog
+        open={bulkOfferOpen}
+        onOpenChange={setBulkOfferOpen}
+        size="lg"
+        title="Poslať ponuku vybraným leadom"
+      >
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Vybraných leadov: <strong>{bulkOfferSelectedLeads.length}</strong>
@@ -1285,8 +1287,7 @@ const Admin = () => {
               </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+      </AdminDialog>
 
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <AlertDialogContent>

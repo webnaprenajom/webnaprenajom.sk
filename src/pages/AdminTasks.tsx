@@ -22,13 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import { toast } from "@/hooks/use-toast";
 import {
   Loader2,
@@ -425,9 +419,20 @@ const AdminTasks = () => {
         </section>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{form.id ? "Upraviť úlohu" : "Nová úloha / zákazka"}</DialogTitle></DialogHeader>
+      <AdminDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        size="lg"
+        title={form.id ? "Upraviť úlohu" : "Nová úloha / zákazka"}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
+            <Button onClick={save} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
+            </Button>
+          </>
+        }
+      >
           <div className="grid gap-3">
             <div>
               <label className="text-xs text-muted-foreground">Názov</label>
@@ -505,14 +510,7 @@ const AdminTasks = () => {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
-            <Button onClick={save} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </AdminDialog>
     </AdminShell>
   );
 };
