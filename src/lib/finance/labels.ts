@@ -37,6 +37,8 @@ export const RENTAL_MONTH_STATUS_LABELS = {
 
   unpaid: "Nezaplatené (interný)",
 
+  overdue: "Omeškaná platba (web deaktivovaný)",
+
 } as const;
 
 

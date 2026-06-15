@@ -66,7 +66,7 @@ interface RentalWebsite {
   implementers: Implementer[];
 }
 
-type PaymentStatus = "none" | "invoice" | "paid" | "unpaid";
+type PaymentStatus = "none" | "invoice" | "paid" | "unpaid" | "overdue";
 
 interface RentalPayment {
   id: string;
@@ -89,14 +89,16 @@ const NEXT_STATUS: Record<PaymentStatus, PaymentStatus> = {
   none: "invoice",
   invoice: "paid",
   paid: "unpaid",
-  unpaid: "none",
+  unpaid: "overdue",
+  overdue: "none",
 };
 
 const PAYMENT_STATUS_RANK: Record<PaymentStatus, number> = {
   none: 0,
   invoice: 1,
   unpaid: 2,
-  paid: 3,
+  overdue: 3,
+  paid: 4,
 };
 
 const isPaymentDowngrade = (current: PaymentStatus, next: PaymentStatus) =>
@@ -426,6 +428,39 @@ export default function AdminRentals() {
     } else {
       await loadAll();
     }
+
+    if (next === "overdue") {
+      const recipient = (website.customer_email || "").trim();
+      if (!recipient) {
+        toast({
+          title: "Stav nastavený na omeškaná platba",
+          description: "E-mail klientovi nebol odoslaný — chýba kontaktný e-mail pri webe.",
+          variant: "destructive",
+        });
+      } else {
+        try {
+          const { error: emailError } = await supabase.functions.invoke("send-overdue-email", {
+            body: {
+              email: recipient,
+              client_name: website.client_name || "",
+              website_name: website.name,
+              website_url: website.url || "",
+              month,
+              year,
+              amount: monthPrice(website, month),
+            },
+          });
+          if (emailError) throw emailError;
+          toast({
+            title: "Omeškaná platba",
+            description: `Klientovi (${recipient}) bol odoslaný e-mail o deaktivácii.`,
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Neznáma chyba";
+          toast({ title: "E-mail nebol odoslaný", description: msg, variant: "destructive" });
+        }
+      }
+    }
   };
 
   const openPrices = (w: RentalWebsite) => {
@@ -533,6 +568,8 @@ export default function AdminRentals() {
         return "bg-green-500/20 border-green-500/50 text-green-500 hover:bg-green-500/30";
       case "unpaid":
         return "bg-red-500/20 border-red-500/50 text-red-500 hover:bg-red-500/30";
+      case "overdue":
+        return "bg-purple-600/25 border-purple-600/60 text-purple-200 hover:bg-purple-600/40";
       default:
         return "bg-muted/30 border-border text-muted-foreground hover:bg-muted/60";
     }
@@ -542,6 +579,7 @@ export default function AdminRentals() {
     if (st === "invoice") return <FileText className="w-4 h-4" />;
     if (st === "paid") return <Check className="w-4 h-4" />;
     if (st === "unpaid") return <X className="w-4 h-4" />;
+    if (st === "overdue") return <AlertTriangle className="w-4 h-4" />;
     return <span className="text-xs">{month}</span>;
   };
 

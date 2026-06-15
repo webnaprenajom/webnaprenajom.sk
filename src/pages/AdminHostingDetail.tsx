@@ -5,6 +5,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { EntityCommissionsPanel } from "@/components/admin/EntityCommissionsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -198,7 +199,101 @@ export default function AdminHostingDetail() {
               })()}
             </Field>
             <Field label="Poskytovateľ" value={record.provider || "—"} />
-            <Field label="Cena / mesiac" value={record.monthly_price != null ? `${record.monthly_price} €` : "—"} />
+            <Field label="Cena / rok €">
+              <Input
+                type="number"
+                step="1"
+                defaultValue={(record as any).yearly_price ?? ""}
+                className="h-8"
+                onBlur={async (e) => {
+                  const raw = e.target.value.trim();
+                  const next = raw === "" ? null : Number(raw);
+                  if (next !== null && Number.isNaN(next)) return;
+                  if (next === ((record as any).yearly_price ?? null)) return;
+                  const { error } = await supabase
+                    .from("hosting_records")
+                    .update({ yearly_price: next })
+                    .eq("id", record.id);
+                  if (error) {
+                    toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                    return;
+                  }
+                  setRecord({ ...record, yearly_price: next } as HostingRecordRow);
+                  toast({ title: "Ročná cena uložená" });
+                }}
+              />
+            </Field>
+            <Field label="Obdobie od">
+              <Input
+                type="date"
+                defaultValue={(record as any).period_from ?? ""}
+                className="h-8"
+                onBlur={async (e) => {
+                  const next = e.target.value || null;
+                  if (next === ((record as any).period_from ?? null)) return;
+                  const { error } = await supabase.from("hosting_records").update({ period_from: next }).eq("id", record.id);
+                  if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); return; }
+                  setRecord({ ...record, period_from: next } as any);
+                  toast({ title: "Uložené" });
+                }}
+              />
+            </Field>
+            <Field label="Obdobie do">
+              <Input
+                type="date"
+                defaultValue={(record as any).period_to ?? ""}
+                className="h-8"
+                onBlur={async (e) => {
+                  const next = e.target.value || null;
+                  if (next === ((record as any).period_to ?? null)) return;
+                  const { error } = await supabase.from("hosting_records").update({ period_to: next }).eq("id", record.id);
+                  if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); return; }
+                  setRecord({ ...record, period_to: next } as any);
+                  toast({ title: "Uložené" });
+                }}
+              />
+            </Field>
+            <Field label="Stav úhrady">
+              <div className="flex gap-2">
+                {(["paid", "unpaid"] as const).map((s) => {
+                  const active = ((record as any).payment_status ?? "unpaid") === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={async () => {
+                        const { error } = await supabase.from("hosting_records").update({ payment_status: s }).eq("id", record.id);
+                        if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); return; }
+                        setRecord({ ...record, payment_status: s } as any);
+                      }}
+                      className={`flex-1 px-3 py-1.5 rounded-md border text-xs font-medium transition ${
+                        active
+                          ? s === "paid"
+                            ? "border-emerald-500 bg-emerald-500/10 text-emerald-700"
+                            : "border-orange-500 bg-orange-500/10 text-orange-700"
+                          : "border-border hover:border-primary/40"
+                      }`}
+                    >
+                      {s === "paid" ? "Zaplatené" : "Má zaplatiť"}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+            <Field label="Poznámka k platbe">
+              <Input
+                defaultValue={(record as any).payment_note ?? ""}
+                className="h-8"
+                onBlur={async (e) => {
+                  const next = e.target.value.trim() || null;
+                  if (next === ((record as any).payment_note ?? null)) return;
+                  const { error } = await supabase.from("hosting_records").update({ payment_note: next }).eq("id", record.id);
+                  if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); return; }
+                  setRecord({ ...record, payment_note: next } as any);
+                  toast({ title: "Uložené" });
+                }}
+              />
+            </Field>
             <div className="sm:col-span-2">
               <OperatingCostField
                 value={Number((record as any).operating_cost ?? 0)}
