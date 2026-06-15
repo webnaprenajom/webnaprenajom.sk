@@ -221,8 +221,9 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
               <TableRow>
                 <TableHead>Klient</TableHead>
                 <TableHead>Poskytovateľ</TableHead>
-                <TableHead className="text-right">Mesiac</TableHead>
-                <TableHead className="text-right">Rok</TableHead>
+                <TableHead className="text-right">Rok €</TableHead>
+                <TableHead>Obdobie</TableHead>
+                <TableHead>Úhrada</TableHead>
                 <TableHead>Provízny</TableHead>
                 <TableHead>Stav</TableHead>
                 <TableHead>Platba</TableHead>
