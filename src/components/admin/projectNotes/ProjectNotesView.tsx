@@ -7,13 +7,7 @@ import { Input } from "@/components/ui/input";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import {
   Select,
   SelectContent,
@@ -533,11 +527,19 @@ function EditDialog({
 }) {
   if (!editing) return null;
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] sm:w-full max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{editing.id ? "Upraviť záznam" : mode === "passwords" ? "Nový prístup" : "Nový projekt"}</DialogTitle>
-        </DialogHeader>
+    <AdminDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      size="xl"
+      stickyFooter
+      title={editing.id ? "Upraviť záznam" : mode === "passwords" ? "Nový prístup" : "Nový projekt"}
+      footer={
+        <>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Zrušiť</Button>
+          <Button onClick={onSave} className="w-full sm:w-auto">Uložiť</Button>
+        </>
+      }
+    >
         <div className="space-y-4">
           <div className="space-y-3">
             <div className="space-y-1.5">
@@ -608,11 +610,6 @@ function EditDialog({
             </div>
           )}
         </div>
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Zrušiť</Button>
-          <Button onClick={onSave} className="w-full sm:w-auto">Uložiť</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </AdminDialog>
   );
 }
