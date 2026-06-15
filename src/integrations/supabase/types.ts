@@ -823,6 +823,228 @@ export type Database = {
           },
         ]
       }
+      legacy_finance_staging: {
+        Row: {
+          batch_id: string
+          id: string
+          imported_at: string
+          legacy_id: string
+          linked_customer_id: string | null
+          linked_rental_id: string | null
+          payload: Json
+          review_status: string
+          row_hash: string
+          source_file: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          id?: string
+          imported_at?: string
+          legacy_id: string
+          linked_customer_id?: string | null
+          linked_rental_id?: string | null
+          payload: Json
+          review_status?: string
+          row_hash: string
+          source_file: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          id?: string
+          imported_at?: string
+          legacy_id?: string
+          linked_customer_id?: string | null
+          linked_rental_id?: string | null
+          payload?: Json
+          review_status?: string
+          row_hash?: string
+          source_file?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legacy_finance_staging_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "legacy_import_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "legacy_finance_staging_linked_customer_id_fkey"
+            columns: ["linked_customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legacy_id_map: {
+        Row: {
+          batch_id: string | null
+          canonical_id: string | null
+          confidence: string | null
+          created_at: string
+          entity_type: string
+          id: string
+          legacy_id: string
+          match_method: string | null
+          updated_at: string
+        }
+        Insert: {
+          batch_id?: string | null
+          canonical_id?: string | null
+          confidence?: string | null
+          created_at?: string
+          entity_type: string
+          id?: string
+          legacy_id: string
+          match_method?: string | null
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string | null
+          canonical_id?: string | null
+          confidence?: string | null
+          created_at?: string
+          entity_type?: string
+          id?: string
+          legacy_id?: string
+          match_method?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legacy_id_map_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "legacy_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      legacy_import_batches: {
+        Row: {
+          batch_key: string
+          finished_at: string | null
+          id: string
+          report_json: Json
+          source_env: string | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          batch_key: string
+          finished_at?: string | null
+          id?: string
+          report_json?: Json
+          source_env?: string | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          batch_key?: string
+          finished_at?: string | null
+          id?: string
+          report_json?: Json
+          source_env?: string | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      legacy_import_rows: {
+        Row: {
+          batch_id: string
+          id: string
+          imported_at: string
+          legacy_id: string
+          payload: Json
+          row_hash: string
+          source_file: string
+          updated_at: string
+        }
+        Insert: {
+          batch_id: string
+          id?: string
+          imported_at?: string
+          legacy_id: string
+          payload: Json
+          row_hash: string
+          source_file: string
+          updated_at?: string
+        }
+        Update: {
+          batch_id?: string
+          id?: string
+          imported_at?: string
+          legacy_id?: string
+          payload?: Json
+          row_hash?: string
+          source_file?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "legacy_import_rows_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "legacy_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      migration_review_queue: {
+        Row: {
+          batch_id: string | null
+          candidates: Json
+          created_at: string
+          detail: string | null
+          entity_type: string
+          id: string
+          legacy_id: string | null
+          reason: string
+          resolved_at: string | null
+          source_file: string | null
+          status: string
+        }
+        Insert: {
+          batch_id?: string | null
+          candidates?: Json
+          created_at?: string
+          detail?: string | null
+          entity_type: string
+          id?: string
+          legacy_id?: string | null
+          reason: string
+          resolved_at?: string | null
+          source_file?: string | null
+          status?: string
+        }
+        Update: {
+          batch_id?: string | null
+          candidates?: Json
+          created_at?: string
+          detail?: string | null
+          entity_type?: string
+          id?: string
+          legacy_id?: string | null
+          reason?: string
+          resolved_at?: string | null
+          source_file?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "migration_review_queue_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "legacy_import_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1420,6 +1642,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_execute_destructive_delete: {
+        Args: { p_entity_id: string; p_entity_type: string; p_options?: Json }
+        Returns: Json
+      }
       admin_list_auth_users: {
         Args: never
         Returns: {
@@ -1428,6 +1654,10 @@ export type Database = {
           email: string
           user_id: string
         }[]
+      }
+      admin_precheck_destructive_delete: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: Json
       }
     }
     Enums: {
