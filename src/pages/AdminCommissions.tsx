@@ -22,6 +22,7 @@ import {
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import {
   COMMISSION_STATUS_LABELS,
   EXPENSE_STATUS_LABELS,
@@ -129,6 +130,33 @@ const emptyExpense = () => ({
   note: "",
 });
 
+// ponytail: Phase 2 unsaved-changes guard — local normalize, id excluded (constant during edit).
+const normalizeExpenseForCompare = (f: ReturnType<typeof emptyExpense>) => ({
+  date: f.date ?? "",
+  title: f.title ?? "",
+  category: f.category ?? "",
+  amount: f.amount ?? "",
+  payment_status: f.payment_status,
+  note: f.note ?? "",
+});
+
+// ponytail: Phase 2 unsaved-changes guard — sourceSelection intentionally excluded
+// (UI-only EntitySearchPicker lookup cache, not persisted); source_type/source_id
+// are the actual compared fields.
+const normalizeCommissionForCompare = (f: ReturnType<typeof emptyCommission>) => ({
+  date: f.date,
+  title: f.title,
+  implementer: f.implementer,
+  amount: f.amount,
+  payment_status: f.payment_status,
+  note: f.note,
+  payment_form: f.payment_form,
+  source_type: f.source_type,
+  source_id: f.source_id,
+  customer_email: f.customer_email,
+  customer_id: f.customer_id,
+});
+
 export function CommissionsExpensesContent() {
   const access = useAccessContext();
 
@@ -152,6 +180,25 @@ export function CommissionsExpensesContent() {
   const [payoutFactOpen, setPayoutFactOpen] = useState(false);
   const [costFactDraft, setCostFactDraft] = useState<FactDraft | null>(null);
   const [costFactOpen, setCostFactOpen] = useState(false);
+
+  // ponytail: Phase 2 unsaved-changes guard rollout — reuses Phase 1 hook unchanged.
+  const commissionGuard = useUnsavedChangesGuard({
+    isOpen: dialogOpen,
+    current: form,
+    normalize: normalizeCommissionForCompare,
+  });
+  const requestCloseCommissionDialog = () => {
+    if (commissionGuard.confirmDiscard()) setDialogOpen(false);
+  };
+
+  const expenseGuard = useUnsavedChangesGuard({
+    isOpen: expDialogOpen,
+    current: expForm,
+    normalize: normalizeExpenseForCompare,
+  });
+  const requestCloseExpDialog = () => {
+    if (expenseGuard.confirmDiscard()) setExpDialogOpen(false);
+  };
 
   useEffect(() => {
     void load();
@@ -709,7 +756,7 @@ export function CommissionsExpensesContent() {
       {/* Commission dialog */}
       <AdminDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(o) => (o ? setDialogOpen(true) : requestCloseCommissionDialog())}
         size="lg"
         stickyFooter
         title={
@@ -725,7 +772,7 @@ export function CommissionsExpensesContent() {
         }
         footer={
           <>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
+            <Button variant="outline" onClick={requestCloseCommissionDialog}>Zrušiť</Button>
             <Button onClick={save} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>
@@ -862,12 +909,12 @@ export function CommissionsExpensesContent() {
       {/* Expense dialog */}
       <AdminDialog
         open={expDialogOpen}
-        onOpenChange={setExpDialogOpen}
+        onOpenChange={(o) => (o ? setExpDialogOpen(true) : requestCloseExpDialog())}
         size="md"
         title={expForm.id ? "Upraviť náklad" : "Nový náklad"}
         footer={
           <>
-            <Button variant="outline" onClick={() => setExpDialogOpen(false)}>Zrušiť</Button>
+            <Button variant="outline" onClick={requestCloseExpDialog}>Zrušiť</Button>
             <Button onClick={saveExp} disabled={savingExp}>
               {savingExp && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>
