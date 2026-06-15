@@ -202,7 +202,7 @@ const ProposeSolutionDialog = ({ pkg, mode, open, onOpenChange }: { pkg: Selecte
     if (extra.demo) extras.push("ukážka");
     if (extra.consultation) extras.push("konzultácia");
 
-    const annualMonthly = Math.round(pkg.price * (1 - ANNUAL_DISCOUNT) * 100) / 100;
+    const annualMonthly = Math.round(pkg.price * (1 - ANNUAL_DISCOUNT));
     const annualTotal = Math.round(pkg.price * 12 * (1 - ANNUAL_DISCOUNT));
     const priceLine = mode === "rental"
       ? `${pkg.price} € / mes`
