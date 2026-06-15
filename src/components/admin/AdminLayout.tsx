@@ -15,7 +15,7 @@ import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
-import { ArrowLeft, Loader2, LogOut, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut, RefreshCw, ShieldAlert } from "lucide-react";
 
 export interface AdminLayoutProps {
   title?: string;
