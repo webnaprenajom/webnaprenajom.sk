@@ -200,6 +200,30 @@ export default function AdminHostingDetail() {
             </Field>
             <Field label="Poskytovateľ" value={record.provider || "—"} />
             <Field label="Cena / mesiac" value={record.monthly_price != null ? `${record.monthly_price} €` : "—"} />
+            <Field label="Cena / rok €">
+              <Input
+                type="number"
+                step="0.01"
+                defaultValue={(record as any).yearly_price ?? ""}
+                className="h-8"
+                onBlur={async (e) => {
+                  const raw = e.target.value.trim();
+                  const next = raw === "" ? null : Number(raw);
+                  if (next !== null && Number.isNaN(next)) return;
+                  if (next === ((record as any).yearly_price ?? null)) return;
+                  const { error } = await supabase
+                    .from("hosting_records")
+                    .update({ yearly_price: next })
+                    .eq("id", record.id);
+                  if (error) {
+                    toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                    return;
+                  }
+                  setRecord({ ...record, yearly_price: next } as HostingRecordRow);
+                  toast({ title: "Ročná cena uložená" });
+                }}
+              />
+            </Field>
             <div className="sm:col-span-2">
               <OperatingCostField
                 value={Number((record as any).operating_cost ?? 0)}
