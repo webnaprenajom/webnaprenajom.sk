@@ -4,12 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import {
   Table,
   TableBody,
@@ -233,14 +228,13 @@ export function ImplementerCommissionDetailDialog({
   }, [rentalRows, commissionRows]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Provízie — {implementerName} ({year})</DialogTitle>
-        </DialogHeader>
-        <p className="text-xs text-muted-foreground">
-          Presný zoznam webov (prenájmy) a zákaziek (provízie modul). Suma prenájmov je odvodená z % podielu a stavu mesačných platieb.
-        </p>
+    <AdminDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      size="xl"
+      title={<>Provízie — {implementerName} ({year})</>}
+      description="Presný zoznam webov (prenájmy) a zákaziek (provízie modul). Suma prenájmov je odvodená z % podielu a stavu mesačných platieb."
+    >
         {dualModelWarning && (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
             {dualModelWarning}
@@ -474,7 +468,6 @@ export function ImplementerCommissionDetailDialog({
         <div className="flex justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Zavrieť</Button>
         </div>
-      </DialogContent>
-    </Dialog>
+    </AdminDialog>
   );
 }

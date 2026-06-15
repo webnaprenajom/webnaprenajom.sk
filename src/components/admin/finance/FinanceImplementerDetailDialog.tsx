@@ -1,11 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import {
   Table,
   TableBody,
@@ -116,11 +111,7 @@ export function FinanceImplementerDetailDialog({ open, onOpenChange, implementer
   }, [rows]);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Provízie — {implementer}</DialogTitle>
-        </DialogHeader>
+    <AdminDialog open={open} onOpenChange={onOpenChange} size="xl" title={<>Provízie — {implementer}</>}>
         <p className="text-xs text-muted-foreground -mt-2">
           Všetky sekcie (prenájmy, hosting, projekty) + legacy riadky bez zdroja.
         </p>
@@ -210,7 +201,6 @@ export function FinanceImplementerDetailDialog({ open, onOpenChange, implementer
             </div>
           </>
         )}
-      </DialogContent>
-    </Dialog>
+    </AdminDialog>
   );
 }
