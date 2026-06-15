@@ -131,7 +131,7 @@ export default function AdminClients() {
       title="Klienti"
       subtitle="Jednotný zoznam klientov naprieč prenájmami, projektmi a hostingom"
     >
-      <div className="max-w-3xl space-y-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="client-search">Meno, e-mail, customer ID alebo lead</Label>
           <div className="flex flex-col sm:flex-row gap-2">
