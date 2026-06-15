@@ -255,8 +255,17 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                       )}
                     </TableCell>
                     <TableCell className="text-xs">{r.provider ?? "—"}</TableCell>
-                    <TableCell className="text-right">{r.monthly_price != null ? `${r.monthly_price} €` : "—"}</TableCell>
-                    <TableCell className="text-right">{(r as HostingRecordRow & { yearly_price?: number | null }).yearly_price != null ? `${(r as HostingRecordRow & { yearly_price?: number | null }).yearly_price} €` : "—"}</TableCell>
+                    <TableCell className="text-right">{(r as any).yearly_price != null ? `${(r as any).yearly_price} €` : "—"}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {(r as any).period_from || (r as any).period_to
+                        ? `${(r as any).period_from ? new Date((r as any).period_from).toLocaleDateString("sk-SK") : "—"} – ${(r as any).period_to ? new Date((r as any).period_to).toLocaleDateString("sk-SK") : "—"}`
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={(r as any).payment_status === "paid" ? "default" : "outline"} className={`text-[10px] ${(r as any).payment_status === "paid" ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/15" : "bg-orange-500/10 text-orange-700 border-orange-500/30"}`}>
+                        {(r as any).payment_status === "paid" ? "Zaplatené" : "Nezaplatené"}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={r.commissionable ? "default" : "outline"} className="text-[10px]">
                         {r.commissionable ? "áno" : "nie"}
