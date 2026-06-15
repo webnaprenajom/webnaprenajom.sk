@@ -764,12 +764,15 @@ const ModelSelectionSection = () => {
                     <span className="text-5xl font-bold text-gradient">{displayPrice}</span>
                     <span className="text-2xl font-bold text-muted-foreground">€</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    {isRental ? "/ mesiac, bez DPH" : "jednorazovo, bez DPH"}
-                  </p>
-                  {!isRental && (
+                  <p className="text-xs text-muted-foreground">{priceSuffix}</p>
+                  {isOneOff && (
                     <p className="text-[10px] text-primary/80 font-medium">
                       Prenájom od {p.price} €/mes • bez vstupu
+                    </p>
+                  )}
+                  {isAnnual && (
+                    <p className="text-[10px] text-primary font-medium">
+                      Fakturované {annualTotal} € / rok (ušetríte 10 %)
                     </p>
                   )}
                   {isRental && (
