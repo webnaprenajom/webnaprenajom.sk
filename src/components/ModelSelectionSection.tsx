@@ -280,7 +280,7 @@ ${data.message || "—"}`;
                   {mode === "oneoff"
                     ? pkg.oneOffPrice
                     : mode === "annual"
-                      ? (Math.round(pkg.price * (1 - ANNUAL_DISCOUNT) * 100) / 100)
+                      ? Math.round(pkg.price * (1 - ANNUAL_DISCOUNT))
                       : pkg.price} €
                 </p>
                 <p className="text-[10px] text-muted-foreground">
