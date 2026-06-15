@@ -115,11 +115,24 @@ export function AdminLayout({
         </header>
         {!hidePageHeader && title && (
           <div className="border-b border-border/60 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold truncate">{title}</h1>
-              {subtitle && (
-                <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+            <div className="flex items-center gap-2 min-w-0">
+              {canGoBack && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 -ml-1"
+                  onClick={() => navigate(-1)}
+                  title="Späť"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
               )}
+              <div className="min-w-0">
+                <h1 className="text-lg sm:text-xl font-bold truncate">{title}</h1>
+                {subtitle && (
+                  <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+                )}
+              </div>
             </div>
             {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
           </div>
