@@ -71,7 +71,7 @@ interface RentalWebsite {
   implementers: Implementer[];
 }
 
-type PaymentStatus = "none" | "invoice" | "paid" | "unpaid";
+type PaymentStatus = "none" | "invoice" | "paid" | "unpaid" | "overdue";
 
 interface RentalPayment {
   id: string;
@@ -94,14 +94,16 @@ const NEXT_STATUS: Record<PaymentStatus, PaymentStatus> = {
   none: "invoice",
   invoice: "paid",
   paid: "unpaid",
-  unpaid: "none",
+  unpaid: "overdue",
+  overdue: "none",
 };
 
 const PAYMENT_STATUS_RANK: Record<PaymentStatus, number> = {
   none: 0,
   invoice: 1,
   unpaid: 2,
-  paid: 3,
+  overdue: 3,
+  paid: 4,
 };
 
 const isPaymentDowngrade = (current: PaymentStatus, next: PaymentStatus) =>
