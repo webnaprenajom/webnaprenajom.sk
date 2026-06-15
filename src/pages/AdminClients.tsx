@@ -236,7 +236,7 @@ export default function AdminClients() {
             {!directoryLoading && directory.length === 0 && (
               <p className="text-sm text-muted-foreground italic">Zatiaľ žiadni klienti v databáze.</p>
             )}
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
               {directory.map((entry) => (
                 <div
                   key={entry.customerId || entry.email || entry.nameKey || entry.displayName}
