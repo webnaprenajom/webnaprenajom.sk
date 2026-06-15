@@ -19,7 +19,6 @@ import {
   FolderKanban,
   Globe,
   Loader2,
-  RefreshCw,
   Search,
   Server,
   Trash2,
@@ -131,20 +130,8 @@ export default function AdminClients() {
     <AdminShell
       title="Klienti"
       subtitle="Jednotný zoznam klientov naprieč prenájmami, projektmi a hostingom"
-      actions={
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void loadDirectory()}
-          disabled={directoryLoading}
-          title="Obnoviť zoznam"
-        >
-          <RefreshCw className={`w-4 h-4 ${directoryLoading ? "animate-spin" : ""}`} />
-          <span className="ml-2 hidden sm:inline">Obnoviť</span>
-        </Button>
-      }
     >
-      <div className="max-w-3xl space-y-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="client-search">Meno, e-mail, customer ID alebo lead</Label>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -236,69 +223,101 @@ export default function AdminClients() {
             {!directoryLoading && directory.length === 0 && (
               <p className="text-sm text-muted-foreground italic">Zatiaľ žiadni klienti v databáze.</p>
             )}
-            <div className="flex flex-col gap-2">
-              {directory.map((entry) => (
-                <div
-                  key={entry.customerId || entry.email || entry.nameKey || entry.displayName}
-                  className="relative rounded-xl border p-3 hover:bg-muted/50 transition-colors min-h-[44px]"
-                >
-                  <button
-                    type="button"
-                    className="w-full text-left pr-8"
-                    onClick={() => openDirectoryEntry(entry)}
-                    disabled={!entry.customerId && !entry.email}
-                  >
-                    <div className="flex items-start gap-2">
-                      <UserRound className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm truncate">{entry.displayName}</p>
-                        {entry.email && (
-                          <p className="text-xs text-muted-foreground truncate">{entry.email}</p>
-                        )}
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {entry.projectCount > 0 && (
-                            <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
-                              <FolderKanban className="w-2.5 h-2.5" /> {entry.projectCount}
-                            </Badge>
-                          )}
-                          {entry.hostingCount > 0 && (
-                            <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
-                              <Server className="w-2.5 h-2.5" /> {entry.hostingCount}
-                            </Badge>
-                          )}
-                          {entry.rentalCount > 0 && (
-                            <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
-                              <Globe className="w-2.5 h-2.5" /> {entry.rentalCount}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          {unifiedClientSectionSummary(entry)}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                  {entry.customerId && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="absolute top-2 right-2 h-8 w-8"
-                      title="Zmazať klienta"
-                      onClick={() =>
-                        void requestDelete({
-                          entityType: "customer",
-                          entityId: entry.customerId!,
-                          entityLabel: entry.displayName,
-                        })
-                      }
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
+            {directory.length > 0 && (
+              <div className="rounded-xl border border-border overflow-x-auto bg-card">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="text-left font-semibold px-4 py-2.5">Meno</th>
+                      <th className="text-left font-semibold px-4 py-2.5">E-mail</th>
+                      <th className="text-left font-semibold px-4 py-2.5 hidden md:table-cell">Sekcie</th>
+                      <th className="text-left font-semibold px-4 py-2.5 hidden lg:table-cell">Súhrn</th>
+                      <th className="px-4 py-2.5 w-12"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {directory.map((entry) => {
+                      const clickable = !!(entry.customerId || entry.email);
+                      return (
+                        <tr
+                          key={entry.customerId || entry.email || entry.nameKey || entry.displayName}
+                          className={`transition-colors ${clickable ? "cursor-pointer hover:bg-muted/40" : ""}`}
+                          onClick={() => clickable && openDirectoryEntry(entry)}
+                        >
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <UserRound className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span className="font-medium truncate">{entry.displayName}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {entry.email ? (
+                              <a
+                                href={`mailto:${entry.email}`}
+                                className="hover:text-primary hover:underline truncate inline-block max-w-[240px]"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {entry.email}
+                              </a>
+                            ) : (
+                              <span className="italic text-xs">—</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 hidden md:table-cell">
+                            <div className="flex flex-wrap gap-1.5">
+                              {entry.projectCount > 0 && (
+                                <Badge variant="outline" className="text-[10px] h-5 gap-1">
+                                  <FolderKanban className="w-3 h-3" /> {entry.projectCount}
+                                </Badge>
+                              )}
+                              {entry.hostingCount > 0 && (
+                                <Badge variant="outline" className="text-[10px] h-5 gap-1">
+                                  <Server className="w-3 h-3" /> {entry.hostingCount}
+                                </Badge>
+                              )}
+                              {entry.rentalCount > 0 && (
+                                <Badge variant="outline" className="text-[10px] h-5 gap-1">
+                                  <Globe className="w-3 h-3" /> {entry.rentalCount}
+                                </Badge>
+                              )}
+                              {entry.leadCount > 0 && (
+                                <Badge variant="secondary" className="text-[10px] h-5 gap-1">
+                                  <Users className="w-3 h-3" /> {entry.leadCount}
+                                </Badge>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell">
+                            {unifiedClientSectionSummary(entry)}
+                          </td>
+                          <td className="px-2 py-3 text-right">
+                            {entry.customerId && (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                title="Zmazať klienta"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void requestDelete({
+                                    entityType: "customer",
+                                    entityId: entry.customerId!,
+                                    entityLabel: entry.displayName,
+                                  });
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         )}
       </div>
