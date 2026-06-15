@@ -231,7 +231,7 @@ export function ImplementerCommissionDetailDialog({
     <AdminDialog
       open={open}
       onOpenChange={onOpenChange}
-      size="xl"
+      size="2xl"
       title={<>Provízie — {implementerName} ({year})</>}
       description="Presný zoznam webov (prenájmy) a zákaziek (provízie modul). Suma prenájmov je odvodená z % podielu a stavu mesačných platieb."
     >

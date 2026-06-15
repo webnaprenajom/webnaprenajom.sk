@@ -20,6 +20,7 @@ import { resolveTaskCustomerFields } from "@/lib/crmLookup/taskCustomerLink";
 import { buildCommissionInsertPayload } from "@/lib/commissionCreateHelpers";
 import { assigneeSelectOptions } from "@/lib/assignees";
 import { parseInsertRowId } from "@/lib/crmLookup/resolveFormCustomerLink";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import type { CustomerWorkbenchContext } from "@/lib/customerWorkbench/types";
 
 export type QuickCreateKind = "task" | "project" | "hosting" | "commission" | "rental";
@@ -57,6 +58,39 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
   const [rentalName, setRentalName] = useState("");
   const [rentalUrl, setRentalUrl] = useState("");
   const [rentalMonthlyPrice, setRentalMonthlyPrice] = useState("");
+
+  const taskFormGuard = useUnsavedChangesGuard({
+    isOpen: openKind === "task",
+    current: { taskTitle, taskDueDate, taskPriority },
+  });
+  const projectFormGuard = useUnsavedChangesGuard({
+    isOpen: openKind === "project",
+    current: { projectTitle },
+  });
+  const rentalFormGuard = useUnsavedChangesGuard({
+    isOpen: openKind === "rental",
+    current: { rentalName, rentalUrl, rentalMonthlyPrice },
+  });
+  const hostingFormGuard = useUnsavedChangesGuard({
+    isOpen: openKind === "hosting",
+    current: { hostingProvider },
+  });
+  const commissionFormGuard = useUnsavedChangesGuard({
+    isOpen: openKind === "commission",
+    current: { commissionTitle, commissionAmount, commissionImplementer },
+  });
+
+  const requestClose = () => {
+    const guard =
+      openKind === "task" ? taskFormGuard
+      : openKind === "project" ? projectFormGuard
+      : openKind === "rental" ? rentalFormGuard
+      : openKind === "hosting" ? hostingFormGuard
+      : openKind === "commission" ? commissionFormGuard
+      : null;
+    if (guard && !guard.confirmDiscard()) return;
+    resetAndClose();
+  };
 
   const resetAndClose = () => {
     setTaskTitle("");
@@ -295,12 +329,12 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     <>
       <AdminDialog
         open={openKind === "task"}
-        onOpenChange={(o) => !o && resetAndClose()}
+        onOpenChange={(o) => !o && requestClose()}
         size="sm"
         title="Nová úloha"
         footer={
           <>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveTask()} disabled={saving}>
@@ -349,12 +383,12 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
 
       <AdminDialog
         open={openKind === "project"}
-        onOpenChange={(o) => !o && resetAndClose()}
+        onOpenChange={(o) => !o && requestClose()}
         size="sm"
         title="Nový projekt"
         footer={
           <>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveProject()} disabled={saving}>
@@ -376,12 +410,12 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
 
       <AdminDialog
         open={openKind === "rental"}
-        onOpenChange={(o) => !o && resetAndClose()}
+        onOpenChange={(o) => !o && requestClose()}
         size="sm"
         title="Nový prenájom webu"
         footer={
           <>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveRental()} disabled={saving}>
@@ -413,12 +447,12 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
 
       <AdminDialog
         open={openKind === "hosting"}
-        onOpenChange={(o) => !o && resetAndClose()}
+        onOpenChange={(o) => !o && requestClose()}
         size="sm"
         title="Nový hosting"
         footer={
           <>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveHosting()} disabled={saving}>
@@ -440,12 +474,12 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
 
       <AdminDialog
         open={openKind === "commission"}
-        onOpenChange={(o) => !o && resetAndClose()}
+        onOpenChange={(o) => !o && requestClose()}
         size="sm"
         title="Nová provízia"
         footer={
           <>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveCommission()} disabled={saving}>

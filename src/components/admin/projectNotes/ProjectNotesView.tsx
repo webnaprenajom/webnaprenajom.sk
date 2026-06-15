@@ -9,6 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -341,102 +349,158 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
             {mode === "passwords" ? "Žiadne uložené prístupy." : "Žiadne projekty. Pridaj prvý."}
           </div>
         ) : mode === "passwords" ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((item) => {
-              const status = PROJECT_STATUSES.find((s) => s.value === item.status);
-              const shown = reveal[item.id];
-              return (
-                <div key={item.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold truncate">{item.title}</h3>
-                      {item.client_name && (
-                        <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
-                      )}
-                    </div>
-                    <Badge variant="outline" className={status?.color}>
-                      {status?.label}
-                    </Badge>
-                  </div>
-                  <CredentialsBlock
-                    item={item}
-                    shown={shown}
-                    onToggle={() => setReveal((r) => ({ ...r, [item.id]: !r[item.id] }))}
-                    onCopy={copy}
-                  />
-                  <CardActions item={item} onEdit={openEdit} onRemove={remove} />
-                </div>
-              );
-            })}
+          <div className="rounded-xl border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Projekt</TableHead>
+                  <TableHead>Stav</TableHead>
+                  <TableHead>Prístupy</TableHead>
+                  <TableHead className="w-20" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((item) => {
+                  const status = PROJECT_STATUSES.find((s) => s.value === item.status);
+                  const shown = reveal[item.id];
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="text-sm">
+                        <div className="font-semibold">{item.title}</div>
+                        {item.client_name && (
+                          <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={status?.color}>
+                          {status?.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="min-w-[280px]">
+                        <CredentialsBlock
+                          item={item}
+                          shown={shown}
+                          onToggle={() => setReveal((r) => ({ ...r, [item.id]: !r[item.id] }))}
+                          onCopy={copy}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(item)}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => remove(item.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((item) => {
-              const status = PROJECT_STATUSES.find((s) => s.value === item.status);
-              const creds = hasCredentials(item);
-              return (
-                <div key={item.id} className="bg-card border border-border rounded-xl p-4 space-y-3 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <Link to={`/admin/projects/${item.id}`} className="font-semibold truncate block hover:text-primary hover:underline">
-                        {item.title}
-                      </Link>
-                      {item.client_name && (
-                        <div className="space-y-0.5">
-                          <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
-                          {customerHrefByClientName(item.client_name, clientEmailMap) && (
-                            <Link
-                              to={customerHrefByClientName(item.client_name, clientEmailMap)!}
-                              className="text-[10px] text-primary hover:underline"
-                            >
-                              Klient 360°
-                            </Link>
-                          )}
+          <div className="rounded-xl border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Projekt</TableHead>
+                  <TableHead>Stav</TableHead>
+                  <TableHead>URL</TableHead>
+                  <TableHead>Poznámka</TableHead>
+                  <TableHead>Heslá</TableHead>
+                  <TableHead>Aktualizované</TableHead>
+                  <TableHead className="w-28" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((item) => {
+                  const status = PROJECT_STATUSES.find((s) => s.value === item.status);
+                  const creds = hasCredentials(item);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="text-sm">
+                        <Link to={`/admin/projects/${item.id}`} className="font-semibold text-primary hover:underline">
+                          {item.title}
+                        </Link>
+                        {item.client_name && (
+                          <div className="space-y-0.5">
+                            <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
+                            {customerHrefByClientName(item.client_name, clientEmailMap) && (
+                              <Link
+                                to={customerHrefByClientName(item.client_name, clientEmailMap)!}
+                                className="text-[10px] text-primary hover:underline"
+                              >
+                                Klient 360°
+                              </Link>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={status?.color}>
+                          {status?.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs max-w-[200px]">
+                        {item.url ? (
+                          <a
+                            href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline inline-flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{item.url}</span>
+                          </a>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-[240px]">
+                        {item.notes ? (
+                          <span className="line-clamp-2 flex items-start gap-1.5">
+                            <FileText className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                            {item.notes}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {creds ? (
+                          <Link
+                            to="/admin/passwords"
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline whitespace-nowrap"
+                          >
+                            <KeyRound className="w-3 h-3" /> Heslá
+                          </Link>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {item.updated_at ? new Date(item.updated_at).toLocaleDateString("sk-SK") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button size="sm" variant="ghost" className="h-8 text-xs" asChild>
+                            <Link to={`/admin/projects/${item.id}`}>Detail</Link>
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(item)}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => remove(item.id)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
-                      )}
-                    </div>
-                    <Badge variant="outline" className={status?.color}>
-                      {status?.label}
-                    </Badge>
-                  </div>
-
-                  {item.url && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      <a
-                        href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline truncate"
-                      >
-                        {item.url}
-                      </a>
-                    </div>
-                  )}
-
-                  {item.notes && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                        <FileText className="w-3.5 h-3.5 shrink-0" />
-                        Poznámka
-                      </div>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">{item.notes}</p>
-                    </div>
-                  )}
-
-                  {creds && (
-                    <Link
-                      to="/admin/passwords"
-                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                    >
-                      <KeyRound className="w-3 h-3" /> Prístupy v sekcii Heslá
-                    </Link>
-                  )}
-
-                  <CardActions item={item} onEdit={openEdit} onRemove={remove} updatedAt={item.updated_at} />
-                </div>
-              );
-            })}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>
@@ -452,37 +516,6 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
         mode={mode}
       />
     </AdminShell>
-  );
-}
-
-function CardActions({
-  item,
-  onEdit,
-  onRemove,
-  updatedAt,
-}: {
-  item: ProjectNote;
-  onEdit: (item: Partial<ProjectNote>) => void;
-  onRemove: (id: string) => void;
-  updatedAt?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between pt-2 border-t border-border/50">
-      <span className="text-[10px] text-muted-foreground">
-        {updatedAt ? new Date(updatedAt).toLocaleDateString("sk-SK") : null}
-      </span>
-      <div className="flex gap-1">
-        <Button size="sm" variant="ghost" className="h-7 text-xs" asChild>
-          <Link to={`/admin/projects/${item.id}`}>Detail</Link>
-        </Button>
-        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(item)}>
-          <Pencil className="w-3.5 h-3.5" />
-        </Button>
-        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => onRemove(item.id)}>
-          <Trash2 className="w-3.5 h-3.5" />
-        </Button>
-      </div>
-    </div>
   );
 }
 

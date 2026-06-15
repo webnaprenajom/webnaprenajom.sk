@@ -72,6 +72,7 @@ import { cn } from "@/lib/utils";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { canAccessOperationalCrm, isCrmUser } from "@/lib/rbac/permissions";
 import { ensureLeadCustomerLink } from "@/lib/crmLookup/leadCustomerLifecycle";
 
@@ -132,12 +133,45 @@ const Admin = () => {
   const [editCreatedAt, setEditCreatedAt] = useState<Date | undefined>(undefined);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // ponytail: unsaved-changes guard for the lead detail dialog — normalizes
+  // optional Date fields to ISO strings so dirty-check matches what the
+  // form inputs (date pickers) actually produce.
+  const leadGuard = useUnsavedChangesGuard({
+    isOpen: !!selected,
+    current: {
+      editName, editEmail, editPhone, editType, editStatus, editSource, editAssigned,
+      editTemperature, editAmount, editConsultDate, editConsultTime, editFollowUpDate,
+      editCreatedAt, editNotes,
+    },
+    normalize: (v) => ({
+      ...v,
+      editConsultDate: v.editConsultDate ? v.editConsultDate.toISOString() : null,
+      editFollowUpDate: v.editFollowUpDate ? v.editFollowUpDate.toISOString() : null,
+      editCreatedAt: v.editCreatedAt ? v.editCreatedAt.toISOString() : null,
+    }),
+  });
+
+  const requestCloseLeadDialog = () => {
+    if (!leadGuard.confirmDiscard()) return;
+    setSelected(null);
+  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Bulk send offer dialog (emails from selected leads)
   const [bulkOfferOpen, setBulkOfferOpen] = useState(false);
   const [bulkOfferName, setBulkOfferName] = useState("");
   const [bulkOfferSending, setBulkOfferSending] = useState(false);
+
+  const bulkOfferGuard = useUnsavedChangesGuard({
+    isOpen: bulkOfferOpen,
+    current: { bulkOfferName },
+  });
+
+  const requestCloseBulkOfferDialog = () => {
+    if (!bulkOfferGuard.confirmDiscard()) return;
+    setBulkOfferOpen(false);
+  };
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const handleBulkOfferSend = async () => {
@@ -1087,7 +1121,7 @@ const Admin = () => {
       {/* Lead detail dialog */}
       <LeadDetailDialog
         open={!!selected}
-        onOpenChange={(o) => !o && setSelected(null)}
+        onOpenChange={(o) => !o && requestCloseLeadDialog()}
         selected={selected}
         saving={saving}
         onSave={handleSave}
@@ -1226,7 +1260,7 @@ const Admin = () => {
 
       <AdminDialog
         open={bulkOfferOpen}
-        onOpenChange={setBulkOfferOpen}
+        onOpenChange={(o) => (o ? setBulkOfferOpen(true) : requestCloseBulkOfferDialog())}
         size="lg"
         title="Poslať ponuku vybraným leadom"
       >
@@ -1274,7 +1308,7 @@ const Admin = () => {
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setBulkOfferOpen(false)} disabled={bulkOfferSending}>
+              <Button variant="outline" onClick={requestCloseBulkOfferDialog} disabled={bulkOfferSending}>
                 Zrušiť
               </Button>
               <Button

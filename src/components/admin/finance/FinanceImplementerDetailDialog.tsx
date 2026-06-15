@@ -111,7 +111,7 @@ export function FinanceImplementerDetailDialog({ open, onOpenChange, implementer
   }, [rows]);
 
   return (
-    <AdminDialog open={open} onOpenChange={onOpenChange} size="xl" title={<>Provízie — {implementer}</>}>
+    <AdminDialog open={open} onOpenChange={onOpenChange} size="2xl" title={<>Provízie — {implementer}</>}>
         <p className="text-xs text-muted-foreground -mt-2">
           Všetky sekcie (prenájmy, hosting, projekty) + legacy riadky bez zdroja.
         </p>

@@ -1,11 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -95,20 +90,47 @@ const LeadDetailDialog = ({
   editNotes, setEditNotes,
 }: LeadDetailDialogProps) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex flex-col gap-2 items-start">
-            <span>Detail leadu</span>
-            {selected && (
-              <LeadCustomerStatusBadge
-                customerId={selected.customer_id}
-                email={editEmail || selected.email}
-                status={editStatus}
-              />
+    <AdminDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      size="xl"
+      stickyFooter
+      title={
+        <div className="flex flex-col gap-2 items-start">
+          <span>Detail leadu</span>
+          {selected && (
+            <LeadCustomerStatusBadge
+              customerId={selected.customer_id}
+              email={editEmail || selected.email}
+              status={editStatus}
+            />
+          )}
+        </div>
+      }
+      footer={
+        selected && (
+          <>
+            {editEmail && adminCustomerHrefPreferred(selected.customer_id, editEmail.trim()) && (
+              <Link
+                to={adminCustomerHrefPreferred(selected.customer_id, editEmail.trim())!}
+                className="mr-auto"
+              >
+                <Button variant="outline" type="button">
+                  Klient 360°
+                </Button>
+              </Link>
             )}
-          </DialogTitle>
-        </DialogHeader>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Zrušiť
+            </Button>
+            <Button onClick={onSave} variant="gradient" disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Uložiť
+            </Button>
+          </>
+        )
+      }
+    >
         {selected && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
@@ -404,30 +426,9 @@ const LeadDetailDialog = ({
                 updatedAt={selected.updated_at}
               />
             )}
-
-            <div className="flex gap-2 justify-end pt-2 flex-wrap">
-              {editEmail && adminCustomerHrefPreferred(selected.customer_id, editEmail.trim()) && (
-                <Link
-                  to={adminCustomerHrefPreferred(selected.customer_id, editEmail.trim())!}
-                  className="mr-auto"
-                >
-                  <Button variant="outline" type="button">
-                    Klient 360°
-                  </Button>
-                </Link>
-              )}
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
-                Zrušiť
-              </Button>
-              <Button onClick={onSave} variant="gradient" disabled={saving}>
-                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Uložiť
-              </Button>
-            </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+    </AdminDialog>
   );
 };
 

@@ -35,6 +35,7 @@ import {
   resolveFormCustomerLink,
 } from "@/lib/crmLookup/resolveFormCustomerLink";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 
 interface Props {
   records: HostingRecordRow[];
@@ -67,6 +68,16 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
   const [form, setForm] = useState(emptyForm());
   const [paymentDraft, setPaymentDraft] = useState<FactDraft | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
+
+  const hostingFormGuard = useUnsavedChangesGuard({
+    isOpen: dialogOpen,
+    current: form,
+  });
+
+  const requestCloseHostingDialog = () => {
+    if (!hostingFormGuard.confirmDiscard()) return;
+    setDialogOpen(false);
+  };
 
   const linkedIds = useMemo(
     () =>
@@ -311,12 +322,12 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
 
       <AdminDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(o) => (o ? setDialogOpen(true) : requestCloseHostingDialog())}
         size="lg"
         title="Nový hosting"
         footer={
           <>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
+            <Button variant="outline" onClick={requestCloseHostingDialog}>Zrušiť</Button>
             <Button onClick={() => void save()} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>

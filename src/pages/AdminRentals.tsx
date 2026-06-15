@@ -203,6 +203,17 @@ export default function AdminRentals() {
     setEditing(null);
   };
 
+  // ponytail: unsaved-changes guard for the "Vlastné ceny po mesiacoch" modal.
+  const pricesFormGuard = useUnsavedChangesGuard({
+    isOpen: !!pricesOpen,
+    current: pricesDraft,
+  });
+
+  const requestClosePricesDialog = () => {
+    if (!pricesFormGuard.confirmDiscard()) return;
+    setPricesOpen(null);
+  };
+
   useEffect(() => {
     void loadAll().finally(() => setLoading(false));
   }, []);
@@ -1001,7 +1012,7 @@ export default function AdminRentals() {
       {/* Per-month custom prices */}
       <AdminDialog
         open={!!pricesOpen}
-        onOpenChange={(o) => !o && setPricesOpen(null)}
+        onOpenChange={(o) => !o && requestClosePricesDialog()}
         size="lg"
         title={
           <>
@@ -1010,7 +1021,7 @@ export default function AdminRentals() {
         }
         footer={
           <>
-            <Button variant="outline" onClick={() => setPricesOpen(null)}>Zrušiť</Button>
+            <Button variant="outline" onClick={requestClosePricesDialog}>Zrušiť</Button>
             <Button onClick={savePrices}>Uložiť ceny</Button>
           </>
         }

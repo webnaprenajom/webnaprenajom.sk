@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { Loader2, Plus, Trash2, Pencil, ExternalLink, UserRound } from "lucide-react";
 import {
   adminCustomerHref,
@@ -53,6 +54,16 @@ export default function AdminDesigns() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [emailLeadIdMap, setEmailLeadIdMap] = useState<Map<string, string>>(new Map());
   const [nameLeadIdMap, setNameLeadIdMap] = useState<Map<string, string>>(new Map());
+
+  const designFormGuard = useUnsavedChangesGuard({
+    isOpen: open,
+    current: form,
+  });
+
+  const requestCloseDesignDialog = () => {
+    if (!designFormGuard.confirmDiscard()) return;
+    setOpen(false);
+  };
 
   useEffect(() => {
     void load();
@@ -200,12 +211,12 @@ export default function AdminDesigns() {
 
       <AdminDialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={(o) => (o ? setOpen(true) : requestCloseDesignDialog())}
         size="lg"
         title={editing ? "Upraviť dizajn" : "Nový zaslaný dizajn"}
         footer={
           <>
-            <Button variant="outline" onClick={() => setOpen(false)}>Zrušiť</Button>
+            <Button variant="outline" onClick={requestCloseDesignDialog}>Zrušiť</Button>
             <Button onClick={save}>{editing ? "Uložiť" : "Pridať"}</Button>
           </>
         }

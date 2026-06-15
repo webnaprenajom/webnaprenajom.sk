@@ -60,6 +60,29 @@ Lead → Klient (customer/:key) → Rental website → payment_records → cost_
 - Každá tabuľka: search + filter + sort + pagination
 - Customer hub = jedna stránka, kompletný obraz klienta
 
+### Dialógy (AdminDialog)
+
+- Všetky admin modály idú cez `AdminDialog` (`src/components/admin/AdminDialog.tsx`), nikdy raw `Dialog`.
+- Size tiers: `sm` (max-w-md) jednoduché quick-create formuláre · `md` (default, max-w-lg) krátke formuláre · `lg` (max-w-2xl) bežné edit formuláre · `xl` (max-w-4xl) detail modály s viac sekciami (napr. lead detail) · `2xl` (max-w-5xl) modály s tabuľkami/prehľadmi (napr. implementer/realizátor provízie).
+- Žiadny horizontálny scroll na desktope v primárnych edit/detail modáloch — ak obsah preteká, zväčši size tier, nepridávaj `overflow-x-auto` na celý modál (výnimka: vnútorné tabuľky s veľa kolónami môžu mať vlastný `overflow-x-auto` wrapper).
+- Dlhé formuláre používajú `stickyFooter` (akčné tlačidlá vždy viditeľné).
+
+### Unsaved-changes guard
+
+- Každý editovateľný dialóg (formulár so save/cancel) MUSÍ použiť `useUnsavedChangesGuard` (`src/hooks/useUnsavedChangesGuard.ts`).
+- Pattern: `const xGuard = useUnsavedChangesGuard({ isOpen, current: form })` → `requestCloseXDialog = () => { if (!xGuard.confirmDiscard()) return; setOpen(false); }` → wire do `onOpenChange` (cancel/ESC/overlay) aj do tlačidla "Zrušiť".
+- Save-success cesty zatvárajú dialóg priamo (`setOpen(false)`), bez guardu — guard chráni len cancel/close cesty.
+- Read-only dialógy (bez formulárového stavu) guard nepotrebujú.
+
+### Row-list štandard
+
+- Zoznamy entít (projekty, heslá, hosting, klienti...) používajú table/row pattern (`Table`/`TableHeader`/`TableBody`/`TableRow` v `rounded-xl border overflow-x-auto` wrapperi), nie card-grid.
+- Akcie (edit/delete/detail linky) v poslednom `TableCell`, badge-y pre stav.
+
+### Cross-module konzistencia
+
+- Pri zmene vzoru (dialóg, tabuľka, guard) aplikuj rovnaký vzor na všetky analogické moduly v jednom changesete — nie postupne medzi sessions.
+
 ## HARD CONSTRAINTS (nikdy neporušiť)
 
 - NIKDY neupravuj deploynuté migrácie

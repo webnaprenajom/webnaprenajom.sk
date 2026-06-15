@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import { toast } from "@/hooks/use-toast";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { Loader2, Plus } from "lucide-react";
 import {
   type CommissionRule,
@@ -38,6 +39,16 @@ export function FinanceCommissionRulesPanel({ rules, overrides, onSaved }: Props
     override_rate: "30",
     reason: "",
   });
+
+  const overrideFormGuard = useUnsavedChangesGuard({
+    isOpen: dialogOpen,
+    current: form,
+  });
+
+  const requestCloseOverrideDialog = () => {
+    if (!overrideFormGuard.confirmDiscard()) return;
+    setDialogOpen(false);
+  };
 
   const preview = resolveCommissionRate({
     revenueStreamKind: form.revenue_stream_kind,
@@ -146,12 +157,12 @@ export function FinanceCommissionRulesPanel({ rules, overrides, onSaved }: Props
 
       <AdminDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(o) => (o ? setDialogOpen(true) : requestCloseOverrideDialog())}
         size="md"
         title="Nový commission override"
         footer={
           <>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
+            <Button variant="outline" onClick={requestCloseOverrideDialog}>Zrušiť</Button>
             <Button onClick={() => void saveOverride()} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>
