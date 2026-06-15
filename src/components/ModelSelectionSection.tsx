@@ -88,7 +88,9 @@ const packages = [
   },
 ] as const;
 
-type BillingMode = "rental" | "oneoff";
+type BillingMode = "rental" | "annual" | "oneoff";
+
+const ANNUAL_DISCOUNT = 0.1;
 
 // ── Capabilities carousel ──
 const capabilities = [
