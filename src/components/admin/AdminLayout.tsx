@@ -34,6 +34,8 @@ export function AdminLayout({
   hidePageHeader = false,
 }: AdminLayoutProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const canGoBack = location.pathname !== "/admin" && location.pathname !== "/admin/";
   const { authChecking, isCrmUser, isAdmin, userEmail, userId } = useAdminAccess();
 
   useEffect(() => {
