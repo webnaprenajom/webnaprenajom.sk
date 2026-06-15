@@ -202,7 +202,7 @@ const ProposeSolutionDialog = ({ pkg, mode, open, onOpenChange }: { pkg: Selecte
     if (extra.demo) extras.push("ukážka");
     if (extra.consultation) extras.push("konzultácia");
 
-    const annualMonthly = Math.round(pkg.price * (1 - ANNUAL_DISCOUNT) * 100) / 100;
+    const annualMonthly = Math.round(pkg.price * (1 - ANNUAL_DISCOUNT));
     const annualTotal = Math.round(pkg.price * 12 * (1 - ANNUAL_DISCOUNT));
     const priceLine = mode === "rental"
       ? `${pkg.price} € / mes`
@@ -280,7 +280,7 @@ ${data.message || "—"}`;
                   {mode === "oneoff"
                     ? pkg.oneOffPrice
                     : mode === "annual"
-                      ? (Math.round(pkg.price * (1 - ANNUAL_DISCOUNT) * 100) / 100)
+                      ? Math.round(pkg.price * (1 - ANNUAL_DISCOUNT))
                       : pkg.price} €
                 </p>
                 <p className="text-[10px] text-muted-foreground">
@@ -716,12 +716,12 @@ const ModelSelectionSection = () => {
 
         <div className="space-y-5 mb-16">
           {packages.map((p, i) => {
-            const annualMonthly = p.price * (1 - ANNUAL_DISCOUNT);
+            const annualMonthly = Math.round(p.price * (1 - ANNUAL_DISCOUNT));
             const annualTotal = Math.round(p.price * 12 * (1 - ANNUAL_DISCOUNT));
             const displayPrice = isOneOff
               ? p.oneOffPrice
               : isAnnual
-                ? (annualMonthly % 1 === 0 ? annualMonthly.toFixed(0) : annualMonthly.toFixed(2))
+                ? annualMonthly
                 : p.price;
             const priceSuffix = isOneOff
               ? "jednorazovo, bez DPH"

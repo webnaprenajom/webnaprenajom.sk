@@ -55,8 +55,11 @@ const emptyForm = () => ({
   lead_id: null as string | null,
   provider: "",
   domains_count: "",
-  monthly_price: "",
   yearly_price: "",
+  period_from: "",
+  period_to: "",
+  payment_status: "unpaid" as "paid" | "unpaid",
+  payment_note: "",
   acquired_by: "",
   commissionable: false,
   note: "",
@@ -129,8 +132,11 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
           customer_id: linked.customer_id,
           provider: form.provider.trim() || null,
           domains_count: form.domains_count ? Number(form.domains_count) : null,
-          monthly_price: form.monthly_price ? Number(form.monthly_price) : null,
           yearly_price: form.yearly_price ? Number(form.yearly_price) : null,
+          period_from: form.period_from || null,
+          period_to: form.period_to || null,
+          payment_status: form.payment_status,
+          payment_note: form.payment_note.trim() || null,
           acquired_by: form.acquired_by.trim() || null,
           commissionable: form.commissionable,
           note: form.note.trim() || null,
@@ -215,8 +221,9 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
               <TableRow>
                 <TableHead>Klient</TableHead>
                 <TableHead>Poskytovateľ</TableHead>
-                <TableHead className="text-right">Mesiac</TableHead>
-                <TableHead className="text-right">Rok</TableHead>
+                <TableHead className="text-right">Rok €</TableHead>
+                <TableHead>Obdobie</TableHead>
+                <TableHead>Úhrada</TableHead>
                 <TableHead>Provízny</TableHead>
                 <TableHead>Stav</TableHead>
                 <TableHead>Platba</TableHead>
@@ -248,8 +255,17 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                       )}
                     </TableCell>
                     <TableCell className="text-xs">{r.provider ?? "—"}</TableCell>
-                    <TableCell className="text-right">{r.monthly_price != null ? `${r.monthly_price} €` : "—"}</TableCell>
-                    <TableCell className="text-right">{(r as HostingRecordRow & { yearly_price?: number | null }).yearly_price != null ? `${(r as HostingRecordRow & { yearly_price?: number | null }).yearly_price} €` : "—"}</TableCell>
+                    <TableCell className="text-right">{(r as any).yearly_price != null ? `${(r as any).yearly_price} €` : "—"}</TableCell>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {(r as any).period_from || (r as any).period_to
+                        ? `${(r as any).period_from ? new Date((r as any).period_from).toLocaleDateString("sk-SK") : "—"} – ${(r as any).period_to ? new Date((r as any).period_to).toLocaleDateString("sk-SK") : "—"}`
+                        : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={(r as any).payment_status === "paid" ? "default" : "outline"} className={`text-[10px] ${(r as any).payment_status === "paid" ? "bg-emerald-500/15 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/15" : "bg-orange-500/10 text-orange-700 border-orange-500/30"}`}>
+                        {(r as any).payment_status === "paid" ? "Zaplatené" : "Nezaplatené"}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                       <Badge variant={r.commissionable ? "default" : "outline"} className="text-[10px]">
                         {r.commissionable ? "áno" : "nie"}
@@ -324,8 +340,32 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
             </Field>
             <Field label="Poskytovateľ"><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} /></Field>
             <Field label="Počet domén"><Input type="number" value={form.domains_count} onChange={(e) => setForm({ ...form, domains_count: e.target.value })} /></Field>
-            <Field label="Mesačná cena €"><Input type="number" step="0.01" value={form.monthly_price} onChange={(e) => setForm({ ...form, monthly_price: e.target.value })} /></Field>
-            <Field label="Ročná cena €"><Input type="number" step="0.01" value={form.yearly_price} onChange={(e) => setForm({ ...form, yearly_price: e.target.value })} /></Field>
+            <Field label="Ročná cena €"><Input type="number" step="1" value={form.yearly_price} onChange={(e) => setForm({ ...form, yearly_price: e.target.value })} /></Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Obdobie od"><Input type="date" value={form.period_from} onChange={(e) => setForm({ ...form, period_from: e.target.value })} /></Field>
+              <Field label="Obdobie do"><Input type="date" value={form.period_to} onChange={(e) => setForm({ ...form, period_to: e.target.value })} /></Field>
+            </div>
+            <Field label="Stav úhrady">
+              <div className="flex gap-2">
+                {(["paid", "unpaid"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setForm({ ...form, payment_status: s })}
+                    className={`flex-1 px-3 py-2 rounded-md border text-sm font-medium transition ${
+                      form.payment_status === s
+                        ? s === "paid"
+                          ? "border-emerald-500 bg-emerald-500/10 text-emerald-700"
+                          : "border-orange-500 bg-orange-500/10 text-orange-700"
+                        : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    {s === "paid" ? "Zaplatené" : "Nezaplatené / Má zaplatiť"}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            <Field label="Poznámka k platbe"><Input value={form.payment_note} onChange={(e) => setForm({ ...form, payment_note: e.target.value })} /></Field>
             <Field label="Získal"><Input value={form.acquired_by} onChange={(e) => setForm({ ...form, acquired_by: e.target.value })} /></Field>
             <Field label="Poznámka"><Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
             <label className="flex items-center gap-2 text-sm">

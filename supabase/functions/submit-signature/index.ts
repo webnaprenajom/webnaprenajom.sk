@@ -13,7 +13,7 @@ function isValidEmail(e: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 255;
 }
 
-const PLANS = new Set(["rental", "oneoff"]);
+const PLANS = new Set(["rental", "annual", "oneoff"]);
 const PACKAGES = new Set(["start", "biznis", "pro", "custom"]);
 
 Deno.serve(async (req) => {
