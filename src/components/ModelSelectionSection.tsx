@@ -642,6 +642,8 @@ const ModelSelectionSection = () => {
   const openConsult = (p: SelectedPkg) => { setConsultPkg(p); setConsultOpen(true); };
 
   const isRental = mode === "rental";
+  const isAnnual = mode === "annual";
+  const isOneOff = mode === "oneoff";
 
   return (
     <section className="relative py-24 overflow-hidden">
@@ -657,50 +659,58 @@ const ModelSelectionSection = () => {
               Tri balíky. Jeden cieľ — <span className="text-gradient">váš rast</span>.
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl">
-              Vyberte si formu spolupráce — mesačný prenájom bez vstupných nákladov, alebo jednorazové dodanie s vlastníctvom kódu.
+              Vyberte si formu spolupráce — mesačný prenájom, ročný prenájom so zľavou 10 %, alebo jednorazové dodanie s vlastníctvom kódu.
             </p>
           </div>
         </AnimatedSection>
 
-        {/* Billing mode toggle */}
+        {/* Billing mode toggle — 3 options */}
         <div className="flex justify-center mb-10">
-          <div className="inline-flex items-center p-1 rounded-full border border-border bg-card/60 backdrop-blur-sm relative">
-            <button
-              onClick={() => setMode("rental")}
-              className={`relative z-10 px-5 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${
-                isRental ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Mesačný prenájom
-              <span className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
-                isRental ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/20 text-primary"
-              }`}>
-                0 € vstup
-              </span>
-            </button>
-            <button
-              onClick={() => setMode("oneoff")}
-              className={`relative z-10 px-5 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${
-                !isRental ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Jednorazové riešenie
-            </button>
-            <motion.span
-              layout
-              transition={{ type: "spring", stiffness: 400, damping: 32 }}
-              className="absolute top-1 bottom-1 rounded-full bg-gradient-to-r from-primary to-primary/80 shadow-lg"
-              style={{
-                left: isRental ? 4 : "50%",
-                right: isRental ? "50%" : 4,
-              }}
-            />
+          <div className="inline-flex items-center p-1 rounded-full border border-border bg-card/60 backdrop-blur-sm relative flex-wrap">
+            {([
+              { id: "rental" as const, label: "Mesačný prenájom", badge: "0 € vstup" },
+              { id: "annual" as const, label: "Ročný prenájom", badge: "−10 %" },
+              { id: "oneoff" as const, label: "Jednorazové riešenie", badge: null },
+            ]).map((opt) => {
+              const active = mode === opt.id;
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => setMode(opt.id)}
+                  className={`relative z-10 px-4 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-colors ${
+                    active
+                      ? "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {opt.label}
+                  {opt.badge && (
+                    <span className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold ${
+                      active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/15 text-primary"
+                    }`}>
+                      {opt.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div className="space-y-5 mb-16">
           {packages.map((p, i) => {
-            const displayPrice = isRental ? p.price : p.oneOffPrice;
+            const annualMonthly = p.price * (1 - ANNUAL_DISCOUNT);
+            const annualTotal = Math.round(p.price * 12 * (1 - ANNUAL_DISCOUNT));
+            const displayPrice = isOneOff
+              ? p.oneOffPrice
+              : isAnnual
+                ? (annualMonthly % 1 === 0 ? annualMonthly.toFixed(0) : annualMonthly.toFixed(2))
+                : p.price;
+            const priceSuffix = isOneOff
+              ? "jednorazovo, bez DPH"
+              : isAnnual
+                ? "/ mesiac (pri ročnej platbe)"
+                : "/ mesiac, bez DPH";
             return (
               <motion.div
                 key={p.id}
