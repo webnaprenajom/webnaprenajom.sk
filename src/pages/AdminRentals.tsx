@@ -503,6 +503,8 @@ export default function AdminRentals() {
         return "bg-green-500/20 border-green-500/50 text-green-500 hover:bg-green-500/30";
       case "unpaid":
         return "bg-red-500/20 border-red-500/50 text-red-500 hover:bg-red-500/30";
+      case "overdue":
+        return "bg-purple-600/25 border-purple-600/60 text-purple-200 hover:bg-purple-600/40";
       default:
         return "bg-muted/30 border-border text-muted-foreground hover:bg-muted/60";
     }
@@ -512,6 +514,7 @@ export default function AdminRentals() {
     if (st === "invoice") return <FileText className="w-4 h-4" />;
     if (st === "paid") return <Check className="w-4 h-4" />;
     if (st === "unpaid") return <X className="w-4 h-4" />;
+    if (st === "overdue") return <AlertTriangle className="w-4 h-4" />;
     return <span className="text-xs">{month}</span>;
   };
 
