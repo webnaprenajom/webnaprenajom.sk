@@ -276,8 +276,16 @@ ${data.message || "—"}`;
                 <p className="font-bold">{pkg.title}</p>
               </div>
               <div className="text-right">
-                <p className="text-xl font-bold text-gradient">{mode === "rental" ? pkg.price : pkg.oneOffPrice} €</p>
-                <p className="text-[10px] text-muted-foreground">{mode === "rental" ? "/ mes" : "jednorazovo"}</p>
+                <p className="text-xl font-bold text-gradient">
+                  {mode === "oneoff"
+                    ? pkg.oneOffPrice
+                    : mode === "annual"
+                      ? (Math.round(pkg.price * (1 - ANNUAL_DISCOUNT) * 100) / 100)
+                      : pkg.price} €
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  {mode === "oneoff" ? "jednorazovo" : mode === "annual" ? "/ mes (ročne)" : "/ mes"}
+                </p>
               </div>
             </div>
 
