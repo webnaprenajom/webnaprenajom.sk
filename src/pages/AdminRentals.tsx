@@ -14,13 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import { toast } from "@/hooks/use-toast";
 import {
   Loader2,
@@ -765,20 +759,30 @@ export default function AdminRentals() {
       </div>
       )}
 
-      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing?.id ? "Upraviť web" : "Pridať web"}</DialogTitle>
-          </DialogHeader>
+      <AdminDialog
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        size="2xl"
+        stickyFooter
+        title={editing?.id ? "Upraviť web" : "Pridať web"}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setEditing(null)}>Zrušiť</Button>
+            <Button onClick={saveWebsite}>Uložiť</Button>
+          </>
+        }
+      >
           {editing && (
             <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium">Názov webu *</label>
-                <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">URL</label>
-                <Input value={editing.url ?? ""} onChange={(e) => setEditing({ ...editing, url: e.target.value })} placeholder="https://..." />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Názov webu *</label>
+                  <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">URL</label>
+                  <Input value={editing.url ?? ""} onChange={(e) => setEditing({ ...editing, url: e.target.value })} placeholder="https://..." />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -834,7 +838,7 @@ export default function AdminRentals() {
               </div>
               <div>
                 <label className="text-sm font-medium">Poznámka</label>
-                <Textarea value={editing.note ?? ""} onChange={(e) => setEditing({ ...editing, note: e.target.value })} />
+                <Textarea rows={4} value={editing.note ?? ""} onChange={(e) => setEditing({ ...editing, note: e.target.value })} />
               </div>
 
               {/* Implementers / commissions */}
@@ -916,21 +920,25 @@ export default function AdminRentals() {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Zrušiť</Button>
-            <Button onClick={saveWebsite}>Uložiť</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </AdminDialog>
 
       {/* Per-month custom prices */}
-      <Dialog open={!!pricesOpen} onOpenChange={(o) => !o && setPricesOpen(null)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              Vlastné ceny po mesiacoch — {pricesOpen?.name} ({year})
-            </DialogTitle>
-          </DialogHeader>
+      <AdminDialog
+        open={!!pricesOpen}
+        onOpenChange={(o) => !o && setPricesOpen(null)}
+        size="lg"
+        title={
+          <>
+            Vlastné ceny po mesiacoch — {pricesOpen?.name} ({year})
+          </>
+        }
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPricesOpen(null)}>Zrušiť</Button>
+            <Button onClick={savePrices}>Uložiť ceny</Button>
+          </>
+        }
+      >
           <p className="text-xs text-muted-foreground -mt-2">
             Nechaj prázdne pre fixnú cenu {pricesOpen?.monthly_price}€. Zadaná hodnota prepíše cenu len pre daný mesiac.
           </p>
@@ -950,12 +958,7 @@ export default function AdminRentals() {
               </div>
             ))}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPricesOpen(null)}>Zrušiť</Button>
-            <Button onClick={savePrices}>Uložiť ceny</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </AdminDialog>
 
       <FactConfirmDialog
         open={paymentFactOpen}
