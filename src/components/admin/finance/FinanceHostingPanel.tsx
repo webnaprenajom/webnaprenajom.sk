@@ -249,6 +249,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                     </TableCell>
                     <TableCell className="text-xs">{r.provider ?? "—"}</TableCell>
                     <TableCell className="text-right">{r.monthly_price != null ? `${r.monthly_price} €` : "—"}</TableCell>
+                    <TableCell className="text-right">{(r as HostingRecordRow & { yearly_price?: number | null }).yearly_price != null ? `${(r as HostingRecordRow & { yearly_price?: number | null }).yearly_price} €` : "—"}</TableCell>
                     <TableCell>
                       <Badge variant={r.commissionable ? "default" : "outline"} className="text-[10px]">
                         {r.commissionable ? "áno" : "nie"}
