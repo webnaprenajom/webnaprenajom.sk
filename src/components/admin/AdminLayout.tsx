@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -15,7 +15,7 @@ import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
-import { Loader2, LogOut, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut, ShieldAlert } from "lucide-react";
 
 export interface AdminLayoutProps {
   title?: string;
