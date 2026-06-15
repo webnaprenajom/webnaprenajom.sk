@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action_type: string
+          actor_user_id: string | null
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string
+          id: string
+          summary: string | null
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          action_type: string
+          actor_user_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          id?: string
+          summary?: string | null
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          action_type?: string
+          actor_user_id?: string | null
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string
+          id?: string
+          summary?: string | null
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: []
+      }
       commission_rule_overrides: {
         Row: {
           active: boolean
@@ -338,6 +374,44 @@ export type Database = {
           },
         ]
       }
+      customer_communication_summaries: {
+        Row: {
+          customer_id: string
+          key_decisions: Json
+          last_event_at: string | null
+          next_steps: Json
+          rolling_summary: string | null
+          unresolved_topics: Json
+          updated_at: string
+        }
+        Insert: {
+          customer_id: string
+          key_decisions?: Json
+          last_event_at?: string | null
+          next_steps?: Json
+          rolling_summary?: string | null
+          unresolved_topics?: Json
+          updated_at?: string
+        }
+        Update: {
+          customer_id?: string
+          key_decisions?: Json
+          last_event_at?: string | null
+          next_steps?: Json
+          rolling_summary?: string | null
+          unresolved_topics?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_communication_summaries_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
@@ -556,6 +630,7 @@ export type Database = {
           id: string
           monthly_price: number | null
           note: string | null
+          operating_cost: number
           provider: string | null
           rental_website_id: string | null
           updated_at: string
@@ -574,6 +649,7 @@ export type Database = {
           id?: string
           monthly_price?: number | null
           note?: string | null
+          operating_cost?: number
           provider?: string | null
           rental_website_id?: string | null
           updated_at?: string
@@ -592,6 +668,7 @@ export type Database = {
           id?: string
           monthly_price?: number | null
           note?: string | null
+          operating_cost?: number
           provider?: string | null
           rental_website_id?: string | null
           updated_at?: string
@@ -966,6 +1043,7 @@ export type Database = {
       }
       project_notes: {
         Row: {
+          access_credentials: Json
           client_name: string | null
           created_at: string
           customer_email: string | null
@@ -973,6 +1051,7 @@ export type Database = {
           id: string
           lead_id: string | null
           notes: string | null
+          operating_cost: number
           password: string | null
           project_type: string | null
           status: string
@@ -982,6 +1061,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          access_credentials?: Json
           client_name?: string | null
           created_at?: string
           customer_email?: string | null
@@ -989,6 +1069,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           notes?: string | null
+          operating_cost?: number
           password?: string | null
           project_type?: string | null
           status?: string
@@ -998,6 +1079,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          access_credentials?: Json
           client_name?: string | null
           created_at?: string
           customer_email?: string | null
@@ -1005,6 +1087,7 @@ export type Database = {
           id?: string
           lead_id?: string | null
           notes?: string | null
+          operating_cost?: number
           password?: string | null
           project_type?: string | null
           status?: string
@@ -1078,6 +1161,7 @@ export type Database = {
           client_name: string | null
           created_at: string
           credits_used: number
+          customer_email: string | null
           customer_id: string | null
           id: string
           implementers: Json
@@ -1094,6 +1178,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
+          customer_email?: string | null
           customer_id?: string | null
           id?: string
           implementers?: Json
@@ -1110,6 +1195,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
+          customer_email?: string | null
           customer_id?: string | null
           id?: string
           implementers?: Json
@@ -1191,6 +1277,72 @@ export type Database = {
           },
         ]
       }
+      team_profiles: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_name: string
+          implementer_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_name: string
+          implementer_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_name?: string
+          implementer_name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_email_accounts: {
+        Row: {
+          config: Json
+          created_at: string
+          email_address: string
+          id: string
+          last_error: string | null
+          last_sync_at: string | null
+          provider: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          email_address: string
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          email_address?: string
+          id?: string
+          last_error?: string | null
+          last_sync_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1268,7 +1420,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_list_auth_users: {
+        Args: never
+        Returns: {
+          auth_display_name: string
+          created_at: string
+          email: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "user"
