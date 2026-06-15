@@ -13,13 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
@@ -295,47 +289,49 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nový hosting</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Field label="Klient">
-              <ClientPicker
-                clientName={form.client_name}
-                customerEmail={form.customer_email}
-                customerId={form.customer_id}
-                leadId={form.lead_id}
-                onChange={({ client_name, customer_email, customer_id, lead_id }) =>
-                  setForm({
-                    ...form,
-                    client_name,
-                    customer_email: customer_email || "",
-                    customer_id,
-                    lead_id,
-                  })
-                }
-              />
-            </Field>
-            <Field label="Poskytovateľ"><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} /></Field>
-            <Field label="Počet domén"><Input type="number" value={form.domains_count} onChange={(e) => setForm({ ...form, domains_count: e.target.value })} /></Field>
-            <Field label="Mesačná cena €"><Input type="number" step="0.01" value={form.monthly_price} onChange={(e) => setForm({ ...form, monthly_price: e.target.value })} /></Field>
-            <Field label="Získal"><Input value={form.acquired_by} onChange={(e) => setForm({ ...form, acquired_by: e.target.value })} /></Field>
-            <Field label="Poznámka"><Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={form.commissionable} onCheckedChange={(v) => setForm({ ...form, commissionable: !!v })} />
-              Provízny (vyžaduje review)
-            </label>
-          </div>
-          <DialogFooter>
+      <AdminDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        size="lg"
+        title="Nový hosting"
+        footer={
+          <>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
             <Button onClick={() => void save()} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <Field label="Klient">
+            <ClientPicker
+              clientName={form.client_name}
+              customerEmail={form.customer_email}
+              customerId={form.customer_id}
+              leadId={form.lead_id}
+              onChange={({ client_name, customer_email, customer_id, lead_id }) =>
+                setForm({
+                  ...form,
+                  client_name,
+                  customer_email: customer_email || "",
+                  customer_id,
+                  lead_id,
+                })
+              }
+            />
+          </Field>
+          <Field label="Poskytovateľ"><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} /></Field>
+          <Field label="Počet domén"><Input type="number" value={form.domains_count} onChange={(e) => setForm({ ...form, domains_count: e.target.value })} /></Field>
+          <Field label="Mesačná cena €"><Input type="number" step="0.01" value={form.monthly_price} onChange={(e) => setForm({ ...form, monthly_price: e.target.value })} /></Field>
+          <Field label="Získal"><Input value={form.acquired_by} onChange={(e) => setForm({ ...form, acquired_by: e.target.value })} /></Field>
+          <Field label="Poznámka"><Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox checked={form.commissionable} onCheckedChange={(v) => setForm({ ...form, commissionable: !!v })} />
+            Provízny (vyžaduje review)
+          </label>
+        </div>
+      </AdminDialog>
 
       <FactConfirmDialog
         open={paymentOpen}

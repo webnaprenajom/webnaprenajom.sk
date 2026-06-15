@@ -11,13 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus } from "lucide-react";
 import {
@@ -150,47 +144,49 @@ export function FinanceCommissionRulesPanel({ rules, overrides, onSaved }: Props
         )}
       </section>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Nový commission override</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <Field label="Client name">
-              <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
-            </Field>
-            <Field label="Customer email">
-              <Input value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} />
-            </Field>
-            <Field label="Revenue stream">
-              <select
-                className="w-full h-9 rounded-md border px-3 text-sm"
-                value={form.revenue_stream_kind}
-                onChange={(e) => setForm({ ...form, revenue_stream_kind: e.target.value as RevenueStreamKind })}
-              >
-                {Object.entries(REVENUE_STREAM_LABELS).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Override rate %">
-              <Input type="number" value={form.override_rate} onChange={(e) => setForm({ ...form, override_rate: e.target.value })} />
-            </Field>
-            <Field label="Dôvod">
-              <Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
-            </Field>
-            <p className="text-xs text-muted-foreground">
-              Preview effective rate: {preview.rate}% ({preview.source})
-            </p>
-          </div>
-          <DialogFooter>
+      <AdminDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        size="md"
+        title="Nový commission override"
+        footer={
+          <>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
             <Button onClick={() => void saveOverride()} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <Field label="Client name">
+            <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
+          </Field>
+          <Field label="Customer email">
+            <Input value={form.customer_email} onChange={(e) => setForm({ ...form, customer_email: e.target.value })} />
+          </Field>
+          <Field label="Revenue stream">
+            <select
+              className="w-full h-9 rounded-md border px-3 text-sm"
+              value={form.revenue_stream_kind}
+              onChange={(e) => setForm({ ...form, revenue_stream_kind: e.target.value as RevenueStreamKind })}
+            >
+              {Object.entries(REVENUE_STREAM_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{v}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Override rate %">
+            <Input type="number" value={form.override_rate} onChange={(e) => setForm({ ...form, override_rate: e.target.value })} />
+          </Field>
+          <Field label="Dôvod">
+            <Input value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
+          </Field>
+          <p className="text-xs text-muted-foreground">
+            Preview effective rate: {preview.rate}% ({preview.source})
+          </p>
+        </div>
+      </AdminDialog>
     </div>
   );
 }

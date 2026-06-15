@@ -4,13 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import {
   Select,
   SelectContent,
@@ -299,47 +293,13 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
 
   return (
     <>
-      <Dialog open={openKind === "task"} onOpenChange={(o) => !o && resetAndClose()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nová úloha</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <CustomerContextHint ctx={ctx} />
-            <Input
-              placeholder="Názov úlohy"
-              value={taskTitle}
-              onChange={(e) => setTaskTitle(e.target.value)}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Termín</Label>
-                <Input
-                  type="date"
-                  value={taskDueDate}
-                  onChange={(e) => setTaskDueDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Priorita</Label>
-                <Select
-                  value={taskPriority}
-                  onValueChange={(v) => setTaskPriority(v as typeof taskPriority)}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Nízka</SelectItem>
-                    <SelectItem value="normal">Normálna</SelectItem>
-                    <SelectItem value="high">Vysoká</SelectItem>
-                    <SelectItem value="urgent">Urgentné</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
+      <AdminDialog
+        open={openKind === "task"}
+        onOpenChange={(o) => !o && resetAndClose()}
+        size="sm"
+        title="Nová úloha"
+        footer={
+          <>
             <Button variant="outline" onClick={resetAndClose}>
               Zrušiť
             </Button>
@@ -347,24 +307,53 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
               Vytvoriť
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={openKind === "project"} onOpenChange={(o) => !o && resetAndClose()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nový projekt</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <CustomerContextHint ctx={ctx} />
-            <Input
-              placeholder="Názov projektu"
-              value={projectTitle}
-              onChange={(e) => setProjectTitle(e.target.value)}
-            />
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <CustomerContextHint ctx={ctx} />
+          <Input
+            placeholder="Názov úlohy"
+            value={taskTitle}
+            onChange={(e) => setTaskTitle(e.target.value)}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Termín</Label>
+              <Input
+                type="date"
+                value={taskDueDate}
+                onChange={(e) => setTaskDueDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Priorita</Label>
+              <Select
+                value={taskPriority}
+                onValueChange={(v) => setTaskPriority(v as typeof taskPriority)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Nízka</SelectItem>
+                  <SelectItem value="normal">Normálna</SelectItem>
+                  <SelectItem value="high">Vysoká</SelectItem>
+                  <SelectItem value="urgent">Urgentné</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <DialogFooter>
+        </div>
+      </AdminDialog>
+
+      <AdminDialog
+        open={openKind === "project"}
+        onOpenChange={(o) => !o && resetAndClose()}
+        size="sm"
+        title="Nový projekt"
+        footer={
+          <>
             <Button variant="outline" onClick={resetAndClose}>
               Zrušiť
             </Button>
@@ -372,34 +361,26 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
               Vytvoriť
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <CustomerContextHint ctx={ctx} />
+          <Input
+            placeholder="Názov projektu"
+            value={projectTitle}
+            onChange={(e) => setProjectTitle(e.target.value)}
+          />
+        </div>
+      </AdminDialog>
 
-      <Dialog open={openKind === "rental"} onOpenChange={(o) => !o && resetAndClose()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nový prenájom webu</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <CustomerContextHint ctx={ctx} />
-            <Input
-              placeholder="Názov webu"
-              value={rentalName}
-              onChange={(e) => setRentalName(e.target.value)}
-            />
-            <Input
-              placeholder="URL (voliteľné)"
-              value={rentalUrl}
-              onChange={(e) => setRentalUrl(e.target.value)}
-            />
-            <Input
-              placeholder="Mesačná cena (€)"
-              value={rentalMonthlyPrice}
-              onChange={(e) => setRentalMonthlyPrice(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
+      <AdminDialog
+        open={openKind === "rental"}
+        onOpenChange={(o) => !o && resetAndClose()}
+        size="sm"
+        title="Nový prenájom webu"
+        footer={
+          <>
             <Button variant="outline" onClick={resetAndClose}>
               Zrušiť
             </Button>
@@ -407,24 +388,36 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
               Vytvoriť
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <CustomerContextHint ctx={ctx} />
+          <Input
+            placeholder="Názov webu"
+            value={rentalName}
+            onChange={(e) => setRentalName(e.target.value)}
+          />
+          <Input
+            placeholder="URL (voliteľné)"
+            value={rentalUrl}
+            onChange={(e) => setRentalUrl(e.target.value)}
+          />
+          <Input
+            placeholder="Mesačná cena (€)"
+            value={rentalMonthlyPrice}
+            onChange={(e) => setRentalMonthlyPrice(e.target.value)}
+          />
+        </div>
+      </AdminDialog>
 
-      <Dialog open={openKind === "hosting"} onOpenChange={(o) => !o && resetAndClose()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nový hosting</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <CustomerContextHint ctx={ctx} />
-            <Input
-              placeholder="Poskytovateľ / doména"
-              value={hostingProvider}
-              onChange={(e) => setHostingProvider(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
+      <AdminDialog
+        open={openKind === "hosting"}
+        onOpenChange={(o) => !o && resetAndClose()}
+        size="sm"
+        title="Nový hosting"
+        footer={
+          <>
             <Button variant="outline" onClick={resetAndClose}>
               Zrušiť
             </Button>
@@ -432,48 +425,26 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
               Vytvoriť
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <CustomerContextHint ctx={ctx} />
+          <Input
+            placeholder="Poskytovateľ / doména"
+            value={hostingProvider}
+            onChange={(e) => setHostingProvider(e.target.value)}
+          />
+        </div>
+      </AdminDialog>
 
-      <Dialog open={openKind === "commission"} onOpenChange={(o) => !o && resetAndClose()}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Nová provízia</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <CustomerContextHint ctx={ctx} />
-            <Input
-              placeholder="Názov / popis"
-              value={commissionTitle}
-              onChange={(e) => setCommissionTitle(e.target.value)}
-            />
-            <Input
-              placeholder="Suma (€)"
-              value={commissionAmount}
-              onChange={(e) => setCommissionAmount(e.target.value)}
-            />
-            <div className="space-y-1">
-              <Label className="text-xs">Realizátor *</Label>
-              <Select
-                value={commissionImplementer || "__none__"}
-                onValueChange={(v) => setCommissionImplementer(v === "__none__" ? "" : v)}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="— vyber —" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">— vyber —</SelectItem>
-                  {assigneeSelectOptions(commissionImplementer).map((name) => (
-                    <SelectItem key={name} value={name}>
-                      {name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
+      <AdminDialog
+        open={openKind === "commission"}
+        onOpenChange={(o) => !o && resetAndClose()}
+        size="sm"
+        title="Nová provízia"
+        footer={
+          <>
             <Button variant="outline" onClick={resetAndClose}>
               Zrušiť
             </Button>
@@ -481,9 +452,42 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
               {saving && <Loader2 className="w-4 h-4 animate-spin mr-1.5" />}
               Pridať
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <CustomerContextHint ctx={ctx} />
+          <Input
+            placeholder="Názov / popis"
+            value={commissionTitle}
+            onChange={(e) => setCommissionTitle(e.target.value)}
+          />
+          <Input
+            placeholder="Suma (€)"
+            value={commissionAmount}
+            onChange={(e) => setCommissionAmount(e.target.value)}
+          />
+          <div className="space-y-1">
+            <Label className="text-xs">Realizátor *</Label>
+            <Select
+              value={commissionImplementer || "__none__"}
+              onValueChange={(v) => setCommissionImplementer(v === "__none__" ? "" : v)}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="— vyber —" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">— vyber —</SelectItem>
+                {assigneeSelectOptions(commissionImplementer).map((name) => (
+                  <SelectItem key={name} value={name}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </AdminDialog>
     </>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -197,48 +198,52 @@ export default function AdminDesigns() {
         )}
       </Card>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{editing ? "Upraviť dizajn" : "Nový zaslaný dizajn"}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Meno klienta *</Label>
-              <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Email</Label>
-                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-              </div>
-              <div>
-                <Label>Dátum zaslania</Label>
-                <Input type="date" value={form.sent_date} onChange={(e) => setForm({ ...form, sent_date: e.target.value })} />
-              </div>
-            </div>
-            <div>
-              <Label>URL dizajnu</Label>
-              <Input value={form.design_url} onChange={(e) => setForm({ ...form, design_url: e.target.value })} placeholder="https://..." />
-            </div>
-            <div>
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map((s) => <SelectItem key={s.v} value={s.v}>{s.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Poznámka</Label>
-              <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-            </div>
-          </div>
-          <DialogFooter>
+      <AdminDialog
+        open={open}
+        onOpenChange={setOpen}
+        size="lg"
+        title={editing ? "Upraviť dizajn" : "Nový zaslaný dizajn"}
+        footer={
+          <>
             <Button variant="outline" onClick={() => setOpen(false)}>Zrušiť</Button>
             <Button onClick={save}>{editing ? "Uložiť" : "Pridať"}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div>
+            <Label>Meno klienta *</Label>
+            <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Email</Label>
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div>
+              <Label>Dátum zaslania</Label>
+              <Input type="date" value={form.sent_date} onChange={(e) => setForm({ ...form, sent_date: e.target.value })} />
+            </div>
+          </div>
+          <div>
+            <Label>URL dizajnu</Label>
+            <Input value={form.design_url} onChange={(e) => setForm({ ...form, design_url: e.target.value })} placeholder="https://..." />
+          </div>
+          <div>
+            <Label>Status</Label>
+            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {STATUSES.map((s) => <SelectItem key={s.v} value={s.v}>{s.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Poznámka</Label>
+            <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+          </div>
+        </div>
+      </AdminDialog>
 
       <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <DialogContent>
