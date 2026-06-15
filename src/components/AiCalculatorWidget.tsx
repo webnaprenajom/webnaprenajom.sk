@@ -256,17 +256,22 @@ const AiCalculatorWidget = ({
         {step === 0 && (
           <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
             <h4 className="font-semibold mb-3">Aký typ webu potrebuješ?</h4>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {websiteTypes.map((t) => (
-                <button key={t.id} onClick={() => { setWebsiteType(t.id); setTimeout(() => setStep(1), 180); }}
-                  className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${websiteType === t.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}>
-                  <t.icon className="w-5 h-5 text-primary flex-shrink-0" />
-                  <div>
-                    <div className="text-sm font-semibold">{t.title}</div>
-                    <div className="text-xs text-muted-foreground">{t.desc}</div>
-                  </div>
-                </button>
-              ))}
+            <div className="grid sm:grid-cols-2 gap-2.5">
+              {websiteTypes.map((t) => {
+                const active = websiteType === t.id;
+                return (
+                  <button key={t.id} onClick={() => { setWebsiteType(t.id); setTimeout(() => setStep(1), 180); }}
+                    className={`group relative flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all overflow-hidden ${active ? "border-primary bg-primary/10 shadow-[0_6px_24px_-12px_hsl(var(--primary)/0.6)]" : "border-border/70 bg-card hover:border-primary/50 hover:shadow-[0_6px_24px_-16px_hsl(var(--primary)/0.45)]"}`}>
+                    <span className={`relative flex items-center justify-center w-11 h-11 rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-105 ${active ? "bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/30" : "bg-gradient-to-br from-primary/90 to-accent/90 shadow-md shadow-primary/20"}`}>
+                      <t.icon className="w-5 h-5 text-white" strokeWidth={2.2} />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">{t.title}</div>
+                      <div className="text-xs text-muted-foreground">{t.desc}</div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </motion.div>
         )}
