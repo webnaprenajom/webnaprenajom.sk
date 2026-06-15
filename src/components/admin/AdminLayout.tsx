@@ -110,6 +110,15 @@ export function AdminLayout({
         <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/95 backdrop-blur px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1 min-w-0" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            title="Obnoviť stránku"
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
           <NotificationBell />
           <AdminThemeToggle />
         </header>
