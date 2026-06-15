@@ -5,6 +5,7 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { EntityCommissionsPanel } from "@/components/admin/EntityCommissionsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
