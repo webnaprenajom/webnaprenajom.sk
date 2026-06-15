@@ -130,6 +130,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
           provider: form.provider.trim() || null,
           domains_count: form.domains_count ? Number(form.domains_count) : null,
           monthly_price: form.monthly_price ? Number(form.monthly_price) : null,
+          yearly_price: form.yearly_price ? Number(form.yearly_price) : null,
           acquired_by: form.acquired_by.trim() || null,
           commissionable: form.commissionable,
           note: form.note.trim() || null,
