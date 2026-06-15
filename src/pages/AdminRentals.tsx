@@ -396,6 +396,39 @@ export default function AdminRentals() {
     } else {
       await loadAll();
     }
+
+    if (next === "overdue") {
+      const recipient = (website.customer_email || "").trim();
+      if (!recipient) {
+        toast({
+          title: "Stav nastavený na omeškaná platba",
+          description: "E-mail klientovi nebol odoslaný — chýba kontaktný e-mail pri webe.",
+          variant: "destructive",
+        });
+      } else {
+        try {
+          const { error: emailError } = await supabase.functions.invoke("send-overdue-email", {
+            body: {
+              email: recipient,
+              client_name: website.client_name || "",
+              website_name: website.name,
+              website_url: website.url || "",
+              month,
+              year,
+              amount: monthPrice(website, month),
+            },
+          });
+          if (emailError) throw emailError;
+          toast({
+            title: "Omeškaná platba",
+            description: `Klientovi (${recipient}) bol odoslaný e-mail o deaktivácii.`,
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Neznáma chyba";
+          toast({ title: "E-mail nebol odoslaný", description: msg, variant: "destructive" });
+        }
+      }
+    }
   };
 
   const openPrices = (w: RentalWebsite) => {
