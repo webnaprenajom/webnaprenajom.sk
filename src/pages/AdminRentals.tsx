@@ -41,6 +41,7 @@ import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog"
 import { type FactDraft, prefillFromRentalPayment } from "@/lib/finance/factDrafts";
 import { ImplementerCommissionDetailDialog } from "@/components/admin/rentals/ImplementerCommissionDetailDialog";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 
 interface Implementer {
   name: string;
@@ -115,6 +116,31 @@ const emptyWebsite = (): RentalWebsite => ({
   implementers: [],
 });
 
+// ponytail: Phase 1 PoC unsaved-changes guard — normalizes null/"" and number
+// coercion drift so dirty-check matches what the form inputs actually do.
+const normalizeWebsiteForCompare = (w: RentalWebsite | null) => {
+  if (!w) return null;
+  return {
+    name: w.name ?? "",
+    url: w.url ?? "",
+    client_name: w.client_name ?? "",
+    customer_id: w.customer_id ?? null,
+    customer_email: w.customer_email ?? "",
+    source: w.source ?? "",
+    monthly_price: Number(w.monthly_price) || 0,
+    year: Number(w.year) || 0,
+    note: w.note ?? "",
+    rental_start_date: w.rental_start_date ?? "",
+    credits_used: Number(w.credits_used) || 0,
+    implementers: (w.implementers || []).map((i) => ({
+      name: i.name ?? "",
+      percentage: Number(i.percentage) || 0,
+      payment_form: i.payment_form ?? "",
+      note: i.note ?? "",
+    })),
+  };
+};
+
 const ASSIGNEES = ["Peter", "Maroš", "Matuš"];
 
 const normalizeImplementers = (raw: unknown): Implementer[] => {
@@ -162,6 +188,18 @@ export default function AdminRentals() {
   const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({
     onSuccess: () => void loadAll(),
   });
+
+  // ponytail: Phase 1 PoC — unsaved-changes guard for the "Pridať/Upraviť web" modal.
+  const websiteGuard = useUnsavedChangesGuard({
+    isOpen: !!editing,
+    current: editing,
+    normalize: normalizeWebsiteForCompare,
+  });
+
+  const requestCloseWebsiteDialog = () => {
+    if (!websiteGuard.confirmDiscard()) return;
+    setEditing(null);
+  };
 
   useEffect(() => {
     void loadAll().finally(() => setLoading(false));
@@ -761,13 +799,13 @@ export default function AdminRentals() {
 
       <AdminDialog
         open={!!editing}
-        onOpenChange={(o) => !o && setEditing(null)}
+        onOpenChange={(o) => !o && requestCloseWebsiteDialog()}
         size="2xl"
         stickyFooter
         title={editing?.id ? "Upraviť web" : "Pridať web"}
         footer={
           <>
-            <Button variant="outline" onClick={() => setEditing(null)}>Zrušiť</Button>
+            <Button variant="outline" onClick={requestCloseWebsiteDialog}>Zrušiť</Button>
             <Button onClick={saveWebsite}>Uložiť</Button>
           </>
         }

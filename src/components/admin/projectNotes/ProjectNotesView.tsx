@@ -52,6 +52,7 @@ import {
   credentialsForSave,
   resolveProjectCredentials,
 } from "@/lib/projectCredentials";
+import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 
 const VIEW_CONFIG: Record<
   ProjectNotesViewMode,
@@ -71,6 +72,33 @@ const VIEW_CONFIG: Record<
   },
 };
 
+// ponytail: Phase 1 PoC unsaved-changes guard — normalizes null/"" fallbacks
+// and excludes credential `id` (UI-only key) so dirty-check matches the form.
+const normalizeProjectNoteForCompare = (state: {
+  editing: Partial<ProjectNote> | null;
+  editCredentials: AccessCredential[];
+}) => {
+  const e = state.editing;
+  if (!e) return null;
+  return {
+    title: e.title ?? "",
+    client_name: e.client_name ?? "",
+    customer_email: e.customer_email ?? "",
+    customer_id: e.customer_id ?? null,
+    lead_id: e.lead_id ?? null,
+    project_type: e.project_type || "wordpress",
+    status: e.status || "in_progress",
+    notes: e.notes ?? "",
+    credentials: state.editCredentials.map((c) => ({
+      label: c.label ?? "",
+      url: c.url ?? "",
+      login: c.login ?? "",
+      password: c.password ?? "",
+      note: c.note ?? "",
+    })),
+  };
+};
+
 export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   const cfg = VIEW_CONFIG[mode];
   const [items, setItems] = useState<ProjectNote[]>([]);
@@ -81,6 +109,18 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<string>("all");
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
+
+  // ponytail: Phase 1 PoC — unsaved-changes guard for the EditDialog.
+  const noteGuard = useUnsavedChangesGuard({
+    isOpen: open,
+    current: { editing, editCredentials },
+    normalize: normalizeProjectNoteForCompare,
+  });
+
+  const requestCloseEditDialog = () => {
+    if (!noteGuard.confirmDiscard()) return;
+    setOpen(false);
+  };
 
   useEffect(() => {
     document.title = cfg.docTitle;
@@ -403,7 +443,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
 
       <EditDialog
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={(o) => (o ? setOpen(true) : requestCloseEditDialog())}
         editing={editing}
         setEditing={setEditing}
         editCredentials={editCredentials}
