@@ -10,431 +10,42 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
-      admin_audit_log: {
-        Row: {
-          action_type: string
-          actor_user_id: string | null
-          after_state: Json | null
-          before_state: Json | null
-          created_at: string
-          id: string
-          summary: string | null
-          target_id: string | null
-          target_type: string
-        }
-        Insert: {
-          action_type: string
-          actor_user_id?: string | null
-          after_state?: Json | null
-          before_state?: Json | null
-          created_at?: string
-          id?: string
-          summary?: string | null
-          target_id?: string | null
-          target_type: string
-        }
-        Update: {
-          action_type?: string
-          actor_user_id?: string | null
-          after_state?: Json | null
-          before_state?: Json | null
-          created_at?: string
-          id?: string
-          summary?: string | null
-          target_id?: string | null
-          target_type?: string
-        }
-        Relationships: []
-      }
-      commission_rule_overrides: {
-        Row: {
-          active: boolean
-          client_name: string | null
-          created_at: string
-          customer_email: string | null
-          id: string
-          override_rate: number
-          reason: string | null
-          rental_website_id: string | null
-          revenue_stream_kind: string | null
-          rule_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          client_name?: string | null
-          created_at?: string
-          customer_email?: string | null
-          id?: string
-          override_rate: number
-          reason?: string | null
-          rental_website_id?: string | null
-          revenue_stream_kind?: string | null
-          rule_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          client_name?: string | null
-          created_at?: string
-          customer_email?: string | null
-          id?: string
-          override_rate?: number
-          reason?: string | null
-          rental_website_id?: string | null
-          revenue_stream_kind?: string | null
-          rule_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "commission_rule_overrides_rental_website_id_fkey"
-            columns: ["rental_website_id"]
-            isOneToOne: false
-            referencedRelation: "rental_websites"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commission_rule_overrides_rule_id_fkey"
-            columns: ["rule_id"]
-            isOneToOne: false
-            referencedRelation: "commission_rules"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      commission_rules: {
-        Row: {
-          active: boolean
-          created_at: string
-          default_rate: number
-          id: string
-          implementer: string | null
-          name: string
-          note: string | null
-          revenue_stream_kind: string
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          default_rate?: number
-          id?: string
-          implementer?: string | null
-          name: string
-          note?: string | null
-          revenue_stream_kind: string
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          default_rate?: number
-          id?: string
-          implementer?: string | null
-          name?: string
-          note?: string | null
-          revenue_stream_kind?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       commissions: {
         Row: {
           amount: number
           created_at: string
-          customer_email: string | null
-          customer_id: string | null
           date: string
           id: string
           implementer: string
           note: string | null
-          payment_form: string | null
           payment_status: string
-          source_id: string | null
-          source_type: string | null
           title: string
           updated_at: string
         }
         Insert: {
           amount?: number
           created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
           date?: string
           id?: string
           implementer: string
           note?: string | null
-          payment_form?: string | null
           payment_status?: string
-          source_id?: string | null
-          source_type?: string | null
           title: string
           updated_at?: string
         }
         Update: {
           amount?: number
           created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
           date?: string
           id?: string
           implementer?: string
           note?: string | null
-          payment_form?: string | null
           payment_status?: string
-          source_id?: string | null
-          source_type?: string | null
           title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "commissions_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      communication_events: {
-        Row: {
-          body_preview: string | null
-          created_at: string
-          customer_email: string | null
-          customer_id: string | null
-          id: string
-          in_reply_to: string | null
-          kind: string
-          message_id: string | null
-          metadata: Json
-          occurred_at: string
-          recipient_email: string | null
-          sender_email: string | null
-          source_id: string | null
-          source_table: string | null
-          thread_id: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          body_preview?: string | null
-          created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
-          id?: string
-          in_reply_to?: string | null
-          kind: string
-          message_id?: string | null
-          metadata?: Json
-          occurred_at?: string
-          recipient_email?: string | null
-          sender_email?: string | null
-          source_id?: string | null
-          source_table?: string | null
-          thread_id?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          body_preview?: string | null
-          created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
-          id?: string
-          in_reply_to?: string | null
-          kind?: string
-          message_id?: string | null
-          metadata?: Json
-          occurred_at?: string
-          recipient_email?: string | null
-          sender_email?: string | null
-          source_id?: string | null
-          source_table?: string | null
-          thread_id?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "communication_events_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      communication_webhook_incidents: {
-        Row: {
-          created_at: string
-          customer_email: string | null
-          id: string
-          incident_type: string
-          metadata: Json
-          occurred_at: string
-          provider_email_id: string | null
-          sender_email: string | null
-          summary: string
-        }
-        Insert: {
-          created_at?: string
-          customer_email?: string | null
-          id?: string
-          incident_type: string
-          metadata?: Json
-          occurred_at?: string
-          provider_email_id?: string | null
-          sender_email?: string | null
-          summary: string
-        }
-        Update: {
-          created_at?: string
-          customer_email?: string | null
-          id?: string
-          incident_type?: string
-          metadata?: Json
-          occurred_at?: string
-          provider_email_id?: string | null
-          sender_email?: string | null
-          summary?: string
-        }
-        Relationships: []
-      }
-      cost_records: {
-        Row: {
-          amount: number
-          category: string | null
-          client_name: string | null
-          created_at: string
-          currency: string
-          id: string
-          imported_from: string | null
-          incurred_at: string | null
-          note: string | null
-          paid_at: string | null
-          reference: string | null
-          rental_website_id: string | null
-          source_id: string | null
-          source_table: string | null
-          truth_level: string
-          updated_at: string
-          vendor: string | null
-        }
-        Insert: {
-          amount?: number
-          category?: string | null
-          client_name?: string | null
-          created_at?: string
-          currency?: string
-          id?: string
-          imported_from?: string | null
-          incurred_at?: string | null
-          note?: string | null
-          paid_at?: string | null
-          reference?: string | null
-          rental_website_id?: string | null
-          source_id?: string | null
-          source_table?: string | null
-          truth_level?: string
-          updated_at?: string
-          vendor?: string | null
-        }
-        Update: {
-          amount?: number
-          category?: string | null
-          client_name?: string | null
-          created_at?: string
-          currency?: string
-          id?: string
-          imported_from?: string | null
-          incurred_at?: string | null
-          note?: string | null
-          paid_at?: string | null
-          reference?: string | null
-          rental_website_id?: string | null
-          source_id?: string | null
-          source_table?: string | null
-          truth_level?: string
-          updated_at?: string
-          vendor?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cost_records_rental_website_id_fkey"
-            columns: ["rental_website_id"]
-            isOneToOne: false
-            referencedRelation: "rental_websites"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      customer_communication_summaries: {
-        Row: {
-          customer_id: string
-          key_decisions: Json
-          last_event_at: string | null
-          next_steps: Json
-          rolling_summary: string | null
-          unresolved_topics: Json
-          updated_at: string
-        }
-        Insert: {
-          customer_id: string
-          key_decisions?: Json
-          last_event_at?: string | null
-          next_steps?: Json
-          rolling_summary?: string | null
-          unresolved_topics?: Json
-          updated_at?: string
-        }
-        Update: {
-          customer_id?: string
-          key_decisions?: Json
-          last_event_at?: string | null
-          next_steps?: Json
-          rolling_summary?: string | null
-          unresolved_topics?: Json
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "customer_communication_summaries_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: true
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      customers: {
-        Row: {
-          created_at: string
-          display_name: string
-          email: string | null
-          id: string
-          metadata: Json
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_name: string
-          email?: string | null
-          id?: string
-          metadata?: Json
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string
-          email?: string | null
-          id?: string
-          metadata?: Json
           updated_at?: string
         }
         Relationships: []
@@ -511,193 +122,6 @@ export type Database = {
         }
         Relationships: []
       }
-      finance_issue_dismissals: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          dismissal_type: string
-          id: string
-          issue_key: string
-          issue_type: string
-          reason: string | null
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          dismissal_type?: string
-          id?: string
-          issue_key: string
-          issue_type: string
-          reason?: string | null
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          dismissal_type?: string
-          id?: string
-          issue_key?: string
-          issue_type?: string
-          reason?: string | null
-        }
-        Relationships: []
-      }
-      finance_policy_settings: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_active_default: boolean
-          label: string
-          policy_key: string
-          policy_value: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active_default?: boolean
-          label: string
-          policy_key: string
-          policy_value: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active_default?: boolean
-          label?: string
-          policy_key?: string
-          policy_value?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      finance_review_items: {
-        Row: {
-          created_at: string
-          id: string
-          item_key: string
-          item_type: string
-          review_cadence_days: number
-          review_due_at: string | null
-          review_note: string | null
-          reviewed_at: string | null
-          snoozed_until: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          item_key: string
-          item_type: string
-          review_cadence_days?: number
-          review_due_at?: string | null
-          review_note?: string | null
-          reviewed_at?: string | null
-          snoozed_until?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          item_key?: string
-          item_type?: string
-          review_cadence_days?: number
-          review_due_at?: string | null
-          review_note?: string | null
-          reviewed_at?: string | null
-          snoozed_until?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      hosting_records: {
-        Row: {
-          acquired_by: string | null
-          active: boolean
-          client_name: string | null
-          commission_rule_override_id: string | null
-          commissionable: boolean
-          created_at: string
-          customer_email: string | null
-          customer_id: string | null
-          domains_count: number | null
-          id: string
-          monthly_price: number | null
-          note: string | null
-          operating_cost: number
-          provider: string | null
-          rental_website_id: string | null
-          updated_at: string
-          yearly_price: number | null
-        }
-        Insert: {
-          acquired_by?: string | null
-          active?: boolean
-          client_name?: string | null
-          commission_rule_override_id?: string | null
-          commissionable?: boolean
-          created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
-          domains_count?: number | null
-          id?: string
-          monthly_price?: number | null
-          note?: string | null
-          operating_cost?: number
-          provider?: string | null
-          rental_website_id?: string | null
-          updated_at?: string
-          yearly_price?: number | null
-        }
-        Update: {
-          acquired_by?: string | null
-          active?: boolean
-          client_name?: string | null
-          commission_rule_override_id?: string | null
-          commissionable?: boolean
-          created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
-          domains_count?: number | null
-          id?: string
-          monthly_price?: number | null
-          note?: string | null
-          operating_cost?: number
-          provider?: string | null
-          rental_website_id?: string | null
-          updated_at?: string
-          yearly_price?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "hosting_records_commission_rule_override_id_fkey"
-            columns: ["commission_rule_override_id"]
-            isOneToOne: false
-            referencedRelation: "commission_rule_overrides"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "hosting_records_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "hosting_records_rental_website_id_fkey"
-            columns: ["rental_website_id"]
-            isOneToOne: false
-            referencedRelation: "rental_websites"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       lead_logs: {
         Row: {
           action: string
@@ -747,7 +171,6 @@ export type Database = {
           consultation_date: string | null
           consultation_time: string | null
           created_at: string
-          customer_id: string | null
           email: string
           follow_up_date: string | null
           id: string
@@ -771,7 +194,6 @@ export type Database = {
           consultation_date?: string | null
           consultation_time?: string | null
           created_at?: string
-          customer_id?: string | null
           email: string
           follow_up_date?: string | null
           id?: string
@@ -795,7 +217,6 @@ export type Database = {
           consultation_date?: string | null
           consultation_time?: string | null
           created_at?: string
-          customer_id?: string | null
           email?: string
           follow_up_date?: string | null
           id?: string
@@ -813,15 +234,7 @@ export type Database = {
           type?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "leads_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -928,132 +341,13 @@ export type Database = {
         }
         Relationships: []
       }
-      payment_records: {
-        Row: {
-          amount: number
-          client_name: string | null
-          created_at: string
-          currency: string
-          customer_email: string | null
-          id: string
-          imported_from: string | null
-          method: string | null
-          note: string | null
-          paid_at: string
-          reference: string | null
-          rental_website_id: string | null
-          source_id: string | null
-          source_table: string | null
-          truth_level: string
-          updated_at: string
-        }
-        Insert: {
-          amount?: number
-          client_name?: string | null
-          created_at?: string
-          currency?: string
-          customer_email?: string | null
-          id?: string
-          imported_from?: string | null
-          method?: string | null
-          note?: string | null
-          paid_at: string
-          reference?: string | null
-          rental_website_id?: string | null
-          source_id?: string | null
-          source_table?: string | null
-          truth_level?: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          client_name?: string | null
-          created_at?: string
-          currency?: string
-          customer_email?: string | null
-          id?: string
-          imported_from?: string | null
-          method?: string | null
-          note?: string | null
-          paid_at?: string
-          reference?: string | null
-          rental_website_id?: string | null
-          source_id?: string | null
-          source_table?: string | null
-          truth_level?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payment_records_rental_website_id_fkey"
-            columns: ["rental_website_id"]
-            isOneToOne: false
-            referencedRelation: "rental_websites"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payout_records: {
-        Row: {
-          amount: number
-          created_at: string
-          currency: string
-          id: string
-          implementer: string | null
-          imported_from: string | null
-          note: string | null
-          paid_at: string
-          reference: string | null
-          source_id: string | null
-          source_table: string | null
-          truth_level: string
-          updated_at: string
-        }
-        Insert: {
-          amount?: number
-          created_at?: string
-          currency?: string
-          id?: string
-          implementer?: string | null
-          imported_from?: string | null
-          note?: string | null
-          paid_at: string
-          reference?: string | null
-          source_id?: string | null
-          source_table?: string | null
-          truth_level?: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          currency?: string
-          id?: string
-          implementer?: string | null
-          imported_from?: string | null
-          note?: string | null
-          paid_at?: string
-          reference?: string | null
-          source_id?: string | null
-          source_table?: string | null
-          truth_level?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       project_notes: {
         Row: {
-          access_credentials: Json
           client_name: string | null
           created_at: string
-          customer_email: string | null
-          customer_id: string | null
           id: string
-          lead_id: string | null
           notes: string | null
-          operating_cost: number
           password: string | null
-          project_type: string | null
           status: string
           title: string
           updated_at: string
@@ -1061,17 +355,11 @@ export type Database = {
           username: string | null
         }
         Insert: {
-          access_credentials?: Json
           client_name?: string | null
           created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
           id?: string
-          lead_id?: string | null
           notes?: string | null
-          operating_cost?: number
           password?: string | null
-          project_type?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -1079,32 +367,18 @@ export type Database = {
           username?: string | null
         }
         Update: {
-          access_credentials?: Json
           client_name?: string | null
           created_at?: string
-          customer_email?: string | null
-          customer_id?: string | null
           id?: string
-          lead_id?: string | null
           notes?: string | null
-          operating_cost?: number
           password?: string | null
-          project_type?: string | null
           status?: string
           title?: string
           updated_at?: string
           url?: string | null
           username?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "project_notes_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       rental_payments: {
         Row: {
@@ -1161,7 +435,6 @@ export type Database = {
           client_name: string | null
           created_at: string
           credits_used: number
-          customer_id: string | null
           id: string
           implementers: Json
           monthly_price: number
@@ -1177,7 +450,6 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
-          customer_id?: string | null
           id?: string
           implementers?: Json
           monthly_price?: number
@@ -1193,7 +465,6 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
-          customer_id?: string | null
           id?: string
           implementers?: Json
           monthly_price?: number
@@ -1205,15 +476,7 @@ export type Database = {
           url?: string | null
           year?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "rental_websites_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       tasks: {
         Row: {
@@ -1221,7 +484,6 @@ export type Database = {
           assignee: string | null
           client_name: string | null
           created_at: string
-          customer_id: string | null
           deposit: number
           description: string | null
           due_date: string | null
@@ -1237,7 +499,6 @@ export type Database = {
           assignee?: string | null
           client_name?: string | null
           created_at?: string
-          customer_id?: string | null
           deposit?: number
           description?: string | null
           due_date?: string | null
@@ -1253,7 +514,6 @@ export type Database = {
           assignee?: string | null
           client_name?: string | null
           created_at?: string
-          customer_id?: string | null
           deposit?: number
           description?: string | null
           due_date?: string | null
@@ -1263,80 +523,6 @@ export type Database = {
           status?: string
           title?: string
           updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      team_profiles: {
-        Row: {
-          active: boolean
-          created_at: string
-          display_name: string
-          implementer_name: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          display_name: string
-          implementer_name: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          display_name?: string
-          implementer_name?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_email_accounts: {
-        Row: {
-          config: Json
-          created_at: string
-          email_address: string
-          id: string
-          last_error: string | null
-          last_sync_at: string | null
-          provider: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          config?: Json
-          created_at?: string
-          email_address: string
-          id?: string
-          last_error?: string | null
-          last_sync_at?: string | null
-          provider?: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          config?: Json
-          created_at?: string
-          email_address?: string
-          id?: string
-          last_error?: string | null
-          last_sync_at?: string | null
-          provider?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -1417,15 +603,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_list_auth_users: {
-        Args: never
-        Returns: {
-          auth_display_name: string
-          created_at: string
-          email: string
-          user_id: string
-        }[]
-      }
+      [_ in never]: never
     }
     Enums: {
       app_role: "admin" | "user"
