@@ -803,7 +803,7 @@ const ModelSelectionSection = () => {
         </div>
 
         {/* Rental advantage callout (only when one-off selected) */}
-        {!isRental && (
+        {isOneOff && (
           <div className="mb-12 rounded-2xl border border-primary/30 bg-primary/5 p-5 text-center text-sm">
             <p className="text-foreground">
               <span className="font-bold text-primary">Tip:</span> Pri mesačnom prenájme začínate na <span className="font-bold">0 € vstupných nákladov</span>, máte v cene všetky úpravy, hosting, SSL aj nové AI funkcie. Vyplatí sa prvé 2 – 3 roky.
