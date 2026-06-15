@@ -19,6 +19,7 @@ import {
   FolderKanban,
   Globe,
   Loader2,
+  RefreshCw,
   Search,
   Server,
   Trash2,
@@ -130,6 +131,18 @@ export default function AdminClients() {
     <AdminShell
       title="Klienti"
       subtitle="Jednotný zoznam klientov naprieč prenájmami, projektmi a hostingom"
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void loadDirectory()}
+          disabled={directoryLoading}
+          title="Obnoviť zoznam"
+        >
+          <RefreshCw className={`w-4 h-4 ${directoryLoading ? "animate-spin" : ""}`} />
+          <span className="ml-2 hidden sm:inline">Obnoviť</span>
+        </Button>
+      }
     >
       <div className="max-w-3xl space-y-6">
         <div className="space-y-2">
@@ -223,7 +236,7 @@ export default function AdminClients() {
             {!directoryLoading && directory.length === 0 && (
               <p className="text-sm text-muted-foreground italic">Zatiaľ žiadni klienti v databáze.</p>
             )}
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
               {directory.map((entry) => (
                 <div
                   key={entry.customerId || entry.email || entry.nameKey || entry.displayName}

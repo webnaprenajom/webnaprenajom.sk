@@ -719,8 +719,8 @@ const ModelSelectionSection = () => {
                 )}
 
                 {/* Package image */}
-                <div className="hidden md:flex items-center justify-center">
-                  <div className="relative w-[200px] h-[200px] rounded-2xl overflow-hidden ring-1 ring-border/60 shadow-[0_10px_30px_-15px_hsl(var(--primary)/0.4)]">
+                <div className="flex items-center justify-center">
+                  <div className="relative w-[160px] h-[160px] md:w-[200px] md:h-[200px] rounded-2xl overflow-hidden ring-1 ring-border/60 shadow-[0_10px_30px_-15px_hsl(var(--primary)/0.4)]">
                     <img
                       src={p.image}
                       alt={`Balík ${p.title}`}
