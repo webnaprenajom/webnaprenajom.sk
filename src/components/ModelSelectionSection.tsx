@@ -716,12 +716,12 @@ const ModelSelectionSection = () => {
 
         <div className="space-y-5 mb-16">
           {packages.map((p, i) => {
-            const annualMonthly = p.price * (1 - ANNUAL_DISCOUNT);
+            const annualMonthly = Math.round(p.price * (1 - ANNUAL_DISCOUNT));
             const annualTotal = Math.round(p.price * 12 * (1 - ANNUAL_DISCOUNT));
             const displayPrice = isOneOff
               ? p.oneOffPrice
               : isAnnual
-                ? (annualMonthly % 1 === 0 ? annualMonthly.toFixed(0) : annualMonthly.toFixed(2))
+                ? annualMonthly
                 : p.price;
             const priceSuffix = isOneOff
               ? "jednorazovo, bez DPH"
