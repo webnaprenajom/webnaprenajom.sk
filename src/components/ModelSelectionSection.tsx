@@ -742,7 +742,7 @@ const ModelSelectionSection = () => {
                 }`}
               >
                 {p.recommended && (
-                  <span className="absolute top-4 right-4 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg">
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-6 z-20 inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg whitespace-nowrap">
                     <Sparkles className="w-3 h-3" /> Najobľúbenejšie
                   </span>
                 )}
