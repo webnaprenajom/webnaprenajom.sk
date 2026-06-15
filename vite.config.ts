@@ -8,7 +8,7 @@ const supabasePublishableKey =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
   process.env.VITE_SUPABASE_ANON_KEY ??
   process.env.SUPABASE_PUBLISHABLE_KEY ??
-  "sb_publishable_tR3lmd0GyPI9xmNEWhuheA_j8Mtylvq";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjdnhhamRrbW5pd2F0ZG9uc2VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNzk3NzUsImV4cCI6MjA4ODY1NTc3NX0.TAo2anXqxmEl1F7jIha3tsjO2SyBUjDcxmQ_FCcp1rA";
 const supabaseProjectId = process.env.VITE_SUPABASE_PROJECT_ID ?? process.env.SUPABASE_PROJECT_ID ?? "hcvxajdkmniwatdonseh";
 
 // https://vitejs.dev/config/
