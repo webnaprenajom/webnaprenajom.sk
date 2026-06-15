@@ -340,8 +340,32 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
             </Field>
             <Field label="Poskytovateľ"><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} /></Field>
             <Field label="Počet domén"><Input type="number" value={form.domains_count} onChange={(e) => setForm({ ...form, domains_count: e.target.value })} /></Field>
-            <Field label="Mesačná cena €"><Input type="number" step="0.01" value={form.monthly_price} onChange={(e) => setForm({ ...form, monthly_price: e.target.value })} /></Field>
-            <Field label="Ročná cena €"><Input type="number" step="0.01" value={form.yearly_price} onChange={(e) => setForm({ ...form, yearly_price: e.target.value })} /></Field>
+            <Field label="Ročná cena €"><Input type="number" step="1" value={form.yearly_price} onChange={(e) => setForm({ ...form, yearly_price: e.target.value })} /></Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Obdobie od"><Input type="date" value={form.period_from} onChange={(e) => setForm({ ...form, period_from: e.target.value })} /></Field>
+              <Field label="Obdobie do"><Input type="date" value={form.period_to} onChange={(e) => setForm({ ...form, period_to: e.target.value })} /></Field>
+            </div>
+            <Field label="Stav úhrady">
+              <div className="flex gap-2">
+                {(["paid", "unpaid"] as const).map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setForm({ ...form, payment_status: s })}
+                    className={`flex-1 px-3 py-2 rounded-md border text-sm font-medium transition ${
+                      form.payment_status === s
+                        ? s === "paid"
+                          ? "border-emerald-500 bg-emerald-500/10 text-emerald-700"
+                          : "border-orange-500 bg-orange-500/10 text-orange-700"
+                        : "border-border hover:border-primary/40"
+                    }`}
+                  >
+                    {s === "paid" ? "Zaplatené" : "Nezaplatené / Má zaplatiť"}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            <Field label="Poznámka k platbe"><Input value={form.payment_note} onChange={(e) => setForm({ ...form, payment_note: e.target.value })} /></Field>
             <Field label="Získal"><Input value={form.acquired_by} onChange={(e) => setForm({ ...form, acquired_by: e.target.value })} /></Field>
             <Field label="Poznámka"><Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
             <label className="flex items-center gap-2 text-sm">
