@@ -36,7 +36,16 @@ export default function AdminHosting() {
         filterHostingForUser((hosting.data || []) as HostingRecordRow[], accessCtx),
       );
     }
-    setPaymentRecords(payments.error ? [] : payments.data || []);
+    if (payments.error) {
+      toast({
+        title: "Chyba načítania platieb",
+        description: payments.error.message,
+        variant: "destructive",
+      });
+      setPaymentRecords([]);
+    } else {
+      setPaymentRecords(payments.data || []);
+    }
     setLoading(false);
   };
 
