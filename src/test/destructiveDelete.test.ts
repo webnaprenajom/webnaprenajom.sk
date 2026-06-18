@@ -254,4 +254,22 @@ describe("blocked delete UX contract", () => {
     expect(impact?.blocking_records.length).toBeGreaterThan(0);
     expect(impact?.cta_links.some((l) => l.path.includes("finance"))).toBe(true);
   });
+
+  it("lead with finance_critical stays deletable (warning only)", () => {
+    const impact = parseImpactSummary({
+      entity_type: "lead",
+      entity_id: "l1",
+      entity_label: "Test",
+      can_delete: true,
+      finance_critical: true,
+      sections: [],
+      lead_impact: { is_risky: true, sections: [] },
+      warnings: ["Prepojený klient má potvrdené finančné fakty."],
+      blocking_records: [],
+      cta_links: [],
+    });
+    expect(impact?.can_delete).toBe(true);
+    expect(impact?.finance_critical).toBe(true);
+    expect(impact?.blocking_records).toEqual([]);
+  });
 });

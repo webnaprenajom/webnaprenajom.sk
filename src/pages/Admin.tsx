@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import LeadBulkBar from "@/components/admin/leads/LeadBulkBar";
 import LeadsToolbar from "@/components/admin/leads/LeadsToolbar";
@@ -54,6 +54,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
+import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import {
   Loader2,
   LogOut,
@@ -140,8 +141,37 @@ const Admin = () => {
   const [editCustomerId, setEditCustomerId] = useState<string | null>(null);
   const [leadCustomerError, setLeadCustomerError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const pendingDeleteLeadId = useRef<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({
+    onSuccess: () => {
+      const id = pendingDeleteLeadId.current;
+      if (!id) return;
+      setLeads((prev) => prev.filter((l) => l.id !== id));
+      setSelectedIds((prev) => {
+        if (!prev.has(id)) return prev;
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      setSelected((cur) => (cur?.id === id ? null : cur));
+      pendingDeleteLeadId.current = null;
+    },
+  });
+
+  const handleRequestDeleteLead = useCallback(
+    (id: string) => {
+      const lead = leads.find((l) => l.id === id);
+      pendingDeleteLeadId.current = id;
+      void requestDelete({
+        entityType: "lead",
+        entityId: id,
+        entityLabel: lead?.name?.trim() || lead?.email?.trim() || undefined,
+      });
+    },
+    [leads, requestDelete],
+  );
 
   // Bulk send offer dialog (emails from selected leads)
   const [bulkOfferOpen, setBulkOfferOpen] = useState(false);
@@ -648,18 +678,6 @@ const Admin = () => {
     setSelectedIds(new Set());
     setBulkDeleteOpen(false);
     toast({ title: `Vymazaných ${ids.length} leadov` });
-  };
-
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    const { error } = await supabase.from("leads").delete().eq("id", deleteId);
-    if (error) {
-      toast({ title: "Vymazanie zlyhalo", description: error.message, variant: "destructive" });
-    } else {
-      setLeads((prev) => prev.filter((l) => l.id !== deleteId));
-      toast({ title: "Lead vymazaný" });
-    }
-    setDeleteId(null);
   };
 
   const handleAddLead = async () => {
@@ -1204,7 +1222,7 @@ const Admin = () => {
           onOpenLead={openLead}
           onSetStatus={setLeadStatus}
           onSetTemperature={setLeadTemperature}
-          onRequestDelete={setDeleteId}
+          onRequestDelete={handleRequestDeleteLead}
         />
       </div>
 
@@ -1439,22 +1457,7 @@ const Admin = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Vymazať lead?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Táto akcia je nevratná. Lead bude trvalo odstránený z databázy.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Zrušiť</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-              Vymazať
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DestructiveModal {...modalProps} />
     </AdminLayout>
   );
 };
