@@ -1221,6 +1221,7 @@ export type Database = {
           client_name: string | null
           created_at: string
           credits_used: number
+          customer_email: string | null
           customer_id: string | null
           id: string
           implementers: Json
@@ -1237,6 +1238,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
+          customer_email?: string | null
           customer_id?: string | null
           id?: string
           implementers?: Json
@@ -1253,6 +1255,7 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
+          customer_email?: string | null
           customer_id?: string | null
           id?: string
           implementers?: Json

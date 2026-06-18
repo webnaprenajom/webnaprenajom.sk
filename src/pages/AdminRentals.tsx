@@ -369,8 +369,8 @@ export default function AdminRentals() {
     };
     const isCreate = !editing.id;
     const res = isCreate
-      ? await (supabase as any).from("rental_websites").insert(payload).select("id").maybeSingle()
-      : await (supabase as any).from("rental_websites").update(payload).eq("id", editing.id!).select("id").maybeSingle();
+      ? await supabase.from("rental_websites").insert(payload).select("id").maybeSingle()
+      : await supabase.from("rental_websites").update(payload).eq("id", editing.id!).select("id").maybeSingle();
     if (res.error) {
       toast({ title: "Chyba", description: res.error.message, variant: "destructive" });
       return;

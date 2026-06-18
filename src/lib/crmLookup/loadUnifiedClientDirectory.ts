@@ -22,8 +22,7 @@ export async function loadUnifiedClientDirectory(
       .limit(limit),
     supabase.from("project_notes").select("customer_id,customer_email,client_name"),
     supabase.from("hosting_records").select("customer_id,customer_email,client_name"),
-    // ponytail: `customer_email` chýba v generovanom `rental_websites` Row — cast dočasne, upgrade = regen types.ts
-    (supabase as any).from("rental_websites").select("client_name,customer_id,customer_email"),
+    supabase.from("rental_websites").select("client_name,customer_id,customer_email"),
     supabase.from("leads").select("id,name,email,customer_id"),
   ]);
 
