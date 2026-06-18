@@ -13,6 +13,7 @@ import {
   type UnifiedClientEntry,
 } from "@/lib/crmLookup/loadUnifiedClientDirectory";
 import { unifiedClientSectionSummary } from "@/lib/crmLookup/unifiedClientDedupe";
+import { toast } from "@/hooks/use-toast";
 import type { LookupResult } from "@/lib/crmLookup/types";
 import {
   AlertCircle,
@@ -72,6 +73,16 @@ export default function AdminClients() {
         supabase.from("leads").select("id, assigned_to, customer_id"),
         supabase.from("rental_websites").select("id, customer_id, implementers"),
       ]);
+      const scopingErrors: string[] = [];
+      if (leadsRes.error) scopingErrors.push(`leads: ${leadsRes.error.message}`);
+      if (rentalsRes.error) scopingErrors.push(`prenájmy: ${rentalsRes.error.message}`);
+      if (scopingErrors.length > 0) {
+        toast({
+          title: "Chyba načítania rozsahu klientov",
+          description: scopingErrors.join("; "),
+          variant: "destructive",
+        });
+      }
       const myLeadCustomerIds = filterLeadsForUser(leadsRes.data || [], accessCtx)
         .map((l) => l.customer_id)
         .filter(Boolean) as string[];

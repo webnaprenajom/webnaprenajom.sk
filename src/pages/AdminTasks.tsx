@@ -160,6 +160,12 @@ const AdminTasks = () => {
           email: l.email,
         })),
       );
+    } else if (leadsRes.error) {
+      toast({
+        title: "Chyba načítania leadov",
+        description: leadsRes.error.message,
+        variant: "destructive",
+      });
     }
     setLoading(false);
   };

@@ -72,6 +72,12 @@ export default function AdminDesigns() {
     if (!leadsRes.error && leadsRes.data) {
       setEmailLeadIdMap(buildEmailLeadIdMap(leadsRes.data));
       setNameLeadIdMap(buildNameLeadIdMap(leadsRes.data));
+    } else if (leadsRes.error) {
+      toast({
+        title: "Chyba načítania leadov",
+        description: leadsRes.error.message,
+        variant: "destructive",
+      });
     }
     setLoading(false);
   };
