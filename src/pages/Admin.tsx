@@ -55,6 +55,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
+import { logAdminAuditEvent } from "@/lib/audit/auditLog";
+import { bulkDeleteLeads, formatBulkLeadDeleteSummary } from "@/lib/destructive/bulkLeadDelete";
 import {
   Loader2,
   LogOut,
@@ -178,6 +180,7 @@ const Admin = () => {
   const [bulkOfferName, setBulkOfferName] = useState("");
   const [bulkOfferSending, setBulkOfferSending] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleteBusy, setBulkDeleteBusy] = useState(false);
 
   const handleBulkOfferSend = async () => {
     const selectedLeads = leads.filter((l) => selectedIds.has(l.id));
@@ -669,15 +672,70 @@ const Admin = () => {
   const bulkDelete = async () => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    const { error } = await supabase.from("leads").delete().in("id", ids);
-    if (error) {
-      toast({ title: "Vymazanie zlyhalo", description: error.message, variant: "destructive" });
+
+    setBulkDeleteBusy(true);
+    const leadLabels = new Map(
+      leads.filter((l) => ids.includes(l.id)).map((l) => [l.id, l.name?.trim() || l.email?.trim() || l.id]),
+    );
+
+    let result;
+    try {
+      result = await bulkDeleteLeads(ids);
+    } catch {
+      setBulkDeleteBusy(false);
+      toast({
+        title: "Hromadné mazanie zlyhalo",
+        description: "Neočakávaná chyba pri mazaní leadov.",
+        variant: "destructive",
+      });
       return;
     }
-    setLeads((prev) => prev.filter((l) => !ids.includes(l.id)));
-    setSelectedIds(new Set());
+
+    setBulkDeleteBusy(false);
     setBulkDeleteOpen(false);
-    toast({ title: `Vymazaných ${ids.length} leadov` });
+
+    const { deleted } = result;
+
+    if (deleted.length > 0) {
+      setLeads((prev) => prev.filter((l) => !deleted.includes(l.id)));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        deleted.forEach((id) => next.delete(id));
+        return next;
+      });
+      setSelected((cur) => (cur && deleted.includes(cur.id) ? null : cur));
+
+      if (userId) {
+        for (const id of deleted) {
+          await logAdminAuditEvent({
+            actorUserId: userId,
+            actionType: "entity_deleted",
+            targetType: "lead",
+            targetId: id,
+            summary: `Zmazaný lead (bulk): ${leadLabels.get(id) ?? id}`,
+          });
+        }
+      }
+    }
+
+    const summary = formatBulkLeadDeleteSummary(result);
+    if (deleted.length === 0) {
+      toast({
+        title: "Žiadny lead nebol zmazaný",
+        description: summary || "Všetky vybrané leady boli preskočené alebo zlyhali.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Hromadné mazanie dokončené",
+        description: summary,
+        ...(result.failed.length > 0 ? { variant: "destructive" as const } : {}),
+      });
+    }
+
+    if (import.meta.env.DEV && (result.skipped.length > 0 || result.failed.length > 0)) {
+      console.info("[bulk-lead-delete]", result);
+    }
   };
 
   const handleAddLead = async () => {
@@ -1440,18 +1498,39 @@ const Admin = () => {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+      <AlertDialog
+        open={bulkDeleteOpen}
+        onOpenChange={(open) => {
+          if (!bulkDeleteBusy) setBulkDeleteOpen(open);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Vymazať {selectedIds.size} leadov?</AlertDialogTitle>
             <AlertDialogDescription>
-              Táto akcia je nevratná. Vybrané leady budú trvalo odstránené z databázy.
+              Pre každý lead sa skontrolujú dopady. Leady s finančným upozornením na prepojenom
+              klientovi budú preskočené; ostatné sa zmazú (úlohy a projekty sa odpoja). Túto akciu
+              nie je možné vrátiť späť.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Zrušiť</AlertDialogCancel>
-            <AlertDialogAction onClick={bulkDelete} className="bg-destructive hover:bg-destructive/90">
-              Vymazať {selectedIds.size}
+            <AlertDialogCancel disabled={bulkDeleteBusy}>Zrušiť</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void bulkDelete();
+              }}
+              disabled={bulkDeleteBusy}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {bulkDeleteBusy ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  Mažem…
+                </>
+              ) : (
+                `Vymazať ${selectedIds.size}`
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
