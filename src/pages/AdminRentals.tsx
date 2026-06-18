@@ -257,7 +257,7 @@ export default function AdminRentals() {
   const loadAll = async () => {
     const [w, p, leadsRes, commRes] = await Promise.all([
       supabase.from("rental_websites").select("*").order("created_at", { ascending: false }),
-      (supabase as any).from("rental_payments").select("*"),
+      supabase.from("rental_payments").select("*"),
       supabase.from("leads").select("name,email"),
       supabase.from("commissions").select("id,title,date,amount,payment_status,note,payment_form,implementer,source_type,source_id,customer_email"),
     ]);
@@ -396,19 +396,19 @@ export default function AdminRentals() {
     const expenseTitle = `AI kredity — ${editing.name} (${editing.year})`;
     const expenseNote = `rental_credits:${recordId || editing.name}:${editing.year}`;
     if (credits > 0 && recordId) {
-      const { data: existingExp } = await (supabase as any)
+      const { data: existingExp } = await supabase
         .from("expenses")
         .select("id")
         .eq("note", expenseNote)
         .maybeSingle();
       if (existingExp?.id) {
-        await (supabase as any).from("expenses").update({
+        await supabase.from("expenses").update({
           amount: expenseAmount,
           title: expenseTitle,
           category: "AI kredity",
         }).eq("id", existingExp.id);
       } else {
-        await (supabase as any).from("expenses").insert({
+        await supabase.from("expenses").insert({
           title: expenseTitle,
           amount: expenseAmount,
           category: "AI kredity",
@@ -442,7 +442,7 @@ export default function AdminRentals() {
     const price = monthPrice(website, month);
 
     if (existing) {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("rental_payments")
         .update({
           status: next,
@@ -456,7 +456,7 @@ export default function AdminRentals() {
         return;
       }
     } else {
-      const { error } = await (supabase as any).from("rental_payments").insert({
+      const { error } = await supabase.from("rental_payments").insert({
         website_id: website.id,
         year,
         month,
@@ -473,7 +473,7 @@ export default function AdminRentals() {
 
     if (next === "paid") {
       await loadAll();
-      const { data: paymentRow } = await (supabase as any)
+      const { data: paymentRow } = await supabase
         .from("rental_payments")
         .select("*")
         .eq("website_id", website.id)
@@ -528,7 +528,7 @@ export default function AdminRentals() {
       const key = `${w.id}-${year}-${m}`;
       const existing = paymentMap.get(key);
       if (existing) {
-        await (supabase as any)
+        await supabase
           .from("rental_payments")
           .update({
             custom_price: value,
@@ -537,7 +537,7 @@ export default function AdminRentals() {
           })
           .eq("id", existing.id);
       } else if (value != null) {
-        await (supabase as any).from("rental_payments").insert({
+        await supabase.from("rental_payments").insert({
           website_id: w.id,
           year,
           month: m,

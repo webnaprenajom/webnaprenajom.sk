@@ -59,7 +59,7 @@ const TodayMustDoSection = ({ refreshKey, onLeadClick }: Props) => {
         .in("status", ["send_offer", "reminder"])
         .order("created_at", { ascending: true })
         .limit(50),
-      (supabase as any)
+      supabase
         .from("leads")
         .select("id,name,email,phone,status,created_at,source,follow_up_date")
         .not("follow_up_date", "is", null)
@@ -67,7 +67,7 @@ const TodayMustDoSection = ({ refreshKey, onLeadClick }: Props) => {
         .not("status", "in", "(won,lost)")
         .order("follow_up_date", { ascending: true })
         .limit(50),
-      (supabase as any)
+      supabase
         .from("tasks")
         .select("id,title,client_name,due_date,status,priority")
         .neq("status", "done")

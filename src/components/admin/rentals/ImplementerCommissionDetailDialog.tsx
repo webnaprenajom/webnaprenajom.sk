@@ -162,7 +162,7 @@ export function ImplementerCommissionDetailDialog({
     if (!w) return;
     const next = [...(w.implementers || [])];
     next[impIndex] = { ...next[impIndex], ...patch };
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from("rental_websites")
       .update({ implementers: next })
       .eq("id", websiteId);

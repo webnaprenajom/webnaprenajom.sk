@@ -86,7 +86,7 @@ export default function AdminHostingDetail() {
         .eq("source_id", id)
         .order("paid_at", { ascending: false }),
       row.rental_website_id
-        ? (supabase as any)
+        ? supabase
             .from("rental_websites")
             .select("id,name,url")
             .eq("id", row.rental_website_id)

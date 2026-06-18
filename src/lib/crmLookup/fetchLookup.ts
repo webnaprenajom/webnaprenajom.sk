@@ -176,7 +176,7 @@ async function searchProjects(q: string, limit: number): Promise<LookupFetchResu
 }
 
 async function searchRentals(q: string, limit: number): Promise<LookupFetchResult> {
-  let req = (supabase as any)
+  let req = supabase
     .from("rental_websites")
     .select("id,name,url,client_name")
     .order("created_at", { ascending: false })

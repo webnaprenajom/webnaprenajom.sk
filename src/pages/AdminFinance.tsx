@@ -89,7 +89,7 @@ const AdminFinance = () => {
       supabase.from("commissions").select("*").order("date", { ascending: false }),
       supabase.from("expenses").select("*").order("date", { ascending: false }),
       supabase.from("rental_websites").select("*"),
-      (supabase as any).from("rental_payments").select("*"),
+      supabase.from("rental_payments").select("*"),
       supabase.from("payment_records").select("*").order("paid_at", { ascending: false }),
       supabase.from("payout_records").select("*").order("paid_at", { ascending: false }),
       supabase.from("cost_records").select("*").order("paid_at", { ascending: false }),

@@ -86,11 +86,11 @@ export default function AdminProjectDetail() {
     }
     if (clientName) {
       tasks.push(
-        (supabase as any)
+        supabase
           .from("rental_websites")
           .select("id,name,url,monthly_price,client_name,created_at")
           .ilike("client_name", clientName)
-          .then(({ data: r }: any) => setRelatedRentals(r || [])),
+          .then(({ data: r }) => setRelatedRentals(r || [])),
       );
     }
 
