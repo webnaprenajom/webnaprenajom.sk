@@ -6,21 +6,21 @@ import {
   canWriteCommissions,
 } from "@/lib/rbac/writePermissions";
 
-const admin = { role: "admin" as const, userId: "a1", implementerName: null };
-const user = { role: "user" as const, userId: "u1", implementerName: "Peter" };
+const owner = { role: "owner" as const, userId: "a1", implementerName: null };
+const administrator = { role: "administrator" as const, userId: "u1", implementerName: "Peter" };
 
 describe("rc6.6 write permissions", () => {
-  it("denies user all mutation helpers", () => {
-    expect(canWriteCommissions(user)).toBe(false);
-    expect(canEditOperatingCosts(user)).toBe(false);
-    expect(canManageUserRoles(user)).toBe(false);
-    expect(canToggleCommissionPaymentStatus(user, "Peter")).toBe(false);
+  it("denies administrator all mutation helpers", () => {
+    expect(canWriteCommissions(administrator)).toBe(false);
+    expect(canEditOperatingCosts(administrator)).toBe(false);
+    expect(canManageUserRoles(administrator)).toBe(false);
+    expect(canToggleCommissionPaymentStatus(administrator, "Peter")).toBe(false);
   });
 
-  it("allows admin mutations", () => {
-    expect(canWriteCommissions(admin)).toBe(true);
-    expect(canEditOperatingCosts(admin)).toBe(true);
-    expect(canManageUserRoles(admin)).toBe(true);
-    expect(canToggleCommissionPaymentStatus(admin, "Peter")).toBe(true);
+  it("allows owner mutations", () => {
+    expect(canWriteCommissions(owner)).toBe(true);
+    expect(canEditOperatingCosts(owner)).toBe(true);
+    expect(canManageUserRoles(owner)).toBe(true);
+    expect(canToggleCommissionPaymentStatus(owner, "Peter")).toBe(true);
   });
 });

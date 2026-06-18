@@ -5,16 +5,23 @@ import { FinanceHostingPanel } from "@/components/admin/finance/FinanceHostingPa
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAccessContext } from "@/hooks/useAccessContext";
+import { filterHostingForUser } from "@/lib/rbac/scopeHelpers";
 
 export default function AdminHosting() {
   const [loading, setLoading] = useState(true);
   const [hostingRecords, setHostingRecords] = useState<HostingRecordRow[]>([]);
   const [paymentRecords, setPaymentRecords] = useState<any[]>([]);
+  const accessCtx = useAccessContext();
 
   useEffect(() => {
     document.title = "Hosting | CRM";
-    void load();
   }, []);
+
+  useEffect(() => {
+    if (accessCtx.authChecking) return;
+    void load();
+  }, [accessCtx.authChecking, accessCtx.role]);
 
   const load = async () => {
     setLoading(true);
@@ -25,7 +32,9 @@ export default function AdminHosting() {
     if (hosting.error) {
       toast({ title: "Chyba", description: hosting.error.message, variant: "destructive" });
     } else {
-      setHostingRecords((hosting.data || []) as HostingRecordRow[]);
+      setHostingRecords(
+        filterHostingForUser((hosting.data || []) as HostingRecordRow[], accessCtx),
+      );
     }
     setPaymentRecords(payments.error ? [] : payments.data || []);
     setLoading(false);

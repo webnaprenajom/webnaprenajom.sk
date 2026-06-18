@@ -1,35 +1,35 @@
 /**
- * Write permission helpers (Batch RC6.6) — align UI with DB/RLS (admin-only mutations).
+ * Write permission helpers (Batch RC6.6 / Phase 4a) — align UI with DB/RLS.
  */
 
 import type { AccessContext } from "@/lib/rbac/permissions";
-import { commissionVisibleToUser } from "@/lib/rbac/permissions";
+import { commissionVisibleToUser, isOwner } from "@/lib/rbac/permissions";
 
 export function canWriteCommissions(ctx: AccessContext): boolean {
-  return ctx.role === "admin";
+  return isOwner(ctx.role);
 }
 
 export function canEditOperatingCosts(ctx: AccessContext): boolean {
-  return ctx.role === "admin";
+  return isOwner(ctx.role);
 }
 
 export function canManageTeamProfiles(ctx: AccessContext): boolean {
-  return ctx.role === "admin";
+  return isOwner(ctx.role);
 }
 
 export function canManageUserRoles(ctx: AccessContext): boolean {
-  return ctx.role === "admin";
+  return isOwner(ctx.role);
 }
 
 export function canMutateFinanceRecords(ctx: AccessContext): boolean {
-  return ctx.role === "admin";
+  return isOwner(ctx.role);
 }
 
 export function canToggleCommissionPaymentStatus(
   ctx: AccessContext,
   implementer: string | null | undefined,
 ): boolean {
-  if (ctx.role === "admin") return true;
+  if (isOwner(ctx.role)) return true;
   return false;
 }
 
@@ -42,5 +42,5 @@ export function canEditCommissionRow(
 }
 
 export function writeDeniedMessage(action: string): string {
-  return `${action} môže vykonať len administrátor.`;
+  return `${action} môže vykonať len owner.`;
 }

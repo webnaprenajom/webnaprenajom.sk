@@ -26,7 +26,6 @@ async function searchCustomers(q: string, limit: number): Promise<LookupFetchRes
       .from("customers")
       .select("id,email,display_name")
       .eq("id", q)
-      .eq("active", true)
       .maybeSingle();
     if (error) return { rows: [], error: error.message };
     if (!data) return { rows: [], error: null };
@@ -49,7 +48,6 @@ async function searchCustomers(q: string, limit: number): Promise<LookupFetchRes
   let req = supabase
     .from("customers")
     .select("id,email,display_name")
-    .eq("active", true)
     .order("updated_at", { ascending: false })
     .limit(limit);
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/lib/rbac/permissions";
-import { isCrmUser } from "@/lib/rbac/permissions";
+import { isCrmUser, normalizeAppRole } from "@/lib/rbac/permissions";
 
 export interface AppAccessState {
   authChecking: boolean;
@@ -40,10 +40,11 @@ export const useAdminAccess = (): AppAccessState => {
       console.error("[useAdminAccess] role read failed", roleError);
     }
 
-    const roleList = (roles || []).map((r) => r.role as AppRole);
-    const isAdmin = roleList.includes("admin");
-    const isUser = roleList.includes("user");
-    const role: AppRole | null = isAdmin ? "admin" : isUser ? "user" : null;
+    const roleList = (roles || []).map((r) => r.role as string);
+    const normalized = roleList.map(normalizeAppRole).filter((r): r is AppRole => r != null);
+    const isAdmin = normalized.includes("owner");
+    const isUser = normalized.includes("administrator");
+    const role: AppRole | null = isAdmin ? "owner" : isUser ? "administrator" : null;
 
     let implementerName: string | null = null;
     let displayName: string | null = null;

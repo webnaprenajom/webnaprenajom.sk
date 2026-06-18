@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { useAccessContext } from "@/hooks/useAccessContext";
-import { isCrmUser } from "@/lib/rbac/permissions";
+import { isAdministrator, isCrmUser } from "@/lib/rbac/permissions";
 import { canAccessRoute, redirectPathForRole, routeAccessDeniedMessage } from "@/lib/rbac/routeAccess";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +35,7 @@ export function ProtectedAdminOutlet() {
           <ShieldAlert className="w-16 h-16 text-destructive mx-auto" />
           <h1 className="text-xl font-bold">Nemáte prístup</h1>
           <p className="text-sm text-muted-foreground">
-            Váš účet nemá rolu admin ani user. Kontaktujte správcu CRM.
+            Váš účet nemá rolu owner ani administrator. Kontaktujte správcu CRM.
           </p>
           <Button onClick={() => confirmAdminSignOut(navigate)} variant="outline">
             Odhlásiť
@@ -46,7 +46,7 @@ export function ProtectedAdminOutlet() {
   }
 
   if (!canAccessRoute(pathname, ctx.role)) {
-    if (ctx.role === "user") {
+    if (isAdministrator(ctx.role)) {
       return <Navigate to={redirectPathForRole(ctx.role)} replace />;
     }
     return (

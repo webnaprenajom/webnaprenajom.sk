@@ -1,13 +1,27 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { FINANCE_TRUTH_DISCLAIMER } from "@/lib/finance/labels";
+import { buildFinanceSnapshot } from "@/lib/finance/buildFinanceSnapshot";
+import type { FinanceRowKind } from "@/lib/finance/types";
 import type { CustomerFinanceSummary, CustomerWorkbenchData } from "@/lib/customerWorkbench/types";
 
 interface Props {
   data: CustomerWorkbenchData;
   finance: CustomerFinanceSummary;
 }
+
+const LEDGER_KIND_LABELS: Record<FinanceRowKind, string> = {
+  commission: "Provízia",
+  expense: "Náklad",
+  rental_receivable: "Prenájom",
+  rental_credit_cost: "Prenájom (kredit)",
+  payment_in: "Platba",
+  payout_out: "Výplata",
+  cost_out: "Náklad",
+};
 
 function FinanceMetric({
   label,
@@ -48,10 +62,61 @@ function FinanceMetric({
   );
 }
 
+function FinancePartialLoadBanner({ data }: { data: CustomerWorkbenchData }) {
+  const hasError =
+    data.paymentRecordsError || data.costRecordsError || data.payoutRecordsError;
+  if (!hasError) return null;
+  return (
+    <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 flex items-start gap-2">
+      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+      <p className="text-xs text-amber-800 dark:text-amber-200">
+        Niektoré finančné dáta sa nepodarilo načítať. Skontrolujte spojenie.
+      </p>
+    </div>
+  );
+}
+
 const MONTH_MS = 1000 * 60 * 60 * 24 * 31;
 
 export function CustomerFinancePanel({ data, finance }: Props) {
   const rentalIds = new Set(data.rentals.map((r) => r.id));
+
+  const snapshot = useMemo(
+    () =>
+      buildFinanceSnapshot({
+        commissions: data.commissions.map((c) => ({
+          id: c.id,
+          date: c.date,
+          title: c.title,
+          implementer: "—",
+          amount: c.amount,
+          payment_status: c.payment_status,
+          note: null,
+        })),
+        expenses: [],
+        websites: data.rentals.map((r) => ({
+          id: r.id,
+          name: r.name,
+          client_name: r.client_name,
+          monthly_price: r.monthly_price,
+          credits_used: 0,
+          year: new Date().getFullYear(),
+        })),
+        payments: data.rentalPayments.map((rp) => ({
+          id: rp.id,
+          website_id: rp.website_id,
+          year: rp.year,
+          month: rp.month,
+          amount: rp.amount,
+          status: rp.status,
+          custom_price: rp.custom_price,
+        })),
+        paymentRecords: data.paymentRecords,
+        costRecords: data.costRecords,
+        payoutRecords: data.payoutRecords,
+      }),
+    [data],
+  );
 
   // Väzby: príjmy/náklady per prenájom (Golden Path: rental_websites -> payment/cost_records)
   const serviceRows = data.rentals.map((r) => {
@@ -77,8 +142,12 @@ export function CustomerFinancePanel({ data, finance }: Props) {
   );
   const rentalNameById = new Map(data.rentals.map((r) => [r.id, r.name]));
 
+  const revenueKnown = data.paymentRecords.length > 0;
+
   return (
     <div className="space-y-4">
+      <FinancePartialLoadBanner data={data} />
+
       {/* Finančný súhrn */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <FinanceMetric
@@ -135,13 +204,70 @@ export function CustomerFinancePanel({ data, finance }: Props) {
         />
       </div>
 
-      <EntityProfitBanner
-        entityKind="customer"
-        revenue={finance.paymentsReceivedTotal}
-        operatingCost={finance.costsTotal}
-        revenueKnown
-        paymentRecordCount={data.paymentRecords.length}
-      />
+      {finance.grossProfit.canShowProfit && (
+        <EntityProfitBanner
+          entityKind="customer"
+          revenue={finance.paymentsReceivedTotal}
+          operatingCost={finance.costsTotal}
+          revenueKnown={revenueKnown}
+          paymentRecordCount={data.paymentRecords.length}
+        />
+      )}
+
+      {snapshot.rows.length > 0 && (
+        <section className="rounded-xl border border-border bg-card">
+          <div className="px-4 py-3 border-b border-border">
+            <h3 className="text-sm font-semibold">
+              Finančný ledger{" "}
+              <span className="text-muted-foreground font-normal">({snapshot.rows.length})</span>
+            </h3>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Agregované záznamy z payment_records, cost_records, payout_records a workflow zdrojov
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/60">
+                  <th className="text-left p-3 text-[11px] font-medium text-muted-foreground">Dátum</th>
+                  <th className="text-left p-3 text-[11px] font-medium text-muted-foreground">Typ</th>
+                  <th className="text-left p-3 text-[11px] font-medium text-muted-foreground">Popis</th>
+                  <th className="text-right p-3 text-[11px] font-medium text-muted-foreground">Suma</th>
+                  <th className="text-left p-3 text-[11px] font-medium text-muted-foreground">Truth level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snapshot.rows.map((row) => (
+                  <tr key={row.id} className="border-b border-border/40 last:border-0">
+                    <td className="p-3 whitespace-nowrap">
+                      {row.date ? new Date(row.date).toLocaleDateString("sk-SK") : "—"}
+                    </td>
+                    <td className="p-3 text-muted-foreground">{LEDGER_KIND_LABELS[row.kind]}</td>
+                    <td className="p-3 truncate max-w-[240px]">{row.title}</td>
+                    <td
+                      className={`p-3 text-right tabular-nums font-medium ${
+                        row.direction === "in" ? "text-green-700 dark:text-green-400" : ""
+                      }`}
+                    >
+                      {row.direction === "out" ? "−" : "+"}
+                      {row.amount.toFixed(2)} €
+                    </td>
+                    <td className="p-3">
+                      <TruthLevelBadge level={row.truthLevel} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {snapshot.rows.length === 0 && (
+        <p className="text-xs text-muted-foreground italic px-1">
+          Žiadne finančné záznamy pre tohto klienta
+        </p>
+      )}
 
       <p className="text-[10px] text-muted-foreground italic">{FINANCE_TRUTH_DISCLAIMER}</p>
 

@@ -27,7 +27,7 @@ export async function resolveCustomerIdentity(
   } else {
     const { data: custRow } = await supabase
       .from("customers")
-      .select("id,email,display_name,metadata,created_at,updated_at,active")
+      .select("id,email,display_name,metadata,created_at,updated_at")
       .eq("email", input.routeValue)
       .maybeSingle();
     if (custRow) {

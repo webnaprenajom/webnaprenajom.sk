@@ -5,8 +5,10 @@ import {
 } from "@/lib/crmLookup/normalizeIdentity";
 import {
   shouldPromoteLeadToCustomer,
+  shouldRequireLeadCustomer,
   hasStrongCustomerIdentity,
   LEAD_CUSTOMER_PROMOTION_STATUSES,
+  LEAD_CUSTOMER_REQUIRED_STATUSES,
 } from "@/lib/crmLookup/leadCustomerLifecycleRules";
 
 describe("buildPostgrestIlikeOr", () => {
@@ -27,9 +29,12 @@ describe("buildPostgrestIlikeOr", () => {
 });
 
 describe("leadCustomerLifecycle rules", () => {
-  it("promotes only won/order statuses", () => {
-    expect(LEAD_CUSTOMER_PROMOTION_STATUSES).toContain("won");
-    expect(LEAD_CUSTOMER_PROMOTION_STATUSES).toContain("order");
+  it("requires customer for scheduled, won, and order", () => {
+    expect(LEAD_CUSTOMER_REQUIRED_STATUSES).toContain("scheduled");
+    expect(LEAD_CUSTOMER_REQUIRED_STATUSES).toContain("won");
+    expect(LEAD_CUSTOMER_REQUIRED_STATUSES).toContain("order");
+    expect(LEAD_CUSTOMER_PROMOTION_STATUSES).toEqual(LEAD_CUSTOMER_REQUIRED_STATUSES);
+    expect(shouldRequireLeadCustomer("scheduled")).toBe(true);
     expect(shouldPromoteLeadToCustomer("won")).toBe(true);
     expect(shouldPromoteLeadToCustomer("order")).toBe(true);
     expect(shouldPromoteLeadToCustomer("new")).toBe(false);

@@ -16,7 +16,6 @@ export function AdminDialog({
   children,
   footer,
   size = "md",
-  stickyFooter,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,9 +23,7 @@ export function AdminDialog({
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
-  size?: "sm" | "md" | "lg" | "xl" | "2xl";
-  /** Keep footer pinned to the bottom of the scrollable dialog body. */
-  stickyFooter?: boolean;
+  size?: "sm" | "md" | "lg" | "xl";
 }) {
   const sizeClass =
     size === "sm"
@@ -35,9 +32,7 @@ export function AdminDialog({
         ? "max-w-2xl"
         : size === "xl"
           ? "max-w-4xl"
-          : size === "2xl"
-            ? "max-w-5xl"
-            : "max-w-lg";
+          : "max-w-lg";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -49,13 +44,7 @@ export function AdminDialog({
           {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </DialogHeader>
         <div className="space-y-4">{children}</div>
-        {footer && (
-          <DialogFooter
-            className={`flex-col sm:flex-row gap-2 ${stickyFooter ? "sticky bottom-0 bg-background border-t pt-3" : ""}`}
-          >
-            {footer}
-          </DialogFooter>
-        )}
+        {footer && <DialogFooter className="flex-col sm:flex-row gap-2">{footer}</DialogFooter>}
       </DialogContent>
     </Dialog>
   );

@@ -196,6 +196,9 @@ export type CustomerWorkbenchData = {
   costRecords: CostRecord[];
   payoutRecords: PayoutRecord[];
   rentalPayments: RentalPaymentBrief[];
+  paymentRecordsError?: string | null;
+  costRecordsError?: string | null;
+  payoutRecordsError?: string | null;
 };
 
 export type WorkbenchSummary = {

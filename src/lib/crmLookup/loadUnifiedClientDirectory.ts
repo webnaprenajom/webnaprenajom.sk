@@ -8,26 +8,17 @@ import {
 
 export type { UnifiedClientEntry };
 
-/** Aktívni (default) | Neaktívni | Všetci — filtruje iba `customers` query (Fáza 1+2). */
-export type ClientDirectoryMode = "active" | "inactive" | "all";
-
 export async function loadUnifiedClientDirectory(
   limit = 24,
-  mode: ClientDirectoryMode = "active",
 ): Promise<{ entries: UnifiedClientEntry[]; error: string | null }> {
   const seeds: UnifiedClientSeed[] = [];
 
-  let customersQuery = supabase
-    .from("customers")
-    .select("id,email,display_name")
-    .order("updated_at", { ascending: false })
-    .limit(limit);
-
-  if (mode === "active") customersQuery = customersQuery.eq("active", true);
-  else if (mode === "inactive") customersQuery = customersQuery.eq("active", false);
-
   const [customersRes, projectsRes, hostingRes, rentalsRes, leadsRes] = await Promise.all([
-    customersQuery,
+    supabase
+      .from("customers")
+      .select("id,email,display_name")
+      .order("updated_at", { ascending: false })
+      .limit(limit),
     supabase.from("project_notes").select("customer_id,customer_email,client_name"),
     supabase.from("hosting_records").select("customer_id,customer_email,client_name"),
     (supabase as any).from("rental_websites").select("client_name,customer_id,customer_email"),

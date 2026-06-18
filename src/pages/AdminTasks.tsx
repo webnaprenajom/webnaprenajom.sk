@@ -22,9 +22,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AdminDialog } from "@/components/admin/AdminDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { useAccessContext } from "@/hooks/useAccessContext";
+import { filterTasksForUser } from "@/lib/rbac/scopeHelpers";
 import {
   Loader2,
   Plus,
@@ -111,22 +118,6 @@ const emptyForm = () => ({
   deposit: "",
 });
 
-// ponytail: Phase 2 unsaved-changes guard — local normalize, id excluded (constant during edit).
-const normalizeTaskForCompare = (f: ReturnType<typeof emptyForm>) => ({
-  title: f.title ?? "",
-  description: f.description ?? "",
-  client_name: f.client_name ?? "",
-  lead_id: f.lead_id ?? "",
-  customer_id: f.customer_id ?? "",
-  customer_email: f.customer_email ?? "",
-  assignee: f.assignee ?? "",
-  status: f.status,
-  priority: f.priority,
-  due_date: f.due_date ?? "",
-  amount: f.amount ?? "",
-  deposit: f.deposit ?? "",
-});
-
 const AdminTasks = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<Task[]>([]);
@@ -138,21 +129,16 @@ const AdminTasks = () => {
   const [form, setForm] = useState(emptyForm());
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
   const [leadOptions, setLeadOptions] = useState<LeadOption[]>([]);
-
-  // ponytail: Phase 2 unsaved-changes guard rollout — reuses Phase 1 hook unchanged.
-  const taskGuard = useUnsavedChangesGuard({
-    isOpen: dialogOpen,
-    current: form,
-    normalize: normalizeTaskForCompare,
-  });
-  const requestCloseTaskDialog = () => {
-    if (taskGuard.confirmDiscard()) setDialogOpen(false);
-  };
+  const accessCtx = useAccessContext();
 
   useEffect(() => {
     document.title = "Úlohy | CRM";
-    void load();
   }, []);
+
+  useEffect(() => {
+    if (accessCtx.authChecking) return;
+    void load();
+  }, [accessCtx.authChecking, accessCtx.role]);
 
   const load = async () => {
     setLoading(true);
@@ -163,7 +149,7 @@ const AdminTasks = () => {
     if (tasksRes.error) {
       toast({ title: "Chyba", description: tasksRes.error.message, variant: "destructive" });
     } else {
-      setItems((tasksRes.data || []) as Task[]);
+      setItems(filterTasksForUser((tasksRes.data || []) as Task[], accessCtx));
     }
     if (!leadsRes.error && leadsRes.data) {
       setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
@@ -446,20 +432,9 @@ const AdminTasks = () => {
         </section>
       </div>
 
-      <AdminDialog
-        open={dialogOpen}
-        onOpenChange={(o) => (o ? setDialogOpen(true) : requestCloseTaskDialog())}
-        size="lg"
-        title={form.id ? "Upraviť úlohu" : "Nová úloha / zákazka"}
-        footer={
-          <>
-            <Button variant="outline" onClick={requestCloseTaskDialog}>Zrušiť</Button>
-            <Button onClick={save} disabled={saving}>
-              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
-            </Button>
-          </>
-        }
-      >
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>{form.id ? "Upraviť úlohu" : "Nová úloha / zákazka"}</DialogTitle></DialogHeader>
           <div className="grid gap-3">
             <div>
               <label className="text-xs text-muted-foreground">Názov</label>
@@ -537,7 +512,14 @@ const AdminTasks = () => {
               </div>
             </div>
           </div>
-      </AdminDialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
+            <Button onClick={save} disabled={saving}>
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminShell>
   );
 };

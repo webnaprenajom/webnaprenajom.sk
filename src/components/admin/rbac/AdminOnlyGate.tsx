@@ -2,7 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldAlert } from "lucide-react";
 import { useAccessContext } from "@/hooks/useAccessContext";
-import { isCrmUser } from "@/lib/rbac/permissions";
+import { isAdministrator, isCrmUser } from "@/lib/rbac/permissions";
 import { canAccessRoute, redirectPathForRole, routeAccessDeniedMessage } from "@/lib/rbac/routeAccess";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useNavigate } from "react-router-dom";
@@ -43,7 +43,7 @@ export function AdminOnlyGate({ children, redirectInstead = false }: Props) {
   }
 
   if (!canAccessRoute(pathname, ctx.role)) {
-    if (redirectInstead && ctx.role === "user") {
+    if (redirectInstead && isAdministrator(ctx.role)) {
       return <Navigate to={redirectPathForRole(ctx.role)} replace />;
     }
     return (
@@ -52,9 +52,9 @@ export function AdminOnlyGate({ children, redirectInstead = false }: Props) {
           <ShieldAlert className="w-16 h-16 text-destructive mx-auto" />
           <h1 className="text-xl font-bold">Prístup obmedzený</h1>
           <p className="text-sm text-muted-foreground">{routeAccessDeniedMessage(pathname, ctx.role)}</p>
-          {ctx.role === "user" && (
-            <Button onClick={() => navigate("/admin/finance")} variant="default">
-              Prejsť na Financie
+          {isAdministrator(ctx.role) && (
+            <Button onClick={() => navigate("/admin/today")} variant="default">
+              Prejsť na CRM
             </Button>
           )}
           <Button onClick={() => confirmAdminSignOut(navigate)} variant="outline">

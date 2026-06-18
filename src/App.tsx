@@ -18,6 +18,8 @@ import AdminProjectDetail from "./pages/AdminProjectDetail";
 import AdminHostingDetail from "./pages/AdminHostingDetail";
 import AdminPasswords from "./pages/AdminPasswords";
 import AdminHosting from "./pages/AdminHosting";
+import AdminMarketing from "./pages/AdminMarketing";
+import AdminMarketingDetail from "./pages/AdminMarketingDetail";
 import AdminClients from "./pages/AdminClients";
 import AdminSettings from "./pages/AdminSettings";
 import AdminTasks from "./pages/AdminTasks";
@@ -63,6 +65,8 @@ const App = () => (
               <Route path="passwords" element={<AdminPasswords />} />
               <Route path="hosting" element={<AdminHosting />} />
               <Route path="hosting/:id" element={<AdminHostingDetail />} />
+              <Route path="marketing" element={<AdminMarketing />} />
+              <Route path="marketing/:id" element={<AdminMarketingDetail />} />
               <Route path="clients" element={<AdminClients />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="commissions" element={<AdminCommissionsRedirect />} />

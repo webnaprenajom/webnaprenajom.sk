@@ -32,7 +32,7 @@ export function TeamSetupDiagnostics() {
 
     const roles = (rolesRes.data || []) as RoleRow[];
     const profiles = (profilesRes.data || []) as ProfileRow[];
-    const userRoles = roles.filter((r) => r.role === "user");
+    const userRoles = roles.filter((r) => r.role === "user" || r.role === "administrator");
     const missingProfile = userRoles.filter(
       (r) => !profiles.some((p) => p.user_id === r.user_id && p.active),
     ).length;

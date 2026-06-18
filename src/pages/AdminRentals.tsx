@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
+import { resolveProfitDisplayContext } from "@/lib/profit/profitContext";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AdminDialog } from "@/components/admin/AdminDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import {
   Loader2,
@@ -34,6 +42,7 @@ import {
 import { buildClientNameEmailMap, customerHrefByClientName } from "@/lib/adminNav";
 import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
 import { resolveCustomerLinkFields } from "@/lib/crmLookup/customers";
+import { assertDeliveryHasCanonicalCustomer } from "@/lib/crmLookup/entitySaveHelpers";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 import { FINANCE_TRUTH_DISCLAIMER, RENTAL_MONTH_STATUS_LABELS } from "@/lib/finance/labels";
 import { type PaymentFormValue } from "@/lib/paymentForm";
@@ -41,7 +50,8 @@ import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog"
 import { type FactDraft, prefillFromRentalPayment } from "@/lib/finance/factDrafts";
 import { ImplementerCommissionDetailDialog } from "@/components/admin/rentals/ImplementerCommissionDetailDialog";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
-import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { useAccessContext } from "@/hooks/useAccessContext";
+import { filterRentalsForUser } from "@/lib/rbac/scopeHelpers";
 
 interface Implementer {
   name: string;
@@ -66,7 +76,7 @@ interface RentalWebsite {
   implementers: Implementer[];
 }
 
-type PaymentStatus = "none" | "invoice" | "paid" | "unpaid" | "overdue";
+type PaymentStatus = "none" | "invoice" | "paid" | "unpaid";
 
 interface RentalPayment {
   id: string;
@@ -89,16 +99,14 @@ const NEXT_STATUS: Record<PaymentStatus, PaymentStatus> = {
   none: "invoice",
   invoice: "paid",
   paid: "unpaid",
-  unpaid: "overdue",
-  overdue: "none",
+  unpaid: "none",
 };
 
 const PAYMENT_STATUS_RANK: Record<PaymentStatus, number> = {
   none: 0,
   invoice: 1,
   unpaid: 2,
-  overdue: 3,
-  paid: 4,
+  paid: 3,
 };
 
 const isPaymentDowngrade = (current: PaymentStatus, next: PaymentStatus) =>
@@ -118,32 +126,46 @@ const emptyWebsite = (): RentalWebsite => ({
   implementers: [],
 });
 
-// ponytail: Phase 1 PoC unsaved-changes guard — normalizes null/"" and number
-// coercion drift so dirty-check matches what the form inputs actually do.
-const normalizeWebsiteForCompare = (w: RentalWebsite | null) => {
-  if (!w) return null;
-  return {
-    name: w.name ?? "",
-    url: w.url ?? "",
-    client_name: w.client_name ?? "",
-    customer_id: w.customer_id ?? null,
-    customer_email: w.customer_email ?? "",
-    source: w.source ?? "",
-    monthly_price: Number(w.monthly_price) || 0,
-    year: Number(w.year) || 0,
-    note: w.note ?? "",
-    rental_start_date: w.rental_start_date ?? "",
-    credits_used: Number(w.credits_used) || 0,
-    implementers: (w.implementers || []).map((i) => ({
-      name: i.name ?? "",
-      percentage: Number(i.percentage) || 0,
-      payment_form: i.payment_form ?? "",
-      note: i.note ?? "",
-    })),
-  };
+const ASSIGNEES = ["Peter", "Maroš", "Matuš"];
+
+type RentalFinanceCache = {
+  websiteId: string;
+  paymentRecords: Array<{ amount: number }>;
+  costRecords: Array<{ amount: number }>;
 };
 
-const ASSIGNEES = ["Peter", "Maroš", "Matuš"];
+function rentalProfitBannerProps(
+  website: RentalWebsite,
+  finance: RentalFinanceCache,
+): ComponentProps<typeof EntityProfitBanner> | null {
+  if (finance.websiteId !== website.id) return null;
+
+  const revenue = finance.paymentRecords.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const operatingCost =
+    finance.costRecords.reduce((s, c) => s + Number(c.amount || 0), 0) +
+    (Number(website.credits_used) || 0) * CREDIT_COST;
+  const revenueKnown =
+    finance.paymentRecords.length > 0 &&
+    website.monthly_price != null &&
+    Number(website.monthly_price) > 0;
+
+  const ctx = resolveProfitDisplayContext({
+    entityKind: "hosting",
+    revenueKnown,
+    revenue,
+    operatingCost,
+    paymentRecordCount: finance.paymentRecords.length,
+  });
+  if (!ctx.canShowProfit) return null;
+
+  return {
+    entityKind: "hosting",
+    revenue,
+    operatingCost,
+    revenueKnown,
+    paymentRecordCount: finance.paymentRecords.length,
+  };
+}
 
 const normalizeImplementers = (raw: unknown): Implementer[] => {
   if (!Array.isArray(raw)) return [];
@@ -171,6 +193,7 @@ export default function AdminRentals() {
   const [pricesOpen, setPricesOpen] = useState<RentalWebsite | null>(null);
   const [pricesDraft, setPricesDraft] = useState<Record<number, string>>({});
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
+  const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
   const [paymentFactDraft, setPaymentFactDraft] = useState<FactDraft | null>(null);
   const [paymentFactOpen, setPaymentFactOpen] = useState(false);
   const [commissions, setCommissions] = useState<Array<{
@@ -187,36 +210,41 @@ export default function AdminRentals() {
     customer_email?: string | null;
   }>>([]);
   const [detailImplementer, setDetailImplementer] = useState<string | null>(null);
+  const [rentalFinance, setRentalFinance] = useState<RentalFinanceCache | null>(null);
   const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({
     onSuccess: () => void loadAll(),
   });
+  const accessCtx = useAccessContext();
 
-  // ponytail: Phase 1 PoC — unsaved-changes guard for the "Pridať/Upraviť web" modal.
-  const websiteGuard = useUnsavedChangesGuard({
-    isOpen: !!editing,
-    current: editing,
-    normalize: normalizeWebsiteForCompare,
-  });
-
-  const requestCloseWebsiteDialog = () => {
-    if (!websiteGuard.confirmDiscard()) return;
-    setEditing(null);
-  };
-
-  // ponytail: unsaved-changes guard for the "Vlastné ceny po mesiacoch" modal.
-  const pricesFormGuard = useUnsavedChangesGuard({
-    isOpen: !!pricesOpen,
-    current: pricesDraft,
-  });
-
-  const requestClosePricesDialog = () => {
-    if (!pricesFormGuard.confirmDiscard()) return;
-    setPricesOpen(null);
-  };
+  const financeTargetId = editing?.id ?? pricesOpen?.id ?? null;
 
   useEffect(() => {
+    if (accessCtx.authChecking) return;
     void loadAll().finally(() => setLoading(false));
-  }, []);
+  }, [accessCtx.authChecking, accessCtx.role]);
+
+  useEffect(() => {
+    if (!financeTargetId) {
+      setRentalFinance(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const [payRes, costRes] = await Promise.all([
+        supabase.from("payment_records").select("amount").eq("rental_website_id", financeTargetId),
+        supabase.from("cost_records").select("amount").eq("rental_website_id", financeTargetId),
+      ]);
+      if (cancelled) return;
+      setRentalFinance({
+        websiteId: financeTargetId,
+        paymentRecords: (payRes.data ?? []) as Array<{ amount: number }>,
+        costRecords: (costRes.data ?? []) as Array<{ amount: number }>,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [financeTargetId]);
 
   const loadAll = async () => {
     const [w, p, leadsRes, commRes] = await Promise.all([
@@ -226,12 +254,11 @@ export default function AdminRentals() {
       supabase.from("commissions").select("id,title,date,amount,payment_status,note,payment_form,implementer,source_type,source_id,customer_email"),
     ]);
     if (w.data) {
-      setWebsites(
-        (w.data as any[]).map((r) => ({
-          ...r,
-          implementers: normalizeImplementers(r?.implementers),
-        })) as RentalWebsite[]
-      );
+      const raw = (w.data as any[]).map((r) => ({
+        ...r,
+        implementers: normalizeImplementers(r?.implementers),
+      })) as RentalWebsite[];
+      setWebsites(filterRentalsForUser(raw, accessCtx));
     }
     if (p.data) setPayments(p.data as RentalPayment[]);
     if (!leadsRes.error && leadsRes.data) {
@@ -283,7 +310,18 @@ export default function AdminRentals() {
       customer_email: editing.customer_email,
       client_name: editing.client_name,
       manual_link: !!editing.customer_id,
+      createIfMissing: true,
+      allowReviewCreate: true,
     });
+
+    const customerGuard = assertDeliveryHasCanonicalCustomer(linked);
+    if (!customerGuard.ok) {
+      setCustomerFieldError(customerGuard.message);
+      toast({ title: customerGuard.message, variant: "destructive" });
+      return;
+    }
+    setCustomerFieldError(null);
+
     if (linked.warnings?.length) {
       toast({ title: "Upozornenie klienta", description: linked.warnings[0] });
     }
@@ -354,6 +392,7 @@ export default function AdminRentals() {
     }
 
     toast({ title: editing.id ? "Aktualizované" : "Pridané" });
+    setCustomerFieldError(null);
     setEditing(null);
     await loadAll();
   };
@@ -438,39 +477,6 @@ export default function AdminRentals() {
       }
     } else {
       await loadAll();
-    }
-
-    if (next === "overdue") {
-      const recipient = (website.customer_email || "").trim();
-      if (!recipient) {
-        toast({
-          title: "Stav nastavený na omeškaná platba",
-          description: "E-mail klientovi nebol odoslaný — chýba kontaktný e-mail pri webe.",
-          variant: "destructive",
-        });
-      } else {
-        try {
-          const { error: emailError } = await supabase.functions.invoke("send-overdue-email", {
-            body: {
-              email: recipient,
-              client_name: website.client_name || "",
-              website_name: website.name,
-              website_url: website.url || "",
-              month,
-              year,
-              amount: monthPrice(website, month),
-            },
-          });
-          if (emailError) throw emailError;
-          toast({
-            title: "Omeškaná platba",
-            description: `Klientovi (${recipient}) bol odoslaný e-mail o deaktivácii.`,
-          });
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : "Neznáma chyba";
-          toast({ title: "E-mail nebol odoslaný", description: msg, variant: "destructive" });
-        }
-      }
     }
   };
 
@@ -579,8 +585,6 @@ export default function AdminRentals() {
         return "bg-green-500/20 border-green-500/50 text-green-500 hover:bg-green-500/30";
       case "unpaid":
         return "bg-red-500/20 border-red-500/50 text-red-500 hover:bg-red-500/30";
-      case "overdue":
-        return "bg-purple-600/25 border-purple-600/60 text-purple-200 hover:bg-purple-600/40";
       default:
         return "bg-muted/30 border-border text-muted-foreground hover:bg-muted/60";
     }
@@ -590,7 +594,6 @@ export default function AdminRentals() {
     if (st === "invoice") return <FileText className="w-4 h-4" />;
     if (st === "paid") return <Check className="w-4 h-4" />;
     if (st === "unpaid") return <X className="w-4 h-4" />;
-    if (st === "overdue") return <AlertTriangle className="w-4 h-4" />;
     return <span className="text-xs">{month}</span>;
   };
 
@@ -612,7 +615,7 @@ export default function AdminRentals() {
               </option>
             ))}
           </select>
-          <Button onClick={() => setEditing(emptyWebsite())} size="sm">
+          <Button onClick={() => { setCustomerFieldError(null); setEditing(emptyWebsite()); }} size="sm">
             <Plus className="w-4 h-4 mr-2" /> Pridať web
           </Button>
         </>
@@ -818,7 +821,7 @@ export default function AdminRentals() {
                         <Button size="icon" variant="ghost" onClick={() => openPrices(w)} title="Vlastné ceny po mesiacoch">
                           <Euro className="w-4 h-4 text-primary" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => setEditing(w)}>
+                        <Button size="icon" variant="ghost" onClick={() => { setCustomerFieldError(null); setEditing(w); }}>
                           <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
@@ -846,30 +849,26 @@ export default function AdminRentals() {
       </div>
       )}
 
-      <AdminDialog
-        open={!!editing}
-        onOpenChange={(o) => !o && requestCloseWebsiteDialog()}
-        size="2xl"
-        stickyFooter
-        title={editing?.id ? "Upraviť web" : "Pridať web"}
-        footer={
-          <>
-            <Button variant="outline" onClick={requestCloseWebsiteDialog}>Zrušiť</Button>
-            <Button onClick={saveWebsite}>Uložiť</Button>
-          </>
-        }
-      >
+      <Dialog open={!!editing} onOpenChange={(o) => { if (!o) { setCustomerFieldError(null); setEditing(null); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editing?.id ? "Upraviť web" : "Pridať web"}</DialogTitle>
+          </DialogHeader>
           {editing && (
             <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium">Názov webu *</label>
-                  <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">URL</label>
-                  <Input value={editing.url ?? ""} onChange={(e) => setEditing({ ...editing, url: e.target.value })} placeholder="https://..." />
-                </div>
+              {editing.id &&
+                rentalFinance &&
+                (() => {
+                  const bannerProps = rentalProfitBannerProps(editing, rentalFinance);
+                  return bannerProps ? <EntityProfitBanner {...bannerProps} /> : null;
+                })()}
+              <div>
+                <label className="text-sm font-medium">Názov webu *</label>
+                <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">URL</label>
+                <Input value={editing.url ?? ""} onChange={(e) => setEditing({ ...editing, url: e.target.value })} placeholder="https://..." />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -878,10 +877,14 @@ export default function AdminRentals() {
                     clientName={editing.client_name ?? ""}
                     customerEmail={editing.customer_email}
                     customerId={editing.customer_id}
-                    onChange={({ client_name, customer_id, customer_email }) =>
-                      setEditing({ ...editing, client_name, customer_id, customer_email })
-                    }
+                    onChange={({ client_name, customer_id, customer_email }) => {
+                      setCustomerFieldError(null);
+                      setEditing({ ...editing, client_name, customer_id, customer_email });
+                    }}
                   />
+                  {customerFieldError && (
+                    <p className="text-destructive text-xs mt-1">{customerFieldError}</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium">Zdroj</label>
@@ -925,7 +928,7 @@ export default function AdminRentals() {
               </div>
               <div>
                 <label className="text-sm font-medium">Poznámka</label>
-                <Textarea rows={4} value={editing.note ?? ""} onChange={(e) => setEditing({ ...editing, note: e.target.value })} />
+                <Textarea value={editing.note ?? ""} onChange={(e) => setEditing({ ...editing, note: e.target.value })} />
               </div>
 
               {/* Implementers / commissions */}
@@ -1007,28 +1010,30 @@ export default function AdminRentals() {
               </div>
             </div>
           )}
-      </AdminDialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Zrušiť</Button>
+            <Button onClick={saveWebsite}>Uložiť</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Per-month custom prices */}
-      <AdminDialog
-        open={!!pricesOpen}
-        onOpenChange={(o) => !o && requestClosePricesDialog()}
-        size="lg"
-        title={
-          <>
-            Vlastné ceny po mesiacoch — {pricesOpen?.name} ({year})
-          </>
-        }
-        footer={
-          <>
-            <Button variant="outline" onClick={requestClosePricesDialog}>Zrušiť</Button>
-            <Button onClick={savePrices}>Uložiť ceny</Button>
-          </>
-        }
-      >
+      <Dialog open={!!pricesOpen} onOpenChange={(o) => !o && setPricesOpen(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Vlastné ceny po mesiacoch — {pricesOpen?.name} ({year})
+            </DialogTitle>
+          </DialogHeader>
           <p className="text-xs text-muted-foreground -mt-2">
             Nechaj prázdne pre fixnú cenu {pricesOpen?.monthly_price}€. Zadaná hodnota prepíše cenu len pre daný mesiac.
           </p>
+          {pricesOpen &&
+            rentalFinance &&
+            (() => {
+              const bannerProps = rentalProfitBannerProps(pricesOpen, rentalFinance);
+              return bannerProps ? <EntityProfitBanner {...bannerProps} /> : null;
+            })()}
           <div className="grid grid-cols-3 gap-3 mt-2">
             {MONTHS.map((m, i) => (
               <div key={i}>
@@ -1045,7 +1050,12 @@ export default function AdminRentals() {
               </div>
             ))}
           </div>
-      </AdminDialog>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPricesOpen(null)}>Zrušiť</Button>
+            <Button onClick={savePrices}>Uložiť ceny</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <FactConfirmDialog
         open={paymentFactOpen}

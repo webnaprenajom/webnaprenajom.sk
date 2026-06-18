@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { AdminDialog } from "@/components/admin/AdminDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -11,8 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
+import { AdminDialog } from "@/components/admin/AdminDialog";
+import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
 import { CalendarIcon, Euro, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
@@ -37,6 +37,10 @@ export interface LeadDetailDialogProps {
   selected: Lead | null;
   saving: boolean;
   onSave: () => void;
+  editCustomerId: string | null;
+  setEditCustomerId: (id: string | null) => void;
+  leadCustomerError: string | null;
+  onClearLeadCustomerError: () => void;
   // Form state + setters
   editName: string;
   setEditName: (v: string) => void;
@@ -74,6 +78,10 @@ const LeadDetailDialog = ({
   selected,
   saving,
   onSave,
+  editCustomerId,
+  setEditCustomerId,
+  leadCustomerError,
+  onClearLeadCustomerError,
   editName, setEditName,
   editEmail, setEditEmail,
   editPhone, setEditPhone,
@@ -89,18 +97,19 @@ const LeadDetailDialog = ({
   editCreatedAt, setEditCreatedAt,
   editNotes, setEditNotes,
 }: LeadDetailDialogProps) => {
+  const resolvedCustomerId = editCustomerId ?? selected?.customer_id ?? null;
+
   return (
     <AdminDialog
       open={open}
       onOpenChange={onOpenChange}
-      size="xl"
-      stickyFooter
+      size="lg"
       title={
         <div className="flex flex-col gap-2 items-start">
           <span>Detail leadu</span>
           {selected && (
             <LeadCustomerStatusBadge
-              customerId={selected.customer_id}
+              customerId={resolvedCustomerId}
               email={editEmail || selected.email}
               status={editStatus}
             />
@@ -108,326 +117,338 @@ const LeadDetailDialog = ({
         </div>
       }
       footer={
-        selected && (
+        selected ? (
           <>
-            {editEmail && adminCustomerHrefPreferred(selected.customer_id, editEmail.trim()) && (
+            {editEmail && adminCustomerHrefPreferred(resolvedCustomerId, editEmail.trim()) && (
               <Link
-                to={adminCustomerHrefPreferred(selected.customer_id, editEmail.trim())!}
-                className="mr-auto"
+                to={adminCustomerHrefPreferred(resolvedCustomerId, editEmail.trim())!}
+                className="mr-auto w-full sm:w-auto"
               >
-                <Button variant="outline" type="button">
+                <Button variant="outline" type="button" className="w-full sm:w-auto">
                   Klient 360°
                 </Button>
               </Link>
             )}
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Zrušiť
             </Button>
-            <Button onClick={onSave} variant="gradient" disabled={saving}>
+            <Button onClick={onSave} variant="gradient" disabled={saving} className="w-full sm:w-auto">
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Uložiť
             </Button>
           </>
-        )
+        ) : undefined
       }
     >
-        {selected && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name" className="text-muted-foreground text-xs">Meno</Label>
-                <Input
-                  id="edit-name"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Meno klienta"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-muted-foreground text-xs">Dátum príchodu</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !editCreatedAt && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {editCreatedAt ? format(editCreatedAt, "d. M. yyyy") : <span>Vyber dátum</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={editCreatedAt}
-                      onSelect={setEditCreatedAt}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                    {editCreatedAt && (
-                      <div className="p-2 border-t">
-                        <Button variant="ghost" size="sm" className="w-full" onClick={() => setEditCreatedAt(undefined)}>
-                          Zrušiť dátum
-                        </Button>
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-email" className="text-muted-foreground text-xs">E-mail</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  placeholder="email@example.sk"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-phone" className="text-muted-foreground text-xs">Telefón</Label>
-                <Input
-                  id="edit-phone"
-                  value={editPhone}
-                  onChange={(e) => setEditPhone(e.target.value)}
-                  placeholder="+421..."
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label className="text-muted-foreground text-xs">Termín konzultácie</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !editConsultDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {editConsultDate ? format(editConsultDate, "d. M. yyyy") : <span>Vyber dátum</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={editConsultDate}
-                      onSelect={setEditConsultDate}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                    {editConsultDate && (
-                      <div className="p-2 border-t">
-                        <Button variant="ghost" size="sm" className="w-full" onClick={() => setEditConsultDate(undefined)}>
-                          Zrušiť dátum
-                        </Button>
-                      </div>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-time" className="text-muted-foreground text-xs">Čas</Label>
-                <Input
-                  id="edit-time"
-                  value={editConsultTime}
-                  onChange={(e) => setEditConsultTime(e.target.value)}
-                  placeholder="napr. 14:00"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-amount" className="text-muted-foreground text-xs">Suma (€)</Label>
-                <div className="relative">
-                  <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
-                  <Input
-                    id="edit-amount"
-                    inputMode="decimal"
-                    value={editAmount}
-                    onChange={(e) => setEditAmount(e.target.value)}
-                    placeholder="0"
-                    className="pl-9 font-bold text-green-600"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
-              <Label className="text-sm font-semibold flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4 text-primary" />
-                Ozvať sa klientovi dňa
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Lead sa v tento deň automaticky objaví v sekcii „Dnes musíš urobiť".
-              </p>
-              <div className="flex gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "flex-1 justify-start text-left font-normal",
-                        !editFollowUpDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {editFollowUpDate ? format(editFollowUpDate, "d. M. yyyy") : <span>Vyber dátum follow-upu</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={editFollowUpDate}
-                      onSelect={setEditFollowUpDate}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-                {[1, 3, 7, 14, 30].map((d) => (
-                  <Button
-                    key={d}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const dt = new Date();
-                      dt.setDate(dt.getDate() + d);
-                      setEditFollowUpDate(dt);
-                    }}
-                  >
-                    +{d}d
-                  </Button>
-                ))}
-                {editFollowUpDate && (
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setEditFollowUpDate(undefined)}>
-                    Zrušiť
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {selected.message && (
-              <div>
-                <Label className="text-muted-foreground text-xs">Správa od klienta</Label>
-                <div className="mt-1 p-3 bg-muted/50 rounded-lg text-sm whitespace-pre-wrap">
-                  {selected.message}
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="type">Typ</Label>
-                <Select value={editType} onValueChange={setEditType}>
-                  <SelectTrigger id="type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TYPE_OPTIONS.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={editStatus} onValueChange={(v) => setEditStatus(v as LeadStatus)}>
-                  <SelectTrigger id="status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(STATUS_CONFIG).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selected.status_changed_at && (
-                  <p className="text-[10px] text-muted-foreground">
-                    Naposledy zmenený: {new Date(selected.status_changed_at).toLocaleString("sk-SK")}
-                  </p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="source">Zdroj</Label>
-                <Input
-                  id="source"
-                  value={editSource}
-                  onChange={(e) => setEditSource(e.target.value)}
-                  placeholder="napr. Google, Facebook..."
-                />
-              </div>
-            </div>
-
+      {selected && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div className="space-y-2">
-              <Label htmlFor="assigned">Kto rieši</Label>
-              <Select
-                value={editAssigned || UNASSIGNED}
-                onValueChange={(v) => setEditAssigned(v === UNASSIGNED ? "" : v)}
-              >
-                <SelectTrigger id="assigned">
-                  <SelectValue placeholder="Nepriradené" />
+              <Label htmlFor="edit-name" className="text-muted-foreground text-xs">Meno</Label>
+              <Input
+                id="edit-name"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Meno klienta"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs">Dátum príchodu</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !editCreatedAt && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {editCreatedAt ? format(editCreatedAt, "d. M. yyyy") : <span>Vyber dátum</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={editCreatedAt}
+                    onSelect={setEditCreatedAt}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                  {editCreatedAt && (
+                    <div className="p-2 border-t">
+                      <Button variant="ghost" size="sm" className="w-full" onClick={() => setEditCreatedAt(undefined)}>
+                        Zrušiť dátum
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email" className="text-muted-foreground text-xs">E-mail</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editEmail}
+                onChange={(e) => setEditEmail(e.target.value)}
+                placeholder="email@example.sk"
+              />
+              <Label className="text-muted-foreground text-xs">Klient (CRM)</Label>
+              <ClientPicker
+                clientName={editName}
+                customerEmail={editEmail}
+                customerId={resolvedCustomerId}
+                leadId={selected.id}
+                onChange={({ customer_id }) => {
+                  setEditCustomerId(customer_id);
+                  onClearLeadCustomerError();
+                }}
+              />
+              {leadCustomerError && (
+                <p className="text-destructive text-xs mt-1">{leadCustomerError}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone" className="text-muted-foreground text-xs">Telefón</Label>
+              <Input
+                id="edit-phone"
+                value={editPhone}
+                onChange={(e) => setEditPhone(e.target.value)}
+                placeholder="+421..."
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <Label className="text-muted-foreground text-xs">Termín konzultácie</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !editConsultDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {editConsultDate ? format(editConsultDate, "d. M. yyyy") : <span>Vyber dátum</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={editConsultDate}
+                    onSelect={setEditConsultDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                  {editConsultDate && (
+                    <div className="p-2 border-t">
+                      <Button variant="ghost" size="sm" className="w-full" onClick={() => setEditConsultDate(undefined)}>
+                        Zrušiť dátum
+                      </Button>
+                    </div>
+                  )}
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-time" className="text-muted-foreground text-xs">Čas</Label>
+              <Input
+                id="edit-time"
+                value={editConsultTime}
+                onChange={(e) => setEditConsultTime(e.target.value)}
+                placeholder="napr. 14:00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-amount" className="text-muted-foreground text-xs">Suma (€)</Label>
+              <div className="relative">
+                <Euro className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                <Input
+                  id="edit-amount"
+                  inputMode="decimal"
+                  value={editAmount}
+                  onChange={(e) => setEditAmount(e.target.value)}
+                  placeholder="0"
+                  className="pl-9 font-bold text-green-600"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
+            <Label className="text-sm font-semibold flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4 text-primary" />
+              Ozvať sa klientovi dňa
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Lead sa v tento deň automaticky objaví v sekcii „Dnes musíš urobiť".
+            </p>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "flex-1 justify-start text-left font-normal",
+                      !editFollowUpDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {editFollowUpDate ? format(editFollowUpDate, "d. M. yyyy") : <span>Vyber dátum follow-upu</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={editFollowUpDate}
+                    onSelect={setEditFollowUpDate}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {[1, 3, 7, 14, 30].map((d) => (
+                <Button
+                  key={d}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const dt = new Date();
+                    dt.setDate(dt.getDate() + d);
+                    setEditFollowUpDate(dt);
+                  }}
+                >
+                  +{d}d
+                </Button>
+              ))}
+              {editFollowUpDate && (
+                <Button type="button" variant="ghost" size="sm" onClick={() => setEditFollowUpDate(undefined)}>
+                  Zrušiť
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {selected.message && (
+            <div>
+              <Label className="text-muted-foreground text-xs">Správa od klienta</Label>
+              <div className="mt-1 p-3 bg-muted/50 rounded-lg text-sm whitespace-pre-wrap">
+                {selected.message}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="type">Typ</Label>
+              <Select value={editType} onValueChange={setEditType}>
+                <SelectTrigger id="type">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={UNASSIGNED}>— Nepriradené —</SelectItem>
-                  {ASSIGNEES.map((a) => (
-                    <SelectItem key={a} value={a}>{a}</SelectItem>
+                  {TYPE_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <Label>Teplota leadu</Label>
-              <div className="flex gap-2">
-                {(["hot", "neutral", "cold"] as const).map((t) => {
-                  const tcfg = TEMP_CONFIG[t];
-                  const Icon = tcfg.icon;
-                  const active = editTemperature === t;
-                  return (
-                    <Button
-                      key={t}
-                      type="button"
-                      variant={active ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setEditTemperature(active ? null : t)}
-                      className={!active ? tcfg.className : ""}
-                    >
-                      <Icon className="w-4 h-4 mr-1.5" />
-                      {tcfg.label}
-                    </Button>
-                  );
-                })}
-              </div>
+              <Label htmlFor="status">Status</Label>
+              <Select value={editStatus} onValueChange={(v) => setEditStatus(v as LeadStatus)}>
+                <SelectTrigger id="status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                    <SelectItem key={k} value={k}>{v.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selected.status_changed_at && (
+                <p className="text-[10px] text-muted-foreground">
+                  Naposledy zmenený: {new Date(selected.status_changed_at).toLocaleString("sk-SK")}
+                </p>
+              )}
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="notes">Interné poznámky</Label>
-              <NoteTextarea
-                id="notes"
-                value={editNotes}
-                onChange={setEditNotes}
-                placeholder="Doplň poznámky o klientovi, dohodách, follow-up..."
-                className="min-h-[120px]"
+              <Label htmlFor="source">Zdroj</Label>
+              <Input
+                id="source"
+                value={editSource}
+                onChange={(e) => setEditSource(e.target.value)}
+                placeholder="napr. Google, Facebook..."
               />
             </div>
-
-            {selected && (
-              <LeadCommunicationPanel
-                leadId={selected.id}
-                email={editEmail || selected.email}
-                name={editName || selected.name}
-                customerId={selected.customer_id}
-                notes={editNotes}
-                updatedAt={selected.updated_at}
-              />
-            )}
           </div>
-        )}
+
+          <div className="space-y-2">
+            <Label htmlFor="assigned">Kto rieši</Label>
+            <Select
+              value={editAssigned || UNASSIGNED}
+              onValueChange={(v) => setEditAssigned(v === UNASSIGNED ? "" : v)}
+            >
+              <SelectTrigger id="assigned">
+                <SelectValue placeholder="Nepriradené" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={UNASSIGNED}>— Nepriradené —</SelectItem>
+                {ASSIGNEES.map((a) => (
+                  <SelectItem key={a} value={a}>{a}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Teplota leadu</Label>
+            <div className="flex gap-2">
+              {(["hot", "neutral", "cold"] as const).map((t) => {
+                const tcfg = TEMP_CONFIG[t];
+                const Icon = tcfg.icon;
+                const active = editTemperature === t;
+                return (
+                  <Button
+                    key={t}
+                    type="button"
+                    variant={active ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setEditTemperature(active ? null : t)}
+                    className={!active ? tcfg.className : ""}
+                  >
+                    <Icon className="w-4 h-4 mr-1.5" />
+                    {tcfg.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="notes">Interné poznámky</Label>
+            <NoteTextarea
+              id="notes"
+              value={editNotes}
+              onChange={setEditNotes}
+              placeholder="Doplň poznámky o klientovi, dohodách, follow-up..."
+              className="min-h-[120px]"
+            />
+          </div>
+
+          <LeadCommunicationPanel
+            leadId={selected.id}
+            email={editEmail || selected.email}
+            name={editName || selected.name}
+            customerId={resolvedCustomerId}
+            notes={editNotes}
+            updatedAt={selected.updated_at}
+          />
+        </>
+      )}
     </AdminDialog>
   );
 };

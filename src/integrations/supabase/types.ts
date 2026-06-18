@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -414,7 +414,6 @@ export type Database = {
       }
       customers: {
         Row: {
-          active: boolean
           created_at: string
           display_name: string
           email: string | null
@@ -423,7 +422,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          active?: boolean
           created_at?: string
           display_name: string
           email?: string | null
@@ -432,7 +430,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          active?: boolean
           created_at?: string
           display_name?: string
           email?: string | null
@@ -634,10 +631,6 @@ export type Database = {
           monthly_price: number | null
           note: string | null
           operating_cost: number
-          payment_note: string | null
-          payment_status: string | null
-          period_from: string | null
-          period_to: string | null
           provider: string | null
           rental_website_id: string | null
           updated_at: string
@@ -657,10 +650,6 @@ export type Database = {
           monthly_price?: number | null
           note?: string | null
           operating_cost?: number
-          payment_note?: string | null
-          payment_status?: string | null
-          period_from?: string | null
-          period_to?: string | null
           provider?: string | null
           rental_website_id?: string | null
           updated_at?: string
@@ -680,10 +669,6 @@ export type Database = {
           monthly_price?: number | null
           note?: string | null
           operating_cost?: number
-          payment_note?: string | null
-          payment_status?: string | null
-          period_from?: string | null
-          period_to?: string | null
           provider?: string | null
           rental_website_id?: string | null
           updated_at?: string
@@ -838,224 +823,62 @@ export type Database = {
           },
         ]
       }
-      legacy_finance_staging: {
+      marketing_records: {
         Row: {
-          batch_id: string
+          channel: string
+          client_name: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string | null
           id: string
-          imported_at: string
-          legacy_id: string
-          linked_customer_id: string | null
-          linked_rental_id: string | null
-          payload: Json
-          review_status: string
-          row_hash: string
-          source_file: string
+          lead_id: string | null
+          notes: string | null
+          status: string
+          title: string
           updated_at: string
+          url: string | null
         }
         Insert: {
-          batch_id: string
+          channel?: string
+          client_name?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
           id?: string
-          imported_at?: string
-          legacy_id: string
-          linked_customer_id?: string | null
-          linked_rental_id?: string | null
-          payload: Json
-          review_status?: string
-          row_hash: string
-          source_file: string
+          lead_id?: string | null
+          notes?: string | null
+          status?: string
+          title: string
           updated_at?: string
+          url?: string | null
         }
         Update: {
-          batch_id?: string
+          channel?: string
+          client_name?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string | null
           id?: string
-          imported_at?: string
-          legacy_id?: string
-          linked_customer_id?: string | null
-          linked_rental_id?: string | null
-          payload?: Json
-          review_status?: string
-          row_hash?: string
-          source_file?: string
+          lead_id?: string | null
+          notes?: string | null
+          status?: string
+          title?: string
           updated_at?: string
+          url?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "legacy_finance_staging_batch_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "legacy_import_batches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "legacy_finance_staging_linked_customer_id_fkey"
-            columns: ["linked_customer_id"]
+            foreignKeyName: "marketing_records_customer_id_fkey"
+            columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      legacy_id_map: {
-        Row: {
-          batch_id: string | null
-          canonical_id: string | null
-          confidence: string | null
-          created_at: string
-          entity_type: string
-          id: string
-          legacy_id: string
-          match_method: string | null
-          updated_at: string
-        }
-        Insert: {
-          batch_id?: string | null
-          canonical_id?: string | null
-          confidence?: string | null
-          created_at?: string
-          entity_type: string
-          id?: string
-          legacy_id: string
-          match_method?: string | null
-          updated_at?: string
-        }
-        Update: {
-          batch_id?: string | null
-          canonical_id?: string | null
-          confidence?: string | null
-          created_at?: string
-          entity_type?: string
-          id?: string
-          legacy_id?: string
-          match_method?: string | null
-          updated_at?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "legacy_id_map_batch_id_fkey"
-            columns: ["batch_id"]
+            foreignKeyName: "marketing_records_lead_id_fkey"
+            columns: ["lead_id"]
             isOneToOne: false
-            referencedRelation: "legacy_import_batches"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      legacy_import_batches: {
-        Row: {
-          batch_key: string
-          finished_at: string | null
-          id: string
-          report_json: Json
-          source_env: string | null
-          started_at: string
-          status: string
-        }
-        Insert: {
-          batch_key: string
-          finished_at?: string | null
-          id?: string
-          report_json?: Json
-          source_env?: string | null
-          started_at?: string
-          status?: string
-        }
-        Update: {
-          batch_key?: string
-          finished_at?: string | null
-          id?: string
-          report_json?: Json
-          source_env?: string | null
-          started_at?: string
-          status?: string
-        }
-        Relationships: []
-      }
-      legacy_import_rows: {
-        Row: {
-          batch_id: string
-          id: string
-          imported_at: string
-          legacy_id: string
-          payload: Json
-          row_hash: string
-          source_file: string
-          updated_at: string
-        }
-        Insert: {
-          batch_id: string
-          id?: string
-          imported_at?: string
-          legacy_id: string
-          payload: Json
-          row_hash: string
-          source_file: string
-          updated_at?: string
-        }
-        Update: {
-          batch_id?: string
-          id?: string
-          imported_at?: string
-          legacy_id?: string
-          payload?: Json
-          row_hash?: string
-          source_file?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "legacy_import_rows_batch_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "legacy_import_batches"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      migration_review_queue: {
-        Row: {
-          batch_id: string | null
-          candidates: Json
-          created_at: string
-          detail: string | null
-          entity_type: string
-          id: string
-          legacy_id: string | null
-          reason: string
-          resolved_at: string | null
-          source_file: string | null
-          status: string
-        }
-        Insert: {
-          batch_id?: string | null
-          candidates?: Json
-          created_at?: string
-          detail?: string | null
-          entity_type: string
-          id?: string
-          legacy_id?: string | null
-          reason: string
-          resolved_at?: string | null
-          source_file?: string | null
-          status?: string
-        }
-        Update: {
-          batch_id?: string | null
-          candidates?: Json
-          created_at?: string
-          detail?: string | null
-          entity_type?: string
-          id?: string
-          legacy_id?: string | null
-          reason?: string
-          resolved_at?: string | null
-          source_file?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "migration_review_queue_batch_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "legacy_import_batches"
+            referencedRelation: "leads"
             referencedColumns: ["id"]
           },
         ]
@@ -1398,7 +1221,6 @@ export type Database = {
           client_name: string | null
           created_at: string
           credits_used: number
-          customer_email: string | null
           customer_id: string | null
           id: string
           implementers: Json
@@ -1415,7 +1237,6 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
-          customer_email?: string | null
           customer_id?: string | null
           id?: string
           implementers?: Json
@@ -1432,7 +1253,6 @@ export type Database = {
           client_name?: string | null
           created_at?: string
           credits_used?: number
-          customer_email?: string | null
           customer_id?: string | null
           id?: string
           implementers?: Json
@@ -1657,10 +1477,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      admin_execute_destructive_delete: {
-        Args: { p_entity_id: string; p_entity_type: string; p_options?: Json }
-        Returns: Json
-      }
       admin_list_auth_users: {
         Args: never
         Returns: {
@@ -1670,13 +1486,9 @@ export type Database = {
           user_id: string
         }[]
       }
-      admin_precheck_destructive_delete: {
-        Args: { p_entity_id: string; p_entity_type: string }
-        Returns: Json
-      }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "owner" | "administrator"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1804,7 +1616,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "owner", "administrator"],
     },
   },
 } as const

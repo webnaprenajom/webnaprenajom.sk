@@ -232,18 +232,10 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
   }
 
   if (!summary.hasAnyData) {
-    const isInactiveCustomer = data.canonicalCustomer?.active === false;
     return (
       <section className="rounded-xl border border-dashed border-border bg-card/50 p-6 sm:p-8 text-center space-y-5">
         <div className="space-y-2">
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            <p className="text-sm font-medium">{summary.displayName || routeValue}</p>
-            {isInactiveCustomer && (
-              <Badge variant="outline" className="text-[10px] border-gray-400 text-gray-600 dark:text-gray-400">
-                Neaktívny klient
-              </Badge>
-            )}
-          </div>
+          <p className="text-sm font-medium">{summary.displayName || routeValue}</p>
           <p className="text-xs text-muted-foreground max-w-md mx-auto">
             Zatiaľ bez záznamov v CRM — workspace je pripravený na prvú aktivitu.
           </p>
@@ -258,19 +250,15 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
           <Button size="sm" asChild className="w-full sm:w-auto">
             <Link to="/admin">Pipeline</Link>
           </Button>
-          {!isInactiveCustomer && (
-            <>
-              <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => openQuickCreate("task")}>
-                <ListTodo className="w-3.5 h-3.5 mr-1" /> Úloha
-              </Button>
-              <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => openQuickCreate("project")}>
-                <FolderKanban className="w-3.5 h-3.5 mr-1" /> Projekt
-              </Button>
-              <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => openQuickCreate("rental")}>
-                <Globe className="w-3.5 h-3.5 mr-1" /> Prenájom
-              </Button>
-            </>
-          )}
+          <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => openQuickCreate("task")}>
+            <ListTodo className="w-3.5 h-3.5 mr-1" /> Úloha
+          </Button>
+          <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => openQuickCreate("project")}>
+            <FolderKanban className="w-3.5 h-3.5 mr-1" /> Projekt
+          </Button>
+          <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => openQuickCreate("rental")}>
+            <Globe className="w-3.5 h-3.5 mr-1" /> Prenájom
+          </Button>
         </div>
         {(resolvedCustomerId || summary.emailKey) && (
           <div className="max-w-md mx-auto text-left">

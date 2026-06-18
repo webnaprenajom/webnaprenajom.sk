@@ -28,6 +28,9 @@ const emptyData = (overrides: Partial<CustomerWorkbenchData> = {}): CustomerWork
   costRecords: [],
   payoutRecords: [],
   rentalPayments: [],
+  paymentRecordsError: null,
+  costRecordsError: null,
+  payoutRecordsError: null,
   ...overrides,
 });
 
@@ -69,6 +72,19 @@ describe("mergeSectionErrors", () => {
   it("joins multiple errors", () => {
     expect(mergeSectionErrors("a", null, "b")).toBe("a; b");
     expect(mergeSectionErrors(null, undefined)).toBeNull();
+  });
+});
+
+describe("CustomerWorkbenchData finance errors", () => {
+  it("surfaces payment/cost/payout section errors on workbench payload", () => {
+    const data = emptyData({
+      paymentRecordsError: "payments: permission denied",
+      costRecordsError: "costs: timeout",
+      payoutRecordsError: null,
+    });
+    expect(data.paymentRecordsError).toBe("payments: permission denied");
+    expect(data.costRecordsError).toBe("costs: timeout");
+    expect(data.payoutRecordsError).toBeNull();
   });
 });
 

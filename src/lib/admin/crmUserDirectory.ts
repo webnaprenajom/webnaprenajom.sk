@@ -1,7 +1,5 @@
-/**
- * Human-friendly CRM user directory helpers (display, search, sort).
- * All writes still use internal userId (UUID).
- */
+import type { AppRole } from "@/lib/rbac/permissions";
+import { isAdministrator, isOwner, normalizeAppRole } from "@/lib/rbac/permissions";
 
 export type AuthDirectoryRow = {
   userId: string;
@@ -12,7 +10,7 @@ export type AuthDirectoryRow = {
 
 export type CrmManagedUser = AuthDirectoryRow & {
   roleRowId: string | null;
-  role: "admin" | "user" | null;
+  role: AppRole | null;
   teamDisplayName: string | null;
   implementerName: string | null;
   profileActive: boolean;
@@ -27,7 +25,7 @@ export type UserDirectoryFilters = {
   mapping: "all" | "missing" | "ok";
 };
 
-type RoleRow = { id: string; user_id: string; role: "admin" | "user" };
+type RoleRow = { id: string; user_id: string; role: string };
 type ProfileRow = {
   user_id: string;
   display_name: string;
@@ -49,19 +47,19 @@ export function resolveUserDisplayName(input: {
 }
 
 export function buildRiskFlags(
-  role: "admin" | "user" | null,
+  role: AppRole | null,
   profile: ProfileRow | undefined,
   standardImplementers: readonly string[],
 ): string[] {
   const flags: string[] = [];
-  if (role === "user" && !profile?.active) {
+  if (isAdministrator(role) && !profile?.active) {
     flags.push("Chýba team profile — provízie neuvidí");
   }
-  if (role === "admin" && !profile?.active) {
-    flags.push("Admin bez team profile (OK pre plný prístup)");
+  if (isOwner(role) && !profile?.active) {
+    flags.push("Owner bez team profile (OK pre plný prístup)");
   }
   if (
-    role === "user" &&
+    isAdministrator(role) &&
     profile?.active &&
     profile.implementer_name &&
     !standardImplementers.includes(profile.implementer_name)
@@ -95,8 +93,8 @@ export function buildCrmManagedUsers(
   return rows.map((d) => {
     const roleRow = roleByUser.get(d.userId);
     const prof = profileByUser.get(d.userId);
-    const role = roleRow?.role ?? null;
-    const missingProfile = role === "user" && !prof?.active;
+    const role = normalizeAppRole(roleRow?.role ?? null);
+    const missingProfile = isAdministrator(role) && !prof?.active;
     const teamDisplayName = prof?.display_name?.trim() || null;
 
     return {
@@ -142,7 +140,8 @@ export function filterManagedUsers(
   filters: UserDirectoryFilters,
 ): CrmManagedUser[] {
   return users.filter((u) => {
-    if (filters.role !== "all" && u.role !== filters.role) return false;
+    if (filters.role === "admin" && u.role !== "owner") return false;
+    if (filters.role === "user" && u.role !== "administrator") return false;
     if (filters.mapping === "missing" && !u.missingProfile) return false;
     if (filters.mapping === "ok" && u.missingProfile) return false;
     return userMatchesSearch(u, filters.search);

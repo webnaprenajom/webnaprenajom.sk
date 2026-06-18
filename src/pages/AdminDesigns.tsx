@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { AdminDialog } from "@/components/admin/AdminDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { Loader2, Plus, Trash2, Pencil, ExternalLink, UserRound } from "lucide-react";
 import {
   adminCustomerHref,
@@ -55,16 +53,6 @@ export default function AdminDesigns() {
   const [emailLeadIdMap, setEmailLeadIdMap] = useState<Map<string, string>>(new Map());
   const [nameLeadIdMap, setNameLeadIdMap] = useState<Map<string, string>>(new Map());
 
-  const designFormGuard = useUnsavedChangesGuard({
-    isOpen: open,
-    current: form,
-  });
-
-  const requestCloseDesignDialog = () => {
-    if (!designFormGuard.confirmDiscard()) return;
-    setOpen(false);
-  };
-
   useEffect(() => {
     void load();
   }, []);
@@ -76,7 +64,11 @@ export default function AdminDesigns() {
       supabase.from("leads").select("id,name,email"),
     ]);
     if (designsRes.error) toast({ title: "Chyba", description: designsRes.error.message, variant: "destructive" });
-    else setRows((designsRes.data || []) as Proposal[]);
+    else {
+      // TODO post-release: pridať assigned_to stĺpec + filterDesignsForUser
+      // Option B (Batch 4c): administrator vidí všetky dizajny — design_proposals nemá ownership stĺpce.
+      setRows((designsRes.data || []) as Proposal[]);
+    }
     if (!leadsRes.error && leadsRes.data) {
       setEmailLeadIdMap(buildEmailLeadIdMap(leadsRes.data));
       setNameLeadIdMap(buildNameLeadIdMap(leadsRes.data));
@@ -209,52 +201,48 @@ export default function AdminDesigns() {
         )}
       </Card>
 
-      <AdminDialog
-        open={open}
-        onOpenChange={(o) => (o ? setOpen(true) : requestCloseDesignDialog())}
-        size="lg"
-        title={editing ? "Upraviť dizajn" : "Nový zaslaný dizajn"}
-        footer={
-          <>
-            <Button variant="outline" onClick={requestCloseDesignDialog}>Zrušiť</Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editing ? "Upraviť dizajn" : "Nový zaslaný dizajn"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Meno klienta *</Label>
+              <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Email</Label>
+                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div>
+                <Label>Dátum zaslania</Label>
+                <Input type="date" value={form.sent_date} onChange={(e) => setForm({ ...form, sent_date: e.target.value })} />
+              </div>
+            </div>
+            <div>
+              <Label>URL dizajnu</Label>
+              <Input value={form.design_url} onChange={(e) => setForm({ ...form, design_url: e.target.value })} placeholder="https://..." />
+            </div>
+            <div>
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map((s) => <SelectItem key={s.v} value={s.v}>{s.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Poznámka</Label>
+              <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Zrušiť</Button>
             <Button onClick={save}>{editing ? "Uložiť" : "Pridať"}</Button>
-          </>
-        }
-      >
-        <div className="space-y-3">
-          <div>
-            <Label>Meno klienta *</Label>
-            <Input value={form.client_name} onChange={(e) => setForm({ ...form, client_name: e.target.value })} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Email</Label>
-              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            </div>
-            <div>
-              <Label>Dátum zaslania</Label>
-              <Input type="date" value={form.sent_date} onChange={(e) => setForm({ ...form, sent_date: e.target.value })} />
-            </div>
-          </div>
-          <div>
-            <Label>URL dizajnu</Label>
-            <Input value={form.design_url} onChange={(e) => setForm({ ...form, design_url: e.target.value })} placeholder="https://..." />
-          </div>
-          <div>
-            <Label>Status</Label>
-            <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {STATUSES.map((s) => <SelectItem key={s.v} value={s.v}>{s.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Poznámka</Label>
-            <Textarea rows={3} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-          </div>
-        </div>
-      </AdminDialog>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
         <DialogContent>

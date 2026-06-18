@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import heroVideoNew from "@/assets/hero-video-new.mp4";
+import heroVideoNew from "@/assets/hero-video-new.mov";
 import heroThumbnail from "@/assets/hero-thumbnail.png";
 import LeadFormDialogLocalized from "./LeadFormDialogLocalized";
 import { ArrowRight, Bot, Calendar, Play } from "lucide-react";

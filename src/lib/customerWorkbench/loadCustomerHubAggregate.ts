@@ -93,6 +93,9 @@ function workbenchFromSections(
     costRecords: sections.costs.data,
     payoutRecords: sections.payouts.data,
     rentalPayments: sections.rentalPayments.data,
+    paymentRecordsError: sections.payments.error,
+    costRecordsError: sections.costs.error,
+    payoutRecordsError: sections.payouts.error,
   };
 }
 
@@ -368,24 +371,44 @@ export async function loadCustomerHubAggregate(
   const commissionsSection = { data: commissions, error: commissionsError, loaded: true };
 
   const rentalIds = rentals.map((r) => r.id);
+  const noteIds = notes.map((n) => n.id);
+  const hostingIds = hosting.map((h) => h.id);
   const commissionIds = commissions.map((c) => c.id);
 
   const paymentSelect =
     "id,source_table,source_id,customer_email,client_name,rental_website_id,amount,currency,paid_at,method,reference,note,truth_level" as const;
-  const paymentQueries: Array<PromiseLike<{ data: PaymentRecord[] | null; error: { message: string } | null }>> = [];
+  const paymentQueries: Promise<{ data: PaymentRecord[] | null; error: { message: string } | null }>[] = [];
   if (rentalIds.length) {
     paymentQueries.push(
-      supabase.from("payment_records").select(paymentSelect).in("rental_website_id", rentalIds) as never,
+      supabase.from("payment_records").select(paymentSelect).in("rental_website_id", rentalIds),
+    );
+  }
+  if (noteIds.length) {
+    paymentQueries.push(
+      supabase
+        .from("payment_records")
+        .select(paymentSelect)
+        .eq("source_table", "project_notes")
+        .in("source_id", noteIds),
+    );
+  }
+  if (hostingIds.length) {
+    paymentQueries.push(
+      supabase
+        .from("payment_records")
+        .select(paymentSelect)
+        .eq("source_table", "hosting_records")
+        .in("source_id", hostingIds),
     );
   }
   if (resolvedEmail) {
     paymentQueries.push(
-      supabase.from("payment_records").select(paymentSelect).ilike("customer_email", resolvedEmail) as never,
+      supabase.from("payment_records").select(paymentSelect).ilike("customer_email", resolvedEmail),
     );
   }
   if (leadNames.length) {
     paymentQueries.push(
-      supabase.from("payment_records").select(paymentSelect).in("client_name", leadNames) as never,
+      supabase.from("payment_records").select(paymentSelect).in("client_name", leadNames),
     );
   }
   let paymentRecords: PaymentRecord[] = [];
@@ -405,14 +428,32 @@ export async function loadCustomerHubAggregate(
 
   const costSelect =
     "id,source_table,source_id,category,vendor,client_name,rental_website_id,amount,currency,paid_at,incurred_at,reference,note,truth_level" as const;
-  const costQueries: Array<PromiseLike<{ data: CostRecord[] | null; error: { message: string } | null }>> = [];
+  const costQueries: Promise<{ data: CostRecord[] | null; error: { message: string } | null }>[] = [];
   if (rentalIds.length) {
     costQueries.push(
-      supabase.from("cost_records").select(costSelect).in("rental_website_id", rentalIds) as never,
+      supabase.from("cost_records").select(costSelect).in("rental_website_id", rentalIds),
+    );
+  }
+  if (noteIds.length) {
+    costQueries.push(
+      supabase
+        .from("cost_records")
+        .select(costSelect)
+        .eq("source_table", "project_notes")
+        .in("source_id", noteIds),
+    );
+  }
+  if (hostingIds.length) {
+    costQueries.push(
+      supabase
+        .from("cost_records")
+        .select(costSelect)
+        .eq("source_table", "hosting_records")
+        .in("source_id", hostingIds),
     );
   }
   if (leadNames.length) {
-    costQueries.push(supabase.from("cost_records").select(costSelect).in("client_name", leadNames) as never);
+    costQueries.push(supabase.from("cost_records").select(costSelect).in("client_name", leadNames));
   }
   let costRecords: CostRecord[] = [];
   let costsError: string | null = null;

@@ -52,7 +52,9 @@ const AdminDebug = () => {
 
       if (rolesError) next.rolesError = rolesError.message;
       next.rolesRows = (roles ?? []) as Array<{ role: string; created_at: string }>;
-      next.isAdmin = next.rolesRows.some((r) => r.role === "admin");
+      next.isAdmin = next.rolesRows.some(
+        (r) => r.role === "admin" || r.role === "owner",
+      );
 
       // has_role function is no longer exposed via RPC (moved to private schema for security).
       // Admin status is derived from the user_roles table read above.

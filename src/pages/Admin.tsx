@@ -43,7 +43,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AdminDialog } from "@/components/admin/AdminDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,9 +71,15 @@ import { cn } from "@/lib/utils";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
-import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
+import { useAccessContext } from "@/hooks/useAccessContext";
 import { canAccessOperationalCrm, isCrmUser } from "@/lib/rbac/permissions";
-import { ensureLeadCustomerLink } from "@/lib/crmLookup/leadCustomerLifecycle";
+import { filterLeadsForUser } from "@/lib/rbac/scopeHelpers";
+import {
+  ensureLeadCustomerLink,
+  prepareLeadCustomerForSave,
+  validateLeadCustomerBeforeSave,
+  shouldRequireLeadCustomer,
+} from "@/lib/crmLookup/leadCustomerLifecycle";
 
 // CSV parser supporting quoted fields with commas/newlines
 const parseCsv = (text: string): string[][] => {
@@ -107,6 +112,7 @@ const Admin = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { authChecking, isAdmin, isCrmUser, role, userEmail, userId } = useAdminAccess();
+  const accessCtx = useAccessContext();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -131,47 +137,16 @@ const Admin = () => {
   const [editConsultTime, setEditConsultTime] = useState<string>("");
   const [editFollowUpDate, setEditFollowUpDate] = useState<Date | undefined>(undefined);
   const [editCreatedAt, setEditCreatedAt] = useState<Date | undefined>(undefined);
+  const [editCustomerId, setEditCustomerId] = useState<string | null>(null);
+  const [leadCustomerError, setLeadCustomerError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-
-  // ponytail: unsaved-changes guard for the lead detail dialog — normalizes
-  // optional Date fields to ISO strings so dirty-check matches what the
-  // form inputs (date pickers) actually produce.
-  const leadGuard = useUnsavedChangesGuard({
-    isOpen: !!selected,
-    current: {
-      editName, editEmail, editPhone, editType, editStatus, editSource, editAssigned,
-      editTemperature, editAmount, editConsultDate, editConsultTime, editFollowUpDate,
-      editCreatedAt, editNotes,
-    },
-    normalize: (v) => ({
-      ...v,
-      editConsultDate: v.editConsultDate ? v.editConsultDate.toISOString() : null,
-      editFollowUpDate: v.editFollowUpDate ? v.editFollowUpDate.toISOString() : null,
-      editCreatedAt: v.editCreatedAt ? v.editCreatedAt.toISOString() : null,
-    }),
-  });
-
-  const requestCloseLeadDialog = () => {
-    if (!leadGuard.confirmDiscard()) return;
-    setSelected(null);
-  };
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Bulk send offer dialog (emails from selected leads)
   const [bulkOfferOpen, setBulkOfferOpen] = useState(false);
   const [bulkOfferName, setBulkOfferName] = useState("");
   const [bulkOfferSending, setBulkOfferSending] = useState(false);
-
-  const bulkOfferGuard = useUnsavedChangesGuard({
-    isOpen: bulkOfferOpen,
-    current: { bulkOfferName },
-  });
-
-  const requestCloseBulkOfferDialog = () => {
-    if (!bulkOfferGuard.confirmDiscard()) return;
-    setBulkOfferOpen(false);
-  };
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const handleBulkOfferSend = async () => {
@@ -278,7 +253,7 @@ const Admin = () => {
     if (error) {
       toast({ title: "Chyba načítania", description: error.message, variant: "destructive" });
     } else {
-      setLeads((data || []) as Lead[]);
+      setLeads(filterLeadsForUser((data || []) as Lead[], accessCtx));
     }
     setLoading(false);
   };
@@ -301,6 +276,8 @@ const Admin = () => {
     setEditConsultTime(lead.consultation_time || "");
     setEditFollowUpDate(lead.follow_up_date ? new Date(lead.follow_up_date) : undefined);
     setEditCreatedAt(lead.created_at ? new Date(lead.created_at) : undefined);
+    setEditCustomerId(lead.customer_id ?? null);
+    setLeadCustomerError(null);
   };
 
   // Open lead when navigated with ?lead=<id> (e.g. from notification quick action)
@@ -332,6 +309,22 @@ const Admin = () => {
       return;
     }
 
+    const prepared = await prepareLeadCustomerForSave({
+      leadId: selected.id,
+      status: editStatus,
+      email: editEmail.trim(),
+      name: editName.trim(),
+      customer_id: editCustomerId ?? selected.customer_id,
+    });
+    if (!prepared.ok) {
+      setLeadCustomerError(prepared.message);
+      toast({ title: prepared.message, variant: "destructive" });
+      setSaving(false);
+      return;
+    }
+
+    const resolvedCustomerId = prepared.customer_id ?? editCustomerId ?? selected.customer_id ?? null;
+
     const { error } = await supabase
       .from("leads")
       .update({
@@ -349,6 +342,7 @@ const Admin = () => {
         consultation_time: editConsultTime.trim() || null,
         follow_up_date: editFollowUpDate ? format(editFollowUpDate, "yyyy-MM-dd") : null,
         created_at: editCreatedAt ? editCreatedAt.toISOString() : selected.created_at,
+        customer_id: resolvedCustomerId,
       })
       .eq("id", selected.id);
 
@@ -363,9 +357,9 @@ const Admin = () => {
       email: editEmail.trim(),
       name: editName.trim(),
       status: editStatus,
-      existingCustomerId: selected.customer_id,
+      existingCustomerId: resolvedCustomerId,
     });
-    const linkedCustomerId = linkResult.customer_id ?? selected.customer_id ?? null;
+    const linkedCustomerId = linkResult.customer_id ?? resolvedCustomerId;
 
     if (linkResult.reason === "created_customer" || linkResult.reason === "promoted") {
       toast({
@@ -423,6 +417,7 @@ const Admin = () => {
           : l
       )
     );
+    setLeadCustomerError(null);
     setSelected(null);
     setSaving(false);
   };
@@ -458,17 +453,30 @@ const Admin = () => {
 
   const setLeadStatus = async (lead: Lead, status: LeadStatus) => {
     if (lead.status === status) return;
-    const prev = { status: lead.status, status_changed_at: lead.status_changed_at };
+
+    const prepared = await prepareLeadCustomerForSave({
+      leadId: lead.id,
+      status,
+      email: lead.email,
+      name: lead.name,
+      customer_id: lead.customer_id,
+    });
+    if (!prepared.ok) {
+      toast({ title: prepared.message, variant: "destructive" });
+      return;
+    }
+
+    const resolvedCustomerId = prepared.customer_id ?? lead.customer_id ?? null;
     const nowIso = new Date().toISOString();
-    setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, status, status_changed_at: nowIso } : l)));
-    const { error } = await supabase.from("leads").update({ status }).eq("id", lead.id);
+    const { error } = await supabase
+      .from("leads")
+      .update({ status, customer_id: resolvedCustomerId, status_changed_at: nowIso })
+      .eq("id", lead.id);
     if (error) {
-      setLeads((ls) => ls.map((l) => (l.id === lead.id ? { ...l, ...prev } : l)));
       toast({ title: "Zmena zlyhala", description: error.message, variant: "destructive" });
       return;
     }
 
-    // Auto-send email when transitioning to a status with sendsEmail (see leadStatusSideEffects.ts)
     const emailResult = await runLeadStatusSideEffects(lead.status, status, {
       name: lead.name,
       email: lead.email,
@@ -494,15 +502,17 @@ const Admin = () => {
       email: lead.email,
       name: lead.name,
       status,
-      existingCustomerId: lead.customer_id,
+      existingCustomerId: resolvedCustomerId,
     });
-    if (linkResult.customer_id) {
-      setLeads((ls) =>
-        ls.map((l) =>
-          l.id === lead.id ? { ...l, customer_id: linkResult.customer_id } : l,
-        ),
-      );
-    }
+    const linkedCustomerId = linkResult.customer_id ?? resolvedCustomerId;
+
+    setLeads((ls) =>
+      ls.map((l) =>
+        l.id === lead.id
+          ? { ...l, status, status_changed_at: nowIso, customer_id: linkedCustomerId }
+          : l,
+      ),
+    );
     if (linkResult.reason === "created_customer" || linkResult.reason === "promoted") {
       toast({
         title: "Lead prepojený na klienta",
@@ -535,13 +545,55 @@ const Admin = () => {
   const bulkSetStatus = async (status: LeadStatus) => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
-    // Bulk updates DB only — intentionally no runLeadStatusSideEffects (avoids mass emails).
+
+    const selectedLeads = leads.filter((l) => ids.includes(l.id));
+
+    if (shouldRequireLeadCustomer(status)) {
+      const invalidCount = selectedLeads.filter(
+        (lead) =>
+          !validateLeadCustomerBeforeSave({
+            status,
+            customer_id: lead.customer_id,
+            email: lead.email,
+          }).ok,
+      ).length;
+      if (invalidCount > 0) {
+        toast({
+          title: "Hromadná zmena statusu zlyhala",
+          description: `Nemožno hromadne zmeniť status: ${invalidCount} lead(ov) nemá klienta ani platný e-mail. Opravte jednotlivo pred hromadnou zmenou.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     const { error } = await supabase.from("leads").update({ status }).in("id", ids);
     if (error) {
       toast({ title: "Zmena zlyhala", description: error.message, variant: "destructive" });
       return;
     }
-    setLeads((prev) => prev.map((l) => (ids.includes(l.id) ? { ...l, status } : l)));
+
+    if (shouldRequireLeadCustomer(status)) {
+      for (const lead of selectedLeads) {
+        const linkResult = await ensureLeadCustomerLink({
+          leadId: lead.id,
+          email: lead.email,
+          name: lead.name,
+          status,
+          existingCustomerId: lead.customer_id,
+        });
+        if (linkResult.customer_id) {
+          setLeads((prev) =>
+            prev.map((l) =>
+              l.id === lead.id ? { ...l, status, customer_id: linkResult.customer_id } : l,
+            ),
+          );
+        }
+      }
+    } else {
+      setLeads((prev) => prev.map((l) => (ids.includes(l.id) ? { ...l, status } : l)));
+    }
+
     setSelectedIds(new Set());
     toast({ title: `Aktualizovaných ${ids.length} leadov`, description: STATUS_CONFIG[status]?.label });
   };
@@ -615,6 +667,19 @@ const Admin = () => {
       toast({ title: "Chýbajú údaje", description: "Meno a e-mail sú povinné", variant: "destructive" });
       return;
     }
+
+    if (shouldRequireLeadCustomer(newLead.status)) {
+      const validation = validateLeadCustomerBeforeSave({
+        status: newLead.status,
+        customer_id: null,
+        email: newLead.email.trim(),
+      });
+      if (!validation.ok) {
+        toast({ title: validation.message, variant: "destructive" });
+        return;
+      }
+    }
+
     setAddSaving(true);
     const { data, error } = await supabase
       .from("leads")
@@ -636,12 +701,37 @@ const Admin = () => {
     setAddSaving(false);
     if (error) {
       toast({ title: "Pridanie zlyhalo", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const inserted = data as Lead;
+
+    if (shouldRequireLeadCustomer(newLead.status)) {
+      const linkResult = await ensureLeadCustomerLink({
+        leadId: inserted.id,
+        email: newLead.email.trim(),
+        name: newLead.name.trim(),
+        status: newLead.status,
+        existingCustomerId: null,
+      });
+      if (linkResult.customer_id) {
+        inserted.customer_id = linkResult.customer_id;
+      }
+      if (linkResult.reason === "created_customer" || linkResult.reason === "promoted") {
+        toast({
+          title: "Lead pridaný a prepojený na klienta",
+          description: `${newLead.name.trim()} · ${newLead.email.trim()}`,
+        });
+      } else {
+        toast({ title: "Lead pridaný" });
+      }
     } else {
       toast({ title: "Lead pridaný" });
-      setLeads((prev) => [data as Lead, ...prev]);
-      setAddOpen(false);
-      setNewLead({ name: "", email: "", phone: "", source: "", type: "ai", status: "new", assigned_to: "", message: "", notes: "" });
     }
+
+    setLeads((prev) => [inserted, ...prev]);
+    setAddOpen(false);
+    setNewLead({ name: "", email: "", phone: "", source: "", type: "ai", status: "new", assigned_to: "", message: "", notes: "" });
   };
 
   const handleCsvImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1121,7 +1211,12 @@ const Admin = () => {
       {/* Lead detail dialog */}
       <LeadDetailDialog
         open={!!selected}
-        onOpenChange={(o) => !o && requestCloseLeadDialog()}
+        onOpenChange={(o) => {
+          if (!o) {
+            setLeadCustomerError(null);
+            setSelected(null);
+          }
+        }}
         selected={selected}
         saving={saving}
         onSave={handleSave}
@@ -1139,6 +1234,10 @@ const Admin = () => {
         editFollowUpDate={editFollowUpDate} setEditFollowUpDate={setEditFollowUpDate}
         editCreatedAt={editCreatedAt} setEditCreatedAt={setEditCreatedAt}
         editNotes={editNotes} setEditNotes={setEditNotes}
+        editCustomerId={editCustomerId}
+        setEditCustomerId={setEditCustomerId}
+        leadCustomerError={leadCustomerError}
+        onClearLeadCustomerError={() => setLeadCustomerError(null)}
       />
 
       {/* Add lead dialog */}
@@ -1258,12 +1357,11 @@ const Admin = () => {
         </DialogContent>
       </Dialog>
 
-      <AdminDialog
-        open={bulkOfferOpen}
-        onOpenChange={(o) => (o ? setBulkOfferOpen(true) : requestCloseBulkOfferDialog())}
-        size="lg"
-        title="Poslať ponuku vybraným leadom"
-      >
+      <Dialog open={bulkOfferOpen} onOpenChange={setBulkOfferOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Poslať ponuku vybraným leadom</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Vybraných leadov: <strong>{bulkOfferSelectedLeads.length}</strong>
@@ -1308,7 +1406,7 @@ const Admin = () => {
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={requestCloseBulkOfferDialog} disabled={bulkOfferSending}>
+              <Button variant="outline" onClick={() => setBulkOfferOpen(false)} disabled={bulkOfferSending}>
                 Zrušiť
               </Button>
               <Button
@@ -1321,7 +1419,8 @@ const Admin = () => {
               </Button>
             </div>
           </div>
-      </AdminDialog>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
         <AlertDialogContent>

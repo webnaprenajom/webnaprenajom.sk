@@ -9,14 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -50,9 +42,10 @@ import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
 import { linkLeadAfterDelivery } from "@/lib/crmLookup/leadCustomerLifecycle";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 import {
+  assertDeliveryHasCanonicalCustomer,
   parseInsertRowId,
-  resolveFormCustomerLink,
-} from "@/lib/crmLookup/resolveFormCustomerLink";
+} from "@/lib/crmLookup/entitySaveHelpers";
+import { resolveFormCustomerLink } from "@/lib/crmLookup/resolveFormCustomerLink";
 import { AccessCredentialsEditor } from "@/components/admin/projectNotes/AccessCredentialsEditor";
 import {
   type AccessCredential,
@@ -60,7 +53,6 @@ import {
   credentialsForSave,
   resolveProjectCredentials,
 } from "@/lib/projectCredentials";
-import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 
 const VIEW_CONFIG: Record<
   ProjectNotesViewMode,
@@ -80,33 +72,6 @@ const VIEW_CONFIG: Record<
   },
 };
 
-// ponytail: Phase 1 PoC unsaved-changes guard — normalizes null/"" fallbacks
-// and excludes credential `id` (UI-only key) so dirty-check matches the form.
-const normalizeProjectNoteForCompare = (state: {
-  editing: Partial<ProjectNote> | null;
-  editCredentials: AccessCredential[];
-}) => {
-  const e = state.editing;
-  if (!e) return null;
-  return {
-    title: e.title ?? "",
-    client_name: e.client_name ?? "",
-    customer_email: e.customer_email ?? "",
-    customer_id: e.customer_id ?? null,
-    lead_id: e.lead_id ?? null,
-    project_type: e.project_type || "wordpress",
-    status: e.status || "in_progress",
-    notes: e.notes ?? "",
-    credentials: state.editCredentials.map((c) => ({
-      label: c.label ?? "",
-      url: c.url ?? "",
-      login: c.login ?? "",
-      password: c.password ?? "",
-      note: c.note ?? "",
-    })),
-  };
-};
-
 export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   const cfg = VIEW_CONFIG[mode];
   const [items, setItems] = useState<ProjectNote[]>([]);
@@ -117,18 +82,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<string>("all");
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
-
-  // ponytail: Phase 1 PoC — unsaved-changes guard for the EditDialog.
-  const noteGuard = useUnsavedChangesGuard({
-    isOpen: open,
-    current: { editing, editCredentials },
-    normalize: normalizeProjectNoteForCompare,
-  });
-
-  const requestCloseEditDialog = () => {
-    if (!noteGuard.confirmDiscard()) return;
-    setOpen(false);
-  };
+  const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = cfg.docTitle;
@@ -144,6 +98,8 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
     if (notesRes.error) {
       toast({ title: "Chyba", description: notesRes.error.message, variant: "destructive" });
     } else {
+      // TODO post-release: pridať assigned_to stĺpec + filterProjectsForUser
+      // Option B (Batch 4c): administrator vidí všetky projekty/heslá — project_notes nemá ownership stĺpce.
       setItems((notesRes.data || []) as ProjectNote[]);
     }
     if (!leadsRes.error && leadsRes.data) {
@@ -179,14 +135,13 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
       return;
     }
 
-    if (!linked.client_name && !linked.customer_id && !linked.customer_email) {
-      toast({
-        title: "Chýba klient",
-        description: "Vyberte klienta alebo lead z vyhľadávania, prípadne zadajte meno firmy.",
-        variant: "destructive",
-      });
+    const customerGuard = assertDeliveryHasCanonicalCustomer(linked);
+    if (!customerGuard.ok) {
+      setCustomerFieldError(customerGuard.message);
+      toast({ title: customerGuard.message, variant: "destructive" });
       return;
     }
+    setCustomerFieldError(null);
 
     const credFields = credentialsForSave(editing, editCredentials);
     const payload = {
@@ -252,6 +207,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
     }
 
     toast({ title: editing.id ? "Aktualizované" : "Projekt vytvorený" });
+    setCustomerFieldError(null);
     setOpen(false);
     setEditing(null);
     void load();
@@ -275,6 +231,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
 
   const openEdit = (item: Partial<ProjectNote>) => {
     setEditCredentials(resolveProjectCredentials(item as ProjectNote));
+    setCustomerFieldError(null);
     setEditing(item);
     setOpen(true);
   };
@@ -292,6 +249,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
           size="sm"
           onClick={() => {
             setEditCredentials([createEmptyCredential("Hlavný prístup")]);
+            setCustomerFieldError(null);
             setEditing({ ...emptyProjectNote });
             setOpen(true);
           }}
@@ -349,173 +307,150 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
             {mode === "passwords" ? "Žiadne uložené prístupy." : "Žiadne projekty. Pridaj prvý."}
           </div>
         ) : mode === "passwords" ? (
-          <div className="rounded-xl border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Projekt</TableHead>
-                  <TableHead>Stav</TableHead>
-                  <TableHead>Prístupy</TableHead>
-                  <TableHead className="w-20" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((item) => {
-                  const status = PROJECT_STATUSES.find((s) => s.value === item.status);
-                  const shown = reveal[item.id];
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell className="text-sm">
-                        <div className="font-semibold">{item.title}</div>
-                        {item.client_name && (
-                          <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={status?.color}>
-                          {status?.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="min-w-[280px]">
-                        <CredentialsBlock
-                          item={item}
-                          shown={shown}
-                          onToggle={() => setReveal((r) => ({ ...r, [item.id]: !r[item.id] }))}
-                          onCopy={copy}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(item)}>
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => remove(item.id)}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((item) => {
+              const status = PROJECT_STATUSES.find((s) => s.value === item.status);
+              const shown = reveal[item.id];
+              return (
+                <div key={item.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold truncate">{item.title}</h3>
+                      {item.client_name && (
+                        <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
+                      )}
+                    </div>
+                    <Badge variant="outline" className={status?.color}>
+                      {status?.label}
+                    </Badge>
+                  </div>
+                  <CredentialsBlock
+                    item={item}
+                    shown={shown}
+                    onToggle={() => setReveal((r) => ({ ...r, [item.id]: !r[item.id] }))}
+                    onCopy={copy}
+                  />
+                  <CardActions item={item} onEdit={openEdit} onRemove={remove} />
+                </div>
+              );
+            })}
           </div>
         ) : (
-          <div className="rounded-xl border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Projekt</TableHead>
-                  <TableHead>Stav</TableHead>
-                  <TableHead>URL</TableHead>
-                  <TableHead>Poznámka</TableHead>
-                  <TableHead>Heslá</TableHead>
-                  <TableHead>Aktualizované</TableHead>
-                  <TableHead className="w-28" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((item) => {
-                  const status = PROJECT_STATUSES.find((s) => s.value === item.status);
-                  const creds = hasCredentials(item);
-                  return (
-                    <TableRow key={item.id}>
-                      <TableCell className="text-sm">
-                        <Link to={`/admin/projects/${item.id}`} className="font-semibold text-primary hover:underline">
-                          {item.title}
-                        </Link>
-                        {item.client_name && (
-                          <div className="space-y-0.5">
-                            <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
-                            {customerHrefByClientName(item.client_name, clientEmailMap) && (
-                              <Link
-                                to={customerHrefByClientName(item.client_name, clientEmailMap)!}
-                                className="text-[10px] text-primary hover:underline"
-                              >
-                                Klient 360°
-                              </Link>
-                            )}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={status?.color}>
-                          {status?.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs max-w-[200px]">
-                        {item.url ? (
-                          <a
-                            href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline inline-flex items-center gap-1"
-                          >
-                            <ExternalLink className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{item.url}</span>
-                          </a>
-                        ) : (
-                          "—"
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground max-w-[240px]">
-                        {item.notes ? (
-                          <span className="line-clamp-2 flex items-start gap-1.5">
-                            <FileText className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            {item.notes}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {creds ? (
-                          <Link
-                            to="/admin/passwords"
-                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline whitespace-nowrap"
-                          >
-                            <KeyRound className="w-3 h-3" /> Heslá
-                          </Link>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                        {item.updated_at ? new Date(item.updated_at).toLocaleDateString("sk-SK") : "—"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-1">
-                          <Button size="sm" variant="ghost" className="h-8 text-xs" asChild>
-                            <Link to={`/admin/projects/${item.id}`}>Detail</Link>
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(item)}>
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive" onClick={() => remove(item.id)}>
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((item) => {
+              const status = PROJECT_STATUSES.find((s) => s.value === item.status);
+              const creds = hasCredentials(item);
+              return (
+                <div key={item.id} className="bg-card border border-border rounded-xl p-4 space-y-3 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <Link to={`/admin/projects/${item.id}`} className="font-semibold truncate block hover:text-primary hover:underline">
+                        {item.title}
+                      </Link>
+                      {item.client_name && (
+                        <div className="space-y-0.5">
+                          <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
+                          {customerHrefByClientName(item.client_name, clientEmailMap) && (
+                            <Link
+                              to={customerHrefByClientName(item.client_name, clientEmailMap)!}
+                              className="text-[10px] text-primary hover:underline"
+                            >
+                              Klient 360°
+                            </Link>
+                          )}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                      )}
+                    </div>
+                    <Badge variant="outline" className={status?.color}>
+                      {status?.label}
+                    </Badge>
+                  </div>
+
+                  {item.url && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <a
+                        href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline truncate"
+                      >
+                        {item.url}
+                      </a>
+                    </div>
+                  )}
+
+                  {item.notes && (
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <FileText className="w-3.5 h-3.5 shrink-0" />
+                        Poznámka
+                      </div>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">{item.notes}</p>
+                    </div>
+                  )}
+
+                  {creds && (
+                    <Link
+                      to="/admin/passwords"
+                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                    >
+                      <KeyRound className="w-3 h-3" /> Prístupy v sekcii Heslá
+                    </Link>
+                  )}
+
+                  <CardActions item={item} onEdit={openEdit} onRemove={remove} updatedAt={item.updated_at} />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
       <EditDialog
         open={open}
-        onOpenChange={(o) => (o ? setOpen(true) : requestCloseEditDialog())}
+        onOpenChange={setOpen}
         editing={editing}
         setEditing={setEditing}
         editCredentials={editCredentials}
         setEditCredentials={setEditCredentials}
         onSave={save}
         mode={mode}
+        customerFieldError={customerFieldError}
+        onClearCustomerFieldError={() => setCustomerFieldError(null)}
       />
     </AdminShell>
+  );
+}
+
+function CardActions({
+  item,
+  onEdit,
+  onRemove,
+  updatedAt,
+}: {
+  item: ProjectNote;
+  onEdit: (item: Partial<ProjectNote>) => void;
+  onRemove: (id: string) => void;
+  updatedAt?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between pt-2 border-t border-border/50">
+      <span className="text-[10px] text-muted-foreground">
+        {updatedAt ? new Date(updatedAt).toLocaleDateString("sk-SK") : null}
+      </span>
+      <div className="flex gap-1">
+        <Button size="sm" variant="ghost" className="h-7 text-xs" asChild>
+          <Link to={`/admin/projects/${item.id}`}>Detail</Link>
+        </Button>
+        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(item)}>
+          <Pencil className="w-3.5 h-3.5" />
+        </Button>
+        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => onRemove(item.id)}>
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -588,6 +523,8 @@ function EditDialog({
   setEditCredentials,
   onSave,
   mode,
+  customerFieldError,
+  onClearCustomerFieldError,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -597,19 +534,24 @@ function EditDialog({
   setEditCredentials: (v: AccessCredential[]) => void;
   onSave: () => void;
   mode: ProjectNotesViewMode;
+  customerFieldError: string | null;
+  onClearCustomerFieldError: () => void;
 }) {
   if (!editing) return null;
   return (
     <AdminDialog
       open={open}
       onOpenChange={onOpenChange}
-      size="xl"
-      stickyFooter
+      size="lg"
       title={editing.id ? "Upraviť záznam" : mode === "passwords" ? "Nový prístup" : "Nový projekt"}
       footer={
         <>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Zrušiť</Button>
-          <Button onClick={onSave} className="w-full sm:w-auto">Uložiť</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+            Zrušiť
+          </Button>
+          <Button onClick={onSave} className="w-full sm:w-auto">
+            Uložiť
+          </Button>
         </>
       }
     >
@@ -627,10 +569,14 @@ function EditDialog({
                   customerEmail={editing.customer_email}
                   customerId={editing.customer_id}
                   leadId={editing.lead_id}
-                  onChange={({ client_name, customer_email, lead_id, customer_id }) =>
-                    setEditing({ ...editing, client_name, customer_email, lead_id, customer_id })
-                  }
+                  onChange={({ client_name, customer_email, lead_id, customer_id }) => {
+                    onClearCustomerFieldError();
+                    setEditing({ ...editing, client_name, customer_email, lead_id, customer_id });
+                  }}
                 />
+                {customerFieldError && (
+                  <p className="text-destructive text-xs mt-1">{customerFieldError}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label>Typ projektu</Label>

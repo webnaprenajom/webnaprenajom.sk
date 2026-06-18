@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import AiCalculatorWidget from "./AiCalculatorWidget";
 
-import heroVideoFile from "@/assets/hero-video-new.mp4";
+import heroVideoFile from "@/assets/hero-video-new2.mov";
 
 const HeroVideoPlayer = () => (
   <div className="relative rounded-2xl overflow-hidden w-full max-w-[90vw] sm:max-w-[460px] mx-auto aspect-[16/13.5] shadow-2xl shadow-primary/20 border border-primary/20">

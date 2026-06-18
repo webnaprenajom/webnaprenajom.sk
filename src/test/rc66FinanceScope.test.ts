@@ -14,34 +14,34 @@ const sampleCommissions = [
 ];
 
 describe("rc6.6 finance scope (negative cases)", () => {
-  const userCtx = {
-    role: "user" as const,
+  const administratorCtx = {
+    role: "administrator" as const,
     userId: "u1",
     implementerName: "Alice",
   };
 
-  it("role=user cannot access org-wide finance advanced tools", () => {
-    expect(canAccessFinanceAdvanced("user")).toBe(false);
-    expect(canAccessOperationalCrm("user")).toBe(false);
-    expect(canAccessFinanceAdvanced("admin")).toBe(true);
+  it("administrator cannot access org-wide finance advanced tools", () => {
+    expect(canAccessFinanceAdvanced("administrator")).toBe(false);
+    expect(canAccessOperationalCrm("administrator")).toBe(true);
+    expect(canAccessFinanceAdvanced("owner")).toBe(true);
   });
 
-  it("role=user sees only own implementer commissions", () => {
-    const scoped = filterCommissionsForUser(sampleCommissions, userCtx);
+  it("administrator sees only own implementer commissions", () => {
+    const scoped = filterCommissionsForUser(sampleCommissions, administratorCtx);
     expect(scoped).toHaveLength(2);
-    expect(scoped.every((r) => commissionVisibleToUser(r.implementer, userCtx))).toBe(true);
+    expect(scoped.every((r) => commissionVisibleToUser(r.implementer, administratorCtx))).toBe(true);
     expect(scoped.some((r) => r.implementer === "Bob")).toBe(false);
   });
 
-  it("role=user implementer totals exclude other implementers", () => {
-    const scoped = filterCommissionsForUser(sampleCommissions, userCtx);
+  it("administrator implementer totals exclude other implementers", () => {
+    const scoped = filterCommissionsForUser(sampleCommissions, administratorCtx);
     const totals = implementerTotalsFromCommissions(scoped);
     expect(totals.has("Bob")).toBe(false);
     expect(totals.has("Alice") || totals.has("alice")).toBe(true);
   });
 
-  it("admin sees all commission rows", () => {
-    const adminCtx = { role: "admin" as const, userId: "a1", implementerName: null };
-    expect(filterCommissionsForUser(sampleCommissions, adminCtx)).toHaveLength(3);
+  it("owner sees all commission rows", () => {
+    const ownerCtx = { role: "owner" as const, userId: "a1", implementerName: null };
+    expect(filterCommissionsForUser(sampleCommissions, ownerCtx)).toHaveLength(3);
   });
 });

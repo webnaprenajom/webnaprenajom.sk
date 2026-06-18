@@ -1,8 +1,13 @@
 /**
- * App RBAC helpers (Batch RC6).
+ * App RBAC helpers (Batch RC6 / Phase 4a owner-administrator).
  */
 
-export type AppRole = "admin" | "user";
+import { filterForUser, rowVisibleToUser } from "@/lib/rbac/scopeHelpers";
+
+export type AppRole = "owner" | "administrator";
+
+/** Legacy DB enum values kept for backward compat until all callers migrate. */
+export type LegacyAppRole = "admin" | "user";
 
 export type AccessContext = {
   role: AppRole | null;
@@ -10,24 +15,111 @@ export type AccessContext = {
   implementerName: string | null;
 };
 
+export type PermissionFlags = {
+  canAccessOperationalCrm: boolean;
+  canAccessFinanceAdvanced: boolean;
+  canSeeAllCommissions: boolean;
+  canAccessAdminDiagnostics: boolean;
+  canSeeAllClients: boolean;
+  canSeeAllLeads: boolean;
+  canSeeAllTasks: boolean;
+  canSeeAllHosting: boolean;
+  canSeeAllRentals: boolean;
+  canSeeAllProjects: boolean;
+  canSeeAllMarketing: boolean;
+  canSeeAllPasswords: boolean;
+  canSeeAllDesigns: boolean;
+};
+
+/** Normalize DB role row (owner/administrator or legacy admin/user). */
+export function normalizeAppRole(raw: string | null | undefined): AppRole | null {
+  if (raw === "owner" || raw === "admin") return "owner";
+  if (raw === "administrator" || raw === "user") return "administrator";
+  return null;
+}
+
+export function isOwner(role: AppRole | null): boolean {
+  return role === "owner";
+}
+
+export function isAdministrator(role: AppRole | null): boolean {
+  return role === "administrator";
+}
+
 export function isCrmUser(role: AppRole | null): boolean {
-  return role === "admin" || role === "user";
+  return role === "owner" || role === "administrator";
+}
+
+export function resolvePermissions(role: AppRole | null): PermissionFlags {
+  const all = isOwner(role);
+  const crm = isCrmUser(role);
+  return {
+    canAccessOperationalCrm: crm,
+    canAccessFinanceAdvanced: all,
+    canSeeAllCommissions: all,
+    canAccessAdminDiagnostics: all,
+    canSeeAllClients: all,
+    canSeeAllLeads: all,
+    canSeeAllTasks: all,
+    canSeeAllHosting: all,
+    canSeeAllRentals: all,
+    canSeeAllProjects: all,
+    canSeeAllMarketing: all,
+    canSeeAllPasswords: all,
+    canSeeAllDesigns: all,
+  };
 }
 
 export function canAccessSettings(role: AppRole | null): boolean {
-  return role === "admin";
+  return isOwner(role);
 }
 
 export function canManageUsers(role: AppRole | null): boolean {
-  return role === "admin";
+  return isOwner(role);
 }
 
 export function canSeeAllCommissions(role: AppRole | null): boolean {
-  return role === "admin";
+  return resolvePermissions(role).canSeeAllCommissions;
 }
 
 export function canAccessFinanceAdvanced(role: AppRole | null): boolean {
-  return role === "admin";
+  return resolvePermissions(role).canAccessFinanceAdvanced;
+}
+
+export function canSeeAllClients(role: AppRole | null): boolean {
+  return resolvePermissions(role).canSeeAllClients;
+}
+
+export function canSeeAllLeads(role: AppRole | null): boolean {
+  return resolvePermissions(role).canSeeAllLeads;
+}
+
+export function canSeeAllTasks(role: AppRole | null): boolean {
+  return resolvePermissions(role).canSeeAllTasks;
+}
+
+export function canSeeAllHosting(role: AppRole | null): boolean {
+  return resolvePermissions(role).canSeeAllHosting;
+}
+
+export function canSeeAllRentals(role: AppRole | null): boolean {
+  return resolvePermissions(role).canSeeAllRentals;
+}
+
+export function canSeeAllProjects(role: AppRole | null): boolean {
+  return resolvePermissions(role).canSeeAllProjects;
+}
+
+export function canSeeAllMarketing(role: AppRole | null): boolean {
+  return resolvePermissions(role).canSeeAllMarketing;
+}
+
+export function canSeeAllPasswords(role: AppRole | null): boolean {
+  return resolvePermissions(role).canSeeAllPasswords;
+}
+
+export function canSeeAllDesigns(role: AppRole | null): boolean {
+  return resolvePermissions(role).canSeeAllDesigns;
 }
 
 /** Match commission row to logged-in user (case-insensitive implementer name). */
@@ -35,9 +127,9 @@ export function commissionVisibleToUser(
   implementer: string | null | undefined,
   ctx: AccessContext,
 ): boolean {
-  if (ctx.role === "admin") return true;
-  if (ctx.role !== "user" || !ctx.implementerName) return false;
-  return (implementer || "").trim().toLowerCase() === ctx.implementerName.trim().toLowerCase();
+  if (isOwner(ctx.role)) return true;
+  if (!isAdministrator(ctx.role)) return false;
+  return rowVisibleToUser({ implementerName: implementer }, ctx);
 }
 
 export function filterCommissionsForUser<T extends { implementer?: string | null }>(
@@ -45,7 +137,7 @@ export function filterCommissionsForUser<T extends { implementer?: string | null
   ctx: AccessContext,
 ): T[] {
   if (canSeeAllCommissions(ctx.role)) return rows;
-  return rows.filter((r) => commissionVisibleToUser(r.implementer, ctx));
+  return filterForUser(rows, ctx, (row) => ({ implementerName: row.implementer }));
 }
 
 export function commissionTotalsFromRows(
@@ -78,17 +170,17 @@ export function implementerTotalsFromCommissions(
   return map;
 }
 
-/** Role=user without team_profiles.implementer_name — RLS hides all commissions. */
+/** Role=administrator without team_profiles.implementer_name — RLS hides all commissions. */
 export function userMissingTeamProfile(ctx: AccessContext): boolean {
-  return ctx.role === "user" && !ctx.implementerName?.trim();
+  return isAdministrator(ctx.role) && !ctx.implementerName?.trim();
 }
 
 export function canAccessOperationalCrm(role: AppRole | null): boolean {
-  return role === "admin";
+  return resolvePermissions(role).canAccessOperationalCrm;
 }
 
 export function canAccessAdminDiagnostics(role: AppRole | null): boolean {
-  return role === "admin";
+  return resolvePermissions(role).canAccessAdminDiagnostics;
 }
 
 export type ScopedEmptyReason = "no_data" | "missing_profile" | "scoped_empty";
@@ -106,7 +198,7 @@ export function resolveScopedCommissionEmpty(ctx: AccessContext): {
         "Správca musí v Nastaveniach → Správa používateľov prepojiť váš účet s menom realizátora (team profile). Bez toho systém nevie, ktoré provízie vám zobraziť.",
     };
   }
-  if (ctx.role === "user") {
+  if (isAdministrator(ctx.role)) {
     return {
       reason: "scoped_empty",
       title: "Zatiaľ žiadne vaše provízie",

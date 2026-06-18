@@ -31,6 +31,9 @@ const emptyData = (overrides: Partial<CustomerWorkbenchData> = {}): CustomerWork
   costRecords: [],
   payoutRecords: [],
   rentalPayments: [],
+  paymentRecordsError: null,
+  costRecordsError: null,
+  payoutRecordsError: null,
   ...overrides,
 });
 
@@ -402,6 +405,33 @@ describe("computeCustomerFinanceSummary", () => {
     expect(finance.netProfitCanShow).toBe(false);
     expect(finance.netProfit).toBeNull();
     expect(finance.paidCommissionsByImplementer).toEqual([]);
+  });
+
+  it("does not show profit when costs exist but payment_records are missing", () => {
+    const data = emptyData({
+      costRecords: [
+        {
+          id: "c1",
+          source_table: null,
+          source_id: null,
+          category: "hosting",
+          vendor: "Wedos",
+          client_name: "X",
+          rental_website_id: null,
+          amount: 40,
+          currency: "EUR",
+          paid_at: "2026-05-01",
+          incurred_at: "2026-05-01",
+          reference: null,
+          note: null,
+          truth_level: "cost_fact",
+        },
+      ],
+    });
+    const finance = computeCustomerFinanceSummary(data);
+    expect(finance.costsTotal).toBe(40);
+    expect(finance.grossProfit.canShowProfit).toBe(false);
+    expect(finance.grossProfit.status).toBe("cost_without_revenue");
   });
 });
 

@@ -244,9 +244,10 @@ export function computeCustomerFinanceSummary(
 
   const grossProfit = resolveProfitDisplayContext({
     entityKind: "customer",
-    revenueKnown: true,
+    revenueKnown: data.paymentRecords.length > 0,
     revenue: paymentsReceivedTotal,
     operatingCost: costsTotal,
+    paymentRecordCount: data.paymentRecords.length,
   });
 
   const payoutByImplementer = new Map<string, CommissionPayout>();

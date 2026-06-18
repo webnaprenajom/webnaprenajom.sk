@@ -11,7 +11,7 @@ export async function precheckDestructiveDelete(
   entityType: DestructiveEntityType,
   entityId: string,
 ): Promise<{ impact: DestructiveImpactSummary | null; error: string | null }> {
-  const { data, error } = await (supabase.rpc as unknown as (fn: string, args: unknown) => Promise<{ data: unknown; error: { message: string } | null }>)("admin_precheck_destructive_delete", {
+  const { data, error } = await supabase.rpc("admin_precheck_destructive_delete", {
     p_entity_type: entityType,
     p_entity_id: entityId,
   });
@@ -32,7 +32,7 @@ export async function executeDestructiveDelete(
   entityId: string,
   options: Record<string, unknown> = {},
 ): Promise<{ result: DestructiveDeleteResult | null; error: string | null }> {
-  const { data, error } = await (supabase.rpc as unknown as (fn: string, args: unknown) => Promise<{ data: unknown; error: { message: string } | null }>)("admin_execute_destructive_delete", {
+  const { data, error } = await supabase.rpc("admin_execute_destructive_delete", {
     p_entity_type: entityType,
     p_entity_id: entityId,
     p_options: options,

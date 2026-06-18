@@ -24,7 +24,6 @@ import { COMMISSION_STATUS_LABELS } from "@/lib/finance/labels";
 import { paymentFormLabel } from "@/lib/paymentForm";
 import { resolveCustomerLinkFields } from "@/lib/crmLookup/customers";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
-import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import {
   CommissionFormFields,
   type CommissionFormState,
@@ -95,16 +94,6 @@ export function EntityCommissionsPanel({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm(defaultTitle));
-
-  const commissionFormGuard = useUnsavedChangesGuard({
-    isOpen: dialogOpen,
-    current: form,
-  });
-
-  const requestCloseCommissionDialog = () => {
-    if (!commissionFormGuard.confirmDiscard()) return;
-    setDialogOpen(false);
-  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -382,11 +371,11 @@ export function EntityCommissionsPanel({
 
       <AdminDialog
         open={dialogOpen}
-        onOpenChange={(o) => (o ? setDialogOpen(true) : requestCloseCommissionDialog())}
+        onOpenChange={setDialogOpen}
         title={form.id ? "Upraviť províziu" : "Nová provízia"}
         footer={
           <>
-            <Button variant="outline" onClick={requestCloseCommissionDialog} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
               Zrušiť
             </Button>
             <Button onClick={save} disabled={saving} className="w-full sm:w-auto">

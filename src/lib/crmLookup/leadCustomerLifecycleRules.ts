@@ -9,8 +9,15 @@ function isCustomerUuid(value: string | null | undefined): boolean {
   return UUID_RE.test(value.trim());
 }
 
-/** Statuses that represent a realized / won business relationship. */
-export const LEAD_CUSTOMER_PROMOTION_STATUSES: readonly LeadStatus[] = ["won", "order"];
+/** Statuses that require a linked or creatable customer before save. */
+export const LEAD_CUSTOMER_REQUIRED_STATUSES: readonly LeadStatus[] = [
+  "scheduled",
+  "won",
+  "order",
+];
+
+/** @deprecated Use LEAD_CUSTOMER_REQUIRED_STATUSES — kept for backward-compatible imports. */
+export const LEAD_CUSTOMER_PROMOTION_STATUSES = LEAD_CUSTOMER_REQUIRED_STATUSES;
 
 export type LeadCustomerLinkReason =
   | "already_linked"
@@ -22,8 +29,12 @@ export type LeadCustomerLinkReason =
   | "update_failed"
   | "promoted";
 
+export function shouldRequireLeadCustomer(status: string): boolean {
+  return (LEAD_CUSTOMER_REQUIRED_STATUSES as readonly string[]).includes(status);
+}
+
 export function shouldPromoteLeadToCustomer(status: string): boolean {
-  return (LEAD_CUSTOMER_PROMOTION_STATUSES as readonly string[]).includes(status);
+  return shouldRequireLeadCustomer(status);
 }
 
 export function hasStrongCustomerIdentity(input: {

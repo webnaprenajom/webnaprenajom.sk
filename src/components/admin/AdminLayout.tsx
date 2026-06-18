@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -15,7 +15,7 @@ import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
-import { ArrowLeft, Loader2, LogOut, RefreshCw, ShieldAlert } from "lucide-react";
+import { Loader2, LogOut, ShieldAlert } from "lucide-react";
 
 export interface AdminLayoutProps {
   title?: string;
@@ -34,8 +34,6 @@ export function AdminLayout({
   hidePageHeader = false,
 }: AdminLayoutProps) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const canGoBack = location.pathname !== "/admin" && location.pathname !== "/admin/";
   const { authChecking, isCrmUser, isAdmin, userEmail, userId } = useAdminAccess();
 
   useEffect(() => {
@@ -80,7 +78,7 @@ export function AdminLayout({
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon" forceStatic>
+      <Sidebar collapsible="icon">
         <SidebarHeader className="border-b border-sidebar-border p-3">
           <button
             type="button"
@@ -110,38 +108,16 @@ export function AdminLayout({
         <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/95 backdrop-blur px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1 min-w-0" />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9"
-            title="Obnoviť stránku"
-            onClick={() => window.location.reload()}
-          >
-            <RefreshCw className="w-4 h-4" />
-          </Button>
           <NotificationBell />
           <AdminThemeToggle />
         </header>
         {!hidePageHeader && title && (
           <div className="border-b border-border/60 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2 min-w-0">
-              {canGoBack && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 shrink-0 -ml-1"
-                  onClick={() => navigate(-1)}
-                  title="Späť"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold truncate">{title}</h1>
+              {subtitle && (
+                <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
               )}
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl font-bold truncate">{title}</h1>
-                {subtitle && (
-                  <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
-                )}
-              </div>
             </div>
             {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
           </div>

@@ -227,22 +227,6 @@ const LeadsTable = ({
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-0.5">
-                        {lead.assigned_to && (
-                          <span
-                            title={`Realizátor: ${lead.assigned_to}`}
-                            className={`inline-flex items-center justify-center h-5 w-5 rounded-full text-[9px] font-bold text-white shrink-0 ${
-                              lead.assigned_to === "Peter"
-                                ? "bg-sky-500"
-                                : lead.assigned_to === "Maroš"
-                                  ? "bg-emerald-500"
-                                  : lead.assigned_to === "Matuš"
-                                    ? "bg-violet-500"
-                                    : "bg-slate-500"
-                            }`}
-                          >
-                            {lead.assigned_to.trim().charAt(0).toUpperCase()}
-                          </span>
-                        )}
                         {lead.email && (
                           <Link
                             to={`/admin/customer/${encodeURIComponent(lead.email.trim().toLowerCase())}`}

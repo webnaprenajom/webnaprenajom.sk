@@ -256,22 +256,17 @@ const AiCalculatorWidget = ({
         {step === 0 && (
           <motion.div key="s0" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-3">
             <h4 className="font-semibold mb-3">Aký typ webu potrebuješ?</h4>
-            <div className="grid sm:grid-cols-2 gap-2.5">
-              {websiteTypes.map((t) => {
-                const active = websiteType === t.id;
-                return (
-                  <button key={t.id} onClick={() => { setWebsiteType(t.id); setTimeout(() => setStep(1), 180); }}
-                    className={`group relative flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all overflow-hidden ${active ? "border-primary bg-primary/10 shadow-[0_6px_24px_-12px_hsl(var(--primary)/0.6)]" : "border-border/70 bg-card hover:border-primary/50 hover:shadow-[0_6px_24px_-16px_hsl(var(--primary)/0.45)]"}`}>
-                    <span className={`relative flex items-center justify-center w-11 h-11 rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-105 ${active ? "bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/30" : "bg-gradient-to-br from-primary/90 to-accent/90 shadow-md shadow-primary/20"}`}>
-                      <t.icon className="w-5 h-5 text-white" strokeWidth={2.2} />
-                    </span>
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold">{t.title}</div>
-                      <div className="text-xs text-muted-foreground">{t.desc}</div>
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="grid sm:grid-cols-2 gap-2">
+              {websiteTypes.map((t) => (
+                <button key={t.id} onClick={() => { setWebsiteType(t.id); setTimeout(() => setStep(1), 180); }}
+                  className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${websiteType === t.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}>
+                  <t.icon className="w-5 h-5 text-primary flex-shrink-0" />
+                  <div>
+                    <div className="text-sm font-semibold">{t.title}</div>
+                    <div className="text-xs text-muted-foreground">{t.desc}</div>
+                  </div>
+                </button>
+              ))}
             </div>
           </motion.div>
         )}
@@ -281,19 +276,14 @@ const AiCalculatorWidget = ({
             <h4 className="font-semibold mb-3">
               {websiteType === "company" ? "Aký typ firemného webu potrebuješ?" : "Pre koho je tvoj biznis?"}
             </h4>
-            <div className="grid sm:grid-cols-2 gap-2.5">
-              {(websiteType === "company" ? companySubtypes : audiences).map((a) => {
-                const active = audience === a.id;
-                return (
-                  <button key={a.id} onClick={() => { setAudience(a.id); setTimeout(() => setStep(2), 180); }}
-                    className={`group flex items-center gap-3 p-3.5 rounded-xl border text-left transition-all ${active ? "border-primary bg-primary/10 shadow-[0_6px_24px_-12px_hsl(var(--primary)/0.6)]" : "border-border/70 bg-card hover:border-primary/50"}`}>
-                    <span className={`flex items-center justify-center w-10 h-10 rounded-xl shrink-0 transition-transform duration-300 group-hover:scale-105 ${active ? "bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/30" : "bg-gradient-to-br from-primary/90 to-accent/90 shadow-md shadow-primary/20"}`}>
-                      <a.icon className="w-5 h-5 text-white" strokeWidth={2.2} />
-                    </span>
-                    <span className="text-sm font-medium">{a.label}</span>
-                  </button>
-                );
-              })}
+            <div className="grid sm:grid-cols-2 gap-2">
+              {(websiteType === "company" ? companySubtypes : audiences).map((a) => (
+                <button key={a.id} onClick={() => { setAudience(a.id); setTimeout(() => setStep(2), 180); }}
+                  className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${audience === a.id ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}>
+                  <a.icon className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span className="text-sm font-medium">{a.label}</span>
+                </button>
+              ))}
             </div>
           </motion.div>
         )}
@@ -303,18 +293,13 @@ const AiCalculatorWidget = ({
             <h4 className="font-semibold mb-1">Ktoré funkcie chceš mať?</h4>
             <p className="text-xs text-muted-foreground mb-3">Vyber jednu alebo viac.</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[320px] overflow-y-auto pr-1">
-              {features.map((f) => {
-                const active = selectedFeatures.includes(f.id);
-                return (
-                  <button key={f.id} onClick={() => toggleFeature(f.id)}
-                    className={`p-3 rounded-xl border text-left transition-all ${active ? "border-primary bg-primary/10 shadow-[0_6px_20px_-12px_hsl(var(--primary)/0.5)]" : "border-border/70 bg-card hover:border-primary/50"}`}>
-                    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg mb-2 transition-transform ${active ? "bg-gradient-to-br from-primary to-accent shadow-md shadow-primary/30" : "bg-gradient-to-br from-primary/85 to-accent/85"}`}>
-                      <f.icon className="w-4 h-4 text-white" strokeWidth={2.2} />
-                    </span>
-                    <div className="text-xs font-semibold leading-tight">{f.title}</div>
-                  </button>
-                );
-              })}
+              {features.map((f) => (
+                <button key={f.id} onClick={() => toggleFeature(f.id)}
+                  className={`p-2.5 rounded-lg border text-left transition-all ${selectedFeatures.includes(f.id) ? "border-primary bg-primary/10" : "border-border hover:border-primary/40"}`}>
+                  <f.icon className="w-4 h-4 text-primary mb-1" />
+                  <div className="text-xs font-semibold leading-tight">{f.title}</div>
+                </button>
+              ))}
             </div>
           </motion.div>
         )}
