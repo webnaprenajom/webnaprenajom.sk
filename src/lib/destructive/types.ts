@@ -198,6 +198,24 @@ export function parseImpactSummary(raw: unknown): DestructiveImpactSummary | nul
   };
 }
 
+export type LeadDeleteExecuteCounts = {
+  deleted_lead_id: string;
+  detached_tasks_count: number;
+  detached_project_notes_count: number;
+};
+
+export function parseLeadDeleteExecuteCounts(
+  result: DestructiveDeleteResult,
+): LeadDeleteExecuteCounts | null {
+  if (result.entity_type !== "lead" || !result.ok) return null;
+  const detached = result.detached;
+  return {
+    deleted_lead_id: result.entity_id,
+    detached_tasks_count: Number(detached.tasks ?? 0),
+    detached_project_notes_count: Number(detached.project_notes ?? 0),
+  };
+}
+
 export function parseDeleteResult(raw: unknown): DestructiveDeleteResult | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;

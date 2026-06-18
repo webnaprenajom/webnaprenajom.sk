@@ -4,6 +4,7 @@ import {
   isLeadDeleteRisky,
   parseDeleteResult,
   parseImpactSummary,
+  parseLeadDeleteExecuteCounts,
   parseLeadImpact,
   sectionActionLabel,
 } from "@/lib/destructive/types";
@@ -58,6 +59,46 @@ describe("parseDeleteResult", () => {
     });
     expect(result?.ok).toBe(true);
     expect(result?.deleted.hosting_records).toBe(1);
+  });
+
+  it("parses lead execute result with detach counts", () => {
+    const result = parseDeleteResult({
+      ok: true,
+      entity_type: "lead",
+      entity_id: "lead-uuid-1",
+      deleted: { leads: 1 },
+      detached: { tasks: 3, project_notes: 1 },
+    });
+    expect(result?.entity_type).toBe("lead");
+    expect(result?.deleted.leads).toBe(1);
+
+    const counts = parseLeadDeleteExecuteCounts(result!);
+    expect(counts?.deleted_lead_id).toBe("lead-uuid-1");
+    expect(counts?.detached_tasks_count).toBe(3);
+    expect(counts?.detached_project_notes_count).toBe(1);
+  });
+
+  it("parseLeadDeleteExecuteCounts returns null for non-lead entities", () => {
+    const result = parseDeleteResult({
+      ok: true,
+      entity_type: "customer",
+      entity_id: "c1",
+      deleted: { customers: 1 },
+      detached: {},
+    });
+    expect(parseLeadDeleteExecuteCounts(result!)).toBeNull();
+  });
+
+  it("customer/hosting/rental delete result contract unchanged", () => {
+    const rental = parseDeleteResult({
+      ok: true,
+      entity_type: "rental_website",
+      entity_id: "r1",
+      deleted: { rental_websites: 1, rental_payments: 2 },
+      detached: { commissions: 1 },
+    });
+    expect(rental?.detached.commissions).toBe(1);
+    expect(parseLeadDeleteExecuteCounts(rental!)).toBeNull();
   });
 });
 
