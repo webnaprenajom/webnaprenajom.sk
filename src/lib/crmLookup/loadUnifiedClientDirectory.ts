@@ -12,6 +12,7 @@ export async function loadUnifiedClientDirectory(
   limit = 24,
 ): Promise<{ entries: UnifiedClientEntry[]; error: string | null }> {
   const seeds: UnifiedClientSeed[] = [];
+  const errors: string[] = [];
 
   const [customersRes, projectsRes, hostingRes, rentalsRes, leadsRes] = await Promise.all([
     supabase
@@ -21,12 +22,24 @@ export async function loadUnifiedClientDirectory(
       .limit(limit),
     supabase.from("project_notes").select("customer_id,customer_email,client_name"),
     supabase.from("hosting_records").select("customer_id,customer_email,client_name"),
+    // ponytail: `customer_email` chýba v generovanom `rental_websites` Row — cast dočasne, upgrade = regen types.ts
     (supabase as any).from("rental_websites").select("client_name,customer_id,customer_email"),
     supabase.from("leads").select("id,name,email,customer_id"),
   ]);
 
   if (customersRes.error) {
     return { entries: [], error: customersRes.error.message };
+  }
+
+  for (const { table, result } of [
+    { table: "project_notes", result: projectsRes },
+    { table: "hosting_records", result: hostingRes },
+    { table: "rental_websites", result: rentalsRes },
+    { table: "leads", result: leadsRes },
+  ] as const) {
+    if (result.error) {
+      errors.push(`${table}: ${result.error.message}`);
+    }
   }
 
   for (const p of projectsRes.data || []) {
@@ -94,7 +107,7 @@ export async function loadUnifiedClientDirectory(
     return a.displayName.localeCompare(b.displayName, "sk");
   });
 
-  return { entries, error: null };
+  return { entries, error: errors.length > 0 ? errors.join("; ") : null };
 }
 
 /** Lookup helper — match rental rows to unified entry by normalized name. */

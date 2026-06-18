@@ -52,6 +52,10 @@ export default function AdminClients() {
     const { entries, error: dirError } = await loadUnifiedClientDirectory(24);
     if (dirError) {
       setError(dirError);
+    } else {
+      setError(null);
+    }
+    if (entries.length === 0 && dirError) {
       setDirectory([]);
       setDirectoryLoading(false);
       return;
@@ -66,7 +70,7 @@ export default function AdminClients() {
     if (isAdministrator(accessCtx.role)) {
       const [leadsRes, rentalsRes] = await Promise.all([
         supabase.from("leads").select("id, assigned_to, customer_id"),
-        (supabase as any).from("rental_websites").select("id, customer_id, implementers"),
+        supabase.from("rental_websites").select("id, customer_id, implementers"),
       ]);
       const myLeadCustomerIds = filterLeadsForUser(leadsRes.data || [], accessCtx)
         .map((l) => l.customer_id)

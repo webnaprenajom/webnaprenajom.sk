@@ -86,42 +86,6 @@ export function canAccessFinanceAdvanced(role: AppRole | null): boolean {
   return resolvePermissions(role).canAccessFinanceAdvanced;
 }
 
-export function canSeeAllClients(role: AppRole | null): boolean {
-  return resolvePermissions(role).canSeeAllClients;
-}
-
-export function canSeeAllLeads(role: AppRole | null): boolean {
-  return resolvePermissions(role).canSeeAllLeads;
-}
-
-export function canSeeAllTasks(role: AppRole | null): boolean {
-  return resolvePermissions(role).canSeeAllTasks;
-}
-
-export function canSeeAllHosting(role: AppRole | null): boolean {
-  return resolvePermissions(role).canSeeAllHosting;
-}
-
-export function canSeeAllRentals(role: AppRole | null): boolean {
-  return resolvePermissions(role).canSeeAllRentals;
-}
-
-export function canSeeAllProjects(role: AppRole | null): boolean {
-  return resolvePermissions(role).canSeeAllProjects;
-}
-
-export function canSeeAllMarketing(role: AppRole | null): boolean {
-  return resolvePermissions(role).canSeeAllMarketing;
-}
-
-export function canSeeAllPasswords(role: AppRole | null): boolean {
-  return resolvePermissions(role).canSeeAllPasswords;
-}
-
-export function canSeeAllDesigns(role: AppRole | null): boolean {
-  return resolvePermissions(role).canSeeAllDesigns;
-}
-
 /** Match commission row to logged-in user (case-insensitive implementer name). */
 export function commissionVisibleToUser(
   implementer: string | null | undefined,

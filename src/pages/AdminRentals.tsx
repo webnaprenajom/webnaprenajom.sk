@@ -235,10 +235,18 @@ export default function AdminRentals() {
         supabase.from("cost_records").select("amount").eq("rental_website_id", financeTargetId),
       ]);
       if (cancelled) return;
+      if (payRes.error || costRes.error) {
+        const msg = [payRes.error?.message, costRes.error?.message].filter(Boolean).join("; ");
+        toast({
+          title: "Chyba načítania financií prenájmu",
+          description: msg,
+          variant: "destructive",
+        });
+      }
       setRentalFinance({
         websiteId: financeTargetId,
-        paymentRecords: (payRes.data ?? []) as Array<{ amount: number }>,
-        costRecords: (costRes.data ?? []) as Array<{ amount: number }>,
+        paymentRecords: (payRes.error ? [] : payRes.data ?? []) as Array<{ amount: number }>,
+        costRecords: (costRes.error ? [] : costRes.data ?? []) as Array<{ amount: number }>,
       });
     })();
     return () => {
@@ -248,20 +256,40 @@ export default function AdminRentals() {
 
   const loadAll = async () => {
     const [w, p, leadsRes, commRes] = await Promise.all([
-      (supabase as any).from("rental_websites").select("*").order("created_at", { ascending: false }),
+      supabase.from("rental_websites").select("*").order("created_at", { ascending: false }),
       (supabase as any).from("rental_payments").select("*"),
       supabase.from("leads").select("name,email"),
       supabase.from("commissions").select("id,title,date,amount,payment_status,note,payment_form,implementer,source_type,source_id,customer_email"),
     ]);
-    if (w.data) {
+    if (w.error) {
+      toast({
+        title: "Chyba načítania prenájmov",
+        description: w.error.message,
+        variant: "destructive",
+      });
+    } else if (w.data) {
       const raw = (w.data as any[]).map((r) => ({
         ...r,
         implementers: normalizeImplementers(r?.implementers),
       })) as RentalWebsite[];
       setWebsites(filterRentalsForUser(raw, accessCtx));
     }
-    if (p.data) setPayments(p.data as RentalPayment[]);
-    if (!leadsRes.error && leadsRes.data) {
+    if (p.error) {
+      toast({
+        title: "Chyba načítania platieb prenájmov",
+        description: p.error.message,
+        variant: "destructive",
+      });
+    } else if (p.data) {
+      setPayments(p.data as RentalPayment[]);
+    }
+    if (leadsRes.error) {
+      toast({
+        title: "Chyba načítania leadov",
+        description: leadsRes.error.message,
+        variant: "destructive",
+      });
+    } else if (leadsRes.data) {
       setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
     }
     if (!commRes.error && commRes.data) {

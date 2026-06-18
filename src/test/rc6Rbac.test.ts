@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   canAccessSettings,
-  canSeeAllClients,
   commissionTotalsFromRows,
   commissionVisibleToUser,
   filterCommissionsForUser,
@@ -28,7 +27,6 @@ describe("rc6 RBAC", () => {
     expect(perms.canAccessFinanceAdvanced).toBe(true);
     expect(perms.canSeeAllCommissions).toBe(true);
     expect(perms.canSeeAllClients).toBe(true);
-    expect(canSeeAllClients("owner")).toBe(true);
     expect(isOwner("owner")).toBe(true);
   });
 
