@@ -4,6 +4,15 @@ import LeadBulkBar from "@/components/admin/leads/LeadBulkBar";
 import LeadsToolbar from "@/components/admin/leads/LeadsToolbar";
 import LeadsTable from "@/components/admin/leads/LeadsTable";
 import LeadDetailDialog from "@/components/admin/leads/LeadDetailDialog";
+import { useCrmDraft } from "@/hooks/useCrmDraft";
+import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
+import {
+  applyLeadFormDraft,
+  leadToFormDraft,
+  snapshotLeadFormState,
+  type LeadFormDraft,
+} from "@/lib/crmPersistence/leadFormDraft";
 import {
   ARCHIVE_STATUSES,
   ASSIGNEES,
@@ -126,6 +135,7 @@ const Admin = () => {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [viewMode, setViewMode] = useState<ViewMode>("current");
   const [selected, setSelected] = useState<Lead | null>(null);
+  const [leadBaseline, setLeadBaseline] = useState<LeadFormDraft | null>(null);
   const [editNotes, setEditNotes] = useState("");
   const [editStatus, setEditStatus] = useState<LeadStatus>("new");
   const [editType, setEditType] = useState<string>("ai");
@@ -293,53 +303,144 @@ const Admin = () => {
 
   const handleSignOut = () => confirmAdminSignOut(navigate);
 
-  const openLead = (lead: Lead) => {
-    setSelected(lead);
-    setEditNotes(lead.notes || "");
-    setEditStatus(lead.status);
-    setEditType(lead.type);
-    setEditSource(lead.source || "");
-    setEditName(lead.name || "");
-    setEditEmail(lead.email || "");
-    setEditPhone(lead.phone || "");
-    setEditTemperature(lead.temperature ?? null);
-    setEditAssigned(lead.assigned_to || "");
-    setEditAmount(lead.amount != null ? String(lead.amount) : "");
-    setEditConsultDate(lead.consultation_date ? new Date(lead.consultation_date) : undefined);
-    setEditConsultTime(lead.consultation_time || "");
-    setEditFollowUpDate(lead.follow_up_date ? new Date(lead.follow_up_date) : undefined);
-    setEditCreatedAt(lead.created_at ? new Date(lead.created_at) : undefined);
-    setEditCustomerId(lead.customer_id ?? null);
-    setLeadCustomerError(null);
-  };
+  const leadFormSetters = useMemo(
+    () => ({
+      setEditNotes,
+      setEditStatus,
+      setEditType,
+      setEditSource,
+      setEditName,
+      setEditEmail,
+      setEditPhone,
+      setEditTemperature,
+      setEditAssigned,
+      setEditAmount,
+      setEditConsultDate,
+      setEditConsultTime,
+      setEditFollowUpDate,
+      setEditCreatedAt,
+      setEditCustomerId,
+    }),
+    [],
+  );
 
-  // Open lead when navigated with ?lead=<id> (e.g. from notification quick action)
+  const openLead = useCallback(
+    (lead: Lead) => {
+      const baseline = leadToFormDraft(lead);
+      applyLeadFormDraft(baseline, leadFormSetters);
+      setLeadBaseline(baseline);
+      setSelected(lead);
+      setLeadCustomerError(null);
+    },
+    [leadFormSetters],
+  );
+
+  const closeLeadModal = useCallback(() => {
+    setLeadCustomerError(null);
+    setSelected(null);
+    setLeadBaseline(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete("lead");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const leadFormSnapshot = useMemo(
+    () =>
+      snapshotLeadFormState({
+        editNotes,
+        editStatus,
+        editType,
+        editSource,
+        editName,
+        editEmail,
+        editPhone,
+        editTemperature,
+        editAssigned,
+        editAmount,
+        editConsultDate,
+        editConsultTime,
+        editFollowUpDate,
+        editCreatedAt,
+        editCustomerId,
+      }),
+    [
+      editNotes,
+      editStatus,
+      editType,
+      editSource,
+      editName,
+      editEmail,
+      editPhone,
+      editTemperature,
+      editAssigned,
+      editAmount,
+      editConsultDate,
+      editConsultTime,
+      editFollowUpDate,
+      editCreatedAt,
+      editCustomerId,
+    ],
+  );
+
+  const applyLeadDraft = useCallback(
+    (draft: LeadFormDraft) => applyLeadFormDraft(draft, leadFormSetters),
+    [leadFormSetters],
+  );
+
+  const { discardDraft: discardLeadDraft } = useCrmDraft({
+    modalId: "lead-detail",
+    route: "/admin",
+    entityId: selected?.id ?? "new",
+    isActive: !!selected,
+    data: leadFormSnapshot,
+    baseline: leadBaseline,
+    onRestore: applyLeadDraft,
+  });
+
+  useCrmViewRestore({
+    route: "/admin",
+    modalId: "lead-detail",
+    entityId: selected?.id ?? null,
+    isModalOpen: !!selected,
+    query: selected ? { lead: selected.id } : undefined,
+    enabled: !loading && !!userId,
+    onRestore: (state) => {
+      if (selected || !state.entityId) return;
+      const target = leads.find((l) => l.id === state.entityId);
+      if (target) openLead(target);
+    },
+  });
+
+  // Open lead from ?lead=<id> (deep link + restore)
   useEffect(() => {
     const leadId = searchParams.get("lead");
     if (!leadId || leads.length === 0) return;
     if (selected?.id === leadId) return;
     const target = leads.find((l) => l.id === leadId);
-    if (target) {
-      openLead(target);
-      // strip the param so re-open is possible after close
-      searchParams.delete("lead");
-      setSearchParams(searchParams, { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, leads]);
+    if (target) openLead(target);
+  }, [searchParams, leads, selected?.id, openLead]);
 
-  const handleSave = async () => {
+  // Keep ?lead= while detail modal is open (tab restore)
+  useEffect(() => {
     if (!selected) return;
+    const next = new URLSearchParams(searchParams);
+    if (next.get("lead") === selected.id) return;
+    next.set("lead", selected.id);
+    setSearchParams(next, { replace: true });
+  }, [selected, searchParams, setSearchParams]);
+
+  const handleSave = async (): Promise<boolean> => {
+    if (!selected) return true;
     if (!editName.trim() || !editEmail.trim()) {
       toast({ title: "Chýbajú údaje", description: "Meno a e-mail sú povinné", variant: "destructive" });
-      return;
+      return false;
     }
     setSaving(true);
     const parsedAmount = editAmount.trim() === "" ? null : Number(editAmount.replace(",", "."));
     if (parsedAmount !== null && Number.isNaN(parsedAmount)) {
       setSaving(false);
       toast({ title: "Neplatná suma", description: "Zadaj číselnú hodnotu", variant: "destructive" });
-      return;
+      return false;
     }
 
     const prepared = await prepareLeadCustomerForSave({
@@ -353,7 +454,7 @@ const Admin = () => {
       setLeadCustomerError(prepared.message);
       toast({ title: prepared.message, variant: "destructive" });
       setSaving(false);
-      return;
+      return false;
     }
 
     const resolvedCustomerId = prepared.customer_id ?? editCustomerId ?? selected.customer_id ?? null;
@@ -382,7 +483,7 @@ const Admin = () => {
     if (error) {
       setSaving(false);
       toast({ title: "Uloženie zlyhalo", description: error.message, variant: "destructive" });
-      return;
+      return false;
     }
 
     const linkResult = await ensureLeadCustomerLink({
@@ -451,9 +552,19 @@ const Admin = () => {
       )
     );
     setLeadCustomerError(null);
-    setSelected(null);
+    discardLeadDraft();
+    closeLeadModal();
     setSaving(false);
+    return true;
   };
+
+  const leadCloseGuard = useAdminCloseGuard({
+    isOpen: !!selected,
+    current: leadFormSnapshot,
+    onSave: handleSave,
+    onDiscard: discardLeadDraft,
+    saving,
+  });
 
   const setLeadTemperature = async (lead: Lead, temp: "hot" | "neutral" | "cold") => {
     // Toggle: clicking the same temperature clears it
@@ -1284,18 +1395,16 @@ const Admin = () => {
         />
       </div>
 
-      {/* Lead detail dialog */}
+      {leadCloseGuard.closeGuardDialog}
       <LeadDetailDialog
         open={!!selected}
         onOpenChange={(o) => {
-          if (!o) {
-            setLeadCustomerError(null);
-            setSelected(null);
-          }
+          if (!o) leadCloseGuard.handleOpenChange(o, closeLeadModal);
         }}
+        onRequestClose={() => leadCloseGuard.requestClose(closeLeadModal)}
         selected={selected}
         saving={saving}
-        onSave={handleSave}
+        onSave={() => void handleSave()}
         editName={editName} setEditName={setEditName}
         editEmail={editEmail} setEditEmail={setEditEmail}
         editPhone={editPhone} setEditPhone={setEditPhone}

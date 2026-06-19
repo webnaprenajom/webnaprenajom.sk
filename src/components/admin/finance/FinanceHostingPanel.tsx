@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState, useCallback, useEffect, type ReactNode } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AdminDialog } from "@/components/admin/AdminDialog";
+import { AdminLongTextField } from "@/components/admin/AdminLongTextField";
+import { useCrmDraft } from "@/hooks/useCrmDraft";
+import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
@@ -58,13 +62,66 @@ const emptyForm = () => ({
 
 export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({ onSuccess: onSaved });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm());
+  const [formBaseline, setFormBaseline] = useState(emptyForm());
   const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
   const [paymentDraft, setPaymentDraft] = useState<FactDraft | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
+
+  const closeHostingDialog = useCallback(() => {
+    setDialogOpen(false);
+    setCustomerFieldError(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete("hosting");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const openHostingDialog = useCallback(() => {
+    const blank = emptyForm();
+    setFormBaseline(blank);
+    setForm(blank);
+    setCustomerFieldError(null);
+    setDialogOpen(true);
+  }, []);
+
+  const { discardDraft: discardHostingDraft } = useCrmDraft({
+    modalId: "hosting-create",
+    route: "/admin/hosting",
+    entityId: "new",
+    isActive: dialogOpen,
+    data: form,
+    baseline: formBaseline,
+    onRestore: (draft) => setForm(draft as ReturnType<typeof emptyForm>),
+  });
+
+  useCrmViewRestore({
+    route: "/admin/hosting",
+    modalId: "hosting-create",
+    entityId: dialogOpen ? "new" : null,
+    isModalOpen: dialogOpen,
+    query: dialogOpen ? { hosting: "new" } : undefined,
+    onRestore: (state) => {
+      if (dialogOpen || state.modalId !== "hosting-create") return;
+      openHostingDialog();
+    },
+  });
+
+  useEffect(() => {
+    if (!dialogOpen) return;
+    const next = new URLSearchParams(searchParams);
+    if (next.get("hosting") === "new") return;
+    next.set("hosting", "new");
+    setSearchParams(next, { replace: true });
+  }, [dialogOpen, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (searchParams.get("hosting") !== "new" || dialogOpen) return;
+    openHostingDialog();
+  }, [searchParams, dialogOpen, openHostingDialog]);
 
   const linkedIds = useMemo(
     () =>
@@ -76,7 +133,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
     [ctx.paymentRecords],
   );
 
-  const save = async () => {
+  const save = async (): Promise<boolean> => {
     const clientLabel = form.client_name.trim();
     if (!clientLabel && !form.customer_id && !form.customer_email.trim()) {
       toast({
@@ -84,7 +141,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
         description: "Zadajte meno klienta alebo vyberte klienta / lead z vyhľadávania.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -104,7 +161,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
           description: e instanceof Error ? e.message : "Skontrolujte e-mail alebo vyberte klienta z lookup.",
           variant: "destructive",
         });
-        return;
+        return false;
       }
 
       if (!linked.client_name && !linked.customer_id && !linked.customer_email) {
@@ -113,14 +170,14 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
           description: "Vyberte klienta z vyhľadávania alebo zadajte meno firmy.",
           variant: "destructive",
         });
-        return;
+        return false;
       }
 
       const customerGuard = assertDeliveryHasCanonicalCustomer(linked);
       if (!customerGuard.ok) {
         setCustomerFieldError(customerGuard.message);
         toast({ title: customerGuard.message, variant: "destructive" });
-        return;
+        return false;
       }
       setCustomerFieldError(null);
 
@@ -148,7 +205,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
           description: insertResult.error,
           variant: "destructive",
         });
-        return;
+        return false;
       }
 
       if (linked.lead_id && linked.customer_id) {
@@ -171,15 +228,25 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
         title: "Hosting vytvorený",
         description: "Otváram detail záznamu…",
       });
+      discardHostingDraft();
       setForm(emptyForm());
-      setCustomerFieldError(null);
-      setDialogOpen(false);
+      setFormBaseline(emptyForm());
+      closeHostingDialog();
       onSaved();
       navigate(`/admin/hosting/${insertResult.id}`);
+      return true;
     } finally {
       setSaving(false);
     }
   };
+
+  const hostingCloseGuard = useAdminCloseGuard({
+    isOpen: dialogOpen,
+    current: form,
+    onSave: save,
+    onDiscard: discardHostingDraft,
+    saving,
+  });
 
   const openPaymentFact = (record: HostingRecordRow) => {
     if (linkedIds.has(record.id) || hasSourceLinkedRecord(ctx, "hosting_records", record.id)) {
@@ -205,14 +272,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
         Hosting je oddelený od prenájmového streamu. Platobný fakt je voliteľný — bez auto-sync.
       </p>
       <div className="flex justify-end">
-        <Button
-          size="sm"
-          onClick={() => {
-            setCustomerFieldError(null);
-            setForm(emptyForm());
-            setDialogOpen(true);
-          }}
-        >
+        <Button size="sm" onClick={openHostingDialog}>
           <Plus className="w-4 h-4 mr-1" /> Nový hosting
         </Button>
       </div>
@@ -307,13 +367,18 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
         </div>
       )}
 
+      {hostingCloseGuard.closeGuardDialog}
+
       <AdminDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(o) => {
+          if (!o) hostingCloseGuard.handleOpenChange(o, closeHostingDialog);
+        }}
         title="Nový hosting"
+        stickyFooter
         footer={
           <>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={() => hostingCloseGuard.requestClose(closeHostingDialog)}>
               Zrušiť
             </Button>
             <Button onClick={() => void save()} disabled={saving}>
@@ -348,7 +413,12 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
             <Field label="Počet domén"><Input type="number" value={form.domains_count} onChange={(e) => setForm({ ...form, domains_count: e.target.value })} /></Field>
             <Field label="Mesačná cena €"><Input type="number" step="0.01" value={form.monthly_price} onChange={(e) => setForm({ ...form, monthly_price: e.target.value })} /></Field>
             <Field label="Získal"><Input value={form.acquired_by} onChange={(e) => setForm({ ...form, acquired_by: e.target.value })} /></Field>
-            <Field label="Poznámka"><Input value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
+            <AdminLongTextField
+              label="Poznámka"
+              value={form.note}
+              onChange={(note) => setForm({ ...form, note })}
+              withDatePrefix={false}
+            />
             <label className="flex items-center gap-2 text-sm">
               <Checkbox checked={form.commissionable} onCheckedChange={(v) => setForm({ ...form, commissionable: !!v })} />
               Provízny (vyžaduje review)

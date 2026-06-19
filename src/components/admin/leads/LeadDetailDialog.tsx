@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { NoteTextarea } from "@/components/admin/NoteTextarea";
+import { AdminLongTextField } from "@/components/admin/AdminLongTextField";
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
 import { CalendarIcon, Euro, Loader2 } from "lucide-react";
@@ -34,6 +34,8 @@ import {
 export interface LeadDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Wired to close guard — cancel / guarded close paths */
+  onRequestClose: () => void;
   selected: Lead | null;
   saving: boolean;
   onSave: () => void;
@@ -75,6 +77,7 @@ export interface LeadDetailDialogProps {
 const LeadDetailDialog = ({
   open,
   onOpenChange,
+  onRequestClose,
   selected,
   saving,
   onSave,
@@ -104,6 +107,7 @@ const LeadDetailDialog = ({
       open={open}
       onOpenChange={onOpenChange}
       size="lg"
+      stickyFooter
       title={
         <div className="flex flex-col gap-2 items-start">
           <span>Detail leadu</span>
@@ -129,7 +133,7 @@ const LeadDetailDialog = ({
                 </Button>
               </Link>
             )}
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={onRequestClose} className="w-full sm:w-auto">
               Zrušiť
             </Button>
             <Button onClick={onSave} variant="gradient" disabled={saving} className="w-full sm:w-auto">
@@ -428,16 +432,13 @@ const LeadDetailDialog = ({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Interné poznámky</Label>
-            <NoteTextarea
-              id="notes"
-              value={editNotes}
-              onChange={setEditNotes}
-              placeholder="Doplň poznámky o klientovi, dohodách, follow-up..."
-              className="min-h-[120px]"
-            />
-          </div>
+          <AdminLongTextField
+            id="notes"
+            label="Interné poznámky"
+            value={editNotes}
+            onChange={setEditNotes}
+            placeholder="Doplň poznámky o klientovi, dohodách, follow-up..."
+          />
 
           <LeadCommunicationPanel
             leadId={selected.id}

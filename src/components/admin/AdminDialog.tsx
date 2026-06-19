@@ -16,6 +16,7 @@ export function AdminDialog({
   children,
   footer,
   size = "md",
+  stickyFooter = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -23,7 +24,9 @@ export function AdminDialog({
   description?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl";
+  /** Keep action buttons visible while body scrolls (long forms). */
+  stickyFooter?: boolean;
 }) {
   const sizeClass =
     size === "sm"
@@ -32,19 +35,41 @@ export function AdminDialog({
         ? "max-w-2xl"
         : size === "xl"
           ? "max-w-4xl"
-          : "max-w-lg";
+          : size === "2xl"
+            ? "max-w-5xl"
+            : "max-w-lg";
+
+  const contentClass = stickyFooter
+    ? `${sizeClass} w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden`
+    : `${sizeClass} w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={`${sizeClass} w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto`}
-      >
-        <DialogHeader>
+      <DialogContent className={contentClass}>
+        <DialogHeader className={stickyFooter ? "px-6 pt-6 shrink-0" : undefined}>
           <DialogTitle>{title}</DialogTitle>
           {description && <p className="text-xs text-muted-foreground">{description}</p>}
         </DialogHeader>
-        <div className="space-y-4">{children}</div>
-        {footer && <DialogFooter className="flex-col sm:flex-row gap-2">{footer}</DialogFooter>}
+        <div
+          className={
+            stickyFooter
+              ? "space-y-4 px-6 overflow-y-auto flex-1 min-h-0"
+              : "space-y-4"
+          }
+        >
+          {children}
+        </div>
+        {footer && (
+          <DialogFooter
+            className={
+              stickyFooter
+                ? "sticky bottom-0 shrink-0 border-t bg-background px-6 py-4 flex-col sm:flex-row gap-2"
+                : "flex-col sm:flex-row gap-2"
+            }
+          >
+            {footer}
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

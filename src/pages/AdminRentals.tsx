@@ -1,12 +1,13 @@
-import { useEffect, useMemo, useState, type ComponentProps } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState, useCallback, type ComponentProps } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import { resolveProfitDisplayContext } from "@/lib/profit/profitContext";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminDialog } from "@/components/admin/AdminDialog";
+import { AdminLongTextField } from "@/components/admin/AdminLongTextField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -51,6 +52,9 @@ import { type FactDraft, prefillFromRentalPayment } from "@/lib/finance/factDraf
 import { ImplementerCommissionDetailDialog } from "@/components/admin/rentals/ImplementerCommissionDetailDialog";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { useCrmDraft } from "@/hooks/useCrmDraft";
+import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { filterRentalsForUser } from "@/lib/rbac/scopeHelpers";
 
 interface Implementer {
@@ -185,10 +189,12 @@ const normalizeImplementers = (raw: unknown): Implementer[] => {
 };
 
 export default function AdminRentals() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [websites, setWebsites] = useState<RentalWebsite[]>([]);
   const [payments, setPayments] = useState<RentalPayment[]>([]);
   const [editing, setEditing] = useState<RentalWebsite | null>(null);
+  const [editBaseline, setEditBaseline] = useState<RentalWebsite | null>(null);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [pricesOpen, setPricesOpen] = useState<RentalWebsite | null>(null);
   const [pricesDraft, setPricesDraft] = useState<Record<number, string>>({});
@@ -215,6 +221,71 @@ export default function AdminRentals() {
     onSuccess: () => void loadAll(),
   });
   const accessCtx = useAccessContext();
+
+  const cloneRental = (w: RentalWebsite): RentalWebsite => JSON.parse(JSON.stringify(w));
+
+  const closeRentalEdit = useCallback(() => {
+    setCustomerFieldError(null);
+    setEditing(null);
+    setEditBaseline(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete("edit");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const openRentalEdit = useCallback((w: RentalWebsite) => {
+    setCustomerFieldError(null);
+    const clone = cloneRental(w);
+    setEditBaseline(clone);
+    setEditing(clone);
+  }, []);
+
+  const openNewRental = useCallback(() => {
+    setCustomerFieldError(null);
+    const blank = emptyWebsite();
+    setEditBaseline(blank);
+    setEditing(blank);
+  }, []);
+
+  const { discardDraft: discardRentalDraft } = useCrmDraft({
+    modalId: "rental-edit",
+    route: "/admin/rentals",
+    entityId: editing?.id ? editing.id : "new",
+    isActive: !!editing,
+    data: editing,
+    baseline: editBaseline,
+    onRestore: (draft) => setEditing(draft as RentalWebsite),
+  });
+
+  useCrmViewRestore({
+    route: "/admin/rentals",
+    modalId: "rental-edit",
+    entityId: editing?.id || null,
+    isModalOpen: !!editing,
+    query: editing?.id ? { edit: editing.id } : undefined,
+    enabled: !loading,
+    onRestore: (state) => {
+      if (editing || !state.entityId) return;
+      const w = websites.find((x) => x.id === state.entityId);
+      if (w) openRentalEdit(w);
+    },
+  });
+
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (!editId || websites.length === 0) return;
+    if (editing?.id === editId) return;
+    const w = websites.find((x) => x.id === editId);
+    if (w) openRentalEdit(w);
+  }, [searchParams, websites, editing?.id, openRentalEdit]);
+
+  useEffect(() => {
+    if (!editing?.id) return;
+    const next = new URLSearchParams(searchParams);
+    if (next.get("edit") === editing.id) return;
+    next.set("edit", editing.id);
+    setSearchParams(next, { replace: true });
+  }, [editing?.id, searchParams, setSearchParams]);
 
   const financeTargetId = editing?.id ?? pricesOpen?.id ?? null;
 
@@ -316,11 +387,11 @@ export default function AdminRentals() {
     return Number(w.monthly_price);
   };
 
-  const saveWebsite = async () => {
-    if (!editing) return;
+  const saveWebsite = async (): Promise<boolean> => {
+    if (!editing) return true;
     if (!editing.name.trim()) {
       toast({ title: "Zadaj názov webu", variant: "destructive" });
-      return;
+      return false;
     }
     const cleanImplementers = (editing.implementers || [])
       .map((i) => {
@@ -346,7 +417,7 @@ export default function AdminRentals() {
     if (!customerGuard.ok) {
       setCustomerFieldError(customerGuard.message);
       toast({ title: customerGuard.message, variant: "destructive" });
-      return;
+      return false;
     }
     setCustomerFieldError(null);
 
@@ -373,7 +444,7 @@ export default function AdminRentals() {
       : await supabase.from("rental_websites").update(payload).eq("id", editing.id!).select("id").maybeSingle();
     if (res.error) {
       toast({ title: "Chyba", description: res.error.message, variant: "destructive" });
-      return;
+      return false;
     }
     const recordId = res.data?.id ?? editing.id;
     if (isCreate && recordId) {
@@ -420,10 +491,18 @@ export default function AdminRentals() {
     }
 
     toast({ title: editing.id ? "Aktualizované" : "Pridané" });
-    setCustomerFieldError(null);
-    setEditing(null);
+    discardRentalDraft();
+    closeRentalEdit();
     await loadAll();
+    return true;
   };
+
+  const rentalCloseGuard = useAdminCloseGuard({
+    isOpen: !!editing,
+    current: editing ?? emptyWebsite(),
+    onSave: saveWebsite,
+    onDiscard: discardRentalDraft,
+  });
 
   const cyclePayment = async (website: RentalWebsite, month: number) => {
     const key = `${website.id}-${year}-${month}`;
@@ -643,7 +722,7 @@ export default function AdminRentals() {
               </option>
             ))}
           </select>
-          <Button onClick={() => { setCustomerFieldError(null); setEditing(emptyWebsite()); }} size="sm">
+          <Button onClick={openNewRental} size="sm">
             <Plus className="w-4 h-4 mr-2" /> Pridať web
           </Button>
         </>
@@ -849,7 +928,7 @@ export default function AdminRentals() {
                         <Button size="icon" variant="ghost" onClick={() => openPrices(w)} title="Vlastné ceny po mesiacoch">
                           <Euro className="w-4 h-4 text-primary" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => { setCustomerFieldError(null); setEditing(w); }}>
+                        <Button size="icon" variant="ghost" onClick={() => openRentalEdit(w)}>
                           <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
@@ -877,11 +956,27 @@ export default function AdminRentals() {
       </div>
       )}
 
-      <Dialog open={!!editing} onOpenChange={(o) => { if (!o) { setCustomerFieldError(null); setEditing(null); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editing?.id ? "Upraviť web" : "Pridať web"}</DialogTitle>
-          </DialogHeader>
+      {rentalCloseGuard.closeGuardDialog}
+
+      <AdminDialog
+        open={!!editing}
+        onOpenChange={(o) => {
+          if (!o) rentalCloseGuard.handleOpenChange(o, closeRentalEdit);
+        }}
+        size="lg"
+        stickyFooter
+        title={editing?.id ? "Upraviť web" : "Pridať web"}
+        footer={
+          editing ? (
+            <>
+              <Button variant="outline" onClick={() => rentalCloseGuard.requestClose(closeRentalEdit)}>
+                Zrušiť
+              </Button>
+              <Button onClick={() => void saveWebsite()}>Uložiť</Button>
+            </>
+          ) : undefined
+        }
+      >
           {editing && (
             <div className="space-y-3">
               {editing.id &&
@@ -954,10 +1049,12 @@ export default function AdminRentals() {
                   </p>
                 </div>
               </div>
-              <div>
-                <label className="text-sm font-medium">Poznámka</label>
-                <Textarea value={editing.note ?? ""} onChange={(e) => setEditing({ ...editing, note: e.target.value })} />
-              </div>
+              <AdminLongTextField
+                label="Poznámka"
+                value={editing.note ?? ""}
+                onChange={(note) => setEditing({ ...editing, note })}
+                withDatePrefix={false}
+              />
 
               {/* Implementers / commissions */}
               <div className="rounded-md border border-border bg-muted/30 p-3 space-y-2">
@@ -1038,12 +1135,7 @@ export default function AdminRentals() {
               </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Zrušiť</Button>
-            <Button onClick={saveWebsite}>Uložiť</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </AdminDialog>
 
       {/* Per-month custom prices */}
       <Dialog open={!!pricesOpen} onOpenChange={(o) => !o && setPricesOpen(null)}>
