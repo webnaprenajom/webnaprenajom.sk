@@ -1,8 +1,10 @@
-import { useState, type ReactNode } from "react";
+import { useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminDialog } from "@/components/admin/AdminDialog";
+import { AdminLongTextField } from "@/components/admin/AdminLongTextField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -11,15 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { useCrmDraft } from "@/hooks/useCrmDraft";
+import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
+import { buildDraftKey, clearCrmDraft } from "@/lib/crmPersistence/draftStore";
+import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { resolveCustomerIdentity, customerDisplayLabel } from "@/lib/finance/customerBridge";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
@@ -56,12 +56,70 @@ const fromLocalInput = (local: string) => {
 
 const isLegacy = (truthLevel: string) => truthLevel === "legacy_import";
 
+type FinanceModalSnapshot = {
+  kind: RecordKind;
+  editId: string | null;
+  readOnly: boolean;
+  form: Record<string, string>;
+  tab: RecordKind;
+};
+
+const emptyFormForKind = (k: RecordKind): Record<string, string> =>
+  k === "payment"
+    ? { amount: "", paid_at: todayLocal(), method: "", reference: "", customer_email: "", client_name: "", note: "" }
+    : k === "payout"
+      ? { amount: "", paid_at: todayLocal(), implementer: "", reference: "", note: "" }
+      : { amount: "", paid_at: todayLocal(), incurred_at: todayLocal(), category: "", vendor: "", reference: "", note: "" };
+
+const recordParamValue = (k: RecordKind, id: string | null) => `${k}:${id ?? "new"}`;
+
+const parseRecordParam = (value: string | null): { kind: RecordKind; editId: string | null } | null => {
+  if (!value) return null;
+  const [kindPart, idPart] = value.split(":");
+  if (kindPart !== "payment" && kindPart !== "payout" && kindPart !== "cost") return null;
+  if (!idPart) return null;
+  return { kind: kindPart, editId: idPart === "new" ? null : idPart };
+};
+
+const snapshotFromRow = (k: RecordKind, row: Record<string, unknown>): Record<string, string> => {
+  if (k === "payment") {
+    return {
+      amount: String(row.amount ?? ""),
+      paid_at: toLocalInput(row.paid_at as string | null),
+      method: String(row.method ?? ""),
+      reference: String(row.reference ?? ""),
+      customer_email: String(row.customer_email ?? ""),
+      client_name: String(row.client_name ?? ""),
+      note: String(row.note ?? ""),
+    };
+  }
+  if (k === "payout") {
+    return {
+      amount: String(row.amount ?? ""),
+      paid_at: toLocalInput(row.paid_at as string | null),
+      implementer: String(row.implementer ?? ""),
+      reference: String(row.reference ?? ""),
+      note: String(row.note ?? ""),
+    };
+  }
+  return {
+    amount: String(row.amount ?? ""),
+    paid_at: toLocalInput(row.paid_at as string | null),
+    incurred_at: toLocalInput(row.incurred_at as string | null),
+    category: String(row.category ?? ""),
+    vendor: String(row.vendor ?? ""),
+    reference: String(row.reference ?? ""),
+    note: String(row.note ?? ""),
+  };
+};
+
 export function FinanceRecordsCrud({
   paymentRecords,
   payoutRecords,
   costRecords,
   onSaved,
 }: FinanceRecordsCrudProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState<RecordKind>("payment");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -69,8 +127,53 @@ export function FinanceRecordsCrud({
   const [editId, setEditId] = useState<string | null>(null);
   const [readOnly, setReadOnly] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
+  const [modalBaseline, setModalBaseline] = useState<FinanceModalSnapshot>(() => ({
+    kind: "payment",
+    editId: null,
+    readOnly: false,
+    form: emptyFormForKind("payment"),
+    tab: "payment",
+  }));
   const [promoteDraft, setPromoteDraft] = useState<FactDraft | null>(null);
   const [promoteOpen, setPromoteOpen] = useState(false);
+
+  const modalSnapshot = useMemo<FinanceModalSnapshot>(
+    () => ({ kind, editId, readOnly, form, tab }),
+    [kind, editId, readOnly, form, tab],
+  );
+
+  const draftEntityId = `${kind}:${editId ?? "new"}`;
+
+  const { discardDraft: discardFinanceDraft, clearDraft: clearFinanceDraft } = useCrmDraft({
+    modalId: "finance-record",
+    route: "/admin/finance",
+    entityId: draftEntityId,
+    isActive: dialogOpen && !readOnly,
+    data: modalSnapshot,
+    baseline: modalBaseline,
+    onRestore: (draft) => {
+      const d = draft as FinanceModalSnapshot;
+      setKind(d.kind);
+      setEditId(d.editId);
+      setReadOnly(d.readOnly);
+      setForm(d.form);
+      setTab(d.tab);
+    },
+  });
+
+  const closeFinanceDialog = useCallback(() => {
+    clearFinanceDraft();
+    clearCrmViewState();
+    setDialogOpen(false);
+    const next = new URLSearchParams(searchParams);
+    next.delete("record");
+    setSearchParams(next, { replace: true });
+  }, [clearFinanceDraft, searchParams, setSearchParams]);
+
+  const discardFinanceChanges = useCallback(() => {
+    discardFinanceDraft();
+    clearCrmViewState();
+  }, [discardFinanceDraft]);
 
   const ctx: FinanceRawContext = {
     commissions: [],
@@ -91,62 +194,113 @@ export function FinanceRecordsCrud({
   const canPromote = (k: RecordKind, row: any) =>
     isLegacy(row.truth_level) && !hasPromotedFactForLegacy(ctx, k, row);
 
-  const openCreate = (k: RecordKind) => {
+  const findRow = useCallback(
+    (k: RecordKind, id: string) => {
+      const list = k === "payment" ? paymentRecords : k === "payout" ? payoutRecords : costRecords;
+      return list.find((r) => r.id === id);
+    },
+    [paymentRecords, payoutRecords, costRecords],
+  );
+
+  const openCreate = useCallback((k: RecordKind, opts?: { reset?: boolean }) => {
+    if (opts?.reset !== false) {
+      const blankForm = emptyFormForKind(k);
+      setForm(blankForm);
+      setModalBaseline({
+        kind: k,
+        editId: null,
+        readOnly: false,
+        form: blankForm,
+        tab: k,
+      });
+    }
     setKind(k);
     setEditId(null);
     setReadOnly(false);
-    setForm(
-      k === "payment"
-        ? { amount: "", paid_at: todayLocal(), method: "", reference: "", customer_email: "", client_name: "", note: "" }
-        : k === "payout"
-          ? { amount: "", paid_at: todayLocal(), implementer: "", reference: "", note: "" }
-          : { amount: "", paid_at: todayLocal(), incurred_at: todayLocal(), category: "", vendor: "", reference: "", note: "" },
-    );
+    setTab(k);
     setDialogOpen(true);
-  };
+  }, []);
 
-  const openEdit = (k: RecordKind, row: any) => {
+  const openEdit = useCallback((k: RecordKind, row: Record<string, unknown>) => {
+    const legacy = isLegacy(String(row.truth_level ?? ""));
+    const rowForm = snapshotFromRow(k, row);
+    const baseline: FinanceModalSnapshot = {
+      kind: k,
+      editId: String(row.id),
+      readOnly: legacy,
+      form: rowForm,
+      tab: k,
+    };
     setKind(k);
-    setEditId(row.id);
-    const legacy = isLegacy(row.truth_level);
+    setEditId(String(row.id));
     setReadOnly(legacy);
-    if (k === "payment") {
-      setForm({
-        amount: String(row.amount ?? ""),
-        paid_at: toLocalInput(row.paid_at),
-        method: row.method ?? "",
-        reference: row.reference ?? "",
-        customer_email: row.customer_email ?? "",
-        client_name: row.client_name ?? "",
-        note: row.note ?? "",
-      });
-    } else if (k === "payout") {
-      setForm({
-        amount: String(row.amount ?? ""),
-        paid_at: toLocalInput(row.paid_at),
-        implementer: row.implementer ?? "",
-        reference: row.reference ?? "",
-        note: row.note ?? "",
-      });
-    } else {
-      setForm({
-        amount: String(row.amount ?? ""),
-        paid_at: toLocalInput(row.paid_at),
-        incurred_at: toLocalInput(row.incurred_at),
-        category: row.category ?? "",
-        vendor: row.vendor ?? "",
-        reference: row.reference ?? "",
-        note: row.note ?? "",
-      });
-    }
+    setForm(rowForm);
+    setTab(k);
+    setModalBaseline(baseline);
     setDialogOpen(true);
-  };
+  }, []);
 
-  const save = async () => {
+  useCrmViewRestore({
+    route: "/admin/finance",
+    modalId: "finance-record",
+    entityId: dialogOpen ? draftEntityId : null,
+    section: tab,
+    isModalOpen: dialogOpen,
+    query: dialogOpen ? { record: recordParamValue(kind, editId) } : undefined,
+    onRestore: (state) => {
+      if (dialogOpen || state.modalId !== "finance-record" || !state.entityId) return;
+      const parsed = parseRecordParam(state.query?.record ?? state.entityId);
+      if (!parsed) return;
+      if (state.section === "payment" || state.section === "payout" || state.section === "cost") {
+        setTab(state.section);
+      }
+      if (parsed.editId) {
+        const row = findRow(parsed.kind, parsed.editId);
+        if (row) openEdit(parsed.kind, row);
+        else clearCrmViewState();
+        return;
+      }
+      openCreate(parsed.kind, { reset: false });
+    },
+  });
+
+  useEffect(() => {
+    const param = searchParams.get("record");
+    const parsed = parseRecordParam(param);
+    if (!parsed) return;
+    if (dialogOpen && kind === parsed.kind && editId === parsed.editId) return;
+    if (parsed.editId) {
+      const row = findRow(parsed.kind, parsed.editId);
+      if (row) {
+        openEdit(parsed.kind, row);
+        return;
+      }
+      clearCrmDraft(buildDraftKey("finance-record", `${parsed.kind}:${parsed.editId}`));
+      clearCrmViewState();
+      const next = new URLSearchParams(searchParams);
+      next.delete("record");
+      setSearchParams(next, { replace: true });
+      return;
+    }
+    if (!dialogOpen) openCreate(parsed.kind, { reset: false });
+  }, [searchParams, dialogOpen, kind, editId, findRow, openEdit, openCreate, setSearchParams]);
+
+  useEffect(() => {
+    if (!dialogOpen) return;
+    const value = recordParamValue(kind, editId);
+    const next = new URLSearchParams(searchParams);
+    if (next.get("record") === value) return;
+    next.set("record", value);
+    setSearchParams(next, { replace: true });
+  }, [dialogOpen, kind, editId, searchParams, setSearchParams]);
+
+  const openCreateFresh = (k: RecordKind) => openCreate(k, { reset: true });
+  const save = async (): Promise<boolean> => {
+    if (readOnly) return true;
     const amount = Number(form.amount);
     if (!amount || amount <= 0) {
       toast({ title: "Neplatná suma", variant: "destructive" });
-      return;
+      return false;
     }
     setSaving(true);
     try {
@@ -194,7 +348,7 @@ export function FinanceRecordsCrud({
         if (!paidAt && !incurredAt) {
           toast({ title: "Zadajte paid_at alebo incurred_at", variant: "destructive" });
           setSaving(false);
-          return;
+          return false;
         }
         const payload = {
           amount,
@@ -217,12 +371,34 @@ export function FinanceRecordsCrud({
         }
       }
       toast({ title: editId ? "Uložené" : "Vytvorené" });
-      setDialogOpen(false);
+      discardFinanceDraft();
+      clearCrmViewState();
+      closeFinanceDialog();
       onSaved();
-    } catch (err: any) {
-      toast({ title: "Chyba", description: err.message, variant: "destructive" });
+      return true;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Neznáma chyba";
+      toast({ title: "Chyba", description: message, variant: "destructive" });
+      return false;
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
+  };
+
+  const financeCloseGuard = useAdminCloseGuard({
+    isOpen: dialogOpen && !readOnly,
+    current: modalSnapshot,
+    onSave: save,
+    onDiscard: discardFinanceChanges,
+    saving,
+  });
+
+  const requestCloseFinance = () => {
+    if (readOnly) {
+      closeFinanceDialog();
+      return;
+    }
+    financeCloseGuard.requestClose(closeFinanceDialog);
   };
 
   const remove = async (k: RecordKind, id: string, truthLevel: string) => {
@@ -261,7 +437,7 @@ export function FinanceRecordsCrud({
 
         <TabsContent value="payment" className="mt-3">
           <div className="flex justify-end mb-2">
-            <Button size="sm" onClick={() => openCreate("payment")}>
+            <Button size="sm" onClick={() => openCreateFresh("payment")}>
               <Plus className="w-4 h-4 mr-1" /> Nová platba
             </Button>
           </div>
@@ -304,7 +480,7 @@ export function FinanceRecordsCrud({
 
         <TabsContent value="payout" className="mt-3">
           <div className="flex justify-end mb-2">
-            <Button size="sm" onClick={() => openCreate("payout")}>
+            <Button size="sm" onClick={() => openCreateFresh("payout")}>
               <Plus className="w-4 h-4 mr-1" /> Nová výplata
             </Button>
           </div>
@@ -340,7 +516,7 @@ export function FinanceRecordsCrud({
 
         <TabsContent value="cost" className="mt-3">
           <div className="flex justify-end mb-2">
-            <Button size="sm" onClick={() => openCreate("cost")}>
+            <Button size="sm" onClick={() => openCreateFresh("cost")}>
               <Plus className="w-4 h-4 mr-1" /> Nový náklad
             </Button>
           </div>
@@ -375,23 +551,45 @@ export function FinanceRecordsCrud({
         </TabsContent>
       </Tabs>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {readOnly
-                ? "Legacy import (read-only)"
-                : editId
-                  ? "Upraviť potvrdený záznam"
-                  : kind === "payment"
-                    ? "Nová potvrdená platba"
-                    : kind === "payout"
-                      ? "Nová potvrdená výplata"
-                      : "Nový potvrdený náklad"}
-            </DialogTitle>
-          </DialogHeader>
+      {financeCloseGuard.closeGuardDialog}
+
+      <AdminDialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          if (!o) {
+            if (readOnly) closeFinanceDialog();
+            else financeCloseGuard.handleOpenChange(o, closeFinanceDialog);
+          }
+        }}
+        size="md"
+        stickyFooter={!readOnly}
+        title={
+          readOnly
+            ? "Legacy import (read-only)"
+            : editId
+              ? "Upraviť potvrdený záznam"
+              : kind === "payment"
+                ? "Nová potvrdená platba"
+                : kind === "payout"
+                  ? "Nová potvrdená výplata"
+                  : "Nový potvrdený náklad"
+        }
+        footer={
+          <>
+            <Button variant="outline" onClick={requestCloseFinance}>
+              {readOnly ? "Zavrieť" : "Zrušiť"}
+            </Button>
+            {!readOnly && (
+              <Button onClick={() => void save()} disabled={saving}>
+                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Uložiť
+              </Button>
+            )}
+          </>
+        }
+      >
           {readOnly && (
-            <p className="text-xs text-muted-foreground border rounded p-2 bg-muted/30">
+            <p className="text-xs text-muted-foreground border rounded p-2 bg-muted/30 mb-3">
               Legacy import nie je editovateľný. Pre korekciu vytvorte nový záznam s truth_level=fact.
             </p>
           )}
@@ -450,21 +648,14 @@ export function FinanceRecordsCrud({
                 </Field>
               </>
             )}
-            <Field label="Poznámka">
-              <Textarea rows={2} value={form.note} disabled={readOnly} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-            </Field>
+            <AdminLongTextField
+              label="Poznámka"
+              value={form.note ?? ""}
+              onChange={(note) => setForm({ ...form, note })}
+              withDatePrefix={false}
+            />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zavrieť</Button>
-            {!readOnly && (
-              <Button onClick={() => void save()} disabled={saving}>
-                {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Uložiť
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </AdminDialog>
 
       <FactConfirmDialog
         open={promoteOpen}

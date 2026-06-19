@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FinanceRecordsCrud } from "@/components/admin/finance/FinanceRecordsCrud";
@@ -42,7 +41,7 @@ import {
   resolveScopedCommissionEmpty,
   type AccessContext,
 } from "@/lib/rbac/permissions";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
 import { ScopedEmptyState } from "@/components/admin/rbac/ScopedEmptyState";
 
@@ -260,6 +259,15 @@ const AdminFinance = () => {
     }
     setSearchParams(next, { replace: true });
   };
+
+  // ponytail: FinanceRecordsCrud mounts only in advanced view — auto-enable when ?record= is present
+  useEffect(() => {
+    if (!searchParams.get("record")) return;
+    if (advanced || !canAccessFinanceAdvanced(access.role)) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("advanced", "1");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, advanced, access.role, setSearchParams]);
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 

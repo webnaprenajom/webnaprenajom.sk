@@ -4,6 +4,8 @@ import LeadBulkBar from "@/components/admin/leads/LeadBulkBar";
 import LeadsToolbar from "@/components/admin/leads/LeadsToolbar";
 import LeadsTable from "@/components/admin/leads/LeadsTable";
 import LeadDetailDialog from "@/components/admin/leads/LeadDetailDialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
+import { AdminLongTextField } from "@/components/admin/AdminLongTextField";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
 import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
@@ -41,7 +43,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -257,9 +258,7 @@ const Admin = () => {
   };
 
   // Manual add dialog state
-  const [addOpen, setAddOpen] = useState(false);
-  const [addSaving, setAddSaving] = useState(false);
-  const [newLead, setNewLead] = useState({
+  const emptyNewLead = () => ({
     name: "",
     email: "",
     phone: "",
@@ -269,6 +268,60 @@ const Admin = () => {
     assigned_to: "",
     message: "",
     notes: "",
+  });
+  type NewLeadForm = ReturnType<typeof emptyNewLead>;
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [addSaving, setAddSaving] = useState(false);
+  const [newLead, setNewLead] = useState<NewLeadForm>(emptyNewLead);
+  const [newLeadBaseline, setNewLeadBaseline] = useState<NewLeadForm>(emptyNewLead);
+
+  const openAddLead = useCallback((opts?: { reset?: boolean }) => {
+    if (opts?.reset !== false) {
+      const blank = emptyNewLead();
+      setNewLeadBaseline(blank);
+      setNewLead(blank);
+    }
+    setSelected(null);
+    setLeadBaseline(null);
+    setAddOpen(true);
+  }, []);
+
+  const { discardDraft: discardAddLeadDraft, clearDraft: clearAddLeadDraft } = useCrmDraft({
+    modalId: "lead-create",
+    route: "/admin",
+    entityId: "new",
+    isActive: addOpen,
+    data: newLead,
+    baseline: newLeadBaseline,
+    onRestore: (draft) => setNewLead(draft as NewLeadForm),
+  });
+
+  const closeAddLeadDialog = useCallback(() => {
+    clearAddLeadDraft();
+    clearCrmViewState();
+    setAddOpen(false);
+    const next = new URLSearchParams(searchParams);
+    if (next.get("lead") === "new") next.delete("lead");
+    setSearchParams(next, { replace: true });
+  }, [clearAddLeadDraft, searchParams, setSearchParams]);
+
+  const discardAddLeadChanges = useCallback(() => {
+    discardAddLeadDraft();
+    clearCrmViewState();
+  }, [discardAddLeadDraft]);
+
+  useCrmViewRestore({
+    route: "/admin",
+    modalId: "lead-create",
+    entityId: addOpen ? "new" : null,
+    isModalOpen: addOpen,
+    query: addOpen ? { lead: "new" } : undefined,
+    enabled: !loading && !!userId,
+    onRestore: (state) => {
+      if (addOpen || selected || state.modalId !== "lead-create") return;
+      openAddLead({ reset: false });
+    },
   });
 
   useEffect(() => {
@@ -331,6 +384,7 @@ const Admin = () => {
 
   const openLead = useCallback(
     (lead: Lead) => {
+      setAddOpen(false);
       const baseline = leadToFormDraft(lead);
       applyLeadFormDraft(baseline, leadFormSetters);
       setLeadBaseline(baseline);
@@ -424,10 +478,15 @@ const Admin = () => {
     },
   });
 
-  // Open lead from ?lead=<id> (deep link + restore)
+  // Open lead from ?lead=<id|new> (deep link + restore)
   useEffect(() => {
     const leadId = searchParams.get("lead");
-    if (!leadId || leads.length === 0) return;
+    if (!leadId) return;
+    if (leadId === "new") {
+      if (!addOpen && !selected) openAddLead({ reset: false });
+      return;
+    }
+    if (leads.length === 0) return;
     if (selected?.id === leadId) return;
     const target = leads.find((l) => l.id === leadId);
     if (target) {
@@ -439,7 +498,7 @@ const Admin = () => {
     const next = new URLSearchParams(searchParams);
     next.delete("lead");
     setSearchParams(next, { replace: true });
-  }, [searchParams, leads, selected?.id, openLead, setSearchParams]);
+  }, [searchParams, leads, selected?.id, addOpen, openLead, openAddLead, setSearchParams]);
 
   // Keep ?lead= while detail modal is open (tab restore)
   useEffect(() => {
@@ -449,6 +508,15 @@ const Admin = () => {
     next.set("lead", selected.id);
     setSearchParams(next, { replace: true });
   }, [selected, searchParams, setSearchParams]);
+
+  // Keep ?lead=new while add dialog is open
+  useEffect(() => {
+    if (!addOpen || selected) return;
+    const next = new URLSearchParams(searchParams);
+    if (next.get("lead") === "new") return;
+    next.set("lead", "new");
+    setSearchParams(next, { replace: true });
+  }, [addOpen, selected, searchParams, setSearchParams]);
 
   const handleSave = async (): Promise<boolean> => {
     if (!selected) return true;
@@ -871,10 +939,10 @@ const Admin = () => {
     }
   };
 
-  const handleAddLead = async () => {
+  const handleAddLead = async (): Promise<boolean> => {
     if (!newLead.name.trim() || !newLead.email.trim()) {
       toast({ title: "Chýbajú údaje", description: "Meno a e-mail sú povinné", variant: "destructive" });
-      return;
+      return false;
     }
 
     if (shouldRequireLeadCustomer(newLead.status)) {
@@ -885,7 +953,7 @@ const Admin = () => {
       });
       if (!validation.ok) {
         toast({ title: validation.message, variant: "destructive" });
-        return;
+        return false;
       }
     }
 
@@ -910,7 +978,7 @@ const Admin = () => {
     setAddSaving(false);
     if (error) {
       toast({ title: "Pridanie zlyhalo", description: error.message, variant: "destructive" });
-      return;
+      return false;
     }
 
     const inserted = data as Lead;
@@ -939,9 +1007,21 @@ const Admin = () => {
     }
 
     setLeads((prev) => [inserted, ...prev]);
-    setAddOpen(false);
-    setNewLead({ name: "", email: "", phone: "", source: "", type: "ai", status: "new", assigned_to: "", message: "", notes: "" });
+    discardAddLeadDraft();
+    clearCrmViewState();
+    closeAddLeadDialog();
+    setNewLead(emptyNewLead());
+    setNewLeadBaseline(emptyNewLead());
+    return true;
   };
+
+  const addLeadCloseGuard = useAdminCloseGuard({
+    isOpen: addOpen,
+    current: newLead,
+    onSave: handleAddLead,
+    onDiscard: discardAddLeadChanges,
+    saving: addSaving,
+  });
 
   const handleCsvImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -1358,7 +1438,7 @@ const Admin = () => {
           onTypeFilterChange={setTypeFilter}
           assigneeFilter={assigneeFilter}
           onAssigneeFilterChange={setAssigneeFilter}
-          onAddLead={() => setAddOpen(true)}
+          onAddLead={() => openAddLead({ reset: true })}
           onBulkOffer={openBulkOffer}
           onImportClick={() => fileInputRef.current?.click()}
           onExport={exportCsv}
@@ -1447,12 +1527,28 @@ const Admin = () => {
         onClearLeadCustomerError={() => setLeadCustomerError(null)}
       />
 
-      {/* Add lead dialog */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nový lead</DialogTitle>
-          </DialogHeader>
+      {addLeadCloseGuard.closeGuardDialog}
+
+      <AdminDialog
+        open={addOpen}
+        onOpenChange={(o) => {
+          if (!o) addLeadCloseGuard.handleOpenChange(o, closeAddLeadDialog);
+        }}
+        size="lg"
+        stickyFooter
+        title="Nový lead"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => addLeadCloseGuard.requestClose(closeAddLeadDialog)}>
+              Zrušiť
+            </Button>
+            <Button onClick={() => void handleAddLead()} variant="gradient" disabled={addSaving}>
+              {addSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Pridať lead
+            </Button>
+          </>
+        }
+      >
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -1533,36 +1629,23 @@ const Admin = () => {
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-message">Správa</Label>
-              <Textarea
-                id="new-message"
-                value={newLead.message}
-                onChange={(e) => setNewLead({ ...newLead, message: e.target.value })}
-                placeholder="Čo klient potrebuje..."
-                className="min-h-[80px]"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-notes">Interné poznámky</Label>
-              <NoteTextarea
-                id="new-notes"
-                value={newLead.notes}
-                onChange={(v) => setNewLead({ ...newLead, notes: v })}
-                placeholder="Poznámky..."
-                className="min-h-[80px]"
-              />
-            </div>
-            <div className="flex gap-2 justify-end pt-2">
-              <Button variant="outline" onClick={() => setAddOpen(false)}>Zrušiť</Button>
-              <Button onClick={handleAddLead} variant="gradient" disabled={addSaving}>
-                {addSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Pridať lead
-              </Button>
-            </div>
+            <AdminLongTextField
+              id="new-message"
+              label="Správa"
+              value={newLead.message}
+              onChange={(message) => setNewLead({ ...newLead, message })}
+              placeholder="Čo klient potrebuje..."
+              withDatePrefix={false}
+            />
+            <AdminLongTextField
+              id="new-notes"
+              label="Interné poznámky"
+              value={newLead.notes}
+              onChange={(notes) => setNewLead({ ...newLead, notes })}
+              placeholder="Poznámky..."
+            />
           </div>
-        </DialogContent>
-      </Dialog>
+      </AdminDialog>
 
       <Dialog open={bulkOfferOpen} onOpenChange={setBulkOfferOpen}>
         <DialogContent className="max-w-lg">

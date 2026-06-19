@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminDialog } from "@/components/admin/AdminDialog";
+import { AdminLongTextField } from "@/components/admin/AdminLongTextField";
 import { LeadClientPicker, type LeadOption } from "@/components/admin/LeadClientPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -22,15 +23,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { useCrmDraft } from "@/hooks/useCrmDraft";
+import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
+import { buildDraftKey, clearCrmDraft } from "@/lib/crmPersistence/draftStore";
+import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { filterTasksForUser } from "@/lib/rbac/scopeHelpers";
 import {
   Loader2,
@@ -72,6 +71,8 @@ interface Task {
   deposit: number;
   created_at: string;
 }
+
+type TaskForm = ReturnType<typeof emptyForm>;
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; className: string }> = {
   todo: { label: "Na rade", className: "bg-slate-500/15 text-slate-400 border-slate-500/30" },
@@ -118,8 +119,25 @@ const emptyForm = () => ({
   deposit: "",
 });
 
+const taskToForm = (t: Task): TaskForm => ({
+  id: t.id,
+  title: t.title,
+  description: t.description ?? "",
+  client_name: t.client_name ?? "",
+  lead_id: t.lead_id ?? "",
+  customer_id: t.customer_id ?? "",
+  customer_email: "",
+  assignee: t.assignee ?? "",
+  status: t.status,
+  priority: t.priority,
+  due_date: t.due_date ?? "",
+  amount: String(t.amount ?? ""),
+  deposit: String(t.deposit ?? ""),
+});
+
 const AdminTasks = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("active");
@@ -127,6 +145,7 @@ const AdminTasks = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm());
+  const [formBaseline, setFormBaseline] = useState<TaskForm>(emptyForm());
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
   const [leadOptions, setLeadOptions] = useState<LeadOption[]>([]);
   const accessCtx = useAccessContext();
@@ -170,24 +189,99 @@ const AdminTasks = () => {
     setLoading(false);
   };
 
-  const openNew = () => { setForm(emptyForm()); setDialogOpen(true); };
-  const openEdit = (t: Task) => {
-    setForm({
-      id: t.id, title: t.title, description: t.description ?? "",
-      client_name: t.client_name ?? "", lead_id: t.lead_id ?? "",
-      customer_id: t.customer_id ?? "",
-      customer_email: "",
-      assignee: t.assignee ?? "",
-      status: t.status, priority: t.priority,
-      due_date: t.due_date ?? "",
-      amount: String(t.amount ?? ""),
-      deposit: String(t.deposit ?? ""),
-    });
+  const openNew = useCallback((opts?: { reset?: boolean }) => {
+    if (opts?.reset !== false) {
+      const blank = emptyForm();
+      setFormBaseline(blank);
+      setForm(blank);
+    }
     setDialogOpen(true);
-  };
+  }, []);
 
-  const save = async () => {
-    if (!form.title.trim()) { toast({ title: "Vyplň názov úlohy", variant: "destructive" }); return; }
+  const openEdit = useCallback((t: Task) => {
+    const baseline = taskToForm(t);
+    setFormBaseline(baseline);
+    setForm(baseline);
+    setDialogOpen(true);
+  }, []);
+
+  const { discardDraft: discardTaskDraft, clearDraft: clearTaskDraft } = useCrmDraft({
+    modalId: "task-edit",
+    route: "/admin/tasks",
+    entityId: form.id ? form.id : "new",
+    isActive: dialogOpen,
+    data: form,
+    baseline: formBaseline,
+    onRestore: (draft) => setForm(draft as TaskForm),
+  });
+
+  const closeTaskDialog = useCallback(() => {
+    clearTaskDraft();
+    clearCrmViewState();
+    setDialogOpen(false);
+    const next = new URLSearchParams(searchParams);
+    next.delete("task");
+    setSearchParams(next, { replace: true });
+  }, [clearTaskDraft, searchParams, setSearchParams]);
+
+  const discardTaskChanges = useCallback(() => {
+    discardTaskDraft();
+    clearCrmViewState();
+  }, [discardTaskDraft]);
+
+  useCrmViewRestore({
+    route: "/admin/tasks",
+    modalId: "task-edit",
+    entityId: dialogOpen ? (form.id || "new") : null,
+    isModalOpen: dialogOpen,
+    query: dialogOpen ? { task: form.id || "new" } : undefined,
+    enabled: !loading,
+    onRestore: (state) => {
+      if (dialogOpen || state.modalId !== "task-edit") return;
+      if (state.entityId && state.entityId !== "new") {
+        const t = items.find((x) => x.id === state.entityId);
+        if (t) openEdit(t);
+        else clearCrmViewState();
+        return;
+      }
+      openNew({ reset: false });
+    },
+  });
+
+  useEffect(() => {
+    const taskParam = searchParams.get("task");
+    if (!taskParam || loading) return;
+    if (taskParam === "new") {
+      if (!dialogOpen) openNew({ reset: false });
+      return;
+    }
+    if (form.id === taskParam && dialogOpen) return;
+    const t = items.find((x) => x.id === taskParam);
+    if (t) {
+      openEdit(t);
+      return;
+    }
+    clearCrmDraft(buildDraftKey("task-edit", taskParam));
+    clearCrmViewState();
+    const next = new URLSearchParams(searchParams);
+    next.delete("task");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, items, loading, dialogOpen, form.id, openEdit, openNew, setSearchParams]);
+
+  useEffect(() => {
+    if (!dialogOpen) return;
+    const param = form.id || "new";
+    const next = new URLSearchParams(searchParams);
+    if (next.get("task") === param) return;
+    next.set("task", param);
+    setSearchParams(next, { replace: true });
+  }, [dialogOpen, form.id, searchParams, setSearchParams]);
+
+  const save = async (): Promise<boolean> => {
+    if (!form.title.trim()) {
+      toast({ title: "Vyplň názov úlohy", variant: "destructive" });
+      return false;
+    }
     setSaving(true);
     const linked = await resolveTaskCustomerFields({
       customer_id: form.customer_id || null,
@@ -212,11 +306,25 @@ const AdminTasks = () => {
       ? await supabase.from("tasks").update(payload).eq("id", form.id)
       : await supabase.from("tasks").insert(payload);
     setSaving(false);
-    if (error) { toast({ title: "Chyba", description: error.message, variant: "destructive" }); return; }
+    if (error) {
+      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      return false;
+    }
     toast({ title: form.id ? "Úloha upravená" : "Úloha pridaná" });
-    setDialogOpen(false);
-    load();
+    discardTaskDraft();
+    clearCrmViewState();
+    closeTaskDialog();
+    void load();
+    return true;
   };
+
+  const taskCloseGuard = useAdminCloseGuard({
+    isOpen: dialogOpen,
+    current: form,
+    onSave: save,
+    onDiscard: discardTaskChanges,
+    saving,
+  });
 
   const remove = async (id: string) => {
     if (!confirm("Naozaj zmazať túto úlohu?")) return;
@@ -265,7 +373,7 @@ const AdminTasks = () => {
       title="Úlohy – aktívne zákazky"
       backTo={{ label: "CRM", href: "/admin" }}
       actions={
-        <Button onClick={openNew} size="sm">
+        <Button onClick={() => openNew({ reset: true })} size="sm">
           <Plus className="w-4 h-4 mr-2" /> Nová úloha
         </Button>
       }
@@ -438,94 +546,108 @@ const AdminTasks = () => {
         </section>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{form.id ? "Upraviť úlohu" : "Nová úloha / zákazka"}</DialogTitle></DialogHeader>
-          <div className="grid gap-3">
-            <div>
-              <label className="text-xs text-muted-foreground">Názov</label>
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="napr. Spustiť web pre klienta XY" />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Popis</label>
-              <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} placeholder="Detail úlohy, kroky, poznámky..." />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground">Klient</label>
-                <LeadClientPicker
-                  leads={leadOptions}
-                  clientName={form.client_name}
-                  leadId={form.lead_id}
-                  customerId={form.customer_id || null}
-                  customerEmail={form.customer_email || null}
-                  onChange={({ client_name, lead_id, customer_id, customer_email }) =>
-                    setForm({
-                      ...form,
-                      client_name,
-                      lead_id: lead_id ?? "",
-                      customer_id: customer_id ?? "",
-                      customer_email: customer_email ?? "",
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Riešiteľ</label>
-                <Select value={form.assignee || "none"} onValueChange={(v) => setForm({ ...form, assignee: v === "none" ? "" : v })}>
-                  <SelectTrigger><SelectValue placeholder="Vyber" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">— bez priradenia —</SelectItem>
-                    {ASSIGNEES.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground">Suma (€)</label>
-                <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Prijatá záloha (€)</label>
-                <Input type="number" step="0.01" value={form.deposit} onChange={(e) => setForm({ ...form, deposit: e.target.value })} placeholder="0.00" />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="text-xs text-muted-foreground">Stav</label>
-                <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as TaskStatus })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STATUS_ORDER.map((s) => <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Priorita</label>
-                <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as TaskPriority })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {(Object.keys(PRIORITY_CONFIG) as TaskPriority[]).map((p) => (
-                      <SelectItem key={p} value={p}>{PRIORITY_CONFIG[p].label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-xs text-muted-foreground">Termín</label>
-                <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Zrušiť</Button>
-            <Button onClick={save} disabled={saving}>
+      {taskCloseGuard.closeGuardDialog}
+
+      <AdminDialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          if (!o) taskCloseGuard.handleOpenChange(o, closeTaskDialog);
+        }}
+        size="lg"
+        stickyFooter
+        title={form.id ? "Upraviť úlohu" : "Nová úloha / zákazka"}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => taskCloseGuard.requestClose(closeTaskDialog)}>
+              Zrušiť
+            </Button>
+            <Button onClick={() => void save()} disabled={saving}>
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="grid gap-3">
+          <div>
+            <label className="text-xs text-muted-foreground">Názov</label>
+            <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="napr. Spustiť web pre klienta XY" />
+          </div>
+          <AdminLongTextField
+            label="Popis"
+            value={form.description}
+            onChange={(description) => setForm({ ...form, description })}
+            placeholder="Detail úlohy, kroky, poznámky..."
+            withDatePrefix={false}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Klient</label>
+              <LeadClientPicker
+                leads={leadOptions}
+                clientName={form.client_name}
+                leadId={form.lead_id}
+                customerId={form.customer_id || null}
+                customerEmail={form.customer_email || null}
+                onChange={({ client_name, lead_id, customer_id, customer_email }) =>
+                  setForm({
+                    ...form,
+                    client_name,
+                    lead_id: lead_id ?? "",
+                    customer_id: customer_id ?? "",
+                    customer_email: customer_email ?? "",
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Riešiteľ</label>
+              <Select value={form.assignee || "none"} onValueChange={(v) => setForm({ ...form, assignee: v === "none" ? "" : v })}>
+                <SelectTrigger><SelectValue placeholder="Vyber" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">— bez priradenia —</SelectItem>
+                  {ASSIGNEES.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Suma (€)</label>
+              <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Prijatá záloha (€)</label>
+              <Input type="number" step="0.01" value={form.deposit} onChange={(e) => setForm({ ...form, deposit: e.target.value })} placeholder="0.00" />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground">Stav</label>
+              <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as TaskStatus })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUS_ORDER.map((s) => <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Priorita</label>
+              <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v as TaskPriority })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(PRIORITY_CONFIG) as TaskPriority[]).map((p) => (
+                    <SelectItem key={p} value={p}>{PRIORITY_CONFIG[p].label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground">Termín</label>
+              <Input type="date" value={form.due_date} onChange={(e) => setForm({ ...form, due_date: e.target.value })} />
+            </div>
+          </div>
+        </div>
+      </AdminDialog>
     </AdminShell>
   );
 };
