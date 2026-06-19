@@ -36,3 +36,4 @@ scripts/migration/reports/review-queue-*
 .cursor
 coverage
 .turbo
+supabase/.temp

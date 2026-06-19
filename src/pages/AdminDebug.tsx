@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, CheckCircle2, XCircle, LogOut } from "lucide-react";
@@ -28,7 +28,7 @@ const initial: DebugInfo = {
   sessionError: null,
 };
 
-const AdminDebug = () => {
+const AdminDebugPage = () => {
   const [info, setInfo] = useState<DebugInfo>(initial);
   const [loading, setLoading] = useState(true);
 
@@ -175,4 +175,10 @@ const AdminDebug = () => {
   );
 };
 
-export default AdminDebug;
+/** Dev-only diagnostics — production builds redirect (CLAUDE.md / RELEASE.md). */
+export default function AdminDebug() {
+  if (import.meta.env.PROD) {
+    return <Navigate to="/admin/today" replace />;
+  }
+  return <AdminDebugPage />;
+}
