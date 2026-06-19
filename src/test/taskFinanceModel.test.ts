@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   isLegacyTaskFinance,
   normalizeTaskFinancePayload,
-  taskParentLinkError,
   taskStatusOptionsForForm,
 } from "@/lib/tasks/taskFinanceModel";
 
@@ -31,11 +30,5 @@ describe("taskFinanceModel", () => {
         { status: "paid", amount: 500, deposit: 100 },
       ),
     ).toEqual({ status: "done", amount: 500, deposit: 100 });
-  });
-
-  it("requires parent link fields", () => {
-    expect(taskParentLinkError({})).toBeTruthy();
-    expect(taskParentLinkError({ client_name: "ACME" })).toBeNull();
-    expect(taskParentLinkError({ lead_id: "l-1" })).toBeNull();
   });
 });

@@ -24,6 +24,14 @@ import {
   isLegacyTaskFinance,
   TASK_FINANCE_DEPRECATION_NOTE,
 } from "@/lib/tasks/taskFinanceModel";
+import {
+  isOrphanTask,
+  isValidTaskParentType,
+  resolveTaskParentLabels,
+  taskParentDetailHref,
+  taskParentKey,
+  TASK_PARENT_TYPE_LABELS,
+} from "@/lib/tasks/taskParentModel";
 
 type TaskStatus =
   | "todo"
@@ -47,6 +55,8 @@ interface TaskRow {
   status: TaskStatus;
   priority: TaskPriority;
   due_date: string | null;
+  parent_type: string | null;
+  parent_id: string | null;
   amount: number;
   deposit: number;
   created_at: string;
@@ -80,6 +90,7 @@ export default function AdminTaskDetail() {
   const [task, setTask] = useState<TaskRow | null>(null);
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
   const [linkedPayments, setLinkedPayments] = useState<EntityPaymentRow[]>([]);
+  const [parentLabel, setParentLabel] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -105,6 +116,12 @@ export default function AdminTaskDetail() {
     const row = data as TaskRow;
     setTask(row);
     setCustomerEmail(null);
+    setParentLabel(null);
+
+    if (isValidTaskParentType(row.parent_type) && row.parent_id) {
+      const labels = await resolveTaskParentLabels([row]);
+      setParentLabel(labels.get(taskParentKey(row.parent_type, row.parent_id)) ?? null);
+    }
 
     if (row.customer_id) {
       const { data: customer } = await supabase
@@ -150,6 +167,8 @@ export default function AdminTaskDetail() {
 
   const remaining = Number(task.amount || 0) - Number(task.deposit || 0);
   const legacyFinance = isLegacyTaskFinance(task);
+  const orphan = isOrphanTask(task);
+  const parentHref = taskParentDetailHref(task.parent_type, task.parent_id);
   const customerHref = adminCustomerHrefPreferred(task.customer_id, customerEmail);
   const depositSourceId = taskPaymentSourceId(task.id, "deposit");
   const fullSourceId = taskPaymentSourceId(task.id, "full");
@@ -172,6 +191,11 @@ export default function AdminTaskDetail() {
         <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
           {TASK_FINANCE_DEPRECATION_NOTE}
         </p>
+        {orphan && (
+          <p className="text-xs text-amber-700 dark:text-amber-400 border border-amber-500/30 rounded-lg p-3 bg-amber-500/5">
+            Legacy úloha bez parent entity — pri uložení v zozname vyberte nadradenú entitu.
+          </p>
+        )}
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="prehlad">Prehľad</TabsTrigger>
           <TabsTrigger value="provizie">Provízie</TabsTrigger>
@@ -197,6 +221,24 @@ export default function AdminTaskDetail() {
                 : "—"}
             </Field>
             <Field label="Klient" value={task.client_name || "—"} />
+            <Field label="Nadradená entita">
+              {isValidTaskParentType(task.parent_type) && task.parent_id ? (
+                <div className="space-y-1">
+                  <Badge variant="outline" className="text-[10px]">
+                    {TASK_PARENT_TYPE_LABELS[task.parent_type]}
+                  </Badge>
+                  {parentHref ? (
+                    <Link to={parentHref} className="text-primary hover:underline block">
+                      {parentLabel || task.parent_id}
+                    </Link>
+                  ) : (
+                    <span>{parentLabel || task.parent_id}</span>
+                  )}
+                </div>
+              ) : (
+                <span className="text-amber-700 dark:text-amber-400">Legacy / orphan</span>
+              )}
+            </Field>
             <Field label="Zákazník">
               {customerHref ? (
                 <Link to={customerHref} className="text-primary hover:underline">

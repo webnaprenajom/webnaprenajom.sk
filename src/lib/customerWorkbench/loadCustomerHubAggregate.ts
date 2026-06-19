@@ -26,7 +26,7 @@ import type {
 } from "./types";
 
 const taskSelect =
-  "id,title,status,amount,deposit,due_date,updated_at,client_name,lead_id,customer_id" as const;
+  "id,title,status,amount,deposit,due_date,updated_at,client_name,lead_id,customer_id,parent_type,parent_id" as const;
 
 const linkRank = (matchedBy: Task["matchedBy"]) =>
   matchedBy === "customer_id" ? 0 : matchedBy === "lead_id" ? 1 : 2;
@@ -194,6 +194,14 @@ export async function loadCustomerHubAggregate(
   if (customerId) {
     taskQueries.push(
       supabase.from("tasks").select(taskSelect).eq("customer_id", customerId) as unknown as Promise<{
+        data: Task[] | null;
+        error: { message: string } | null;
+      }>,
+      supabase
+        .from("tasks")
+        .select(taskSelect)
+        .eq("parent_type", "customer")
+        .eq("parent_id", customerId) as unknown as Promise<{
         data: Task[] | null;
         error: { message: string } | null;
       }>,

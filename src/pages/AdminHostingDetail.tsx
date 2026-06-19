@@ -31,6 +31,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
+import { buildTaskCreateHref } from "@/lib/tasks/taskParentModel";
 
 export default function AdminHostingDetail() {
   const { id = "" } = useParams();
@@ -148,7 +149,18 @@ export default function AdminHostingDetail() {
       title={label}
       subtitle={record.provider || "Hosting záznam"}
       actions={
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button asChild size="sm" variant="outline">
+            <Link
+              to={buildTaskCreateHref({
+                parent_type: "hosting",
+                parent_id: record.id,
+                label: label,
+              })}
+            >
+              Nová úloha
+            </Link>
+          </Button>
           <Button
             size="sm"
             variant="outline"

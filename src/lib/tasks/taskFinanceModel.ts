@@ -60,15 +60,3 @@ export function normalizeTaskFinancePayload(
   const status = isTaskFinanceStatus(input.status) ? "todo" : input.status;
   return { status, amount: 0, deposit: 0 };
 }
-
-/** Minimum parent context today: customer, lead, or client name (project/hosting FK not in schema yet). */
-export function taskParentLinkError(fields: {
-  customer_id?: string | null;
-  lead_id?: string | null;
-  client_name?: string | null;
-}): string | null {
-  if (fields.customer_id?.trim()) return null;
-  if (fields.lead_id?.trim()) return null;
-  if (fields.client_name?.trim()) return null;
-  return "Úloha musí byť naviazaná na klienta (zákazník, lead alebo meno klienta). Financie zadávajte na projekte, marketingu, prenájme alebo hostingu.";
-}

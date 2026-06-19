@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import { AdminLongTextField } from "@/components/admin/AdminLongTextField";
-import { LeadClientPicker, type LeadOption } from "@/components/admin/LeadClientPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -51,9 +50,21 @@ import {
   isTaskFinanceStatus,
   normalizeTaskFinancePayload,
   TASK_FINANCE_DEPRECATION_NOTE,
-  taskParentLinkError,
   taskStatusOptionsForForm,
 } from "@/lib/tasks/taskFinanceModel";
+import { TaskParentPicker } from "@/components/admin/tasks/TaskParentPicker";
+import {
+  enrichTaskCustomerFieldsFromParent,
+  isOrphanTask,
+  isValidTaskParentType,
+  parseTaskParentFromSearchParams,
+  resolveTaskParentLabels,
+  taskParentDetailHref,
+  taskParentKey,
+  taskParentRequiredError,
+  TASK_PARENT_TYPE_LABELS,
+  type TaskParentType,
+} from "@/lib/tasks/taskParentModel";
 
 type TaskStatus =
   | "todo"
@@ -78,6 +89,8 @@ interface Task {
   due_date: string | null;
   amount: number;
   deposit: number;
+  parent_type: string | null;
+  parent_id: string | null;
   created_at: string;
 }
 
@@ -126,6 +139,9 @@ const emptyForm = () => ({
   due_date: "",
   amount: "",
   deposit: "",
+  parent_type: "" as TaskParentType | "",
+  parent_id: "",
+  parent_label: "",
 });
 
 const taskToForm = (t: Task): TaskForm => ({
@@ -142,6 +158,9 @@ const taskToForm = (t: Task): TaskForm => ({
   due_date: t.due_date ?? "",
   amount: String(t.amount ?? ""),
   deposit: String(t.deposit ?? ""),
+  parent_type: (t.parent_type as TaskParentType) || "",
+  parent_id: t.parent_id ?? "",
+  parent_label: "",
 });
 
 const AdminTasks = () => {
@@ -156,7 +175,8 @@ const AdminTasks = () => {
   const [form, setForm] = useState(emptyForm());
   const [formBaseline, setFormBaseline] = useState<TaskForm>(emptyForm());
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
-  const [leadOptions, setLeadOptions] = useState<LeadOption[]>([]);
+  const [parentLabels, setParentLabels] = useState<Map<string, string>>(new Map());
+  const [fixedParentType, setFixedParentType] = useState<TaskParentType | undefined>();
   const accessCtx = useAccessContext();
 
   useEffect(() => {
@@ -177,17 +197,13 @@ const AdminTasks = () => {
     if (tasksRes.error) {
       toast({ title: "Chyba", description: tasksRes.error.message, variant: "destructive" });
     } else {
-      setItems(filterTasksForUser((tasksRes.data || []) as Task[], accessCtx));
+      const rows = filterTasksForUser((tasksRes.data || []) as Task[], accessCtx);
+      setItems(rows);
+      const labels = await resolveTaskParentLabels(rows);
+      setParentLabels(labels);
     }
     if (!leadsRes.error && leadsRes.data) {
       setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
-      setLeadOptions(
-        leadsRes.data.map((l) => ({
-          id: l.id,
-          name: (l.name || "").trim() || l.email || "—",
-          email: l.email,
-        })),
-      );
     } else if (leadsRes.error) {
       toast({
         title: "Chyba načítania leadov",
@@ -198,21 +214,38 @@ const AdminTasks = () => {
     setLoading(false);
   };
 
-  const openNew = useCallback((opts?: { reset?: boolean }) => {
-    if (opts?.reset !== false) {
-      const blank = emptyForm();
-      setFormBaseline(blank);
-      setForm(blank);
-    }
-    setDialogOpen(true);
-  }, []);
+  const openNew = useCallback(
+    (opts?: { reset?: boolean; parentType?: TaskParentType }) => {
+      const urlParent = parseTaskParentFromSearchParams(searchParams);
+      if (opts?.reset !== false) {
+        const blank = emptyForm();
+        if (urlParent) {
+          blank.parent_type = urlParent.parent_type;
+          blank.parent_id = urlParent.parent_id;
+          blank.parent_label = urlParent.label ?? "";
+          setFixedParentType(urlParent.parent_type);
+        } else {
+          setFixedParentType(opts?.parentType);
+        }
+        setFormBaseline(blank);
+        setForm(blank);
+      }
+      setDialogOpen(true);
+    },
+    [searchParams],
+  );
 
   const openEdit = useCallback((t: Task) => {
     const baseline = taskToForm(t);
+    if (t.parent_type && t.parent_id) {
+      baseline.parent_label =
+        parentLabels.get(taskParentKey(t.parent_type, t.parent_id)) ?? baseline.parent_label;
+    }
+    setFixedParentType(undefined);
     setFormBaseline(baseline);
     setForm(baseline);
     setDialogOpen(true);
-  }, []);
+  }, [parentLabels]);
 
   const { discardDraft: discardTaskDraft, clearDraft: clearTaskDraft } = useCrmDraft({
     modalId: "task-edit",
@@ -228,8 +261,12 @@ const AdminTasks = () => {
     clearTaskDraft();
     clearCrmViewState();
     setDialogOpen(false);
+    setFixedParentType(undefined);
     const next = new URLSearchParams(searchParams);
     next.delete("task");
+    next.delete("parentType");
+    next.delete("parentId");
+    next.delete("parentLabel");
     setSearchParams(next, { replace: true });
   }, [clearTaskDraft, searchParams, setSearchParams]);
 
@@ -292,18 +329,25 @@ const AdminTasks = () => {
       return false;
     }
     setSaving(true);
-    const linked = await resolveTaskCustomerFields({
-      customer_id: form.customer_id || null,
-      customer_email: form.customer_email || null,
-      client_name: form.client_name,
-      lead_id: form.lead_id || null,
-    });
-    const parentErr = taskParentLinkError(linked);
+    const parentErr = taskParentRequiredError(form.parent_type, form.parent_id);
     if (parentErr) {
       toast({ title: parentErr, variant: "destructive" });
       setSaving(false);
       return false;
     }
+    const parentRef = {
+      parent_type: form.parent_type as TaskParentType,
+      parent_id: form.parent_id,
+      label: form.parent_label,
+    };
+    const enriched = await enrichTaskCustomerFieldsFromParent(parentRef);
+    const linked = await resolveTaskCustomerFields({
+      customer_id:
+        parentRef.parent_type === "customer" ? parentRef.parent_id : enriched.customer_id,
+      customer_email: form.customer_email || null,
+      client_name: enriched.client_name || form.client_name,
+      lead_id: enriched.lead_id || form.lead_id || null,
+    });
     const existing = form.id ? items.find((t) => t.id === form.id) : null;
     const finance = normalizeTaskFinancePayload(
       {
@@ -325,6 +369,8 @@ const AdminTasks = () => {
       due_date: form.due_date || null,
       amount: finance.amount,
       deposit: finance.deposit,
+      parent_type: parentRef.parent_type,
+      parent_id: parentRef.parent_id,
     };
     const { error } = form.id
       ? await supabase.from("tasks").update(payload).eq("id", form.id)
@@ -507,6 +553,7 @@ const AdminTasks = () => {
                   <TableRow>
                     <TableHead className="whitespace-nowrap">Termín</TableHead>
                     <TableHead>Názov</TableHead>
+                    <TableHead>Parent</TableHead>
                     <TableHead>Klient</TableHead>
                     <TableHead>Riešiteľ</TableHead>
                     {legacyFinanceCount > 0 && (
@@ -527,6 +574,7 @@ const AdminTasks = () => {
                     const pcfg = PRIORITY_CONFIG[t.priority];
                     const overdue = isOverdue(t.due_date, t.status);
                     const legacyFinance = isLegacyTaskFinance(t);
+                    const orphan = isOrphanTask(t);
                     const remaining = Number(t.amount || 0) - Number(t.deposit || 0);
                     const rowStatusOptions = taskStatusOptionsForForm(t);
                     return (
@@ -538,6 +586,34 @@ const AdminTasks = () => {
                         </TableCell>
                         <TableCell className="text-sm font-medium max-w-[260px]">
                           <button onClick={() => openEdit(t)} className="text-left hover:text-primary line-clamp-2">{t.title}</button>
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {isValidTaskParentType(t.parent_type) && t.parent_id ? (
+                            <div className="space-y-1">
+                              <Badge variant="outline" className="text-[9px]">
+                                {TASK_PARENT_TYPE_LABELS[t.parent_type]}
+                              </Badge>
+                              {(() => {
+                                const href = taskParentDetailHref(t.parent_type, t.parent_id);
+                                const label =
+                                  parentLabels.get(taskParentKey(t.parent_type, t.parent_id)) ||
+                                  t.parent_id.slice(0, 8);
+                                return href ? (
+                                  <Link to={href} className="text-primary hover:underline block truncate max-w-[140px]">
+                                    {label}
+                                  </Link>
+                                ) : (
+                                  <span className="truncate block max-w-[140px]">{label}</span>
+                                );
+                              })()}
+                            </div>
+                          ) : orphan ? (
+                            <Badge variant="outline" className="text-[9px] text-amber-700 border-amber-500/30">
+                              Legacy / orphan
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="text-sm">
                           {t.client_name ? (
@@ -657,6 +733,22 @@ const AdminTasks = () => {
         }
       >
         <div className="grid gap-3">
+          <TaskParentPicker
+            value={{
+              parent_type: form.parent_type,
+              parent_id: form.parent_id,
+              parent_label: form.parent_label,
+            }}
+            fixedType={fixedParentType}
+            onChange={(v) =>
+              setForm({
+                ...form,
+                parent_type: v.parent_type,
+                parent_id: v.parent_id,
+                parent_label: v.parent_label,
+              })
+            }
+          />
           <div>
             <label className="text-xs text-muted-foreground">Názov</label>
             <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="napr. Spustiť web pre klienta XY" />
@@ -670,23 +762,10 @@ const AdminTasks = () => {
           />
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-muted-foreground">Klient</label>
-              <LeadClientPicker
-                leads={leadOptions}
-                clientName={form.client_name}
-                leadId={form.lead_id}
-                customerId={form.customer_id || null}
-                customerEmail={form.customer_email || null}
-                onChange={({ client_name, lead_id, customer_id, customer_email }) =>
-                  setForm({
-                    ...form,
-                    client_name,
-                    lead_id: lead_id ?? "",
-                    customer_id: customer_id ?? "",
-                    customer_email: customer_email ?? "",
-                  })
-                }
-              />
+              <label className="text-xs text-muted-foreground">Kontext klienta (odvodený)</label>
+              <p className="text-sm text-muted-foreground mt-1 rounded-md border px-2 py-1.5 bg-muted/30 min-h-[2.25rem]">
+                {form.client_name || form.parent_label || "— vyplní sa z parent entity —"}
+              </p>
             </div>
             <div>
               <label className="text-xs text-muted-foreground">Riešiteľ</label>

@@ -30,6 +30,7 @@ import {
   type EntityPaymentRow,
 } from "@/lib/finance/entityPaymentBridge";
 import { financeCtxWithPayments, prefillFromMarketing } from "@/lib/finance/factDrafts";
+import { buildTaskCreateHref } from "@/lib/tasks/taskParentModel";
 
 type MarketingRecordDetail = MarketingRecord & {
   customers?: { id: string; email: string | null; display_name: string } | null;
@@ -142,7 +143,18 @@ export default function AdminMarketingDetail() {
       title={record.title}
       subtitle={record.client_name || "Bez klienta"}
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button asChild size="sm" variant="outline">
+            <Link
+              to={buildTaskCreateHref({
+                parent_type: "marketing",
+                parent_id: record.id,
+                label: record.title,
+              })}
+            >
+              Nová úloha
+            </Link>
+          </Button>
           <Button size="sm" variant="outline" onClick={openEdit}>
             <Pencil className="w-4 h-4 mr-1" /> Upraviť
           </Button>

@@ -27,6 +27,7 @@ import {
 import { financeCtxWithPayments, prefillFromProject } from "@/lib/finance/factDrafts";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
+import { buildTaskCreateHref } from "@/lib/tasks/taskParentModel";
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
   wordpress: "WordPress",
@@ -148,9 +149,22 @@ export default function AdminProjectDetail() {
       title={project.title}
       subtitle={project.client_name || "Bez klienta"}
       actions={
-        <Button size="sm" variant="outline" onClick={() => navigate("/admin/projects")}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Späť
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link
+              to={buildTaskCreateHref({
+                parent_type: "project",
+                parent_id: project.id,
+                label: project.title,
+              })}
+            >
+              Nová úloha
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => navigate("/admin/projects")}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Späť
+          </Button>
+        </div>
       }
     >
       <Tabs defaultValue="prehlad" className="space-y-4">

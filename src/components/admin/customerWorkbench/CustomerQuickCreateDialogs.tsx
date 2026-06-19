@@ -91,11 +91,22 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
       client_name: ctx.clientName,
       lead_id: ctx.primaryLeadId,
     });
+    if (!linked.customer_id) {
+      setSaving(false);
+      toast({
+        title: "Úloha vyžaduje zákazníka ako parent entitu",
+        description: "Najprv prepojte klienta na kanonického zákazníka.",
+        variant: "destructive",
+      });
+      return;
+    }
     const { error } = await supabase.from("tasks").insert({
       title: taskTitle.trim(),
       client_name: linked.client_name || null,
       lead_id: linked.lead_id,
       customer_id: linked.customer_id,
+      parent_type: "customer",
+      parent_id: linked.customer_id,
       status: "todo",
       priority: taskPriority,
       due_date: taskDueDate || null,
