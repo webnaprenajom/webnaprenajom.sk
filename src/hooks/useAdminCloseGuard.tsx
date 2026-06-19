@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useBlocker } from "react-router-dom";
 import { useUnsavedChangesGuard } from "@/hooks/useUnsavedChangesGuard";
 import { UnsavedChangesAlertDialog } from "@/components/admin/UnsavedChangesAlertDialog";
 
@@ -10,7 +9,7 @@ export interface UseAdminCloseGuardOptions<T> {
   onSave: () => boolean | Promise<boolean>;
   onDiscard?: () => void;
   saving?: boolean;
-  /** Block in-app route changes while dirty (pilot pages). */
+  /** Reserved for future Data Router — ignored under BrowserRouter (ponytail). */
   blockRouteChanges?: boolean;
 }
 
@@ -21,20 +20,11 @@ export function useAdminCloseGuard<T>({
   onSave,
   onDiscard,
   saving = false,
-  blockRouteChanges = true,
 }: UseAdminCloseGuardOptions<T>) {
   const { isDirty } = useUnsavedChangesGuard({ isOpen, current, normalize });
   const [promptOpen, setPromptOpen] = useState(false);
   const pendingCloseRef = useRef<(() => void) | null>(null);
   const pendingProceedRef = useRef<(() => void) | null>(null);
-
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      blockRouteChanges &&
-      isOpen &&
-      isDirty &&
-      currentLocation.pathname !== nextLocation.pathname,
-  );
 
   const requestClose = useCallback(
     (closeFn: () => void, proceed?: () => void) => {
@@ -48,6 +38,14 @@ export function useAdminCloseGuard<T>({
       setPromptOpen(true);
     },
     [isDirty],
+  );
+
+  /** Wrap programmatic navigate() — sidebar Link clicks are not intercepted under BrowserRouter. */
+  const requestNavigate = useCallback(
+    (navigateFn: () => void) => {
+      requestClose(() => {}, navigateFn);
+    },
+    [requestClose],
   );
 
   const handleOpenChange = useCallback(
@@ -70,8 +68,7 @@ export function useAdminCloseGuard<T>({
     pendingCloseRef.current = null;
     pendingProceedRef.current = null;
     setPromptOpen(false);
-    if (blocker.state === "blocked") blocker.reset?.();
-  }, [blocker]);
+  }, []);
 
   const handleDiscard = useCallback(() => {
     onDiscard?.();
@@ -84,11 +81,14 @@ export function useAdminCloseGuard<T>({
   }, [finishClose, onSave]);
 
   useEffect(() => {
-    if (blocker.state !== "blocked") return;
-    pendingCloseRef.current = () => {};
-    pendingProceedRef.current = () => blocker.proceed?.();
-    setPromptOpen(true);
-  }, [blocker.state, blocker]);
+    if (!isOpen || !isDirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isOpen, isDirty]);
 
   const closeGuardDialog = (
     <UnsavedChangesAlertDialog
@@ -105,6 +105,7 @@ export function useAdminCloseGuard<T>({
   return {
     isDirty,
     requestClose,
+    requestNavigate,
     handleOpenChange,
     closeGuardDialog,
   };
