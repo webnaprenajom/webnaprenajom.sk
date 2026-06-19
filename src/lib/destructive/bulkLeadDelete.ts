@@ -1,4 +1,4 @@
-import { executeDestructiveDelete, precheckDestructiveDelete } from "./client";
+import { executeLeadDelete, precheckLeadDelete } from "@/lib/leads/destructive";
 import { isLeadDeleteRisky } from "./types";
 
 export type BulkLeadDeleteItemFailure = {
@@ -19,7 +19,7 @@ export async function bulkDeleteLeads(ids: string[]): Promise<BulkLeadDeleteResu
   const failed: BulkLeadDeleteItemFailure[] = [];
 
   for (const id of ids) {
-    const { impact, error: precheckError } = await precheckDestructiveDelete("lead", id);
+    const { impact, error: precheckError } = await precheckLeadDelete(id);
     if (precheckError || !impact) {
       failed.push({ id, reason: precheckError ?? "Precheck zlyhal." });
       continue;
@@ -30,7 +30,7 @@ export async function bulkDeleteLeads(ids: string[]): Promise<BulkLeadDeleteResu
       continue;
     }
 
-    const { result, error: execError } = await executeDestructiveDelete("lead", id);
+    const { result, error: execError } = await executeLeadDelete(id);
     if (execError || !result) {
       failed.push({ id, reason: execError ?? "Zmazanie zlyhalo." });
       continue;

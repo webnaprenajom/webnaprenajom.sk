@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { DestructiveImpactSummaryView } from "@/components/admin/destructive/DestructiveImpactSummaryView";
 import {
   destructiveEntityTypeLabel,
+  type DestructiveEntityType,
   type DestructiveImpactSummary,
 } from "@/lib/destructive/types";
+import { LEAD_DELETE_MODAL_INTRO } from "@/lib/leads/destructive";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 export interface ConfirmDestructiveActionModalProps {
@@ -38,21 +40,33 @@ export function ConfirmDestructiveActionModal({
   const entityType = impact?.entity_type;
   const canDelete = impact?.can_delete ?? false;
   const busy = loading || executing;
+  const isLead = entityType === "lead";
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="max-w-lg w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Zmazať {entityType ? destructiveEntityTypeLabel(entityType).toLowerCase() : "záznam"}?
+            {isLead
+              ? "Vymazať lead"
+              : `Zmazať ${entityType ? destructiveEntityTypeLabel(entityType as DestructiveEntityType).toLowerCase() : "záznam"}?`}
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-3 text-sm text-muted-foreground">
-              <p>
-                Chystáte sa <strong className="text-foreground">natrvalo zmazať</strong>{" "}
-                <strong className="text-foreground">{entityLabel}</strong>. Túto akciu nie je možné
-                vrátiť späť.
-              </p>
+              {isLead ? (
+                <p>{LEAD_DELETE_MODAL_INTRO}</p>
+              ) : (
+                <p>
+                  Chystáte sa <strong className="text-foreground">natrvalo zmazať</strong>{" "}
+                  <strong className="text-foreground">{entityLabel}</strong>. Túto akciu nie je možné
+                  vrátiť späť.
+                </p>
+              )}
+              {isLead && impact && (
+                <p>
+                  Lead: <strong className="text-foreground">{entityLabel}</strong>
+                </p>
+              )}
               {loading && (
                 <div className="flex items-center gap-2 py-4 justify-center">
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -86,7 +100,7 @@ export function ConfirmDestructiveActionModal({
                 Mažem…
               </>
             ) : canDelete ? (
-              "Natrvalo zmazať"
+              isLead ? "Vymazať" : "Natrvalo zmazať"
             ) : (
               "Zmazanie zablokované"
             )}

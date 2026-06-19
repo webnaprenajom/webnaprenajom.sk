@@ -1,35 +1,26 @@
 # AUDIT_FINDINGS.md — webnaprenajom.sk CRM
 
-> Audit KROK 3 (READ ONLY). Zoradené podľa závažnosti. Každý nález má lokalizáciu v kóde a business dopad.
+> Pôvodný audit KROK 3. **Living doc** — nižšie status k jednotlivým nálezom (aktualizované po Fázach 1–2c, 3, 5 a cleanup batchoch).
+>
+> **Aktuálny stav (stručne):** Customer Hub finance ✅ · AdminFinance error surfacing ✅ · destructive delete (customer/hosting/rental) ✅ · `customers` + FK foundation ✅ · RBAC `owner`/`administrator` ✅ · truth badges v daily finance ✅.
+> **Otvorené:** scoped KPI pre administratora (#5) · inline page queries (#6) · `EntityProfitBanner` v Rentals (#8) · projects/marketing/designs bez ownership scoping.
 
 ## 🔴 KRITICKÉ
 
-### 1. Customer Hub nemá kompletný finančný obraz klienta
-- **Lokalizácia**: `src/lib/customerWorkbench/loadCustomerWorkbench.ts` (411 riadkov), `src/lib/customerWorkbench/types.ts`,
-  `src/components/admin/customerWorkbench/CustomerWorkbench.tsx` (tab "financie", ~1012 riadkov)
-- **Problém**: `loadCustomerWorkbench` nikde nevolá `payment_records`, `payout_records` ani `cost_records`.
-  `CustomerWorkbenchData` tieto pola vôbec nemá. Tab "financie" zobrazuje len `paidCommissions`/`unpaidCommissions`
-  (zo `commissions` tabuľky) — žiadny príjem, žiadne náklady, žiadny "čistý zisk".
-- **Business dopad**: Maroš nevidí na jednej stránke "kto platí, koľko, čistý zisk" pre konkrétneho klienta —
-  presne to, čo CLAUDE.md definuje ako primárnu potrebu. Musí prepínať medzi Customer Hub a Finance/Rentals
-  a ručne si dávať čísla do súvisu. Toto je hlavný gap medzi "Golden Path" (DB úroveň funguje, FK existujú) a
-  prezentačnou vrstvou.
+### 1. Customer Hub nemá kompletný finančný obraz klienta — ✅ RESOLVED (Fáza 2/2b, 2026-06-14)
+- **Lokalizácia**: `loadCustomerHubAggregate.ts`, `CustomerFinancePanel.tsx`, `CustomerHubFinanceSnapshot.tsx`, `summary.ts`
+- **Bolo**: `loadCustomerWorkbench` nečítal `payment_records` / `cost_records` / `payout_records`.
+- **Teraz**: Hub načítava finance sekcie, truth-level badge, `computeCustomerFinanceSummary`, platobná história 12 mes., timeline payment events.
 
-### 2. Customer Hub nemá históriu platieb (graf ani tabuľku)
-- **Lokalizácia**: rovnaké súbory ako #1
-- **Problém**: Bez `payment_records`/`rental_payments` dát v `CustomerWorkbenchData` nie je možné zobraziť
-  timeline platieb. `CustomerTimeline` komponent existuje, ale pracuje len s `lead_logs`/`communication_events`,
-  nie s platbami.
-- **Business dopad**: Pri riešení sporu o platbu ("zaplatil/nezaplatil minulý mesiac?") musí Maroš ísť do
-  `/admin/rentals` alebo `/admin/finance` a filtrovať manuálne.
+### 2. Customer Hub nemá históriu platieb — ✅ RESOLVED (Fáza 2, 2026-06-14)
+- **Lokalizácia**: `CustomerFinancePanel.tsx`, `timeline.ts`
+- **Bolo**: Bez payment dát v hub loaderi.
+- **Teraz**: Tabuľka `payment_records` (12 mes.) + timeline udalosti `payment`/`payout`/`rental_payment`.
 
-### 3. AdminFinance.tsx — nekonzistentné error handling pri 13 paralelných queries
-- **Lokalizácia**: `src/pages/AdminFinance.tsx`, funkcia `load()` (13× `supabase.from(...)` v `Promise.all`)
-- **Problém**: Iba chyby pri `commissions`/`expenses` vyvolajú `toast()` (1 toast call v celom súbore).
-  Chyby pri `payment_records`, `payout_records`, `cost_records`, `commission_rules`, `commission_rule_overrides`,
-  `hosting_records`, `finance_policy_settings` sa ticho premenia na `[]` (`pr.error ? [] : pr.data || []`).
-- **Business dopad**: Ak zlyhá query na `payment_records` (napr. RLS problém po zmene rolí), Finance stránka
-  vyzerá normálne, ale všetky súčty sú nesprávne — bez akéhokoľvek upozornenia. Vysoké riziko pri finančných číslach.
+### 3. AdminFinance.tsx — nekonzistentné error handling — ✅ RESOLVED (Fáza 1, 2026-06-14)
+- **Lokalizácia**: `src/pages/AdminFinance.tsx`, funkcia `load()`
+- **Bolo**: Väčšina paralelných queries ticho degradovala na `[]`.
+- **Teraz**: Per-table `errors[]` + destructive toast + persistent banner pri čiastočnom zlyhaní.
 
 ## 🟡 DÔLEŽITÉ
 
@@ -64,12 +55,10 @@
   (`workflow_only`, zdroj `commissions`) + pätičku vysvetľujúcu vzťah k auditovaným `payout_records`.
   Viď `src/components/admin/finance/TruthLevelBadge.tsx` a `ROADMAP.md` Fáza 3.
 
-### 5. KPI karty v daily Finance view sú len pre admina
-- **Lokalizácia**: `src/pages/AdminFinance.tsx`, `showOrgKpis = canAccessOperationalCrm(access.role)`
-- **Problém**: KPI karty ("Zaplatené faktúry", "Prijaté platby" atď.) sú v kóde *above the fold* — to je v poriadku —
-  ale celá sekcia je podmienená `role === "admin"`. `role="user"` (realizátor) nevidí žiadne KPI, iba tabuľku provízií.
-- **Business dopad**: CLAUDE.md pravidlo "KPI karty vždy above the fold" platí len pre admina. Pre implementerov
-  by aspoň scoped KPI (vlastné provízie/výplaty) zlepšili prehľad bez nutnosti scrollovať do tabuľky.
+### 5. KPI karty v daily Finance view — ⚠️ ČIASTOČNE OTVORENÉ (ROADMAP 3.2)
+- **Lokalizácia**: `src/pages/AdminFinance.tsx`
+- **Stav**: Owner aj **administrator** vidia daily finance (`canAccessOperationalCrm`). Org KPI karty sú dostupné obom rolám s operational prístupom.
+- **Otvorené**: Scoped KPI pre administratora (vlastné provízie/výplaty above the fold) — ROADMAP 3.2.
 
 ### 6. Inline Supabase queries — "spaghetti" v najväčších stránkach
 - **Lokalizácia**: `AdminRentals.tsx` (19×), `Admin.tsx` (18×), `AdminFinance.tsx` (13×), `AdminCommissions.tsx` (12×)
@@ -77,31 +66,19 @@
 - **Problém**: Dátová logika je zamiešaná s UI logikou, ťažko testovateľná (porovnaj s `loadCustomerWorkbench.ts`,
   ktorý má vlastné testy v `src/test/`). Zmena schémy (napr. pridanie `rental_website_id` do query) vyžaduje
   úpravu na viacerých miestach naraz.
-- **Business dopad**: Vyššie riziko regresií pri budúcich zmenách (napr. Fáza 2 nižšie, kde treba pridať finance
-  queries do Customer Hub aj Rentals).
+- **Business dopad**: Vyššie riziko regresií pri budúcich zmenách.
+- **Poznámka:** Customer Hub finance už v `lib/` — zvyšok stránok backlog (ROADMAP / data-loader konsolidácia).
 
-### 7. CLAUDE.md je už zastaraný v sekcii "Customer identity"
-- **Lokalizácia**: `CLAUDE.md` (práve vytvorený), sekcia "DATABÁZA – KĽÚČOVÉ TABUĽKY" hovorí
-  "Customer identity: identity bridge cez email/name – **NIE full customers tabuľka**" a v POST-RELEASE BACKLOG
-  je "Full customers tabuľka s FK".
-- **Skutočnosť**: Migrácie `20260611100000_customers_foundation.sql` (F1) a `20260614000000_rc5_rental_customer_identity.sql`
-  (RC5) **už vytvorili** `customers` tabuľku + `customer_id` FK na `leads`, `project_notes`, `rental_websites`,
-  `hosting_records`, `commissions`, + `rental_websites.customer_email` backfill. `loadCustomerWorkbench.ts` to
-  aktívne používa (`findCustomerById`, `CanonicalCustomerBadge` vs `HeuristicDataBadge`).
-- **Business dopad**: CLAUDE.md (zdroj pravdy pre Claude session) je v rozpore s realitou — riziko, že budúce
-  session budú plánovať prácu na "Full customers tabuľka s FK", ktorá je z veľkej časti hotová. Treba
-  CLAUDE.md opraviť (presunúť z backlogu, popísať reálny stav: FK existujú, ale identity bridge cez email/name
-  je stále potrebná pre záznamy bez `customer_id`).
+### 7. CLAUDE.md customer identity — ✅ RESOLVED (Fáza 1.2)
+- **Skutočnosť**: `customers` tabuľka + `customer_id` FK + `rental_websites.customer_email` — popísané v `CLAUDE.md`.
+- **Backlog:** postupný backfill zostávajúcich záznamov bez `customer_id` (heuristika stále fallback).
 
 ### 8. "Čistý zisk" komponent existuje, ale nie je univerzálny
 - **Lokalizácia**: `src/lib/profit/profitCalculator.ts`, `src/lib/profit/profitContext.ts`,
   `src/components/admin/EntityProfitBanner.tsx`, použité v `AdminHostingDetail.tsx` a `AdminProjectDetail.tsx`
   (cez `EntityCommissionsPanel`).
-- **Problém**: Logika `profit = max(0, revenue - operatingCost)` s bezpečnými fallbackmi je dobre navrhnutá,
-  ale je vykreslená iba pre `entityKind: "hosting" | "project"`. `AdminRentals.tsx` (kde je hlavný revenue stream —
-  mesačné prenájmy) a Customer Hub ju nemajú.
-- **Business dopad**: Najdôležitejšie číslo ("čistý zisk", ktoré priamo definuje CLAUDE.md ako kľúčovú potrebu)
-  chýba presne tam, kde je revenue najväčší (rentals) a kde ho Maroš najčastejšie potrebuje (Customer Hub).
+- **Problém**: `EntityProfitBanner` chýba v `AdminRentals.tsx` (hlavný MRR stream).
+- **Customer Hub:** ✅ `EntityProfitBanner` / `computeCustomerFinanceSummary` s `entityKind: "customer"` (Fáza 2).
 - **✅ ČIASTOČNE RESOLVED (Fáza 5 "Commission Clarity", 2026-06-14)** — pre províziovú časť tohto nálezu:
   `/admin/commissions` a `EntityCommissionsPanel` (hosting/project) teraz jasne rozlišujú workflow flag
   (`commissions.payment_status`) od auditovanej výplaty (`payout_records`, nový stĺpec "Výplata" + 3-bucket
@@ -142,10 +119,9 @@
 ### 12. Golden Path je na DB úrovni reálne prepojený
 - **Lokalizácia**: `payment_records.rental_website_id` a `cost_records.rental_website_id` sú FK →
   `rental_websites(id)` (migrácie `20260609120000`, `20260609130000`).
-- **Prečo je to dobre**: Fáza 2 (Customer Hub finance) je teda "len" o doplnení queries a UI — DB schéma už
-  podporuje presné prepojenie rental → payment/cost bez ďalšej migrácie.
+- **Prečo je to dobre**: DB schéma podporuje rental → payment/cost; UI doplnené vo Fáze 2 (Customer Hub).
 
-### 13. `customers` FK rollout (F1 + RC5) je ďalej, než CLAUDE.md predpokladá
+### 13. `customers` FK rollout (F1 + RC5) — ✅ AKTÍVNE
 - **Lokalizácia**: `20260611100000_customers_foundation.sql`, `20260611100100_customers_email_backfill.sql`,
   `20260614000000_rc5_rental_customer_identity.sql`
 - **Prečo je to dobre**: `customer_id` FK na 5 tabuľkách + email backfill + index na `lower(display_name)` —
@@ -156,7 +132,7 @@
 - **Lokalizácia**: `src/lib/profit/profitContext.ts`
 - **Prečo je to dobre**: `resolveProfitDisplayContext()` explicitne rozlišuje "no_revenue_yet", "zero_revenue",
   "cost_without_revenue" a `canShowProfit: false` v neistých prípadoch — presne v duchu "nikdy nenaznačiť zisk,
-  ak nie je revenue základ známy". Toto je vzor, ktorý treba znovu použiť vo Fáze 2 pre Customer Hub aj Rentals.
+  ak nie je revenue základ známy". Použité v Customer Hub, hosting/project detail.
 
 ### 15. Legacy_import záznamy sú chránené pred zmazaním/úpravou
 - **Lokalizácia**: `src/components/admin/finance/FinanceRecordsCrud.tsx`, `isLegacy(truthLevel)`
@@ -167,10 +143,15 @@
 - **Lokalizácia**: `CustomerWorkbench.tsx`
 - **Prečo je to dobre**: 8 záložiek + priame linky na `/admin/rollout-health`, `/admin/communication-ops`,
   `/admin/signatures`, `/admin/designs`, `/admin/rentals`, `/admin/hosting`, `/admin/projects`, `/admin/tasks`,
-  `/admin?lead=`. Audit item A (cross-module links) je splnený — chýba len finančný blok (#1, #2).
+  `/admin?lead=`. Finančný blok (#1, #2) doručený vo Fáze 2.
 
-### 17. RBAC scoping pre provízie je dobre premyslený
+### 17. RBAC scoping — ✅ AKTÍVNE (`owner` / `administrator`)
 - **Lokalizácia**: `src/lib/rbac/permissions.ts`
 - **Prečo je to dobre**: `filterCommissionsForUser`, `commissionVisibleToUser` (case-insensitive),
   `resolveScopedCommissionEmpty` (3 rozlíšené dôvody prázdneho stavu s user-friendly textom) — pripravené pre
-  Fázu 5 (Commission Clarity) bez väčších zmien v RBAC vrstve.
+  `resolveScopedCommissionEmpty` — pripravené pre Commission Clarity (Fáza 5, hotová časť).
+  Legacy DB enum `admin`/`user` sa normalizuje na `owner`/`administrator` v `useAdminAccess`.
+
+### 18. Destructive delete (customer / hosting / rental / lead) — ✅ RESOLVED (Fáza 2c + L1/L2)
+- **Lokalizácia**: `useDestructiveAction.ts`, destructive RPC migrácie, `ConfirmDestructiveActionModal`, `src/lib/leads/destructive.ts`, `bulkLeadDelete.ts`
+- **Stav**: Precheck + execute RPC pre customer/hosting/rental/lead. Lead: hard delete + detach tasks/notes; bulk skipne `is_risky` leady. Wired v Admin.tsx (single + bulk).

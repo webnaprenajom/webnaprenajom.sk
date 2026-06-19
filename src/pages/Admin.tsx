@@ -73,6 +73,7 @@ import { toast } from "@/hooks/use-toast";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { bulkDeleteLeads, formatBulkLeadDeleteSummary } from "@/lib/destructive/bulkLeadDelete";
+import { LEAD_DELETE_BULK_SUMMARY } from "@/lib/leads/destructive";
 import {
   Loader2,
   LogOut,
@@ -1722,11 +1723,7 @@ const Admin = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Vymazať {selectedIds.size} leadov?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Pre každý lead sa skontrolujú dopady. Leady s finančným upozornením na prepojenom
-              klientovi budú preskočené; ostatné sa zmazú (úlohy a projekty sa odpoja). Túto akciu
-              nie je možné vrátiť späť.
-            </AlertDialogDescription>
+            <AlertDialogDescription>{LEAD_DELETE_BULK_SUMMARY}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={bulkDeleteBusy}>Zrušiť</AlertDialogCancel>

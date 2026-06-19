@@ -42,7 +42,7 @@
 | `TruthLevelBadge.tsx` | Finance truth UI | Single color map: fact=green, legacy=orange, workflow=gray |
 | `FinanceRecordsCrud.tsx` | Confirmed finance records CRUD | Inserts `*_fact`; legacy read-only |
 | `AdminDialog` + `useAdminCloseGuard` | Modal + unsaved guard | All edit modals; wraps `useUnsavedChangesGuard` + route blocker |
-| `useDestructiveAction` | Destructive delete UX | RPC precheck modal; not for lead pipeline delete (backlog) |
+| `useDestructiveAction` | Destructive delete UX | RPC precheck modal; lead pipeline wired (Admin.tsx) |
 
 **Helper / non-canonical:** page-local state, one-off hooks, marketing components, most `components/ui/*`.
 
@@ -54,7 +54,7 @@
 | Unsaved guard | `useAdminCloseGuard` → `useUnsavedChangesGuard` | Legacy pages without guard; CLAUDE still documents `useUnsavedChangesGuard` — **use `useAdminCloseGuard` for new CRM modals** |
 | Long notes | `AdminLongTextField` | `NoteTextarea` in older forms (Commissions, project notes) |
 | Truth badge | `TruthLevelBadge` + `FINANCE_TRUTH_DISCLAIMER` | Resolved in daily finance (Fáza 3) |
-| Destructive delete | `useDestructiveAction` + `ConfirmDestructiveActionModal` | Lead delete in `Admin.tsx` raw `.delete()`; Tasks/FinanceRecordsCrud `window.confirm` |
+| Destructive delete | `useDestructiveAction` + `ConfirmDestructiveActionModal` | Tasks/FinanceRecordsCrud `window.confirm`; bulk lead delete uses dedicated AlertDialog + `bulkDeleteLeads` |
 | Admin tables | `Table` in `rounded-xl border overflow-x-auto` | Some card grids in marketing/debug |
 | Customer Hub | `CustomerWorkbench.tsx` | Golden path canvas — extend via hub sections, not duplicate loaders in pages |
 
