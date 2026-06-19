@@ -80,14 +80,6 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   },
 ];
 
-/** Nav groups visible in production sidebar (excludes devOnly items). */
-export function visibleAdminNavGroups(): AdminNavGroup[] {
-  return ADMIN_NAV_GROUPS.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => !item.devOnly),
-  })).filter((group) => group.items.length > 0);
-}
-
 export function isAdminNavActive(pathname: string, href: string, exact?: boolean): boolean {
   if (href === "/admin" || exact) {
     return pathname === href;

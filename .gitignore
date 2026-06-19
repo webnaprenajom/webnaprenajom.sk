@@ -37,3 +37,4 @@ scripts/migration/reports/review-queue-*
 coverage
 .turbo
 supabase/.temp
+.supabase-migrations.json
