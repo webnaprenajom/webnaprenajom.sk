@@ -30,6 +30,11 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { buildFinanceSnapshot } from "@/lib/finance/buildFinanceSnapshot";
 import { FINANCE_TRUTH_DISCLAIMER } from "@/lib/finance/labels";
+import {
+  FINANCE_ENTITY_KIND_LABELS,
+  type EntityPaymentTotals,
+  type FinanceEntityKind,
+} from "@/lib/finance/financeSourceLabels";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { FinanceImplementerDetailDialog } from "@/components/admin/finance/FinanceImplementerDetailDialog";
 import type { CommissionRow } from "@/lib/commissionSource";
@@ -62,6 +67,9 @@ const AdminFinance = () => {
     paymentRecords: [] as any[],
     payoutRecords: [] as any[],
     costRecords: [] as any[],
+    projects: [] as any[],
+    marketing: [] as any[],
+    tasks: [] as any[],
   });
   const [dismissals, setDismissals] = useState<IssueDismissalRow[]>([]);
   const [commissionRules, setCommissionRules] = useState<CommissionRule[]>([]);
@@ -85,7 +93,8 @@ const AdminFinance = () => {
     // ale chyba sa nestratí — zobrazí sa konsolidovaný toast + banner (pozri loadErrors nižšie).
     const errors: { table: string; message: string }[] = [];
 
-    const [c, e, w, p, pr, po, cr, dis, rules, overrides, hosting, reviews, policies] = await Promise.all([
+    const [c, e, w, p, pr, po, cr, dis, rules, overrides, hosting, reviews, policies, proj, mkt, tsk] =
+      await Promise.all([
       supabase.from("commissions").select("*").order("date", { ascending: false }),
       supabase.from("expenses").select("*").order("date", { ascending: false }),
       supabase.from("rental_websites").select("*"),
@@ -105,6 +114,15 @@ const AdminFinance = () => {
         return [];
       }),
       supabase.from("finance_policy_settings").select("*").order("policy_key"),
+      supabase
+        .from("project_notes")
+        .select("id,title,client_name,customer_email,agreed_fee,status"),
+      supabase
+        .from("marketing_records")
+        .select("id,title,client_name,customer_email,agreed_fee,status"),
+      supabase
+        .from("tasks")
+        .select("id,title,client_name,amount,deposit,status"),
     ]);
 
     // Priame supabase.from(...) výsledky — každý sa skontroluje samostatne, žiadny sa nezahodí tichom.
@@ -120,6 +138,9 @@ const AdminFinance = () => {
       { table: "commission_rule_overrides", result: overrides },
       { table: "hosting_records", result: hosting },
       { table: "finance_policy_settings", result: policies },
+      { table: "project_notes", result: proj },
+      { table: "marketing_records", result: mkt },
+      { table: "tasks", result: tsk },
     ];
     for (const { table, result } of directResults) {
       if (result.error) {
@@ -135,6 +156,9 @@ const AdminFinance = () => {
       paymentRecords: pr.data || [],
       payoutRecords: po.data || [],
       costRecords: cr.data || [],
+      projects: proj.data || [],
+      marketing: mkt.data || [],
+      tasks: tsk.data || [],
     });
     setDismissals(dis);
     setCommissionRules((rules.data as CommissionRule[]) ?? []);
@@ -165,9 +189,13 @@ const AdminFinance = () => {
         paymentRecords: raw.paymentRecords,
         payoutRecords: raw.payoutRecords,
         costRecords: raw.costRecords,
+        projects: raw.projects,
+        marketing: raw.marketing,
+        tasks: raw.tasks,
+        hosting: hostingRecords,
         filterYear: year,
       }),
-    [raw, year],
+    [raw, hostingRecords, year],
   );
 
   const financeCtx = useMemo(
@@ -179,8 +207,12 @@ const AdminFinance = () => {
       paymentRecords: raw.paymentRecords,
       payoutRecords: raw.payoutRecords,
       costRecords: raw.costRecords,
+      projects: raw.projects,
+      marketing: raw.marketing,
+      tasks: raw.tasks,
+      hosting: hostingRecords,
     }),
-    [raw],
+    [raw, hostingRecords],
   );
 
   const activeIssueCount = useMemo(() => {
@@ -377,6 +409,7 @@ const AdminFinance = () => {
         ) : (
           <DailyFinanceView
             dailyKpis={dailyKpis}
+            entityPayments={snapshot.totals.entityPaymentsConfirmed}
             implementerTotals={implementerTotals}
             commissions={scopedCommissions as CommissionRow[]}
             activeIssueCount={activeIssueCount}
@@ -399,6 +432,7 @@ const AdminFinance = () => {
 
 function DailyFinanceView({
   dailyKpis,
+  entityPayments,
   implementerTotals,
   commissions,
   activeIssueCount,
@@ -416,6 +450,7 @@ function DailyFinanceView({
     paymentsConfirmed: number;
     paymentsLegacyImport: number;
   };
+  entityPayments: EntityPaymentTotals;
   implementerTotals: [string, { paid: number; unpaid: number; count: number }][];
   commissions: CommissionRow[];
   activeIssueCount: number;
@@ -443,6 +478,8 @@ function DailyFinanceView({
       <p className="text-[11px] text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
         {FINANCE_TRUTH_DISCLAIMER}
       </p>
+
+      {showOrgKpis && <EntityPaymentsKpiGrid totals={entityPayments} />}
 
       {showOrgKpis && (
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -628,6 +665,7 @@ function AdvancedFinanceView({
         </TabsList>
 
         <TabsContent value="prehlad" className="space-y-4 mt-4">
+          <EntityPaymentsKpiGrid totals={snapshot.totals.entityPaymentsConfirmed} />
           <section className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <StatCard label="Potvrdené platby" value={snapshot.totals.paymentsConfirmed} accent="text-green-600" />
             <StatCard label="Potvrdené výplaty" value={snapshot.totals.payoutsConfirmed} accent="text-red-600" />
@@ -746,6 +784,62 @@ function StatCard({
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`text-xl font-bold mt-1 ${accent}`}>{value.toFixed(2)} €</div>
     </div>
+  );
+}
+
+const ENTITY_KPI_ORDER: FinanceEntityKind[] = [
+  "hosting",
+  "project",
+  "task",
+  "marketing",
+  "rental",
+  "other",
+];
+
+function EntityPaymentsKpiGrid({ totals }: { totals: EntityPaymentTotals }) {
+  const totalAmount = ENTITY_KPI_ORDER.reduce((s, k) => s + totals[k].amount, 0);
+  const totalCount = ENTITY_KPI_ORDER.reduce((s, k) => s + totals[k].count, 0);
+  const hasAny = totalCount > 0;
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-4 space-y-3">
+      <div className="flex items-start justify-between gap-2 flex-wrap">
+        <div>
+          <h2 className="text-sm font-semibold">Potvrdené platby podľa entity</h2>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Len <TruthLevelBadge level="payment_fact" /> z payment_records — nie workflow stavy entít ani legacy
+            import.
+          </p>
+        </div>
+        {hasAny && (
+          <div className="text-right">
+            <div className="text-lg font-bold text-green-600 tabular-nums">{totalAmount.toFixed(2)} €</div>
+            <div className="text-[10px] text-muted-foreground">{totalCount} záznamov</div>
+          </div>
+        )}
+      </div>
+      {!hasAny ? (
+        <p className="text-xs text-muted-foreground py-2">
+          Zatiaľ žiadne entity-linked payment facts (Hosting, Projekty, Úlohy, Marketing, Prenájmy).
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {ENTITY_KPI_ORDER.map((kind) => {
+            const bucket = totals[kind];
+            if (bucket.count === 0) return null;
+            return (
+              <div key={kind} className="rounded-lg border border-border/70 bg-muted/20 px-3 py-2">
+                <div className="text-[10px] text-muted-foreground">{FINANCE_ENTITY_KIND_LABELS[kind]}</div>
+                <div className="text-sm font-semibold text-green-700 dark:text-green-400 tabular-nums">
+                  {bucket.amount.toFixed(0)} €
+                </div>
+                <div className="text-[10px] text-muted-foreground">{bucket.count}×</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
 

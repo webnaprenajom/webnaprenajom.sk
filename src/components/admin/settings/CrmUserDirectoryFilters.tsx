@@ -42,8 +42,8 @@ export function CrmUserDirectoryFilters({ filters, onChange, showMappingFilter =
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Všetky role</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-              <SelectItem value="user">User</SelectItem>
+              <SelectItem value="owner">Owner</SelectItem>
+              <SelectItem value="administrator">Administrator</SelectItem>
             </SelectContent>
           </Select>
         </div>

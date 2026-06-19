@@ -1,6 +1,12 @@
 /** Commission source linking — maps workflow rows to business entities. */
 
-export type CommissionSourceType = "project" | "rental" | "hosting" | "other";
+export type CommissionSourceType =
+  | "project"
+  | "rental"
+  | "hosting"
+  | "marketing"
+  | "task"
+  | "other";
 
 /** linked = type+id set; legacy = neither; partial = mismatched pair; other = type other without id requirement */
 export type CommissionLinkStatus = "linked" | "legacy" | "partial" | "other";
@@ -16,6 +22,8 @@ export const COMMISSION_SOURCE_LABELS: Record<CommissionSourceType, string> = {
   project: "Projekt",
   rental: "Prenájom",
   hosting: "Hosting",
+  marketing: "Marketing",
+  task: "Úloha",
   other: "Iné",
 };
 
@@ -37,6 +45,8 @@ export interface SourceLabelContext {
   projects?: Map<string, { title: string }>;
   rentals?: Map<string, { name: string }>;
   hosting?: Map<string, { label: string }>;
+  marketing?: Map<string, { title: string }>;
+  tasks?: Map<string, { title: string }>;
 }
 
 export function commissionMatchesSource(
@@ -64,8 +74,14 @@ export function resolveCommissionSourceLabel(
   if (type === "hosting" && id && ctx.hosting?.has(id)) {
     return ctx.hosting.get(id)!.label;
   }
+  if (type === "marketing" && id && ctx.marketing?.has(id)) {
+    return ctx.marketing.get(id)!.title;
+  }
+  if (type === "task" && id && ctx.tasks?.has(id)) {
+    return ctx.tasks.get(id)!.title;
+  }
 
-  const typeLabel = COMMISSION_SOURCE_LABELS[type] ?? type;
+  const typeLabel = COMMISSION_SOURCE_LABELS[type as CommissionSourceType] ?? type;
   return id ? `${typeLabel} · ${row.title}` : row.title;
 }
 
@@ -81,12 +97,22 @@ export function sourceDetailHref(
       return `/admin/rentals?website=${sourceId}`;
     case "hosting":
       return `/admin/hosting/${sourceId}`;
+    case "marketing":
+      return `/admin/marketing/${sourceId}`;
+    case "task":
+      return `/admin/tasks/${sourceId}`;
     default:
       return null;
   }
 }
 
-const ENTITY_SOURCE_TYPES = new Set<CommissionSourceType>(["project", "rental", "hosting"]);
+const ENTITY_SOURCE_TYPES = new Set<CommissionSourceType>([
+  "project",
+  "rental",
+  "hosting",
+  "marketing",
+  "task",
+]);
 
 export function getCommissionLinkStatus(row: {
   source_type?: CommissionSourceType | string | null;

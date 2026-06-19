@@ -7,7 +7,7 @@ Release stabilization for webnaprenajom.sk CRM (React + Vite + Supabase).
 
 ## Go-live quick checklist
 
-Run as **admin**, after env + migrations are deployed.
+Run as **owner** (full CRM) or **administrator** (scoped), after env + migrations are deployed.
 
 | Group | Check |
 |-------|-------|
@@ -129,6 +129,55 @@ SQL Editor → run each migration file in timestamp order.
 - Rollback = restore DB snapshot taken before deploy, or manually drop new tables if empty.
 - **Do not** drop tables if production facts were created — data loss.
 
+### Admin bootstrap (fresh Supabase project)
+
+Migration `20260610031204_*` is a **legacy one-off ops seed** (hardcoded `auth.users` UUID + password reset). It has **no schema changes** but **fails on empty projects** (FK to missing auth user).
+
+**Do not edit that migration file** (CLAUDE.md hard constraint). On a **fresh** Supabase project:
+
+1. Run migrations until it fails (expected at `20260610031204`):
+
+```sh
+npx supabase db push
+```
+
+2. Mark the legacy ops migration as applied **without re-running** (skip seed on fresh DB):
+
+```sh
+npx supabase migration repair --status applied 20260610031204
+```
+
+3. Continue remaining migrations:
+
+```sh
+npx supabase db push
+```
+
+4. **Authentication → Users → Add user** (email + password).
+
+5. **SQL Editor** (after RBAC migrations applied `owner` role exists):
+
+```sql
+SELECT public.grant_crm_owner_by_email('your@email.com');
+```
+
+Expected: `{"ok": true, "role": "owner", ...}`
+
+6. Sign in at `/auth` → `/admin`.
+
+For **administrator** (scoped team member):
+
+```sql
+INSERT INTO public.user_roles (user_id, role)
+SELECT id, 'administrator'::public.app_role
+FROM auth.users WHERE lower(email) = lower('team@example.com')
+ON CONFLICT (user_id, role) DO NOTHING;
+```
+
+Set `team_profiles.implementer_name` when commissions/rentals scoping is needed.
+
+**Production / already-deployed DB:** if `20260610031204` is already in migration history, **do not** run repair — bootstrap is only for fresh setup.
+
 ---
 
 ## 3. Build & run
@@ -158,28 +207,31 @@ Use if the quick checklist fails or you need module-by-module verification.
 
 ## 5. Release notes (summary)
 
-### What improved
+### What improved (current — beyond initial finance foundation)
 
 - Unified **AdminShell** across admin pages
-- **Customer detail** hub with cross-module links
+- **Customer Hub** (`/admin/customer/:key`) — executive cockpit, cross-module links, **full finance snapshot** (payments/costs/payouts, truth badges, profit summary, payment history)
+- **Customer identity foundation** — `customers` table, `customer_id` FK on core tables, `rental_websites.customer_email`; identity bridge heuristics for legacy rows
 - **Finance foundation** (Phases 2A–2G):
   - Canonical `payment_records`, `payout_records`, `cost_records`
-  - Truth levels: fact vs legacy import vs workflow-only
+  - Truth levels: fact vs legacy import vs workflow-only (`TruthLevelBadge` in daily + advanced views)
   - Reconciliation + guided fact confirmation
   - Settlement drafts + batch payouts
   - Commission rules (advisory preview)
   - Hosting records + opt-in payment facts
   - Governance queue with periodic review / due dates
-  - Customer identity bridge (compatibility layer, not full entity)
-- Honest labels in Rentals/Commissions (workflow vs confirmed)
+- **Destructive delete** (Fáza 2c) — customer, hosting, rental with finance fact hard-block + impact modal
+- **RBAC** — `owner` / `administrator` (legacy `admin`/`user` normalized in app)
+- Honest labels in Rentals/Commissions (workflow vs confirmed payout)
 
-### Still legacy / manual / foundation-only
+### Still legacy / manual / backlog
 
-- Customer identity fragmented (email/name — no full customers table)
 - Commission rules are **preview/advisory** — rental split still in `implementers` JSON
 - No automation engine, webhooks rules, or retroactive payout recalc
-- Finance tables require migrations on Supabase before full functionality
+- `customer_id` backfill incomplete for some heuristic-mapped rows
 - `/admin/debug` is dev/diagnostic — not end-user feature
+- `EntityProfitBanner` not yet on Rentals list/detail (ROADMAP 5.2)
+- Lead delete not yet on destructive-delete RPC path
 
 ### Post-deploy manual checks
 
@@ -214,15 +266,18 @@ feat(crm): finance foundation + admin shell stabilization
 
 ## 7. Post-release backlog (do not block go-live)
 
-- Full customer entity / canonical identity engine
+- `customer_id` backfill for remaining heuristic-mapped rows (table + FK exist)
 - Commission rules enforcement (beyond preview)
 - Implementers JSON ↔ overrides sync workflow
+- Shared admin data loaders (reduce inline `supabase.from` in pages)
 - ESLint cleanup (`no-explicit-any` across legacy pages)
 - Code-splitting for bundle size
 - GitHub Actions CI (lint + build on PR)
 - Remove or gate `/admin/debug` in production
 - Hosting billing automation
 - Finance snapshot includes hosting payment facts in ledger rollup
+- Lead delete via destructive-delete RPC (optional)
+- Scoped KPI for administrator role (ROADMAP 3.2)
 
 ---
 
@@ -234,5 +289,5 @@ After smoke test, mark one:
 - **READY WITH KNOWN LIMITATIONS** — usable daily; backlog items documented
 - **NOT READY** — migrations missing, auth broken, or finance crashes on load
 
-**Current engineering status:** GO LIVE AFTER 3 STEPS  
-(build/tests pass; `.env` still tracked; migrations + smoke test pending operator)
+**Current engineering status:** READY WITH KNOWN LIMITATIONS  
+(build/tests pass locally; operator must confirm migrations deployed + smoke test on target Supabase; verify `.env` not tracked)

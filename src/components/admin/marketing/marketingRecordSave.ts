@@ -56,6 +56,10 @@ export async function saveMarketingRecord(
     status: editing.status || "active",
     url: editing.url?.trim() || null,
     notes: editing.notes?.trim() || null,
+    agreed_fee:
+      editing.agreed_fee != null && Number(editing.agreed_fee) > 0
+        ? Math.max(0, Number(editing.agreed_fee))
+        : null,
   };
 
   const created = !editing.id;

@@ -14,8 +14,14 @@ type RpcAuthRow = {
   created_at: string;
 };
 
-export function useCrmUserDirectory() {
-  const [loading, setLoading] = useState(true);
+type UseCrmUserDirectoryOptions = {
+  /** When false, skips RPC/load (e.g. non-owner sidebar badge). Default true. */
+  enabled?: boolean;
+};
+
+export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
+  const enabled = options.enabled !== false;
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<CrmManagedUser[]>([]);
 
@@ -44,7 +50,7 @@ export function useCrmUserDirectory() {
 
     const managed = buildCrmManagedUsers(
       directory,
-      (rolesRes.data || []) as Array<{ id: string; user_id: string; role: "admin" | "user" }>,
+      (rolesRes.data || []) as Array<{ id: string; user_id: string; role: string }>,
       (profilesRes.data || []) as Array<{
         user_id: string;
         display_name: string;
@@ -59,8 +65,14 @@ export function useCrmUserDirectory() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) {
+      setLoading(false);
+      setError(null);
+      setUsers([]);
+      return;
+    }
     void load();
-  }, [load]);
+  }, [load, enabled]);
 
   const withRole = users.filter((u) => u.role);
   const withoutRole = users.filter((u) => !u.role);

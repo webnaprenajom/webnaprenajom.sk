@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Clock, Loader2, Mail, MessageSquare, AlertCircle, Inbox, Link2Off } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import {
   Select,
   SelectContent,
@@ -46,6 +47,8 @@ export interface TimelineEvent {
     log_field?: string;
     log_new_value?: string;
   };
+  /** Finance timeline events — payment_fact, payout_fact, workflow_only, … */
+  truthLevel?: string;
 }
 
 export interface CustomerTimelineProps {
@@ -208,6 +211,9 @@ export function CustomerTimeline({
                   linkStatus={item.meta?.link_status}
                   isThreaded={item.meta?.is_threaded}
                 />
+                {item.truthLevel && (
+                  <TruthLevelBadge level={item.truthLevel} className="text-[9px] h-4 px-1 shrink-0" />
+                )}
                 <span className="font-medium truncate flex items-center gap-1 min-w-0">
                   <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
                   {item.label}

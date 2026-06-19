@@ -54,6 +54,7 @@ export function CustomerHubFinanceSnapshot({ finance, onOpenTab }: Props) {
   const grossDisplay = finance.grossProfit.canShowProfit
     ? `${finance.grossProfit.profit!.toFixed(2)} €`
     : "—";
+  const netDisplay = finance.netProfitCanShow ? `${finance.netProfit!.toFixed(2)} €` : "—";
 
   return (
     <section className="rounded-xl border border-border bg-card p-4 space-y-3">
@@ -67,7 +68,7 @@ export function CustomerHubFinanceSnapshot({ finance, onOpenTab }: Props) {
           Detail financií <ArrowRight className="w-3 h-3" />
         </button>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         <KpiCell
           label="Tržby"
           value={`${finance.paymentsReceivedTotal.toFixed(2)} €`}
@@ -86,7 +87,32 @@ export function CustomerHubFinanceSnapshot({ finance, onOpenTab }: Props) {
             { level: "legacy_import", amount: finance.costsLegacyTotal },
           ]}
         />
-        <KpiCell label="Hrubý zisk" value={grossDisplay} tone="success" />
+        <KpiCell
+          label="Hrubý zisk"
+          value={grossDisplay}
+          tone={finance.grossProfit.canShowProfit ? "success" : "default"}
+          breakdown={
+            finance.grossProfit.canShowProfit
+              ? [{ level: "derived", amount: finance.grossProfit.profit ?? 0 }]
+              : undefined
+          }
+        />
+        <KpiCell
+          label="Čistý zisk"
+          value={netDisplay}
+          tone={
+            finance.netProfitCanShow
+              ? (finance.netProfit ?? 0) >= 0
+                ? "success"
+                : "danger"
+              : "default"
+          }
+          breakdown={
+            finance.netProfitCanShow
+              ? [{ level: "derived", amount: finance.netProfit ?? 0 }]
+              : undefined
+          }
+        />
         <KpiCell
           label="Nezaplatené"
           value={`${finance.paymentsExpectedTotal.toFixed(2)} €`}

@@ -3,7 +3,14 @@ import type {
   ReconciliationIssueKind,
   ReconciliationSummaryCounts,
 } from "./types";
+import type {
+  HostingReconRow,
+  MarketingReconRow,
+  ProjectReconRow,
+  TaskReconRow,
+} from "./reconciliationEntityRows";
 import { buildIssueKey } from "./issueKeys";
+import { formatReconciliationSourceHint } from "./financeSourceLabels";
 
 type CommissionRow = {
   id: string;
@@ -82,6 +89,15 @@ function sourceKey(table: string | null, id: string | null): string | null {
   return `${table}:${id}`;
 }
 
+function withSourceHint(
+  detail: string,
+  sourceTable?: string | null,
+  sourceId?: string | null,
+): string {
+  const hint = formatReconciliationSourceHint(sourceTable, sourceId);
+  return hint ? `${hint} · ${detail}` : detail;
+}
+
 function pushIssue(
   issues: ReconciliationIssue[],
   kind: ReconciliationIssueKind,
@@ -89,9 +105,17 @@ function pushIssue(
   detail: string,
   opts: Partial<ReconciliationIssue> = {},
 ) {
+  const severity: ReconciliationIssue["severity"] =
+    kind === "entity_payment_ahead_of_workflow"
+      ? "info"
+      : kind.startsWith("workflow") ||
+          kind === "entity_missing_payment_fact" ||
+          kind.startsWith("task_missing")
+        ? "warn"
+        : "info";
   const issue: ReconciliationIssue = {
     kind,
-    severity: kind.startsWith("workflow") ? "warn" : "info",
+    severity,
     title,
     detail,
     ...opts,
@@ -120,6 +144,218 @@ function findDuplicateGroups<T extends { id: string; amount: number }>(
   return [...groups.values()].filter((g) => g.length > 1);
 }
 
+const TASK_DEPOSIT_STATUSES = new Set([
+  "deposit_received",
+  "send_final_invoice",
+  "paid",
+  "done",
+]);
+const TASK_PAID_STATUSES = new Set(["paid", "done"]);
+const TASK_EARLY_STATUSES = new Set(["todo", "in_progress", "blocked"]);
+
+export function hasConfirmedEntityPayment(
+  records: PaymentRecordRow[],
+  sourceTable: string,
+  sourceId: string,
+): boolean {
+  return records.some(
+    (r) =>
+      r.source_table === sourceTable &&
+      r.source_id === sourceId &&
+      r.truth_level === "payment_fact",
+  );
+}
+
+function hasLegacyEntityPayment(
+  records: PaymentRecordRow[],
+  sourceTable: string,
+  sourceId: string,
+): boolean {
+  return records.some(
+    (r) =>
+      r.source_table === sourceTable &&
+      r.source_id === sourceId &&
+      r.truth_level === "legacy_import",
+  );
+}
+
+function hasTaskDepositPaymentFact(records: PaymentRecordRow[], taskId: string): boolean {
+  return (
+    hasConfirmedEntityPayment(records, "tasks", `${taskId}:deposit`) ||
+    hasConfirmedEntityPayment(records, "tasks", taskId)
+  );
+}
+
+function hasTaskFullPaymentFact(records: PaymentRecordRow[], taskId: string): boolean {
+  return hasConfirmedEntityPayment(records, "tasks", `${taskId}:full`);
+}
+
+function hasAnyTaskPaymentFact(records: PaymentRecordRow[], taskId: string): boolean {
+  return (
+    hasTaskDepositPaymentFact(records, taskId) || hasTaskFullPaymentFact(records, taskId)
+  );
+}
+
+function taskFullAmountNeeded(
+  task: TaskReconRow,
+  records: PaymentRecordRow[],
+): number {
+  const total = Number(task.amount ?? 0);
+  const dep = Number(task.deposit ?? 0);
+  const depositLinked = hasTaskDepositPaymentFact(records, task.id);
+  if (dep > 0 && depositLinked) {
+    const remaining = total - dep;
+    return remaining > 0 ? remaining : 0;
+  }
+  return total > 0 ? total : 0;
+}
+
+function reconcileEntityPaymentGaps(
+  issues: ReconciliationIssue[],
+  paymentRecords: PaymentRecordRow[],
+  projects: ProjectReconRow[],
+  marketing: MarketingReconRow[],
+  tasks: TaskReconRow[],
+  hosting: HostingReconRow[],
+) {
+  for (const p of projects) {
+    if (p.status === "archived") continue;
+    const fee = Number(p.agreed_fee ?? 0);
+    if (!fee || fee <= 0) continue;
+    const table = "project_notes";
+    if (
+      hasConfirmedEntityPayment(paymentRecords, table, p.id) ||
+      hasLegacyEntityPayment(paymentRecords, table, p.id)
+    ) {
+      continue;
+    }
+    pushIssue(
+      issues,
+      "entity_missing_payment_fact",
+      p.title,
+      withSourceHint(
+        `Projekt má dohodnutú cenu ${fee.toFixed(2)} € bez potvrdené platby (payment_fact)`,
+        table,
+        p.id,
+      ),
+      { amount: fee, sourceTable: table, sourceId: p.id },
+    );
+  }
+
+  for (const m of marketing) {
+    if (m.status === "archived" || m.status === "paused") continue;
+    const fee = Number(m.agreed_fee ?? 0);
+    if (!fee || fee <= 0) continue;
+    const table = "marketing_records";
+    if (
+      hasConfirmedEntityPayment(paymentRecords, table, m.id) ||
+      hasLegacyEntityPayment(paymentRecords, table, m.id)
+    ) {
+      continue;
+    }
+    pushIssue(
+      issues,
+      "entity_missing_payment_fact",
+      m.title,
+      withSourceHint(
+        `Kampaň má dohodnutý poplatok ${fee.toFixed(2)} € bez potvrdené platby (payment_fact)`,
+        table,
+        m.id,
+      ),
+      { amount: fee, sourceTable: table, sourceId: m.id },
+    );
+  }
+
+  for (const h of hosting) {
+    // ponytail: conservative — active + monthly_price + standalone (no rental bundle) + commissionable
+    if (!h.active) continue;
+    if (h.rental_website_id) continue;
+    if (h.commissionable === false) continue;
+    const price = Number(h.monthly_price ?? 0);
+    if (!price || price <= 0) continue;
+    const table = "hosting_records";
+    if (
+      hasConfirmedEntityPayment(paymentRecords, table, h.id) ||
+      hasLegacyEntityPayment(paymentRecords, table, h.id)
+    ) {
+      continue;
+    }
+    const label = h.client_name ?? h.provider ?? "Hosting";
+    pushIssue(
+      issues,
+      "entity_missing_payment_fact",
+      label,
+      withSourceHint(
+        `Hosting má mesačnú cenu ${price.toFixed(2)} € bez potvrdené platby (payment_fact)`,
+        table,
+        h.id,
+      ),
+      { amount: price, sourceTable: table, sourceId: h.id },
+    );
+  }
+
+  for (const t of tasks) {
+    const dep = Number(t.deposit ?? 0);
+    if (
+      dep > 0 &&
+      TASK_DEPOSIT_STATUSES.has(t.status) &&
+      !hasTaskDepositPaymentFact(paymentRecords, t.id) &&
+      !hasLegacyEntityPayment(paymentRecords, "tasks", `${t.id}:deposit`) &&
+      !hasLegacyEntityPayment(paymentRecords, "tasks", t.id)
+    ) {
+      pushIssue(
+        issues,
+        "task_missing_payment_deposit",
+        t.title,
+        withSourceHint(
+          `Workflow (${t.status}) signalizuje zálohu ${dep.toFixed(2)} € bez payment_fact`,
+          "tasks",
+          `${t.id}:deposit`,
+        ),
+        { amount: dep, sourceTable: "tasks", sourceId: `${t.id}:deposit` },
+      );
+    }
+
+    if (TASK_PAID_STATUSES.has(t.status)) {
+      const needed = taskFullAmountNeeded(t, paymentRecords);
+      const depositFact = hasTaskDepositPaymentFact(paymentRecords, t.id);
+      if (
+        needed > 0 &&
+        !hasTaskFullPaymentFact(paymentRecords, t.id) &&
+        !hasLegacyEntityPayment(paymentRecords, "tasks", `${t.id}:full`)
+      ) {
+        pushIssue(
+          issues,
+          "task_missing_payment_full",
+          t.title,
+          withSourceHint(
+            depositFact
+              ? `Workflow uhradené — chýba doplatok ${needed.toFixed(2)} € (payment_fact)`
+              : `Workflow uhradené — chýba úhrada ${needed.toFixed(2)} € (payment_fact)`,
+            "tasks",
+            `${t.id}:full`,
+          ),
+          { amount: needed, sourceTable: "tasks", sourceId: `${t.id}:full` },
+        );
+      }
+    }
+
+    if (TASK_EARLY_STATUSES.has(t.status) && hasAnyTaskPaymentFact(paymentRecords, t.id)) {
+      pushIssue(
+        issues,
+        "entity_payment_ahead_of_workflow",
+        t.title,
+        withSourceHint(
+          `Potvrdená platba existuje, workflow stav je ešte „${t.status}"`,
+          "tasks",
+          t.id,
+        ),
+        { sourceTable: "tasks", sourceId: t.id },
+      );
+    }
+  }
+}
+
 export function buildReconciliation(input: {
   commissions: CommissionRow[];
   expenses: ExpenseRow[];
@@ -128,6 +364,10 @@ export function buildReconciliation(input: {
   paymentRecords: PaymentRecordRow[];
   payoutRecords: PayoutRecordRow[];
   costRecords: CostRecordRow[];
+  projects?: ProjectReconRow[];
+  marketing?: MarketingReconRow[];
+  tasks?: TaskReconRow[];
+  hosting?: HostingReconRow[];
   filterYear?: number;
 }): { counts: ReconciliationSummaryCounts; issues: ReconciliationIssue[] } {
   const {
@@ -138,6 +378,10 @@ export function buildReconciliation(input: {
     paymentRecords,
     payoutRecords,
     costRecords,
+    projects = [],
+    marketing = [],
+    tasks = [],
+    hosting = [],
     filterYear,
   } = input;
   const issues: ReconciliationIssue[] = [];
@@ -168,7 +412,11 @@ export function buildReconciliation(input: {
         issues,
         "workflow_incoming",
         `${w.name} · ${m}/${year}`,
-        "Prenájom označ. uhradený bez záznamu v payment_records",
+        withSourceHint(
+          "Prenájom označ. uhradený bez záznamu v payment_records (workflow mirror)",
+          "rental_payments",
+          p.id,
+        ),
         { amount: amt, sourceTable: "rental_payments", sourceId: p.id },
       );
     }
@@ -181,7 +429,11 @@ export function buildReconciliation(input: {
       issues,
       "workflow_outgoing_commission",
       c.title,
-      `Provízia označ. vyplatená (${c.implementer}) bez payout_records`,
+      withSourceHint(
+        `Provízia označ. vyplatená (${c.implementer}) bez payout_records (workflow mirror)`,
+        "commissions",
+        c.id,
+      ),
       { amount: Number(c.amount || 0), sourceTable: "commissions", sourceId: c.id },
     );
   }
@@ -193,10 +445,12 @@ export function buildReconciliation(input: {
       issues,
       "workflow_outgoing_expense",
       e.title,
-      "Náklad označ. uhradený bez cost_records",
+      withSourceHint("Náklad označ. uhradený bez cost_records (workflow mirror)", "expenses", e.id),
       { amount: Number(e.amount || 0), sourceTable: "expenses", sourceId: e.id },
     );
   }
+
+  reconcileEntityPaymentGaps(issues, paymentRecords, projects, marketing, tasks, hosting);
 
   for (const r of paymentRecords) {
     if (r.truth_level === "legacy_import" && !r.reference) {
@@ -204,7 +458,11 @@ export function buildReconciliation(input: {
         issues,
         "legacy_no_reference",
         `Platba ${Number(r.amount).toFixed(2)} €`,
-        r.client_name ?? r.customer_email ?? "Bez klienta",
+        withSourceHint(
+          r.client_name ?? r.customer_email ?? "Bez klienta",
+          r.source_table,
+          r.source_id,
+        ),
         { amount: Number(r.amount), recordId: r.id, sourceTable: "payment_records" },
       );
     }
@@ -222,7 +480,11 @@ export function buildReconciliation(input: {
         issues,
         "missing_counterparty",
         "Platba bez klienta",
-        `Suma ${Number(r.amount).toFixed(2)} € · ${dateKey(r.paid_at)}`,
+        withSourceHint(
+          `Suma ${Number(r.amount).toFixed(2)} € · ${dateKey(r.paid_at)}`,
+          r.source_table,
+          r.source_id,
+        ),
         { amount: Number(r.amount), recordId: r.id, sourceTable: "payment_records" },
       );
     }
@@ -328,6 +590,13 @@ export function buildReconciliation(input: {
     workflowIncoming: issues.filter((i) => i.kind === "workflow_incoming").length,
     workflowOutgoing: issues.filter(
       (i) => i.kind === "workflow_outgoing_commission" || i.kind === "workflow_outgoing_expense",
+    ).length,
+    entityMissingPayment: issues.filter((i) => i.kind === "entity_missing_payment_fact").length,
+    taskPaymentGaps: issues.filter(
+      (i) => i.kind === "task_missing_payment_deposit" || i.kind === "task_missing_payment_full",
+    ).length,
+    entityWorkflowMismatch: issues.filter(
+      (i) => i.kind === "entity_payment_ahead_of_workflow",
     ).length,
     legacyNoReference: issues.filter((i) => i.kind === "legacy_no_reference").length,
     legacyImprecisePaidAt: issues.filter((i) => i.kind === "legacy_imprecise_paid_at").length,

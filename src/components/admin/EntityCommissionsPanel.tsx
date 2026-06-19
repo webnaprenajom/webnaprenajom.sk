@@ -33,9 +33,12 @@ import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { filterCommissionsForUser } from "@/lib/rbac/permissions";
-import { canWriteCommissions, writeDeniedMessage } from "@/lib/rbac/writePermissions";
+import { canWriteCommissions, canToggleCommissionPaymentStatus, commissionPaymentStatusDeniedMessage, writeDeniedMessage } from "@/lib/rbac/writePermissions";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
+import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
+import type { FactDraft } from "@/lib/finance/factDrafts";
+import { resolveCommissionPayoutBridgeAfterMarkPaid } from "@/lib/finance/commissionPayoutBridge";
 import {
   resolveCommissionPayoutInfo,
   COMMISSION_PAYOUT_STATUS_LABELS,
@@ -94,6 +97,8 @@ export function EntityCommissionsPanel({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm(defaultTitle));
+  const [payoutFactDraft, setPayoutFactDraft] = useState<FactDraft | null>(null);
+  const [payoutFactOpen, setPayoutFactOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -217,6 +222,56 @@ export function EntityCommissionsPanel({
     void load();
   };
 
+  const togglePaymentStatus = async (c: CommissionRow) => {
+    if (!canToggleCommissionPaymentStatus(access, c.implementer)) {
+      toast({ title: commissionPaymentStatusDeniedMessage(), variant: "destructive" });
+      return;
+    }
+    const next = c.payment_status === "paid" ? "unpaid" : "paid";
+    const { error } = await supabase
+      .from("commissions")
+      .update({ payment_status: next })
+      .eq("id", c.id);
+    if (error) {
+      toast({ title: "Chyba uloženia", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (next === "paid") {
+      logEntityCommunicationEventSafe({
+        kind: "payment",
+        title: c.title,
+        body_preview: `${Number(c.amount).toFixed(2)} € · vyplatené`,
+        customer_id: (c as { customer_id?: string | null }).customer_id ?? null,
+        customer_email: (c as { customer_email?: string | null }).customer_email ?? null,
+        source_table: "commissions",
+        source_id: c.id,
+        idempotency_key: `commissions:${c.id}:paid`,
+        metadata: { payment_status: "paid", action: "paid" },
+      });
+    }
+    if (access.userId) {
+      void logAdminAuditEvent({
+        actorUserId: access.userId,
+        actionType: AUDIT_ACTION_TYPES.commission_status_changed,
+        targetType: "commission",
+        targetId: c.id,
+        summary: `Provízia ${c.title}: ${c.payment_status} → ${next}`,
+        before: { payment_status: c.payment_status },
+        after: { payment_status: next },
+      });
+    }
+    toast({ title: "Stav úhrady upravený" });
+    await load();
+
+    if (next === "paid") {
+      const bridge = await resolveCommissionPayoutBridgeAfterMarkPaid(c);
+      if (bridge.action === "open_dialog") {
+        setPayoutFactDraft(bridge.draft);
+        setPayoutFactOpen(true);
+      }
+    }
+  };
+
   const totals = useMemo(() => {
     const paid = rows.filter((r) => r.payment_status === "paid").reduce((s, r) => s + Number(r.amount || 0), 0);
     const unpaid = rows.filter((r) => r.payment_status === "unpaid").reduce((s, r) => s + Number(r.amount || 0), 0);
@@ -249,7 +304,9 @@ export function EntityCommissionsPanel({
     return <span className="text-xs text-muted-foreground">—</span>;
   };
 
-  const renderRow = (c: CommissionRow) => (
+  const renderRow = (c: CommissionRow) => {
+    const canToggle = canToggleCommissionPaymentStatus(access, c.implementer);
+    return (
     <>
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
         {new Date(c.date).toLocaleDateString("sk-SK")}
@@ -259,9 +316,17 @@ export function EntityCommissionsPanel({
       <TableCell className="text-right font-medium">{Number(c.amount || 0).toFixed(2)} €</TableCell>
       <TableCell className="text-xs hidden md:table-cell">{paymentFormLabel(c.payment_form)}</TableCell>
       <TableCell>
-        <Badge variant="outline" className={`text-[10px] ${STATUS_CLASS[c.payment_status] ?? ""}`}>
-          {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
-        </Badge>
+        {canToggle ? (
+          <button type="button" onClick={() => void togglePaymentStatus(c)} title="Prepnúť stav úhrady">
+            <Badge variant="outline" className={`text-[10px] cursor-pointer ${STATUS_CLASS[c.payment_status] ?? ""}`}>
+              {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
+            </Badge>
+          </button>
+        ) : (
+          <Badge variant="outline" className={`text-[10px] ${STATUS_CLASS[c.payment_status] ?? ""}`}>
+            {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
+          </Badge>
+        )}
       </TableCell>
       <TableCell className="text-xs">{renderPayoutBadge(c)}</TableCell>
       <TableCell className="text-right">
@@ -273,6 +338,7 @@ export function EntityCommissionsPanel({
       </TableCell>
     </>
   );
+  };
 
   const showProfit = sourceType === "hosting" || sourceType === "project";
 
@@ -336,7 +402,9 @@ export function EntityCommissionsPanel({
           </div>
           {/* Mobile cards */}
           <div className="sm:hidden space-y-2">
-            {rows.map((c) => (
+            {rows.map((c) => {
+              const canToggle = canToggleCommissionPaymentStatus(access, c.implementer);
+              return (
               <div key={c.id} className="rounded-xl border p-3 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -353,14 +421,23 @@ export function EntityCommissionsPanel({
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="font-semibold">{Number(c.amount || 0).toFixed(2)} €</span>
-                  <Badge variant="outline" className={`text-[10px] ${STATUS_CLASS[c.payment_status] ?? ""}`}>
-                    {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
-                  </Badge>
+                  {canToggle ? (
+                    <button type="button" onClick={() => void togglePaymentStatus(c)}>
+                      <Badge variant="outline" className={`text-[10px] cursor-pointer ${STATUS_CLASS[c.payment_status] ?? ""}`}>
+                        {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
+                      </Badge>
+                    </button>
+                  ) : (
+                    <Badge variant="outline" className={`text-[10px] ${STATUS_CLASS[c.payment_status] ?? ""}`}>
+                      {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
+                    </Badge>
+                  )}
                   <span className="text-xs text-muted-foreground">{paymentFormLabel(c.payment_form)}</span>
                 </div>
                 <div className="text-xs">{renderPayoutBadge(c)}</div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </>
       )}
@@ -386,6 +463,20 @@ export function EntityCommissionsPanel({
       >
         <CommissionFormFields form={form} onChange={(patch) => setForm({ ...form, ...patch })} />
       </AdminDialog>
+
+      <FactConfirmDialog
+        open={payoutFactOpen}
+        onOpenChange={setPayoutFactOpen}
+        draft={payoutFactDraft}
+        mode="workflow"
+        onSaved={() => {
+          toast({
+            title: "Payout fact vytvorený",
+            description: "Workflow status zostáva nezmenený.",
+          });
+          void load();
+        }}
+      />
     </div>
   );
 }

@@ -1,4 +1,13 @@
-export type LookupKind = "customer" | "client" | "lead" | "project" | "rental" | "hosting" | "email";
+export type LookupKind =
+  | "customer"
+  | "client"
+  | "lead"
+  | "project"
+  | "rental"
+  | "hosting"
+  | "marketing"
+  | "task"
+  | "email";
 
 export interface LookupResult {
   kind: LookupKind;

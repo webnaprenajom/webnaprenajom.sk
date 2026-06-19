@@ -25,16 +25,19 @@ import { customerHrefByClientName } from "@/lib/adminNav";
 import { bucketCommissionsBySection } from "@/lib/commissionFilters";
 import { detectRentalDualModelWarning } from "@/lib/finance/commissionConsistency";
 import { useAccessContext } from "@/hooks/useAccessContext";
-import { canToggleCommissionPaymentStatus } from "@/lib/rbac/writePermissions";
+import {
+  canToggleCommissionPaymentStatus,
+  commissionPaymentStatusDeniedMessage,
+} from "@/lib/rbac/writePermissions";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import type { CommissionRow as SourceCommissionRow } from "@/lib/commissionSource";
+import {
+  type RentalImplementer,
+  type RentalImplementerPaymentStatus,
+  serializeRentalImplementerForSave,
+} from "@/lib/rentalImplementers";
 
-export type RentalImplementer = {
-  name: string;
-  percentage: number;
-  payment_form?: PaymentFormValue | "";
-  note?: string;
-};
+export type { RentalImplementer } from "@/lib/rentalImplementers";
 
 type RentalWebsite = {
   id: string;
@@ -72,6 +75,7 @@ export function ImplementerCommissionDetailDialog({
   onSaved,
 }: Props) {
   const access = useAccessContext();
+  const canTogglePaymentStatus = canToggleCommissionPaymentStatus(access, implementerName);
 
   const rentalRows = useMemo(() => {
     const rows: Array<{
@@ -81,6 +85,7 @@ export function ImplementerCommissionDetailDialog({
       percentage: number;
       paid: number;
       potential: number;
+      payment_status: RentalImplementerPaymentStatus;
       payment_form: PaymentFormValue | "";
       note: string;
       impIndex: number;
@@ -102,6 +107,7 @@ export function ImplementerCommissionDetailDialog({
         percentage: pct,
         paid: (stats.paid * pct) / 100,
         potential: (stats.potential * pct) / 100,
+        payment_status: imp.payment_status,
         payment_form: (imp.payment_form as PaymentFormValue) || "",
         note: imp.note || "",
         impIndex: idx,
@@ -156,7 +162,11 @@ export function ImplementerCommissionDetailDialog({
   const saveRentalRow = async (
     websiteId: string,
     impIndex: number,
-    patch: { payment_form?: PaymentFormValue | ""; note?: string },
+    patch: {
+      payment_form?: PaymentFormValue | "";
+      note?: string;
+      payment_status?: RentalImplementerPaymentStatus;
+    },
   ) => {
     const w = websites.find((x) => x.id === websiteId);
     if (!w) return;
@@ -164,7 +174,7 @@ export function ImplementerCommissionDetailDialog({
     next[impIndex] = { ...next[impIndex], ...patch };
     const { error } = await supabase
       .from("rental_websites")
-      .update({ implementers: next })
+      .update({ implementers: next.map(serializeRentalImplementerForSave) })
       .eq("id", websiteId);
     if (error) {
       toast({ title: "Chyba uloženia", description: error.message, variant: "destructive" });
@@ -195,8 +205,8 @@ export function ImplementerCommissionDetailDialog({
   };
 
   const toggleCommissionPaid = async (id: string, current: string) => {
-    if (!canToggleCommissionPaymentStatus(access, implementerName)) {
-      toast({ title: "Úpravu môže len administrátor", variant: "destructive" });
+    if (!canTogglePaymentStatus) {
+      toast({ title: commissionPaymentStatusDeniedMessage(), variant: "destructive" });
       return;
     }
     const next = current === "paid" ? "unpaid" : "paid";
@@ -213,6 +223,35 @@ export function ImplementerCommissionDetailDialog({
       });
     }
   };
+
+  const toggleRentalPaid = async (
+    websiteId: string,
+    impIndex: number,
+    current: RentalImplementerPaymentStatus,
+  ) => {
+    if (!canTogglePaymentStatus) {
+      toast({ title: commissionPaymentStatusDeniedMessage(), variant: "destructive" });
+      return;
+    }
+    const next: RentalImplementerPaymentStatus = current === "paid" ? "unpaid" : "paid";
+    await saveRentalRow(websiteId, impIndex, { payment_status: next });
+    if (access.userId) {
+      void logAdminAuditEvent({
+        actorUserId: access.userId,
+        actionType: AUDIT_ACTION_TYPES.commission_status_changed,
+        targetType: "rental_website",
+        targetId: websiteId,
+        summary: `Prenájom provízia ${implementerName}: ${current} → ${next}`,
+        before: { payment_status: current },
+        after: { payment_status: next },
+      });
+    }
+  };
+
+  const paymentStatusButtonClass = (status: string) =>
+    status === "paid"
+      ? "border-green-500/40 text-green-600"
+      : "border-amber-500/40 text-amber-600";
 
   const dualModelWarning = useMemo(
     () => detectRentalDualModelWarning(implementerName, commissionRows.length, rentalRows.length),
@@ -239,7 +278,8 @@ export function ImplementerCommissionDetailDialog({
           <DialogTitle>Provízie — {implementerName} ({year})</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
-          Presný zoznam webov (prenájmy) a zákaziek (provízie modul). Suma prenájmov je odvodená z % podielu a stavu mesačných platieb.
+          Prenájmy: stĺpec „Z klienta“ = podiel z uhradených mesiacov klienta; „Stav úhrady provízie“ = manuálny
+          workflow výplaty realizátorovi.
         </p>
         {dualModelWarning && (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
@@ -276,9 +316,11 @@ export function ImplementerCommissionDetailDialog({
                   <TableHead>Názov</TableHead>
                   <TableHead>Klient</TableHead>
                   <TableHead className="text-right">%</TableHead>
-                  <TableHead className="text-right">Vypl.</TableHead>
+                  <TableHead className="text-right" title="Podiel z mesiacov, kde klient uhradil prenájom">
+                    Z klienta
+                  </TableHead>
                   <TableHead className="text-right">Potenc.</TableHead>
-                  <TableHead>Stav úhrady</TableHead>
+                  <TableHead title="Manuálny stav výplaty provízie realizátorovi">Stav úhrady provízie</TableHead>
                   <TableHead>Forma úhrady</TableHead>
                   <TableHead>Poznámka</TableHead>
                 </TableRow>
@@ -309,7 +351,19 @@ export function ImplementerCommissionDetailDialog({
                     <TableCell className="text-right text-xs">{r.percentage}%</TableCell>
                     <TableCell className="text-right text-xs text-green-600">{r.paid.toFixed(2)} €</TableCell>
                     <TableCell className="text-right text-xs">{r.potential.toFixed(2)} €</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">—</TableCell>
+                    <TableCell>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={!canTogglePaymentStatus}
+                        className={`h-7 text-[10px] ${paymentStatusButtonClass(r.payment_status)}`}
+                        onClick={() => void toggleRentalPaid(r.websiteId, r.impIndex, r.payment_status)}
+                      >
+                        {r.payment_status === "paid"
+                          ? COMMISSION_STATUS_LABELS.paid
+                          : COMMISSION_STATUS_LABELS.unpaid}
+                      </Button>
+                    </TableCell>
                     <TableCell>
                       <select
                         className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
@@ -357,11 +411,8 @@ export function ImplementerCommissionDetailDialog({
                       <Button
                         size="sm"
                         variant="outline"
-                        className={`h-7 text-[10px] ${
-                          c.payment_status === "paid"
-                            ? "border-green-500/40 text-green-600"
-                            : "border-amber-500/40 text-amber-600"
-                        }`}
+                        disabled={!canTogglePaymentStatus}
+                        className={`h-7 text-[10px] ${paymentStatusButtonClass(c.payment_status)}`}
                         onClick={() => void toggleCommissionPaid(c.id, c.payment_status)}
                       >
                         {c.payment_status === "paid"
@@ -425,11 +476,8 @@ export function ImplementerCommissionDetailDialog({
                       <Button
                         size="sm"
                         variant="outline"
-                        className={`h-7 text-[10px] ${
-                          c.payment_status === "paid"
-                            ? "border-green-500/40 text-green-600"
-                            : "border-amber-500/40 text-amber-600"
-                        }`}
+                        disabled={!canTogglePaymentStatus}
+                        className={`h-7 text-[10px] ${paymentStatusButtonClass(c.payment_status)}`}
                         onClick={() => void toggleCommissionPaid(c.id, c.payment_status)}
                       >
                         {c.payment_status === "paid"

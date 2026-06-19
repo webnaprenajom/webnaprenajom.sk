@@ -17,7 +17,7 @@ src/
 │   ├── hero/                  # marketingová homepage
 │   └── localized/             # lokalizované verzie verejných stránok
 ├── lib/
-│   ├── customerWorkbench/      # loadCustomerWorkbench.ts, summary.ts, types.ts – Customer Hub data layer
+│   ├── customerWorkbench/      # loadCustomerHubAggregate.ts, summary.ts, types.ts – Customer Hub data layer (loadCustomerWorkbench = thin wrapper)
 │   ├── finance/                 # 17 súborov – buildFinanceSnapshot, dismissals, commissionRules, reconciliation, labels, types
 │   ├── profit/                  # profitCalculator.ts, profitContext.ts – "čistý zisk" logika
 │   ├── rbac/                    # permissions.ts, routeAccess.ts, writePermissions.ts
@@ -28,10 +28,10 @@ src/
 ├── hooks/                      # useAdminAccess, useAccessContext, useCrmUserDirectory, use-toast
 ├── contexts/LanguageContext.tsx
 ├── integrations/supabase/      # client.ts, types.ts (generovaný DB typ)
-└── test/                       # 22 súborov, väčšina rcN*.test.ts ("release candidate" batch testy)
+└── test/                       # 36+ súborov (Vitest), rcN batch testy + customer hub / RBAC / finance helpers
 ```
 
-Kód: 307 `.ts`/`.tsx` súborov, ~44 900 riadkov. 58 migrácií v `supabase/migrations/`.
+Kód: ~340 `.ts`/`.tsx` súborov. 58+ migrácií v `supabase/migrations/`.
 
 ### Admin stránky (`src/pages/Admin*.tsx`)
 `Admin.tsx` (Leads pipeline), `AdminCustomer.tsx` (Customer Hub), `AdminFinance.tsx`, `AdminRentals.tsx`,
@@ -57,10 +57,11 @@ Kód: 307 `.ts`/`.tsx` súborov, ~44 900 riadkov. 58 migrácií v `supabase/migr
 - `finance_issue_dismissals`, `finance_policy_settings`, `finance_review_items`, commission rules: `commission_rules`, `commission_rule_overrides`
 - `hosting_records`
 
-### Komunikácia / governance (RC6+, 2026-06-11 až 06-17)
+### Komunikácia / governance (RC6+, 2026-06-11 až 06-19)
 - `communication_events`, `communication_webhook_incidents`
 - `design_proposals`, `order_signatures`, `project_notes`, `notifications`
-- `lead_logs`, `user_roles`, admin auth user directory RPC (najnovšia migrácia 2026-06-17)
+- `lead_logs`, `user_roles`, admin auth user directory RPC
+- Destructive delete RPCs: `admin_precheck_destructive_delete`, `admin_execute_destructive_delete` (Fáza 2c — customer, hosting, rental_website; hard block na `*_fact`)
 
 ## 3. Dátové toky
 
@@ -80,20 +81,20 @@ leads ──┬─→ customers (cez customer_id FK, F1/RC5 backfill)
         └─→ tasks / project_notes / design_proposals / communication_events (customer_id alebo email/meno heuristika)
 ```
 
-DB úroveň prepojenia (`rental_website_id` FK na `payment_records` a `cost_records`) je **funkčná** — golden path
-je v databáze realizovaný. Problém je v **prezentačnej vrstve**: `loadCustomerWorkbench.ts` tieto tabuľky
-nečíta (pozri AUDIT_FINDINGS.md, 🔴 #1).
+DB úroveň prepojenia (`rental_website_id` FK na `payment_records` a `cost_records`) je **funkčná**.
+Prezentačná vrstva: Customer Hub (`loadCustomerHubAggregate` → `CustomerFinancePanel`, `CustomerHubFinanceSnapshot`) načítava
+`payment_records`, `cost_records`, `payout_records`, `rental_payments` a zobrazuje truth-level badge + čistý zisk (`entityKind: "customer"`).
+**Backlog:** `EntityProfitBanner` v `AdminRentals.tsx` (list/detail prenájmu) ešte chýba.
 
-### 3.2 Customer identity resolution (`loadCustomerWorkbench.ts`)
-1. Vstup: `routeMode` (`"id"` alebo `"email"`) + `routeValue`.
-2. `id` mode → `findCustomerById` (priamy lookup do `customers`).
-3. `email` mode → `supabase.from("customers").select(...).eq("email", ...)` — ak nič nenájde,
-   `viewMode = "heuristic"` (zobrazí sa `HeuristicDataBadge` namiesto `CanonicalCustomerBadge`).
-4. Pre každú entitu (leads, tasks, rentals, signatures, notes, hosting, commissions, wheel_spins, designs,
-   lead_logs, communication_events) sa spustí **2–3 paralelné query stratégie** (customer_id, email, client_name)
-   a výsledky sa dedupujú cez `Map<id, Row>` — pattern opakovaný v ~10 blokoch tohto súboru.
-5. `computeWorkbenchSummary()` → KPI chips (projekty, prenájmy, hosting, otvorené úlohy, neuhradené provízie).
-6. `computeRecommendedActions()` / `computeUnresolvedIssues()` → prioritizovaný zoznam akcií a upozornení.
+### 3.2 Customer Hub loader (`loadCustomerHubAggregate.ts`)
+Runtime path: `AdminCustomer.tsx` → `useCustomerHub` → **`loadCustomerHubAggregate`** (Fáza 2/2b).
+`loadCustomerWorkbench.ts` je tenký wrapper spätnej kompatibility.
+
+1. Vstup: `resolveCustomerIdentity` — `routeMode` (`"id"` | `"email"`) + `routeValue`.
+2. `id` mode → priamy lookup do `customers`; `email` mode → canonical alebo `viewMode = "heuristic"` (`HeuristicDataBadge`).
+3. Sekčné fetch (`sectionFetch` / manuálne multi-query): leads, tasks, rentals, hosting, commissions, payments, costs, payouts, timeline, atď.
+4. `computeCustomerFinanceSummary()` + `CustomerFinancePanel` — príjem/náklady/profit s truth-level badge.
+5. `computeRecommendedActions()` / `computeUnresolvedIssues()` — prioritizované akcie.
 
 ### 3.3 Finance snapshot (`buildFinanceSnapshot.ts`)
 Vstup: 7 surových datasetov (`commissions`, `expenses`, `websites`, `payments` [rental_payments legacy],
@@ -108,38 +109,30 @@ Výstup: `FinanceSnapshot` = `{ rows: FinanceLedgerRow[], totals: FinanceSnapsho
 - `computeProfit({revenue, operatingCost}) = max(0, revenue - operatingCost)`.
 - `resolveProfitDisplayContext()` rozhoduje, či sa zisk vôbec **smie zobraziť** (status `complete | no_revenue_yet
   | zero_revenue | cost_without_revenue`) — nikdy nenaznačí zisk bez známeho revenue základu.
-- Revenue basis: hosting → mesačná cena hostingu; project → suma `payment_records`.
-- UI: `<EntityProfitBanner>` (zobrazuje headline+detail+revenue basis) je vykreslený v `<EntityCommissionsPanel>`,
-  použitý v `AdminHostingDetail.tsx` a `AdminProjectDetail.tsx` — **NIE** v Customer Hub a **NIE** v `AdminRentals.tsx`.
+- Revenue basis: hosting → mesačná cena hostingu; project → suma `payment_records`; customer hub → agregát `payment_records`/`cost_records`.
+- UI: `<EntityProfitBanner>` v `EntityCommissionsPanel` (hosting/project), **`CustomerFinancePanel`** (customer), `AdminHostingDetail`, `AdminProjectDetail`.
+- **Backlog:** `AdminRentals.tsx` (hlavný MRR stream) ešte bez `EntityProfitBanner`.
 
-### 3.5 RBAC (`src/lib/rbac/permissions.ts`)
-- `AppRole = "admin" | "user"`. Iba `admin` má `canAccessOperationalCrm`, `canAccessFinanceAdvanced`,
-  `canSeeAllCommissions`, `canAccessAdminDiagnostics`.
-- `role = "user"` (implementer) vidí len svoje provízie (`filterCommissionsForUser`,
-  `commissionVisibleToUser` — case-insensitive match na `implementerName`).
-- `resolveScopedCommissionEmpty()` rozlišuje 3 dôvody prázdneho zoznamu (`missing_profile`, `scoped_empty`, `no_data`)
-  a vracia užívateľsky zrozumiteľný text — dobrý UX detail.
-- **Dôsledok**: Customer Hub (`AdminCustomer.tsx`) je gatovaný `canAccessOperationalCrm(role)` → **iba admin** ho
-  vidí načítaný; `role="user"` dostane prázdnu stránku (loading sa ukončí, data ostanú `emptyData()`).
+### 3.5 RBAC (`src/lib/rbac/permissions.ts` + `writePermissions.ts`)
+- **`AppRole = "owner" | "administrator"`** (DB môže mať legacy `admin`/`user` — normalizované v `useAdminAccess`).
+- **Owner:** plný CRM + finance advanced + settings + všetky provízie/klienti (read/write podľa `writePermissions`).
+- **Administrator:** operational CRM (vrátane Customer Hub a daily finance), scoped provízie/rentals/leads podľa `team_profiles.implementer_name` / `assigned_to`; **write = owner-only**.
+- `filterCommissionsForUser`, `commissionVisibleToUser`, `resolveScopedCommissionEmpty` — scoped empty states s user-friendly textom.
 
 ## 4. Identifikované patterny
 
 ### 4.1 Hooks / lib organizácia
-- Dátová logika je z veľkej časti v `src/lib/**` ako čisté funkcie (testovateľné — 22 testov v `src/test/`),
-  ale **fetching** je nekonzistentný: niekedy je v `lib/` (`loadCustomerWorkbench.ts`), niekedy priamo v page
-  komponente (`AdminFinance.tsx`, `AdminRentals.tsx`, `Admin.tsx`).
+- Dátová logika je z veľkej časti v `src/lib/**` ako čisté funkcie (36 test súborov / 240 testov).
+- **Fetching:** Customer Hub centralizovaný (`loadCustomerHubAggregate`); Finance/Rentals/Leads stále mix page + lib (backlog: shared loadery).
 
 ### 4.2 Supabase query patterns
-- **Hook/lib-based** (dobrý pattern): `loadCustomerWorkbench.ts` — všetky queries na jednom mieste, dedup cez `Map`.
-- **Inline-in-component** (spaghetti riziko): `AdminRentals.tsx` (19×), `Admin.tsx` (18×), `AdminFinance.tsx` (13×),
-  `AdminCommissions.tsx` (12×) — `supabase.from(...)` priamo v `useEffect`/handleroch stránky.
-- **Map-dedup pattern**: opakovaný v `loadCustomerWorkbench.ts` pre každú entitu s viacerými match-strategiami
-  (customer_id vs email vs client_name), s `matchedBy` flagom pre transparentnosť (heuristic vs canonical).
+- **Hook/lib-based (vzor):** `loadCustomerHubAggregate.ts`, `loadUnifiedClientDirectory.ts`, čiastočne `AdminFinance.load()`.
+- **Inline-in-page (dlh):** `AdminRentals.tsx`, `Admin.tsx`, `AdminFinance.tsx`, `AdminCommissions.tsx` — `supabase.from(...)` v page komponente.
+- **Map-dedup / multi-strategy identity:** v hub loaderi pre entity bez `customer_id` (heuristika email/meno).
 
 ### 4.3 Truth-level pattern
-- `TRUTH_LEVEL_LABELS` (text) v `src/lib/finance/labels.ts`; `truthBadge()` v `FinanceRecordsCrud.tsx` renderuje
-  `<Badge variant="default"|"secondary">` — badge variant, nie explicitné farby z CLAUDE.md (#22c55e/#f97316/...).
-- `isLegacy(truthLevel)` chráni `legacy_import` záznamy pred editáciou/zmazaním (Lock ikona, read-only).
+- **`TruthLevelBadge.tsx`** — jediný zdroj farieb (CLAUDE.md: zelená=fact, oranžová=legacy, sivá=workflow/derived); použitý v daily finance, records CRUD, Customer Hub.
+- `isLegacy(truthLevel)` chráni `legacy_import` pred editáciou/zmazaním.
 
 ### 4.4 Profit/Commission pattern
 - `<EntityCommissionsPanel>` + `<EntityProfitBanner>` = opakovateľný "card" pattern pre hosting/project entity

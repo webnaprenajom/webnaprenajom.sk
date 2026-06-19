@@ -112,6 +112,10 @@ export async function fetchLookupWithMeta(
       return searchRentals(q, limit);
     case "hosting":
       return searchHosting(q, limit);
+    case "marketing":
+      return searchMarketing(q, limit);
+    case "task":
+      return searchTasks(q, limit);
     default:
       return { rows: [], error: null };
   }
@@ -227,6 +231,61 @@ async function searchHosting(q: string, limit: number): Promise<LookupFetchResul
         .filter(Boolean)
         .join(" · ") || undefined,
       email: normalizeEmail(row.customer_email),
+      clientName: normalizeClientName(row.client_name),
+    })),
+    error: null,
+  };
+}
+
+async function searchMarketing(q: string, limit: number): Promise<LookupFetchResult> {
+  let req = supabase
+    .from("marketing_records")
+    .select("id,title,client_name,customer_email,channel,status")
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  const orFilter = q
+    ? buildPostgrestIlikeOr(["title", "client_name", "customer_email"], q)
+    : null;
+  if (orFilter) req = req.or(orFilter);
+
+  const { data, error } = await req;
+  if (error) return { rows: [], error: error.message };
+  if (!data) return { rows: [], error: null };
+
+  return {
+    rows: (data as any[]).map((row) => ({
+      kind: "marketing" as const,
+      id: row.id,
+      label: row.title,
+      sublabel: [row.client_name, row.channel].filter(Boolean).join(" · ") || undefined,
+      email: normalizeEmail(row.customer_email),
+      clientName: normalizeClientName(row.client_name),
+    })),
+    error: null,
+  };
+}
+
+async function searchTasks(q: string, limit: number): Promise<LookupFetchResult> {
+  let req = supabase
+    .from("tasks")
+    .select("id,title,client_name,assignee,status")
+    .order("updated_at", { ascending: false })
+    .limit(limit);
+
+  const orFilter = q ? buildPostgrestIlikeOr(["title", "client_name", "assignee"], q) : null;
+  if (orFilter) req = req.or(orFilter);
+
+  const { data, error } = await req;
+  if (error) return { rows: [], error: error.message };
+  if (!data) return { rows: [], error: null };
+
+  return {
+    rows: (data as any[]).map((row) => ({
+      kind: "task" as const,
+      id: row.id,
+      label: row.title,
+      sublabel: [row.client_name, row.assignee].filter(Boolean).join(" · ") || undefined,
       clientName: normalizeClientName(row.client_name),
     })),
     error: null,

@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { EntityCommissionsPanel } from "@/components/admin/EntityCommissionsPanel";
+import { EntityPaymentRecordsPanel } from "@/components/admin/EntityPaymentRecordsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import {
@@ -20,6 +23,13 @@ import {
   ClientLinkBadge,
   ConfirmedLinkBadge,
 } from "@/components/admin/lookup/LinkStatusBadge";
+import { OperatingCostField } from "@/components/admin/OperatingCostField";
+import {
+  entityHasLinkedPaymentInRows,
+  marketingPaymentCreateHint,
+  type EntityPaymentRow,
+} from "@/lib/finance/entityPaymentBridge";
+import { financeCtxWithPayments, prefillFromMarketing } from "@/lib/finance/factDrafts";
 
 type MarketingRecordDetail = MarketingRecord & {
   customers?: { id: string; email: string | null; display_name: string } | null;
@@ -31,6 +41,7 @@ export default function AdminMarketingDetail() {
   const [loading, setLoading] = useState(true);
   const [record, setRecord] = useState<MarketingRecordDetail | null>(null);
   const [lead, setLead] = useState<{ id: string; name: string; email: string | null } | null>(null);
+  const [linkedPayments, setLinkedPayments] = useState<EntityPaymentRow[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<MarketingRecord> | null>(null);
   const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
@@ -68,6 +79,14 @@ export default function AdminMarketingDetail() {
       if (leadRow) setLead(leadRow);
     }
 
+    const { data: pays } = await supabase
+      .from("payment_records")
+      .select("id,amount,paid_at,note,truth_level,source_table,source_id")
+      .eq("source_table", "marketing_records")
+      .eq("source_id", id)
+      .order("paid_at", { ascending: false });
+    setLinkedPayments((pays || []) as EntityPaymentRow[]);
+
     setLoading(false);
   };
 
@@ -97,6 +116,7 @@ export default function AdminMarketingDetail() {
     () => MARKETING_CHANNELS.find((c) => c.value === record?.channel)?.label ?? record?.channel,
     [record?.channel],
   );
+  const paymentCtx = useMemo(() => financeCtxWithPayments(linkedPayments), [linkedPayments]);
 
   if (loading || !record) {
     return (
@@ -110,6 +130,12 @@ export default function AdminMarketingDetail() {
 
   const customerHref = adminCustomerHrefPreferred(record.customer_id, record.customer_email);
   const clientLinked = !!record.lead_id;
+  const marketingPaymentLinked = entityHasLinkedPaymentInRows(
+    "marketing_records",
+    record.id,
+    linkedPayments,
+  );
+  const marketingPaymentHint = marketingPaymentCreateHint(record, marketingPaymentLinked);
 
   return (
     <AdminShell
@@ -126,6 +152,14 @@ export default function AdminMarketingDetail() {
         </div>
       }
     >
+      <Tabs defaultValue="prehlad" className="space-y-4">
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="prehlad">Prehľad</TabsTrigger>
+          <TabsTrigger value="provizie">Provízie</TabsTrigger>
+          <TabsTrigger value="platby">Platby</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="prehlad" className="space-y-4">
       <section className="rounded-xl border bg-card p-4 grid sm:grid-cols-2 gap-4 text-sm">
         <Field label="Kanál" value={channelLabel || "—"} />
         <Field label="Stav">
@@ -180,6 +214,28 @@ export default function AdminMarketingDetail() {
         <Field label="Vytvorené" value={new Date(record.created_at).toLocaleString("sk-SK")} />
         <Field label="Aktualizované" value={new Date(record.updated_at).toLocaleString("sk-SK")} />
         <div className="sm:col-span-2">
+          <OperatingCostField
+            label="Dohodnutý poplatok (€)"
+            value={Number(record.agreed_fee ?? 0)}
+            onSave={async (next) => {
+              const { error } = await supabase
+                .from("marketing_records")
+                .update({ agreed_fee: next > 0 ? next : null })
+                .eq("id", record.id);
+              if (error) {
+                toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                throw error;
+              }
+              setRecord({ ...record, agreed_fee: next > 0 ? next : null });
+              toast({ title: "Poplatok uložený" });
+              void load();
+            }}
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Základ pre opt-in platbu do financií — nie je auditovaný príjem.
+          </p>
+        </div>
+        <div className="sm:col-span-2">
           <Field label="Poznámky">
             {record.notes ? (
               <div className="mt-1 rounded-lg bg-muted/40 p-3 whitespace-pre-wrap">{record.notes}</div>
@@ -189,6 +245,36 @@ export default function AdminMarketingDetail() {
           </Field>
         </div>
       </section>
+        </TabsContent>
+
+        <TabsContent value="provizie">
+          <EntityCommissionsPanel
+            sourceType="marketing"
+            sourceId={record.id}
+            customerEmail={record.customer_email}
+            customerId={record.customer_id}
+            defaultTitle={record.title}
+            revenueKnown={false}
+          />
+        </TabsContent>
+
+        <TabsContent value="platby">
+          <EntityPaymentRecordsPanel
+            payments={linkedPayments}
+            onSaved={() => void load()}
+            createActions={[
+              {
+                key: "create",
+                label: "Vytvoriť platbu",
+                linkedExists: marketingPaymentLinked,
+                disabled: !!marketingPaymentHint,
+                hint: marketingPaymentHint,
+                buildDraft: () => prefillFromMarketing(record, paymentCtx),
+              },
+            ]}
+          />
+        </TabsContent>
+      </Tabs>
 
       <MarketingRecordEditDialog
         open={editOpen}

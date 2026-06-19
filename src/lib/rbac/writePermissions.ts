@@ -3,7 +3,7 @@
  */
 
 import type { AccessContext } from "@/lib/rbac/permissions";
-import { commissionVisibleToUser, isOwner } from "@/lib/rbac/permissions";
+import { commissionVisibleToUser, isAdministrator, isOwner } from "@/lib/rbac/permissions";
 
 export function canWriteCommissions(ctx: AccessContext): boolean {
   return isOwner(ctx.role);
@@ -30,7 +30,12 @@ export function canToggleCommissionPaymentStatus(
   implementer: string | null | undefined,
 ): boolean {
   if (isOwner(ctx.role)) return true;
-  return false;
+  if (!isAdministrator(ctx.role)) return false;
+  return commissionVisibleToUser(implementer, ctx);
+}
+
+export function commissionPaymentStatusDeniedMessage(): string {
+  return "Stav úhrady môže meniť owner (všetky provízie) alebo realizátor len na svojich províziách.";
 }
 
 export function canEditCommissionRow(
@@ -42,5 +47,5 @@ export function canEditCommissionRow(
 }
 
 export function writeDeniedMessage(action: string): string {
-  return `${action} môže vykonať len owner.`;
+  return `${action} môže vykonať len owner.`;
 }

@@ -33,8 +33,19 @@ export type PermissionFlags = {
 
 /** Normalize DB role row (owner/administrator or legacy admin/user). */
 export function normalizeAppRole(raw: string | null | undefined): AppRole | null {
-  if (raw === "owner" || raw === "admin") return "owner";
-  if (raw === "administrator" || raw === "user") return "administrator";
+  const value = raw?.trim();
+  if (value === "owner" || value === "admin") return "owner";
+  if (value === "administrator" || value === "user") return "administrator";
+  return null;
+}
+
+/** Pick CRM role from user_roles rows — owner wins when both are present. */
+export function resolveAppRoleFromRows(roleValues: string[]): AppRole | null {
+  const normalized = roleValues
+    .map(normalizeAppRole)
+    .filter((role): role is AppRole => role != null);
+  if (normalized.includes("owner")) return "owner";
+  if (normalized.includes("administrator")) return "administrator";
   return null;
 }
 

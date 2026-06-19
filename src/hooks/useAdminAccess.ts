@@ -1,7 +1,32 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/lib/rbac/permissions";
-import { isCrmUser, normalizeAppRole } from "@/lib/rbac/permissions";
+import { isCrmUser, resolveAppRoleFromRows } from "@/lib/rbac/permissions";
+
+/** Server-side role check when user_roles SELECT is empty (RLS/timing). */
+async function resolveAppRoleViaRpc(userId: string): Promise<AppRole | null> {
+  // ponytail: is_crm_* RPCs exist in DB but are not in generated Database types yet
+  const rpc = supabase.rpc.bind(supabase) as (
+    fn: string,
+    args?: Record<string, unknown>,
+  ) => ReturnType<typeof supabase.rpc>;
+
+  const [ownerRes, adminRes] = await Promise.all([
+    rpc("is_crm_owner", { _user_id: userId }),
+    rpc("is_crm_administrator", { _user_id: userId }),
+  ]);
+
+  if (ownerRes.error) {
+    console.error("[useAdminAccess] is_crm_owner RPC failed", ownerRes.error);
+  }
+  if (adminRes.error) {
+    console.error("[useAdminAccess] is_crm_administrator RPC failed", adminRes.error);
+  }
+
+  if (ownerRes.data === true) return "owner";
+  if (adminRes.data === true) return "administrator";
+  return null;
+}
 
 export interface AppAccessState {
   authChecking: boolean;
@@ -41,10 +66,12 @@ export const useAdminAccess = (): AppAccessState => {
     }
 
     const roleList = (roles || []).map((r) => r.role as string);
-    const normalized = roleList.map(normalizeAppRole).filter((r): r is AppRole => r != null);
-    const isAdmin = normalized.includes("owner");
-    const isUser = normalized.includes("administrator");
-    const role: AppRole | null = isAdmin ? "owner" : isUser ? "administrator" : null;
+    let role = resolveAppRoleFromRows(roleList);
+    if (!role) {
+      role = await resolveAppRoleViaRpc(user.id);
+    }
+    const isAdmin = role === "owner";
+    const isUser = role === "administrator";
 
     let implementerName: string | null = null;
     let displayName: string | null = null;
@@ -67,23 +94,26 @@ export const useAdminAccess = (): AppAccessState => {
   useEffect(() => {
     let active = true;
 
-    const applySession = async (session: { user: { id: string; email?: string | null } } | null) => {
+    const refreshAccess = async () => {
       if (!active) return;
-      const user = session?.user;
 
-      if (!user) {
-        setState({ ...initialState, authChecking: false });
-        return;
-      }
-
-      setState((prev) => ({
-        ...prev,
-        authChecking: true,
-        userEmail: user.email ?? "",
-        userId: user.id,
-      }));
+      setState((prev) => ({ ...prev, authChecking: true }));
 
       try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+          console.error("[useAdminAccess] getUser failed", userError);
+        }
+
+        if (!user) {
+          setState({ ...initialState, authChecking: false });
+          return;
+        }
+
         const access = await resolveAccess(user);
         if (!active) return;
         setState({
@@ -100,33 +130,35 @@ export const useAdminAccess = (): AppAccessState => {
       } catch (error) {
         console.error("[useAdminAccess] resolution failed", error);
         if (active) {
-          setState({
+          setState((prev) => ({
+            ...prev,
             authChecking: false,
             isAdmin: false,
             isUser: false,
             isCrmUser: false,
             role: null,
-            userEmail: user.email ?? "",
-            userId: user.id,
             implementerName: null,
             displayName: null,
-          });
+          }));
         }
       }
     };
 
-    void supabase.auth.getSession().then(({ data, error }) => {
-      if (error) console.error("Session restore failed", error);
-      void applySession(data.session ?? null);
-    });
+    void refreshAccess();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      window.setTimeout(() => {
-        if (!active) return;
-        void applySession(session as { user: { id: string; email?: string | null } } | null);
-      }, 0);
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
+        if (active) setState({ ...initialState, authChecking: false });
+        return;
+      }
+      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        window.setTimeout(() => {
+          if (!active) return;
+          void refreshAccess();
+        }, 0);
+      }
     });
 
     return () => {

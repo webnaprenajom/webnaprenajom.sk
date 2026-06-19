@@ -36,6 +36,11 @@ import {
   computeUnresolvedIssues,
   computeWorkbenchSummary,
 } from "@/lib/customerWorkbench/summary";
+import {
+  commissionHubStatusLabel,
+  commissionHubStatusTone,
+  hasConfirmedPayout,
+} from "@/lib/customerWorkbench/commissionHubTruth";
 import type {
   CustomerWorkbenchContext,
   CustomerWorkbenchData,
@@ -217,7 +222,10 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
 
   const openTasks = data.tasks.filter((t) => t.status !== "done");
   const unpaidCommissions = data.commissions.filter((c) => c.payment_status !== "paid");
-  const paidCommissions = data.commissions.filter((c) => c.payment_status === "paid");
+  const workflowPaidCommissions = data.commissions.filter((c) => c.payment_status === "paid");
+  const confirmedPayoutCount = data.payoutRecords.filter(
+    (p) => p.truth_level === "payout_fact" || p.truth_level === "legacy_import",
+  ).length;
   const activeProjects = data.notes.filter((n) => !["done", "archived"].includes(n.status));
 
   const usageRows = useMemo(() => getWorkbenchUsageRows().slice(0, 5), [activeTab, quickCreate]);
@@ -576,16 +584,20 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
             />
             <CustomerFinancePanel data={data} finance={financeSummary} />
             <div className="grid gap-3 sm:grid-cols-3">
-              <MetricChip label="Vyplatené" value={paidCommissions.length} tone="success" />
+              <MetricChip
+                label="Workflow vypl."
+                value={workflowPaidCommissions.length}
+                tone={workflowPaidCommissions.length > 0 ? "warning" : "default"}
+              />
               <MetricChip
                 label="Neuhradené"
                 value={unpaidCommissions.length}
                 tone={unpaidCommissions.length > 0 ? "warning" : "default"}
               />
               <MetricChip
-                label="Suma neuhradených"
-                value={`${summary.unpaidCommissionsTotal.toFixed(2)} €`}
-                tone={summary.unpaidCommissionsTotal > 0 ? "warning" : "default"}
+                label="Payout fakty"
+                value={confirmedPayoutCount}
+                tone={confirmedPayoutCount > 0 ? "success" : "default"}
               />
             </div>
             <TabPanel
@@ -599,22 +611,25 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
                 <EmptyTab text="Žiadne provízie viazané na klienta." />
               ) : (
                 <ul>
-                  {data.commissions.map((c) => (
+                  {data.commissions.map((c) => {
+                    const confirmedPayout = hasConfirmedPayout(c.id, data.payoutRecords);
+                    const statusLabel = commissionHubStatusLabel(c.payment_status, confirmedPayout);
+                    const tone = commissionHubStatusTone(c.payment_status, confirmedPayout);
+                    const toneClass =
+                      tone === "success"
+                        ? "border-green-500/40 text-green-700 dark:text-green-400"
+                        : tone === "warning"
+                          ? "border-amber-500/40 text-amber-700 dark:text-amber-400"
+                          : "border-muted-foreground/30 text-muted-foreground";
+                    return (
                     <EntityRow
                       key={c.id}
                       title={c.title}
                       subtitle={new Date(c.date).toLocaleDateString("sk-SK")}
                       meta={
                         <>
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] ${
-                              c.payment_status === "paid"
-                                ? "border-green-500/40 text-green-700"
-                                : "border-amber-500/40 text-amber-700"
-                            }`}
-                          >
-                            {c.payment_status === "paid" ? "Vyplatené" : "Neuhradené"}
+                          <Badge variant="outline" className={`text-[10px] ${toneClass}`}>
+                            {statusLabel}
                           </Badge>
                           <span className="font-semibold">{Number(c.amount).toFixed(2)} €</span>
                         </>
@@ -622,7 +637,8 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
                       href="/admin/finance?advanced=1&legacy=commissions"
                       actionLabel="Financie"
                     />
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </TabPanel>

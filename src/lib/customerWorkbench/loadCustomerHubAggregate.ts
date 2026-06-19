@@ -70,6 +70,68 @@ function dedupeById<T extends { id: string }>(rows: T[]): T[] {
   return Array.from(seen.values());
 }
 
+const payoutSelect =
+  "id,source_table,source_id,implementer,amount,currency,paid_at,reference,note,truth_level" as const;
+
+/** ponytail: chunked .in() — ceiling ~100 IDs/query; upgrade path: RPC join on customer_id */
+const PAYOUT_ID_CHUNK = 100;
+
+async function fetchAllCommissionIds(
+  customerId: string | null,
+  resolvedEmail: string,
+): Promise<{ ids: string[]; error: string | null }> {
+  const queries: Promise<{
+    data: { id: string }[] | null;
+    error: { message: string } | null;
+  }>[] = [];
+  if (customerId) {
+    queries.push(
+      supabase.from("commissions").select("id").eq("customer_id", customerId) as unknown as Promise<{
+        data: { id: string }[] | null;
+        error: { message: string } | null;
+      }>,
+    );
+  }
+  if (resolvedEmail) {
+    queries.push(
+      supabase
+        .from("commissions")
+        .select("id")
+        .ilike("customer_email", resolvedEmail) as unknown as Promise<{
+        data: { id: string }[] | null;
+        error: { message: string } | null;
+      }>,
+    );
+  }
+  if (!queries.length) return { ids: [], error: null };
+  const results = await Promise.all(queries);
+  const errors: string[] = [];
+  results.forEach((res, i) => {
+    if (res.error) errors.push(`commission ids query ${i + 1}: ${res.error.message}`);
+  });
+  const ids = dedupeById(results.flatMap((r) => r.data || [])).map((r) => r.id);
+  return { ids, error: errors.length ? errors.join("; ") : null };
+}
+
+async function fetchPayoutRecordsForCommissionIds(
+  commissionIds: string[],
+): Promise<{ data: PayoutRecord[]; error: string | null }> {
+  if (!commissionIds.length) return { data: [], error: null };
+  const errors: string[] = [];
+  const rows: PayoutRecord[] = [];
+  for (let i = 0; i < commissionIds.length; i += PAYOUT_ID_CHUNK) {
+    const chunk = commissionIds.slice(i, i + PAYOUT_ID_CHUNK).map(String);
+    const res = await supabase
+      .from("payout_records")
+      .select(payoutSelect)
+      .eq("source_table", "commissions")
+      .in("source_id", chunk);
+    if (res.error) errors.push(res.error.message);
+    rows.push(...((res.data || []) as PayoutRecord[]));
+  }
+  return { data: dedupeById(rows), error: errors.length ? errors.join("; ") : null };
+}
+
 function workbenchFromSections(
   identity: Awaited<ReturnType<typeof resolveCustomerIdentity>>,
   sections: CustomerHubSections,
@@ -373,7 +435,14 @@ export async function loadCustomerHubAggregate(
   const rentalIds = rentals.map((r) => r.id);
   const noteIds = notes.map((n) => n.id);
   const hostingIds = hosting.map((h) => h.id);
-  const commissionIds = commissions.map((c) => c.id);
+
+  const { ids: allCommissionIds, error: commissionIdsError } = await fetchAllCommissionIds(
+    customerId,
+    resolvedEmail,
+  );
+  if (commissionIdsError) {
+    commissionsError = mergeSectionErrors(commissionsError, commissionIdsError);
+  }
 
   const paymentSelect =
     "id,source_table,source_id,customer_email,client_name,rental_website_id,amount,currency,paid_at,method,reference,note,truth_level" as const;
@@ -486,16 +555,13 @@ export async function loadCustomerHubAggregate(
 
   const payoutsSection = await fetchSection(
     "payouts",
-    () =>
-      commissionIds.length
-        ? supabase
-            .from("payout_records")
-            .select(
-              "id,source_table,source_id,implementer,amount,currency,paid_at,reference,note,truth_level",
-            )
-            .eq("source_table", "commissions")
-            .in("source_id", commissionIds.map(String))
-        : Promise.resolve({ data: [] as PayoutRecord[], error: null }),
+    async () => {
+      const res = await fetchPayoutRecordsForCommissionIds(allCommissionIds);
+      return {
+        data: res.data,
+        error: res.error ? { message: res.error } : null,
+      };
+    },
     [] as PayoutRecord[],
   );
 

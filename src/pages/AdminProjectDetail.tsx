@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { EntityCommissionsPanel } from "@/components/admin/EntityCommissionsPanel";
+import { EntityPaymentRecordsPanel } from "@/components/admin/EntityPaymentRecordsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +19,12 @@ import {
 import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
 import { OperatingCostField } from "@/components/admin/OperatingCostField";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
+import {
+  entityHasLinkedPaymentInRows,
+  projectPaymentCreateHint,
+  type EntityPaymentRow,
+} from "@/lib/finance/entityPaymentBridge";
+import { financeCtxWithPayments, prefillFromProject } from "@/lib/finance/factDrafts";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 
@@ -39,6 +46,7 @@ export default function AdminProjectDetail() {
   const [relatedRentals, setRelatedRentals] = useState<any[]>([]);
   const [projectRevenue, setProjectRevenue] = useState(0);
   const [projectPaymentCount, setProjectPaymentCount] = useState(0);
+  const [linkedPayments, setLinkedPayments] = useState<EntityPaymentRow[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -97,11 +105,13 @@ export default function AdminProjectDetail() {
     tasks.push(
       supabase
         .from("payment_records")
-        .select("amount")
+        .select("id,amount,paid_at,note,truth_level,source_table,source_id")
         .eq("source_table", "project_notes")
         .eq("source_id", id)
+        .order("paid_at", { ascending: false })
         .then(({ data: pays }) => {
-          const list = pays || [];
+          const list = (pays || []) as EntityPaymentRow[];
+          setLinkedPayments(list);
           setProjectPaymentCount(list.length);
           setProjectRevenue(list.reduce((s, p) => s + Number(p.amount || 0), 0));
         }),
@@ -115,6 +125,7 @@ export default function AdminProjectDetail() {
     () => PROJECT_STATUSES.find((s) => s.value === project?.status),
     [project?.status],
   );
+  const paymentCtx = useMemo(() => financeCtxWithPayments(linkedPayments), [linkedPayments]);
 
   if (loading || !project) {
     return (
@@ -129,6 +140,8 @@ export default function AdminProjectDetail() {
   const customerEmail = project.customer_email;
   const projectType = project.project_type;
   const clientLinked = !!project.lead_id;
+  const projectPaymentLinked = entityHasLinkedPaymentInRows("project_notes", project.id, linkedPayments);
+  const projectPaymentHint = projectPaymentCreateHint(project, projectPaymentLinked);
 
   return (
     <AdminShell
@@ -145,6 +158,7 @@ export default function AdminProjectDetail() {
           <TabsTrigger value="prehlad">Prehľad</TabsTrigger>
           <TabsTrigger value="poznamky">Poznámky</TabsTrigger>
           <TabsTrigger value="provizie">Provízie</TabsTrigger>
+          <TabsTrigger value="platby">Platby</TabsTrigger>
           <TabsTrigger value="suvisiace">Súvisiace</TabsTrigger>
           <TabsTrigger value="hesla" asChild>
             <Link to="/admin/passwords">Heslá ↗</Link>
@@ -235,6 +249,29 @@ export default function AdminProjectDetail() {
               />
             </div>
             <div className="sm:col-span-2">
+              <OperatingCostField
+                label="Dohodnutá cena (€)"
+                value={Number(project.agreed_fee ?? 0)}
+                onSave={async (next) => {
+                  const prev = Number(project.agreed_fee ?? 0);
+                  const { error } = await supabase
+                    .from("project_notes")
+                    .update({ agreed_fee: next > 0 ? next : null })
+                    .eq("id", project.id);
+                  if (error) {
+                    toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                    throw error;
+                  }
+                  setProject({ ...project, agreed_fee: next > 0 ? next : null });
+                  toast({ title: "Dohodnutá cena uložená" });
+                  void load();
+                }}
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Základ pre opt-in platbu do financií — nie je auditovaný príjem.
+              </p>
+            </div>
+            <div className="sm:col-span-2">
               <EntityProfitBanner
                 entityKind="project"
                 revenue={projectRevenue}
@@ -267,6 +304,23 @@ export default function AdminProjectDetail() {
             operatingCost={Number(project.operating_cost ?? 0)}
             revenueKnown
             paymentRecordCount={projectPaymentCount}
+          />
+        </TabsContent>
+
+        <TabsContent value="platby">
+          <EntityPaymentRecordsPanel
+            payments={linkedPayments}
+            onSaved={() => void load()}
+            createActions={[
+              {
+                key: "create",
+                label: "Vytvoriť platbu",
+                linkedExists: projectPaymentLinked,
+                disabled: !!projectPaymentHint,
+                hint: projectPaymentHint,
+                buildDraft: () => prefillFromProject(project, paymentCtx),
+              },
+            ]}
           />
         </TabsContent>
 

@@ -8,13 +8,13 @@ import {
 
 const owner = { role: "owner" as const, userId: "a1", implementerName: null };
 const administrator = { role: "administrator" as const, userId: "u1", implementerName: "Peter" };
+const noRole = { role: null, userId: "x1", implementerName: "Peter" };
 
 describe("rc6.6 write permissions", () => {
-  it("denies administrator all mutation helpers", () => {
+  it("denies administrator full commission CRUD helpers", () => {
     expect(canWriteCommissions(administrator)).toBe(false);
     expect(canEditOperatingCosts(administrator)).toBe(false);
     expect(canManageUserRoles(administrator)).toBe(false);
-    expect(canToggleCommissionPaymentStatus(administrator, "Peter")).toBe(false);
   });
 
   it("allows owner mutations", () => {
@@ -22,5 +22,15 @@ describe("rc6.6 write permissions", () => {
     expect(canEditOperatingCosts(owner)).toBe(true);
     expect(canManageUserRoles(owner)).toBe(true);
     expect(canToggleCommissionPaymentStatus(owner, "Peter")).toBe(true);
+    expect(canToggleCommissionPaymentStatus(owner, "Maroš")).toBe(true);
+  });
+
+  it("allows administrator payment_status toggle only for own implementer", () => {
+    expect(canToggleCommissionPaymentStatus(administrator, "Peter")).toBe(true);
+    expect(canToggleCommissionPaymentStatus(administrator, "Maroš")).toBe(false);
+  });
+
+  it("denies payment_status toggle without CRM role", () => {
+    expect(canToggleCommissionPaymentStatus(noRole, "Peter")).toBe(false);
   });
 });

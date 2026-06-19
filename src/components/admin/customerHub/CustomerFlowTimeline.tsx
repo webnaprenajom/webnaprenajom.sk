@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import type { TimelineEvent } from "@/components/admin/CustomerTimeline";
 import { TIMELINE_CATEGORY_LABELS } from "@/lib/crmLookup/timeline";
 import { AlertCircle, ChevronDown, ChevronRight, Clock, Loader2 } from "lucide-react";
@@ -28,6 +29,9 @@ function TimelineRow({ item }: { item: TimelineEvent }) {
             <Badge variant="outline" className="text-[9px] h-4 px-1.5 shrink-0">
               {TIMELINE_CATEGORY_LABELS[item.category]}
             </Badge>
+          )}
+          {item.truthLevel && (
+            <TruthLevelBadge level={item.truthLevel} className="text-[9px] h-4 px-1 shrink-0" />
           )}
           <span className="font-medium truncate flex items-center gap-1 min-w-0 text-xs">
             <Clock className="w-3 h-3 text-muted-foreground shrink-0" />

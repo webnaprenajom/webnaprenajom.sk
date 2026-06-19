@@ -248,5 +248,20 @@ describe("buildCustomerTimelineEvents — finance events", () => {
     expect(events.some((e) => e.id === "payout-po1")).toBe(true);
     expect(events.some((e) => e.id === "rental-pay-rp1")).toBe(true);
     expect(events.filter((e) => e.category === "finance").length).toBeGreaterThanOrEqual(3);
+    expect(events.find((e) => e.id === "payment-p1")?.truthLevel).toBe("payment_fact");
+    expect(events.find((e) => e.id === "payout-po1")?.truthLevel).toBe("payout_fact");
+    expect(events.find((e) => e.id === "rental-pay-rp1")?.truthLevel).toBe("workflow_only");
+  });
+
+  it("marks commission timeline as workflow and uses explicit status copy", () => {
+    const data = emptyData({
+      commissions: [
+        { id: "c1", title: "Prov", amount: 50, payment_status: "paid", date: "2026-01-01" },
+      ],
+      payoutRecords: [],
+    });
+    const event = buildCustomerTimelineEvents(data).find((e) => e.id === "comm-c1");
+    expect(event?.truthLevel).toBe("workflow_only");
+    expect(event?.detail).toContain("workflow");
   });
 });

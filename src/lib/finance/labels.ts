@@ -3,7 +3,7 @@
 
 
 export const FINANCE_TRUTH_DISCLAIMER =
-  "Súhrn agreguje CRM záznamy podľa úrovne dôveryhodnosti. Potvrdené platby/výplaty/náklady pochádzajú z payment_records / payout_records / cost_records. Legacy import je odvodený zo starých workflow flagov bez bankovej referencie. Interné stavy „vyplatené/uhradené“ nie sú auditované platobné dôkazy.";
+  "Súhrn agreguje CRM záznamy podľa úrovne dôveryhodnosti. Potvrdené platby/výplaty/náklady pochádzajú z payment_records / payout_records / cost_records (vrátane entity-linked zdrojov: Hosting, Projekty, Úlohy, Marketing, Prenájmy). Legacy import je odvodený zo starých workflow flagov bez bankovej referencie. Interné stavy „vyplatené/uhradené“ a rental_payments nie sú auditovaný cash — workflow mirror.";
 
 
 

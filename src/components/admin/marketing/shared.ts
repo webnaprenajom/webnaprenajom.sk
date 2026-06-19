@@ -24,6 +24,7 @@ export interface MarketingRecord {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  agreed_fee?: number | null;
 }
 
 export const MARKETING_CHANNELS: { value: MarketingChannel; label: string }[] = [
@@ -61,4 +62,5 @@ export const emptyMarketingRecord: Omit<
   status: "active",
   url: null,
   notes: null,
+  agreed_fee: null,
 };

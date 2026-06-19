@@ -1,5 +1,7 @@
 /** Phase 2C compatibility types — canonical facts + legacy workflow sources. */
 
+import type { EntityPaymentTotals } from "./financeSourceLabels";
+
 export type FinanceRowKind =
   | "commission"
   | "expense"
@@ -39,6 +41,11 @@ export interface FinanceLedgerRow {
   implementer: string | null;
   year: number | null;
   month: number | null;
+  /** CRM entity origin when fact row is linked via source_table/source_id on the record */
+  linkedOriginTable?: string | null;
+  linkedOriginId?: string | null;
+  linkedOriginLabel?: string | null;
+  linkedOriginSublabel?: string | null;
 }
 
 export interface FinanceSnapshotMeta {
@@ -63,11 +70,16 @@ export interface FinanceSnapshotTotals {
   rentalMarkedUnpaid: number;
   rentalPotential: number;
   rentalCreditsCostDerived: number;
+  /** payment_fact only — grouped by entity-linked source_table */
+  entityPaymentsConfirmed: EntityPaymentTotals;
 }
 
 export interface ReconciliationSummaryCounts {
   workflowIncoming: number;
   workflowOutgoing: number;
+  entityMissingPayment: number;
+  taskPaymentGaps: number;
+  entityWorkflowMismatch: number;
   legacyNoReference: number;
   legacyImprecisePaidAt: number;
   missingCounterparty: number;
@@ -79,6 +91,10 @@ export type ReconciliationIssueKind =
   | "workflow_incoming"
   | "workflow_outgoing_commission"
   | "workflow_outgoing_expense"
+  | "entity_missing_payment_fact"
+  | "task_missing_payment_deposit"
+  | "task_missing_payment_full"
+  | "entity_payment_ahead_of_workflow"
   | "legacy_no_reference"
   | "legacy_imprecise_paid_at"
   | "missing_counterparty"

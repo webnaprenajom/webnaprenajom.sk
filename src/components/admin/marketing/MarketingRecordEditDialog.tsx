@@ -114,6 +114,26 @@ export function MarketingRecordEditDialog({
         </div>
 
         <div className="space-y-1.5">
+          <Label>Dohodnutý poplatok (€)</Label>
+          <Input
+            type="number"
+            step="0.01"
+            min={0}
+            value={editing.agreed_fee ?? ""}
+            onChange={(e) =>
+              setEditing({
+                ...editing,
+                agreed_fee: e.target.value === "" ? null : Number(e.target.value),
+              })
+            }
+            placeholder="Základ pre platbu do financií"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Nie je auditovaný príjem — slúži len na draft payment fact.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
           <Label>Klient</Label>
           <ClientPicker
             clientName={editing.client_name || ""}

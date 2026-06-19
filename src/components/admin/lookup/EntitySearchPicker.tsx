@@ -18,6 +18,8 @@ const KIND_LABELS: Record<LookupKind, string> = {
   project: "Projekt",
   rental: "Prenájom",
   hosting: "Hosting",
+  marketing: "Marketing",
+  task: "Úloha",
   email: "E-mail",
 };
 

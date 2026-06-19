@@ -21,7 +21,7 @@ export type CrmManagedUser = AuthDirectoryRow & {
 
 export type UserDirectoryFilters = {
   search: string;
-  role: "all" | "admin" | "user";
+  role: "all" | "owner" | "administrator";
   mapping: "all" | "missing" | "ok";
 };
 
@@ -135,13 +135,47 @@ export function userMatchesSearch(user: CrmManagedUser, query: string): boolean 
   return haystack.includes(q);
 }
 
+export function countOwners(users: CrmManagedUser[]): number {
+  return users.filter((u) => u.role === "owner").length;
+}
+
+export function isLastOwner(users: CrmManagedUser[], userId: string): boolean {
+  const user = users.find((u) => u.userId === userId);
+  if (!user || user.role !== "owner") return false;
+  return countOwners(users) <= 1;
+}
+
+export function canRemoveOwnerRole(users: CrmManagedUser[], user: CrmManagedUser): boolean {
+  if (user.role !== "owner") return true;
+  return countOwners(users) > 1;
+}
+
+export function canDemoteOwner(users: CrmManagedUser[], userId: string): boolean {
+  return !isLastOwner(users, userId);
+}
+
+export function implementerNameTaken(
+  users: CrmManagedUser[],
+  name: string,
+  exceptUserId?: string,
+): boolean {
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  const key = trimmed.toLowerCase();
+  return users.some(
+    (u) =>
+      u.userId !== exceptUserId &&
+      u.implementerName?.trim().toLowerCase() === key,
+  );
+}
+
 export function filterManagedUsers(
   users: CrmManagedUser[],
   filters: UserDirectoryFilters,
 ): CrmManagedUser[] {
   return users.filter((u) => {
-    if (filters.role === "admin" && u.role !== "owner") return false;
-    if (filters.role === "user" && u.role !== "administrator") return false;
+    if (filters.role === "owner" && u.role !== "owner") return false;
+    if (filters.role === "administrator" && u.role !== "administrator") return false;
     if (filters.mapping === "missing" && !u.missingProfile) return false;
     if (filters.mapping === "ok" && u.missingProfile) return false;
     return userMatchesSearch(u, filters.search);
@@ -188,3 +222,13 @@ export const DEFAULT_USER_DIRECTORY_FILTERS: UserDirectoryFilters = {
   role: "all",
   mapping: "all",
 };
+
+/** Hash target for Settings → add-user section (owner pending auth review). */
+export const PENDING_AUTH_USER_REVIEW_HASH = "pending-auth-users";
+
+export function pendingAuthUserReviewMessage(count: number): string | null {
+  if (count <= 0) return null;
+  if (count === 1) return "Čaká 1 nový účet na priradenie CRM role";
+  if (count >= 2 && count <= 4) return `Čaká ${count} nové účty na priradenie CRM role`;
+  return `Čaká ${count} nových účtov na priradenie CRM role`;
+}

@@ -6,10 +6,26 @@ import {
   filterCommissionsForUser,
   isCrmUser,
   isOwner,
+  normalizeAppRole,
+  resolveAppRoleFromRows,
   resolvePermissions,
 } from "@/lib/rbac/permissions";
 
 describe("rc6 RBAC", () => {
+  it("normalizes legacy and canonical DB role strings", () => {
+    expect(normalizeAppRole("owner")).toBe("owner");
+    expect(normalizeAppRole("admin")).toBe("owner");
+    expect(normalizeAppRole("administrator")).toBe("administrator");
+    expect(normalizeAppRole("user")).toBe("administrator");
+    expect(normalizeAppRole(" guest ")).toBe(null);
+  });
+
+  it("resolves owner before administrator from role rows", () => {
+    expect(resolveAppRoleFromRows(["administrator", "owner"])).toBe("owner");
+    expect(resolveAppRoleFromRows(["user"])).toBe("administrator");
+    expect(resolveAppRoleFromRows(["admin"])).toBe("owner");
+    expect(resolveAppRoleFromRows([])).toBe(null);
+  });
   it("recognizes CRM roles", () => {
     expect(isCrmUser("owner")).toBe(true);
     expect(isCrmUser("administrator")).toBe(true);

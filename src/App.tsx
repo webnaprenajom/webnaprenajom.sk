@@ -23,6 +23,7 @@ import AdminMarketingDetail from "./pages/AdminMarketingDetail";
 import AdminClients from "./pages/AdminClients";
 import AdminSettings from "./pages/AdminSettings";
 import AdminTasks from "./pages/AdminTasks";
+import AdminTaskDetail from "./pages/AdminTaskDetail";
 import AdminRentals from "./pages/AdminRentals";
 import AdminWheelLeads from "./pages/AdminWheelLeads";
 import AdminDebug from "./pages/AdminDebug";
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="commissions" element={<AdminCommissionsRedirect />} />
               <Route path="finance" element={<AdminFinance />} />
               <Route path="tasks" element={<AdminTasks />} />
+              <Route path="tasks/:id" element={<AdminTaskDetail />} />
               <Route path="rentals" element={<AdminRentals />} />
               <Route path="wheel-leads" element={<AdminWheelLeads />} />
               <Route path="debug" element={<AdminDebug />} />

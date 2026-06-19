@@ -1,6 +1,17 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { ReconciliationIssue } from "./types";
+import type {
+  HostingReconRow,
+  MarketingReconRow,
+  ProjectReconRow,
+  TaskReconRow,
+} from "./reconciliationEntityRows";
+import {
+  taskPaymentSourceId,
+  type TaskPaymentVariant,
+} from "@/lib/finance/entityPaymentBridge";
+import { upsertPaymentFactForSource } from "@/lib/finance/syncFinanceFact";
 
 type PaymentRecordInsert = Database["public"]["Tables"]["payment_records"]["Insert"];
 type PayoutRecordInsert = Database["public"]["Tables"]["payout_records"]["Insert"];
@@ -33,6 +44,10 @@ export interface FinanceRawContext {
   paymentRecords: any[];
   payoutRecords: any[];
   costRecords: any[];
+  projects?: ProjectReconRow[];
+  marketing?: MarketingReconRow[];
+  tasks?: TaskReconRow[];
+  hosting?: HostingReconRow[];
 }
 
 const todayLocal = () => new Date().toISOString().slice(0, 16);
@@ -211,6 +226,38 @@ export function prefillFromReconciliationIssue(
     return prefillFromLegacyRecord(kind, row);
   }
 
+  if (issue.kind === "entity_missing_payment_fact" && issue.sourceId) {
+    if (issue.sourceTable === "project_notes") {
+      const p = ctx.projects?.find((r) => r.id === issue.sourceId);
+      if (!p) return null;
+      return prefillFromProject(p, ctx);
+    }
+    if (issue.sourceTable === "marketing_records") {
+      const m = ctx.marketing?.find((r) => r.id === issue.sourceId);
+      if (!m) return null;
+      return prefillFromMarketing(m, ctx);
+    }
+    if (issue.sourceTable === "hosting_records") {
+      const h = ctx.hosting?.find((r) => r.id === issue.sourceId);
+      if (!h) return null;
+      return prefillFromHosting(h, ctx);
+    }
+  }
+
+  if (issue.kind === "task_missing_payment_deposit" && issue.sourceId) {
+    const taskId = issue.sourceId.replace(/:deposit$/, "");
+    const t = ctx.tasks?.find((r) => r.id === taskId);
+    if (!t) return null;
+    return prefillFromTask(t, "deposit", t.customer_email ?? null, ctx);
+  }
+
+  if (issue.kind === "task_missing_payment_full" && issue.sourceId) {
+    const taskId = issue.sourceId.replace(/:full$/, "");
+    const t = ctx.tasks?.find((r) => r.id === taskId);
+    if (!t) return null;
+    return prefillFromTask(t, "full", t.customer_email ?? null, ctx);
+  }
+
   return null;
 }
 
@@ -286,6 +333,127 @@ export function prefillFromHosting(
   };
 }
 
+/** Opt-in payment fact from project — revenue basis = agreed_fee. */
+export function prefillFromProject(
+  project: {
+    id: string;
+    title: string;
+    client_name: string | null;
+    customer_email: string | null;
+    agreed_fee?: number | null;
+  },
+  ctx: FinanceRawContext,
+): FactDraft | null {
+  if (hasSourceLinkedRecord(ctx, "project_notes", project.id)) return null;
+  const amount = Number(project.agreed_fee ?? 0);
+  if (!amount || amount <= 0) return null;
+  return {
+    kind: "payment",
+    amount: String(amount),
+    paid_at: todayLocal(),
+    customer_email: project.customer_email ?? "",
+    client_name: project.client_name ?? "",
+    note: `Projekt · ${project.title}`,
+    source_table: "project_notes",
+    source_id: project.id,
+  };
+}
+
+/** Opt-in payment fact from marketing record — revenue basis = agreed_fee. */
+export function prefillFromMarketing(
+  record: {
+    id: string;
+    title: string;
+    client_name: string | null;
+    customer_email: string | null;
+    agreed_fee?: number | null;
+  },
+  ctx: FinanceRawContext,
+): FactDraft | null {
+  if (hasSourceLinkedRecord(ctx, "marketing_records", record.id)) return null;
+  const amount = Number(record.agreed_fee ?? 0);
+  if (!amount || amount <= 0) return null;
+  return {
+    kind: "payment",
+    amount: String(amount),
+    paid_at: todayLocal(),
+    customer_email: record.customer_email ?? "",
+    client_name: record.client_name ?? "",
+    note: `Marketing · ${record.title}`,
+    source_table: "marketing_records",
+    source_id: record.id,
+  };
+}
+
+/** Opt-in payment fact from task workflow — deposit or full/doplatok variant. */
+export function prefillFromTask(
+  task: {
+    id: string;
+    title: string;
+    client_name: string | null;
+    amount: number;
+    deposit: number;
+  },
+  variant: TaskPaymentVariant,
+  customerEmail: string | null,
+  ctx: FinanceRawContext,
+): FactDraft | null {
+  const sourceId = taskPaymentSourceId(task.id, variant);
+  if (hasSourceLinkedRecord(ctx, "tasks", sourceId)) return null;
+
+  let amount = 0;
+  let notePrefix = "Úhrada";
+  if (variant === "deposit") {
+    amount = Number(task.deposit ?? 0);
+    notePrefix = "Záloha";
+  } else {
+    const total = Number(task.amount ?? 0);
+    const dep = Number(task.deposit ?? 0);
+    const depositLinked = hasSourceLinkedRecord(
+      ctx,
+      "tasks",
+      taskPaymentSourceId(task.id, "deposit"),
+    );
+    if (dep > 0 && depositLinked) {
+      amount = total - dep;
+      notePrefix = "Doplatok";
+    } else {
+      amount = total;
+      notePrefix = dep > 0 ? "Úhrada" : "Úhrada";
+    }
+  }
+
+  if (!amount || amount <= 0) return null;
+  return {
+    kind: "payment",
+    amount: String(amount),
+    paid_at: todayLocal(),
+    customer_email: customerEmail ?? "",
+    client_name: task.client_name ?? "",
+    note: `${notePrefix} · ${task.title}`,
+    source_table: "tasks",
+    source_id: sourceId,
+  };
+}
+
+export function emptyFinanceRawContext(): FinanceRawContext {
+  return {
+    commissions: [],
+    expenses: [],
+    websites: [],
+    payments: [],
+    paymentRecords: [],
+    payoutRecords: [],
+    costRecords: [],
+  };
+}
+
+export function financeCtxWithPayments(
+  paymentRecords: FinanceRawContext["paymentRecords"],
+): FinanceRawContext {
+  return { ...emptyFinanceRawContext(), paymentRecords };
+}
+
 export function getIssueActionLabel(issue: ReconciliationIssue): string | null {
   switch (issue.kind) {
     case "workflow_incoming":
@@ -294,6 +462,10 @@ export function getIssueActionLabel(issue: ReconciliationIssue): string | null {
       return "Vytvoriť confirmed payout";
     case "workflow_outgoing_expense":
       return "Vytvoriť confirmed cost";
+    case "entity_missing_payment_fact":
+    case "task_missing_payment_deposit":
+    case "task_missing_payment_full":
+      return "Potvrdiť platbu do financií";
     case "legacy_no_reference":
     case "legacy_imprecise_paid_at":
       return "Potvrdiť ako fact";
@@ -303,7 +475,11 @@ export function getIssueActionLabel(issue: ReconciliationIssue): string | null {
 }
 
 export function isIssueActionable(issue: ReconciliationIssue, ctx: FinanceRawContext): boolean {
-  if (issue.kind === "potential_duplicate" || issue.kind === "missing_counterparty") {
+  if (
+    issue.kind === "potential_duplicate" ||
+    issue.kind === "missing_counterparty" ||
+    issue.kind === "entity_payment_ahead_of_workflow"
+  ) {
     return false;
   }
   return prefillFromReconciliationIssue(issue, ctx) != null;
@@ -326,8 +502,13 @@ export async function saveFactDraft(draft: FactDraft): Promise<void> {
       truth_level: "payment_fact",
     };
     if (draft.source_table && draft.source_id) {
-      payload.source_table = draft.source_table;
-      payload.source_id = draft.source_id;
+      const result = await upsertPaymentFactForSource({
+        ...(payload as PaymentRecordInsert),
+        source_table: draft.source_table,
+        source_id: draft.source_id,
+      });
+      if (!result.ok) throw new Error(result.error);
+      return;
     }
     const { error } = await supabase.from("payment_records").insert(payload as PaymentRecordInsert);
     if (error) throw error;

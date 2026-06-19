@@ -34,11 +34,13 @@ import {
   FINANCE_TRUTH_DISCLAIMER,
 } from "@/lib/finance/labels";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
-import { type FactDraft, prefillFromCommission, prefillFromExpense } from "@/lib/finance/factDrafts";
+import { type FactDraft, prefillFromExpense } from "@/lib/finance/factDrafts";
+import { resolveCommissionPayoutBridgeAfterMarkPaid } from "@/lib/finance/commissionPayoutBridge";
 import { PAYMENT_FORM_OPTIONS, type PaymentFormValue } from "@/lib/paymentForm";
 import { assigneeSelectOptions, isKnownAssignee } from "@/lib/assignees";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { EntitySearchPicker } from "@/components/admin/lookup/EntitySearchPicker";
+import type { LookupKind } from "@/lib/crmLookup/types";
 import {
   COMMISSION_SOURCE_LABELS,
   type CommissionSourceType,
@@ -55,6 +57,10 @@ import type { LookupResult } from "@/lib/crmLookup/types";
 import { Link } from "react-router-dom";
 import { CommissionLinkBadge } from "@/components/admin/lookup/LinkStatusBadge";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import {
+  canToggleCommissionPaymentStatus,
+  commissionPaymentStatusDeniedMessage,
+} from "@/lib/rbac/writePermissions";
 import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import {
@@ -108,6 +114,23 @@ const STATUS_CONFIG: Record<PaymentStatus, { label: string; className: string }>
 };
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
+
+function commissionSourceToLookupKind(sourceType: CommissionSourceType): LookupKind {
+  switch (sourceType) {
+    case "project":
+      return "project";
+    case "rental":
+      return "rental";
+    case "hosting":
+      return "hosting";
+    case "marketing":
+      return "marketing";
+    case "task":
+      return "task";
+    default:
+      return "project";
+  }
+}
 
 const emptyCommission = () => ({
   id: "",
@@ -297,6 +320,10 @@ export function CommissionsExpensesContent() {
   };
 
   const togglePaid = async (c: Commission) => {
+    if (!canToggleCommissionPaymentStatus(access, c.implementer)) {
+      toast({ title: commissionPaymentStatusDeniedMessage(), variant: "destructive" });
+      return;
+    }
     const next: PaymentStatus = c.payment_status === "paid" ? "unpaid" : "paid";
     const { error } = await supabase.from("commissions").update({ payment_status: next }).eq("id", c.id);
     if (error) {
@@ -318,26 +345,10 @@ export function CommissionsExpensesContent() {
     }
     load();
     if (next === "paid") {
-      const { data: linked } = await supabase
-        .from("payout_records")
-        .select("id")
-        .eq("source_table", "commissions")
-        .eq("source_id", c.id)
-        .maybeSingle();
-      if (!linked) {
-        const draft = prefillFromCommission(c, {
-          commissions: [],
-          expenses: [],
-          websites: [],
-          payments: [],
-          paymentRecords: [],
-          payoutRecords: [],
-          costRecords: [],
-        });
-        if (draft) {
-          setPayoutFactDraft(draft);
-          setPayoutFactOpen(true);
-        }
+      const bridge = await resolveCommissionPayoutBridgeAfterMarkPaid(c);
+      if (bridge.action === "open_dialog") {
+        setPayoutFactDraft(bridge.draft);
+        setPayoutFactOpen(true);
       }
     }
   };
@@ -543,6 +554,7 @@ export function CommissionsExpensesContent() {
                     <TableBody>
                       {filtered.map((c) => {
                         const cfg = STATUS_CONFIG[c.payment_status];
+                        const canToggle = canToggleCommissionPaymentStatus(access, c.implementer);
                         return (
                           <TableRow key={c.id}>
                             <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
@@ -580,8 +592,13 @@ export function CommissionsExpensesContent() {
                             )}
                             <TableCell className="text-sm text-right font-semibold whitespace-nowrap">{Number(c.amount || 0).toFixed(2)} €</TableCell>
                             <TableCell>
-                              <button onClick={() => togglePaid(c)} title="Prepnúť stav">
-                                <Badge variant="outline" className={`text-xs cursor-pointer ${cfg.className}`}>{cfg.label}</Badge>
+                              <button
+                                onClick={() => togglePaid(c)}
+                                title="Prepnúť stav"
+                                disabled={!canToggle}
+                                className={!canToggle ? "cursor-not-allowed opacity-50" : undefined}
+                              >
+                                <Badge variant="outline" className={`text-xs ${canToggle ? "cursor-pointer" : ""} ${cfg.className}`}>{cfg.label}</Badge>
                               </button>
                             </TableCell>
                             <TableCell className="text-xs">
@@ -775,7 +792,7 @@ export function CommissionsExpensesContent() {
                   {COMMISSION_SOURCE_LABELS[form.source_type as CommissionSourceType]} *
                 </label>
                 <EntitySearchPicker
-                  kind={form.source_type === "project" ? "project" : form.source_type === "rental" ? "rental" : "hosting"}
+                  kind={commissionSourceToLookupKind(form.source_type as CommissionSourceType)}
                   value={form.sourceSelection}
                   onSelect={(result) =>
                     setForm({
@@ -914,6 +931,7 @@ export function CommissionsExpensesContent() {
         mode="workflow"
         onSaved={() => {
           toast({ title: "Payout fact vytvorený", description: "Workflow status zostáva nezmenený." });
+          load();
         }}
       />
 

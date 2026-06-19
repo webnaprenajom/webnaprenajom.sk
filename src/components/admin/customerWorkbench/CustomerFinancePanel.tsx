@@ -231,6 +231,7 @@ export function CustomerFinancePanel({ data, finance }: Props) {
                 <tr className="border-b border-border/60">
                   <th className="text-left p-3 text-[11px] font-medium text-muted-foreground">Dátum</th>
                   <th className="text-left p-3 text-[11px] font-medium text-muted-foreground">Typ</th>
+                  <th className="text-left p-3 text-[11px] font-medium text-muted-foreground">Zdroj</th>
                   <th className="text-left p-3 text-[11px] font-medium text-muted-foreground">Popis</th>
                   <th className="text-right p-3 text-[11px] font-medium text-muted-foreground">Suma</th>
                   <th className="text-left p-3 text-[11px] font-medium text-muted-foreground">Truth level</th>
@@ -243,6 +244,11 @@ export function CustomerFinancePanel({ data, finance }: Props) {
                       {row.date ? new Date(row.date).toLocaleDateString("sk-SK") : "—"}
                     </td>
                     <td className="p-3 text-muted-foreground">{LEDGER_KIND_LABELS[row.kind]}</td>
+                    <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">
+                      {row.linkedOriginLabel
+                        ? `${row.linkedOriginLabel}${row.linkedOriginSublabel ? ` · ${row.linkedOriginSublabel}` : ""}`
+                        : "—"}
+                    </td>
                     <td className="p-3 truncate max-w-[240px]">{row.title}</td>
                     <td
                       className={`p-3 text-right tabular-nums font-medium ${

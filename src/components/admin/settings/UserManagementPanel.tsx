@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { CRM_ASSIGNEES } from "@/lib/assignees";
-import { Loader2, Plus, Trash2, AlertTriangle, UserPlus } from "lucide-react";
+import { assigneeSelectOptions } from "@/lib/assignees";
+import { Loader2, Plus, Trash2, AlertTriangle } from "lucide-react";
+import type { AppRole } from "@/lib/rbac/permissions";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useCrmUserDirectory } from "@/hooks/useCrmUserDirectory";
 import { ConfirmSensitiveActionDialog } from "@/components/admin/rbac/ConfirmSensitiveActionDialog";
@@ -22,8 +23,13 @@ import { CrmUserIdentity } from "@/components/admin/settings/CrmUserIdentity";
 import { CrmUserDirectoryFilters } from "@/components/admin/settings/CrmUserDirectoryFilters";
 import {
   DEFAULT_USER_DIRECTORY_FILTERS,
+  PENDING_AUTH_USER_REVIEW_HASH,
+  pendingAuthUserReviewMessage,
+  canDemoteOwner,
+  canRemoveOwnerRole,
   duplicateDisplayNameKeys,
   filterManagedUsers,
+  implementerNameTaken,
   sortUsersForManagement,
   userActionLabel,
   userMatchesSearch,
@@ -35,34 +41,43 @@ type PendingAction =
       kind: "add";
       userId: string;
       userLabel: string;
-      email: string;
-      role: "admin" | "user";
+      role: AppRole;
       implementer: string;
       displayName: string;
     }
-  | { kind: "remove"; roleRowId: string; userId: string; userLabel: string; role: string }
+  | { kind: "remove"; roleRowId: string; userId: string; userLabel: string; role: AppRole }
+  | {
+      kind: "change_role";
+      roleRowId: string;
+      userId: string;
+      userLabel: string;
+      fromRole: AppRole;
+      toRole: AppRole;
+    }
   | {
       kind: "assign";
       userId: string;
       userLabel: string;
       implementer: string;
+      displayName: string;
       previous: string | null;
     };
+
+const CRM_ROLES: AppRole[] = ["owner", "administrator"];
 
 export function UserManagementPanel() {
   const { userId: actorId } = useAdminAccess();
   const { loading, error, withRole, withoutRole, reload } = useCrmUserDirectory();
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [filters, setFilters] = useState(DEFAULT_USER_DIRECTORY_FILTERS);
-  const [newRole, setNewRole] = useState<"admin" | "user">("user");
-  const [newImplementer, setNewImplementer] = useState<string>(CRM_ASSIGNEES[0]);
+  const [newRole, setNewRole] = useState<AppRole>("administrator");
+  const [newImplementer, setNewImplementer] = useState<string>(() => assigneeSelectOptions()[0] ?? "");
   const [newDisplayName, setNewDisplayName] = useState("");
   const [selectedAddUserId, setSelectedAddUserId] = useState<string | null>(null);
   const [addSearch, setAddSearch] = useState("");
 
   const filteredManaged = useMemo(() => {
-    const list = filterManagedUsers(withRole, filters).sort(sortUsersForManagement);
-    return list;
+    return filterManagedUsers(withRole, filters).sort(sortUsersForManagement);
   }, [withRole, filters]);
 
   const duplicateNames = useMemo(() => duplicateDisplayNameKeys(withRole), [withRole]);
@@ -75,8 +90,18 @@ export function UserManagementPanel() {
   }, [withoutRole, addSearch]);
 
   const selectedAddUser = withoutRole.find((u) => u.userId === selectedAddUserId) ?? null;
+  const pendingReviewMessage = pendingAuthUserReviewMessage(withoutRole.length);
 
+  useEffect(() => {
+    if (loading || withoutRole.length === 0) return;
+    if (window.location.hash.replace(/^#/, "") !== PENDING_AUTH_USER_REVIEW_HASH) return;
+    document.getElementById(PENDING_AUTH_USER_REVIEW_HASH)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [loading, withoutRole.length]);
   const usersMissingProfile = withRole.filter((u) => u.missingProfile);
+  const implementerOptions = assigneeSelectOptions();
 
   const executeAddUser = async (action: Extract<PendingAction, { kind: "add" }>) => {
     const { error: roleErr } = await supabase
@@ -86,13 +111,18 @@ export function UserManagementPanel() {
       toast({ title: "Rola", description: roleErr.message, variant: "destructive" });
       return;
     }
-    if (action.role === "user" && action.implementer) {
-      await supabase.from("team_profiles").upsert({
+    if (action.role === "administrator" && action.implementer) {
+      const { error: profileErr } = await supabase.from("team_profiles").upsert({
         user_id: action.userId,
         display_name: action.displayName.trim() || action.implementer,
         implementer_name: action.implementer,
         active: true,
       });
+      if (profileErr) {
+        toast({ title: "Team profile", description: profileErr.message, variant: "destructive" });
+        void reload();
+        return;
+      }
     }
     if (actorId) {
       void logAdminAuditEvent({
@@ -116,11 +146,21 @@ export function UserManagementPanel() {
       toast({ title: "Vyberte používateľa zo zoznamu", variant: "destructive" });
       return;
     }
+    if (
+      newRole === "administrator" &&
+      implementerNameTaken(withRole, newImplementer, selectedAddUser.userId)
+    ) {
+      toast({
+        title: "Implementer obsadený",
+        description: "Toto meno realizátora už používa iný účet.",
+        variant: "destructive",
+      });
+      return;
+    }
     setPending({
       kind: "add",
       userId: selectedAddUser.userId,
       userLabel: userActionLabel(selectedAddUser),
-      email: selectedAddUser.email,
       role: newRole,
       implementer: newImplementer,
       displayName: newDisplayName,
@@ -148,20 +188,72 @@ export function UserManagementPanel() {
   };
 
   const removeRole = (user: CrmManagedUser) => {
-    if (!user.roleRowId) return;
+    if (!user.roleRowId || !user.role) return;
+    if (!canRemoveOwnerRole(withRole, user)) {
+      toast({
+        title: "Posledný owner",
+        description: "Nemôžete odstrániť posledného ownera v systéme.",
+        variant: "destructive",
+      });
+      return;
+    }
     setPending({
       kind: "remove",
       roleRowId: user.roleRowId,
       userId: user.userId,
       userLabel: userActionLabel(user),
-      role: user.role!,
+      role: user.role,
+    });
+  };
+
+  const executeChangeRole = async (action: Extract<PendingAction, { kind: "change_role" }>) => {
+    const { error } = await supabase
+      .from("user_roles")
+      .update({ role: action.toRole })
+      .eq("id", action.roleRowId);
+    if (error) {
+      toast({ title: "Zmena roly", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (actorId) {
+      void logAdminAuditEvent({
+        actorUserId: actorId,
+        actionType: AUDIT_ACTION_TYPES.role_assigned,
+        targetType: "user",
+        targetId: action.userId,
+        summary: `${action.userLabel}: ${action.fromRole} → ${action.toRole}`,
+        before: { role: action.fromRole },
+        after: { role: action.toRole },
+      });
+    }
+    toast({ title: "Rola zmenená" });
+    void reload();
+  };
+
+  const changeRole = (user: CrmManagedUser, toRole: AppRole) => {
+    if (!user.roleRowId || !user.role || user.role === toRole) return;
+    if (user.role === "owner" && toRole === "administrator" && !canDemoteOwner(withRole, user.userId)) {
+      toast({
+        title: "Posledný owner",
+        description: "Nemôžete zmeniť rolu posledného ownera na administrator.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setPending({
+      kind: "change_role",
+      roleRowId: user.roleRowId,
+      userId: user.userId,
+      userLabel: userActionLabel(user),
+      fromRole: user.role,
+      toRole,
     });
   };
 
   const executeAssignProfile = async (action: Extract<PendingAction, { kind: "assign" }>) => {
     const { error } = await supabase.from("team_profiles").upsert({
       user_id: action.userId,
-      display_name: action.implementer,
+      display_name: action.displayName.trim() || action.implementer,
       implementer_name: action.implementer,
       active: true,
     });
@@ -182,16 +274,25 @@ export function UserManagementPanel() {
         after: { implementer_name: action.implementer },
       });
     }
-    toast({ title: "Team profile priradený" });
+    toast({ title: "Team profile uložený" });
     void reload();
   };
 
   const assignProfile = (user: CrmManagedUser, implementerName: string) => {
+    if (implementerNameTaken(withRole, implementerName, user.userId)) {
+      toast({
+        title: "Implementer obsadený",
+        description: "Toto meno realizátora už používa iný účet.",
+        variant: "destructive",
+      });
+      return;
+    }
     setPending({
       kind: "assign",
       userId: user.userId,
       userLabel: userActionLabel(user),
       implementer: implementerName,
+      displayName: user.teamDisplayName ?? user.displayName,
       previous: user.implementerName,
     });
   };
@@ -202,6 +303,7 @@ export function UserManagementPanel() {
     setPending(null);
     if (p.kind === "add") await executeAddUser(p);
     if (p.kind === "remove") await executeRemoveRole(p);
+    if (p.kind === "change_role") await executeChangeRole(p);
     if (p.kind === "assign") await executeAssignProfile(p);
   };
 
@@ -225,17 +327,27 @@ export function UserManagementPanel() {
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Admin vidí celé CRM a financie. User vidí len vlastné provízie — musí mať team profile s menom
-        realizátora (rovnaké ako v províziách). Spravujte účty podľa mena a e-mailu; interné ID zostáva
-        len v technických detailoch.
+        Owner vidí celé CRM a financie. Administrator vidí len vlastné provízie — musí mať team profile
+        s menom realizátora (rovnaké ako v províziách). Spravujte účty podľa mena a e-mailu; interné ID
+        zostáva len v technických detailoch.
       </p>
+
+      {pendingReviewMessage && (
+        <div
+          className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs flex gap-2"
+          role="status"
+        >
+          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <p>{pendingReviewMessage}</p>
+        </div>
+      )}
 
       {usersMissingProfile.length > 0 && (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs flex gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
           <p>
-            <strong>{usersMissingProfile.length}</strong> používateľ(ov) s rolou user nemá team profile —
-            neuvidia provízie, kým im nepriradíte implementera.
+            <strong>{usersMissingProfile.length}</strong> používateľ(ov) s rolou administrator nemá team
+            profile — neuvidia provízie, kým im nepriradíte implementera.
           </p>
         </div>
       )}
@@ -253,7 +365,7 @@ export function UserManagementPanel() {
         {filteredManaged.map((user) => (
           <li key={user.roleRowId ?? user.userId} className="p-3 flex flex-wrap items-start gap-2 justify-between">
             <CrmUserIdentity user={user} duplicateNames={duplicateNames} />
-            <div className="flex flex-col items-end gap-2 shrink-0">
+            <div className="flex flex-col items-end gap-2 shrink-0 min-w-[10rem]">
               <div className="flex gap-2 flex-wrap items-center justify-end">
                 <Badge variant="outline">{user.role}</Badge>
                 {user.implementerName && (
@@ -267,26 +379,52 @@ export function UserManagementPanel() {
                   </Badge>
                 )}
               </div>
-              {user.missingProfile && (
-                <div className="flex flex-wrap gap-1 justify-end">
-                  {CRM_ASSIGNEES.map((name) => (
-                    <Button
-                      key={name}
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-[10px]"
-                      onClick={() => assignProfile(user, name)}
-                    >
-                      <UserPlus className="w-3 h-3 mr-0.5" /> {name}
-                    </Button>
-                  ))}
+              <div className="flex flex-wrap gap-2 items-end justify-end">
+                <div className="space-y-1">
+                  <Label className="text-[10px] text-muted-foreground">Rola</Label>
+                  <Select
+                    value={user.role ?? undefined}
+                    onValueChange={(v) => changeRole(user, v as AppRole)}
+                  >
+                    <SelectTrigger className="h-8 w-[9.5rem] text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CRM_ROLES.map((r) => (
+                        <SelectItem key={r} value={r} className="text-xs">
+                          {r === "owner" ? "Owner" : "Administrator"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
+                {user.role === "administrator" && (
+                  <div className="space-y-1">
+                    <Label className="text-[10px] text-muted-foreground">Implementer</Label>
+                    <Select
+                      value={user.implementerName || undefined}
+                      onValueChange={(v) => assignProfile(user, v)}
+                    >
+                      <SelectTrigger className="h-8 w-[9.5rem] text-xs">
+                        <SelectValue placeholder="Vyberte…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {assigneeSelectOptions(user.implementerName).map((name) => (
+                          <SelectItem key={name} value={name} className="text-xs">
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
               <Button
                 size="icon"
                 variant="ghost"
                 className="text-destructive"
                 onClick={() => removeRole(user)}
+                disabled={!canRemoveOwnerRole(withRole, user)}
                 aria-label={`Odstrániť rolu ${user.displayName}`}
               >
                 <Trash2 className="w-4 h-4" />
@@ -296,7 +434,10 @@ export function UserManagementPanel() {
         ))}
       </ul>
 
-      <div className="rounded-xl border p-4 space-y-3 bg-muted/20">
+      <div
+        id={PENDING_AUTH_USER_REVIEW_HASH}
+        className="rounded-xl border p-4 space-y-3 bg-muted/20 scroll-mt-4"
+      >
         <h3 className="text-sm font-semibold">Pridať používateľa do CRM</h3>
         <p className="text-xs text-muted-foreground">
           Vyberte existujúci auth účet (podľa mena alebo e-mailu). Nový účet musí byť najprv vytvorený
@@ -348,17 +489,17 @@ export function UserManagementPanel() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label className="text-xs">Rola</Label>
-            <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "user")}>
+            <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="user">User</SelectItem>
+                <SelectItem value="owner">Owner</SelectItem>
+                <SelectItem value="administrator">Administrator</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          {newRole === "user" && (
+          {newRole === "administrator" && (
             <div className="space-y-1.5">
               <Label className="text-xs">Implementer (provízie)</Label>
               <Select value={newImplementer} onValueChange={setNewImplementer}>
@@ -366,7 +507,7 @@ export function UserManagementPanel() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {CRM_ASSIGNEES.map((a) => (
+                  {implementerOptions.map((a) => (
                     <SelectItem key={a} value={a}>
                       {a}
                     </SelectItem>
@@ -376,7 +517,7 @@ export function UserManagementPanel() {
             </div>
           )}
         </div>
-        {newRole === "user" && (
+        {newRole === "administrator" && (
           <div className="space-y-1.5">
             <Label className="text-xs">Zobrazované meno v CRM</Label>
             <Input
@@ -398,8 +539,10 @@ export function UserManagementPanel() {
           pending?.kind === "remove"
             ? "Odstrániť rolu používateľa?"
             : pending?.kind === "assign"
-              ? "Priradiť team profile?"
-              : "Pridať používateľa s rolou?"
+              ? "Uložiť team profile?"
+              : pending?.kind === "change_role"
+                ? "Zmeniť rolu používateľa?"
+                : "Pridať používateľa s rolou?"
         }
         description={
           pending?.kind === "add" ? (
@@ -407,14 +550,13 @@ export function UserManagementPanel() {
               <p>
                 <strong>{pending.userLabel}</strong> dostane rolu <strong>{pending.role}</strong>.
               </p>
-              {pending.role === "user" && (
+              {pending.role === "administrator" && (
                 <p>
-                  Uvidí len provízie pre realizátora <strong>{pending.implementer}</strong>. Bez team
-                  profile neuvidí financie.
+                  Uvidí len provízie pre realizátora <strong>{pending.implementer}</strong>.
                 </p>
               )}
-              {pending.role === "admin" && (
-                <p>Admin má plný prístup k CRM, nastaveniam a všetkým províziám.</p>
+              {pending.role === "owner" && (
+                <p>Owner má plný prístup k CRM, nastaveniam a všetkým províziám.</p>
               )}
             </>
           ) : pending?.kind === "remove" ? (
@@ -423,6 +565,20 @@ export function UserManagementPanel() {
                 Odstránite rolu {pending.role} pre <strong>{pending.userLabel}</strong>.
               </p>
               <p>Používateľ stratí prístup k CRM, ak nemá inú rolu.</p>
+            </>
+          ) : pending?.kind === "change_role" ? (
+            <>
+              <p>
+                <strong>{pending.userLabel}</strong>: {pending.fromRole} → <strong>{pending.toRole}</strong>
+              </p>
+              {pending.toRole === "administrator" && (
+                <p>
+                  Po zmene musí mať team profile s menom realizátora, inak neuvidí provízie.
+                </p>
+              )}
+              {pending.toRole === "owner" && (
+                <p>Owner má plný prístup k CRM a financiám.</p>
+              )}
             </>
           ) : pending?.kind === "assign" ? (
             <>
@@ -434,7 +590,13 @@ export function UserManagementPanel() {
             </>
           ) : null
         }
-        confirmLabel={pending?.kind === "remove" ? "Odstrániť rolu" : "Potvrdiť"}
+        confirmLabel={
+          pending?.kind === "remove"
+            ? "Odstrániť rolu"
+            : pending?.kind === "assign"
+              ? "Uložiť profil"
+              : "Potvrdiť"
+        }
         destructive={pending?.kind === "remove"}
         onConfirm={confirmPending}
       />

@@ -48,8 +48,13 @@ import { assertDeliveryHasCanonicalCustomer } from "@/lib/crmLookup/entitySaveHe
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 import { FINANCE_TRUTH_DISCLAIMER, RENTAL_MONTH_STATUS_LABELS } from "@/lib/finance/labels";
 import { type PaymentFormValue } from "@/lib/paymentForm";
-import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
-import { type FactDraft, prefillFromRentalPayment } from "@/lib/finance/factDrafts";
+import {
+  RENTAL_AI_CREDIT_EUR,
+  syncRentalCreditsToFinance,
+  syncRentalPaymentToFinance,
+  unsyncRentalCreditsFromFinance,
+  unsyncRentalPaymentFromFinance,
+} from "@/lib/finance/syncFinanceFact";
 import { ImplementerCommissionDetailDialog } from "@/components/admin/rentals/ImplementerCommissionDetailDialog";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { useAccessContext } from "@/hooks/useAccessContext";
@@ -59,13 +64,11 @@ import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { buildDraftKey, clearCrmDraft } from "@/lib/crmPersistence/draftStore";
 import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { filterRentalsForUser } from "@/lib/rbac/scopeHelpers";
-
-interface Implementer {
-  name: string;
-  percentage: number;
-  payment_form?: PaymentFormValue | "";
-  note?: string;
-}
+import {
+  type RentalImplementer,
+  normalizeRentalImplementers,
+  serializeRentalImplementerForSave,
+} from "@/lib/rentalImplementers";
 
 interface RentalWebsite {
   id: string;
@@ -80,7 +83,7 @@ interface RentalWebsite {
   note: string | null;
   rental_start_date: string | null;
   credits_used: number;
-  implementers: Implementer[];
+  implementers: RentalImplementer[];
 }
 
 type PaymentStatus = "none" | "invoice" | "paid" | "unpaid";
@@ -100,7 +103,7 @@ interface RentalPayment {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "Máj", "Jún", "Júl", "Aug", "Sep", "Okt", "Nov", "Dec"];
 
 // 100 credits = 30 EUR cost
-const CREDIT_COST = 30 / 100;
+const CREDIT_COST = RENTAL_AI_CREDIT_EUR;
 
 const NEXT_STATUS: Record<PaymentStatus, PaymentStatus> = {
   none: "invoice",
@@ -174,23 +177,6 @@ function rentalProfitBannerProps(
   };
 }
 
-const normalizeImplementers = (raw: unknown): Implementer[] => {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((r: any): Implementer => {
-      const paymentForm = ["cash", "iban", "crypto", "faktura", "ine"].includes(String(r?.payment_form))
-        ? (r.payment_form as PaymentFormValue)
-        : "";
-      return {
-        name: String(r?.name ?? "").trim(),
-        percentage: Number(r?.percentage) || 0,
-        payment_form: paymentForm,
-        note: String(r?.note ?? "").trim(),
-      };
-    })
-    .filter((r) => r.name);
-};
-
 export default function AdminRentals() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -203,8 +189,6 @@ export default function AdminRentals() {
   const [pricesDraft, setPricesDraft] = useState<Record<number, string>>({});
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
   const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
-  const [paymentFactDraft, setPaymentFactDraft] = useState<FactDraft | null>(null);
-  const [paymentFactOpen, setPaymentFactOpen] = useState(false);
   const [commissions, setCommissions] = useState<Array<{
     id: string;
     title: string;
@@ -364,7 +348,7 @@ export default function AdminRentals() {
     } else if (w.data) {
       const raw = (w.data as any[]).map((r) => ({
         ...r,
-        implementers: normalizeImplementers(r?.implementers),
+        implementers: normalizeRentalImplementers(r?.implementers),
       })) as RentalWebsite[];
       setWebsites(filterRentalsForUser(raw, accessCtx));
     }
@@ -417,15 +401,7 @@ export default function AdminRentals() {
       return false;
     }
     const cleanImplementers = (editing.implementers || [])
-      .map((i) => {
-        const row: Record<string, unknown> = {
-          name: i.name.trim(),
-          percentage: Number(i.percentage) || 0,
-        };
-        if (i.payment_form) row.payment_form = i.payment_form;
-        if (i.note?.trim()) row.note = i.note.trim();
-        return row;
-      })
+      .map((i) => serializeRentalImplementerForSave(i))
       .filter((i) => i.name);
     const linked = await resolveCustomerLinkFields({
       customer_id: editing.customer_id,
@@ -513,6 +489,35 @@ export default function AdminRentals() {
       }
     }
 
+    if (recordId) {
+      const websiteForSync = {
+        id: recordId,
+        name: editing.name,
+        client_name: linked.client_name,
+        customer_email: linked.customer_email,
+      };
+      const yearForSync = Number(editing.year) || new Date().getFullYear();
+      if (credits > 0) {
+        const sync = await syncRentalCreditsToFinance(websiteForSync, yearForSync, credits);
+        if (!sync.ok) {
+          toast({
+            title: "Web uložený, sync nákladov do Financií zlyhal",
+            description: sync.error,
+            variant: "destructive",
+          });
+        }
+      } else {
+        const reverse = await unsyncRentalCreditsFromFinance(recordId, yearForSync);
+        if (!reverse.ok) {
+          toast({
+            title: "Web uložený, sync nákladov do Financií zlyhal",
+            description: reverse.error,
+            variant: "destructive",
+          });
+        }
+      }
+    }
+
     toast({ title: editing.id ? "Aktualizované" : "Pridané" });
     discardRentalDraft();
     clearCrmViewState();
@@ -574,41 +579,43 @@ export default function AdminRentals() {
       }
     }
 
-    if (next === "paid") {
+    const { data: paymentRow, error: fetchError } = await supabase
+      .from("rental_payments")
+      .select("*")
+      .eq("website_id", website.id)
+      .eq("year", year)
+      .eq("month", month)
+      .maybeSingle();
+
+    if (fetchError) {
+      toast({ title: "Chyba", description: fetchError.message, variant: "destructive" });
       await loadAll();
-      const { data: paymentRow } = await supabase
-        .from("rental_payments")
-        .select("*")
-        .eq("website_id", website.id)
-        .eq("year", year)
-        .eq("month", month)
-        .maybeSingle();
-      if (paymentRow) {
-        const { data: linked } = await supabase
-          .from("payment_records")
-          .select("id")
-          .eq("source_table", "rental_payments")
-          .eq("source_id", paymentRow.id)
-          .maybeSingle();
-        if (!linked) {
-          const draft = prefillFromRentalPayment(paymentRow, website, {
-            commissions: [],
-            expenses: [],
-            websites: [],
-            payments: [],
-            paymentRecords: [],
-            payoutRecords: [],
-            costRecords: [],
+      return;
+    }
+
+    if (paymentRow) {
+      if (next === "paid") {
+        const sync = await syncRentalPaymentToFinance(paymentRow, website);
+        if (!sync.ok) {
+          toast({
+            title: "Mesiac uložený, sync do Financií zlyhal",
+            description: sync.error,
+            variant: "destructive",
           });
-          if (draft) {
-            setPaymentFactDraft(draft);
-            setPaymentFactOpen(true);
-          }
+        }
+      } else if (current === "paid" && next !== "paid") {
+        const reverse = await unsyncRentalPaymentFromFinance(paymentRow.id);
+        if (!reverse.ok) {
+          toast({
+            title: "Mesiac uložený, sync do Financií zlyhal",
+            description: reverse.error,
+            variant: "destructive",
+          });
         }
       }
-    } else {
-      await loadAll();
     }
+
+    await loadAll();
   };
 
   const openPrices = (w: RentalWebsite) => {
@@ -650,6 +657,28 @@ export default function AdminRentals() {
         });
       }
     }
+    const { data: paymentRows, error: fetchError } = await supabase
+      .from("rental_payments")
+      .select("*")
+      .eq("website_id", w.id)
+      .eq("year", year);
+
+    if (fetchError) {
+      toast({ title: "Chyba", description: fetchError.message, variant: "destructive" });
+    } else {
+      for (const paymentRow of paymentRows ?? []) {
+        if (paymentRow.status !== "paid") continue;
+        const sync = await syncRentalPaymentToFinance(paymentRow, w);
+        if (!sync.ok) {
+          toast({
+            title: "Mesiac uložený, sync do Financií zlyhal",
+            description: sync.error,
+            variant: "destructive",
+          });
+        }
+      }
+    }
+
     toast({ title: "Ceny uložené" });
     setPricesOpen(null);
     await loadAll();
@@ -1200,16 +1229,6 @@ export default function AdminRentals() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <FactConfirmDialog
-        open={paymentFactOpen}
-        onOpenChange={setPaymentFactOpen}
-        draft={paymentFactDraft}
-        mode="workflow"
-        onSaved={() => {
-          toast({ title: "Payment fact vytvorený", description: "Workflow status zostáva nezmenený." });
-        }}
-      />
 
       {detailImplementer && (
         <ImplementerCommissionDetailDialog

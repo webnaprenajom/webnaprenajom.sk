@@ -22,6 +22,11 @@ import { buildDraftKey, clearCrmDraft } from "@/lib/crmPersistence/draftStore";
 import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { resolveCustomerIdentity, customerDisplayLabel } from "@/lib/finance/customerBridge";
+import {
+  FINANCE_ENTITY_KIND_LABELS,
+  resolvePaymentRecordOrigin,
+  type FinanceEntityKind,
+} from "@/lib/finance/financeSourceLabels";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
 import {
   type FactDraft,
@@ -136,6 +141,14 @@ export function FinanceRecordsCrud({
   }));
   const [promoteDraft, setPromoteDraft] = useState<FactDraft | null>(null);
   const [promoteOpen, setPromoteOpen] = useState(false);
+  const [paymentOriginFilter, setPaymentOriginFilter] = useState<FinanceEntityKind | "all">("all");
+
+  const filteredPaymentRecords = useMemo(() => {
+    if (paymentOriginFilter === "all") return paymentRecords;
+    return paymentRecords.filter(
+      (r) => resolvePaymentRecordOrigin(r).entityKind === paymentOriginFilter,
+    );
+  }, [paymentRecords, paymentOriginFilter]);
 
   const modalSnapshot = useMemo<FinanceModalSnapshot>(
     () => ({ kind, editId, readOnly, form, tab }),
@@ -436,17 +449,54 @@ export function FinanceRecordsCrud({
         </TabsList>
 
         <TabsContent value="payment" className="mt-3">
-          <div className="flex justify-end mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div className="flex flex-wrap gap-1">
+              <Button
+                size="sm"
+                variant={paymentOriginFilter === "all" ? "default" : "outline"}
+                className="h-7 text-[10px]"
+                onClick={() => setPaymentOriginFilter("all")}
+              >
+                Všetky ({paymentRecords.length})
+              </Button>
+              {(
+                ["hosting", "project", "task", "marketing", "rental", "other"] as FinanceEntityKind[]
+              ).map((kind) => {
+                const count = paymentRecords.filter(
+                  (r) => resolvePaymentRecordOrigin(r).entityKind === kind,
+                ).length;
+                if (count === 0) return null;
+                return (
+                  <Button
+                    key={kind}
+                    size="sm"
+                    variant={paymentOriginFilter === kind ? "default" : "outline"}
+                    className="h-7 text-[10px]"
+                    onClick={() => setPaymentOriginFilter(kind)}
+                  >
+                    {FINANCE_ENTITY_KIND_LABELS[kind]} ({count})
+                  </Button>
+                );
+              })}
+            </div>
             <Button size="sm" onClick={() => openCreateFresh("payment")}>
               <Plus className="w-4 h-4 mr-1" /> Nová platba
             </Button>
           </div>
           <RecordsTable
-            rows={paymentRecords}
-            columns={["Dátum", "Klient", "Suma", "Ref.", "Truth", ""]}
-            renderRow={(r) => (
+            rows={filteredPaymentRecords}
+            columns={["Dátum", "Zdroj entity", "Klient", "Suma", "Ref.", "Truth", ""]}
+            renderRow={(r) => {
+              const origin = resolvePaymentRecordOrigin(r);
+              return (
               <TableRow key={r.id}>
                 <TableCell className="text-xs">{r.paid_at?.slice(0, 10)}</TableCell>
+                <TableCell className="text-xs">
+                  <span className="font-medium">{origin.entityLabel ?? "—"}</span>
+                  {origin.sublabel && (
+                    <span className="block text-[10px] text-muted-foreground">{origin.sublabel}</span>
+                  )}
+                </TableCell>
                 <TableCell className="text-sm">
                   {customerDisplayLabel(
                     resolveCustomerIdentity({
@@ -474,7 +524,8 @@ export function FinanceRecordsCrud({
                   )}
                 </TableCell>
               </TableRow>
-            )}
+            );
+            }}
           />
         </TabsContent>
 

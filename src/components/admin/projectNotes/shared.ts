@@ -18,6 +18,7 @@ export interface ProjectNote {
   status: string;
   updated_at: string;
   operating_cost?: number;
+  agreed_fee?: number | null;
 }
 
 export const PROJECT_TYPE_OPTIONS: { value: ProjectType; label: string }[] = [

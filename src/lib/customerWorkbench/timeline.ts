@@ -1,5 +1,10 @@
 import { communicationEventsToTimeline } from "@/lib/communication/events";
 import type { TimelineEvent } from "@/components/admin/CustomerTimeline";
+import { RENTAL_MONTH_STATUS_LABELS } from "@/lib/finance/labels";
+import {
+  commissionHubStatusLabel,
+  hasConfirmedPayout,
+} from "./commissionHubTruth";
 import {
   DESIGN_STATUS_LABEL,
   NOTE_STATUS_LABEL,
@@ -9,6 +14,12 @@ import type { CustomerWorkbenchData } from "./types";
 
 export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): TimelineEvent[] {
   const items: TimelineEvent[] = communicationEventsToTimeline(data.commEvents);
+
+  const paymentFactByRentalPayment = new Set(
+    data.paymentRecords
+      .filter((p) => p.source_table === "rental_payments" && p.source_id)
+      .map((p) => p.source_id!),
+  );
 
   data.logs.forEach((log) => {
     items.push({
@@ -49,13 +60,15 @@ export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): Timeli
   });
 
   data.commissions.forEach((c) => {
+    const confirmedPayout = hasConfirmedPayout(c.id, data.payoutRecords);
     items.push({
       id: `comm-${c.id}`,
       at: c.date,
       label: `Provízia · ${c.title}`,
-      detail: `${Number(c.amount).toFixed(2)} € · ${c.payment_status === "paid" ? "vyplatené" : "nezaplatené"}`,
+      detail: `${Number(c.amount).toFixed(2)} € · ${commissionHubStatusLabel(c.payment_status, confirmedPayout)}`,
       href: "/admin/finance?advanced=1&legacy=commissions",
       category: "finance",
+      truthLevel: "workflow_only",
       meta:
         c.source_type && c.source_id
           ? { source_type: c.source_type, source_id: c.source_id }
@@ -123,9 +136,10 @@ export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): Timeli
       id: `payment-${p.id}`,
       at: p.paid_at,
       label: `Platba · ${Number(p.amount).toFixed(2)} €`,
-      detail: p.method || p.reference || p.truth_level,
+      detail: p.method || p.reference || undefined,
       href: "/admin/finance?advanced=1&legacy=payments",
       category: "finance",
+      truthLevel: p.truth_level,
       meta: p.rental_website_id ? { source_id: p.rental_website_id } : undefined,
     });
   });
@@ -138,21 +152,40 @@ export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): Timeli
       detail: `${Number(p.amount).toFixed(2)} €`,
       href: "/admin/finance?advanced=1&legacy=payouts",
       category: "finance",
+      truthLevel: p.truth_level,
       meta: p.source_id ? { source_id: p.source_id, source_table: p.source_table ?? undefined } : undefined,
+    });
+  });
+
+  data.costRecords.forEach((c) => {
+    const at = c.paid_at || c.incurred_at || new Date(0).toISOString();
+    items.push({
+      id: `cost-${c.id}`,
+      at,
+      label: `Náklad · ${Number(c.amount).toFixed(2)} €`,
+      detail: c.category || c.vendor || undefined,
+      href: "/admin/finance?advanced=1&legacy=costs",
+      category: "finance",
+      truthLevel: c.truth_level,
     });
   });
 
   data.rentalPayments.forEach((rp) => {
     const at = rp.paid_at || `${rp.year}-${String(rp.month).padStart(2, "0")}-01`;
+    const amt = Number(rp.custom_price ?? rp.amount).toFixed(2);
+    const hasPaymentFact = paymentFactByRentalPayment.has(rp.id);
+    const statusLabel =
+      RENTAL_MONTH_STATUS_LABELS[rp.status as keyof typeof RENTAL_MONTH_STATUS_LABELS] ?? rp.status;
     items.push({
       id: `rental-pay-${rp.id}`,
       at,
       label: `Faktúra prenájmu · ${rp.month}/${rp.year}`,
-      detail: rp.paid
-        ? `Uhradené ${Number(rp.custom_price ?? rp.amount).toFixed(2)} €`
-        : `Neuhradené ${Number(rp.custom_price ?? rp.amount).toFixed(2)} €`,
+      detail: hasPaymentFact
+        ? `${statusLabel} · ${amt} € (aj v payment_records)`
+        : `${statusLabel} · ${amt} €`,
       href: "/admin/rentals",
       category: "finance",
+      truthLevel: "workflow_only",
       meta: { source_id: rp.website_id },
     });
   });

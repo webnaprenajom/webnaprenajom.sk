@@ -1366,7 +1366,7 @@ const Admin = () => {
           <ShieldAlert className="w-16 h-16 text-destructive mx-auto" />
           <h1 className="text-2xl font-bold">Nemáte prístup</h1>
           <p className="text-muted-foreground">
-            Účet <strong>{userEmail}</strong> nemá pridelenú rolu admin ani user. Kontaktujte správcu.
+            Účet <strong>{userEmail}</strong> nemá pridelenú rolu owner ani administrator. Kontaktujte správcu.
           </p>
           <Button onClick={handleSignOut} variant="outline">
             <LogOut className="w-4 h-4 mr-2" /> Odhlásiť

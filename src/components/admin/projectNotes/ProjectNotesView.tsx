@@ -1,9 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { matchesSearchQuery } from "@/lib/searchMatch";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +36,7 @@ import {
   ExternalLink,
   KeyRound,
   FileText,
+  Search,
 } from "lucide-react";
 import { buildClientNameEmailMap, customerHrefByClientName } from "@/lib/adminNav";
 import {
@@ -81,6 +91,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   const [editCredentials, setEditCredentials] = useState<AccessCredential[]>([]);
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
   const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
 
@@ -237,8 +248,25 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   };
 
   const baseFiltered = filter === "all" ? items : items.filter((i) => i.status === filter);
-  const filtered =
+  const statusFiltered =
     mode === "passwords" ? baseFiltered.filter((i) => hasCredentials(i)) : baseFiltered;
+  const filtered = useMemo(() => {
+    if (!searchQuery.trim()) return statusFiltered;
+    return statusFiltered.filter((item) => {
+      const statusLabel = PROJECT_STATUSES.find((s) => s.value === item.status)?.label;
+      const typeLabel = PROJECT_TYPE_OPTIONS.find((t) => t.value === item.project_type)?.label;
+      return matchesSearchQuery(
+        searchQuery,
+        item.title,
+        item.client_name,
+        item.customer_email,
+        item.url,
+        item.notes,
+        statusLabel,
+        typeLabel,
+      );
+    });
+  }, [statusFiltered, searchQuery]);
 
   return (
     <AdminShell
@@ -298,13 +326,29 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
           })}
         </div>
 
+        {mode === "projects" && (
+          <div className="relative max-w-md">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Hľadať projekt, klienta, stav, URL…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        )}
+
         {loading ? (
           <div className="py-16 flex items-center justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground border border-dashed rounded-xl">
-            {mode === "passwords" ? "Žiadne uložené prístupy." : "Žiadne projekty. Pridaj prvý."}
+            {mode === "passwords"
+              ? "Žiadne uložené prístupy."
+              : items.length === 0
+                ? "Žiadne projekty. Pridaj prvý."
+                : "Žiadna zhoda pre zadané filtre alebo vyhľadávanie."}
           </div>
         ) : mode === "passwords" ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -336,73 +380,114 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
             })}
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((item) => {
-              const status = PROJECT_STATUSES.find((s) => s.value === item.status);
-              const creds = hasCredentials(item);
-              return (
-                <div key={item.id} className="bg-card border border-border rounded-xl p-4 space-y-3 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <Link to={`/admin/projects/${item.id}`} className="font-semibold truncate block hover:text-primary hover:underline">
-                        {item.title}
-                      </Link>
-                      {item.client_name && (
-                        <div className="space-y-0.5">
-                          <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
-                          {customerHrefByClientName(item.client_name, clientEmailMap) && (
-                            <Link
-                              to={customerHrefByClientName(item.client_name, clientEmailMap)!}
-                              className="text-[10px] text-primary hover:underline"
-                            >
-                              Klient 360°
-                            </Link>
-                          )}
+          <div className="rounded-xl border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Projekt</TableHead>
+                  <TableHead>Klient</TableHead>
+                  <TableHead>Typ</TableHead>
+                  <TableHead>Stav</TableHead>
+                  <TableHead>URL</TableHead>
+                  <TableHead>Aktualizované</TableHead>
+                  <TableHead className="w-[120px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((item) => {
+                  const status = PROJECT_STATUSES.find((s) => s.value === item.status);
+                  const typeLabel =
+                    PROJECT_TYPE_OPTIONS.find((t) => t.value === item.project_type)?.label ?? "—";
+                  const creds = hasCredentials(item);
+                  const customerHref = item.client_name
+                    ? customerHrefByClientName(item.client_name, clientEmailMap)
+                    : null;
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="text-sm font-medium">
+                        <Link
+                          to={`/admin/projects/${item.id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {item.title}
+                        </Link>
+                        {creds && (
+                          <Link
+                            to="/admin/passwords"
+                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary mt-0.5"
+                          >
+                            <KeyRound className="w-2.5 h-2.5" /> Prístupy
+                          </Link>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {item.client_name ? (
+                          <>
+                            <span className="truncate block max-w-[180px]">{item.client_name}</span>
+                            {customerHref && (
+                              <Link
+                                to={customerHref}
+                                className="text-[10px] text-primary hover:underline"
+                              >
+                                Klient 360°
+                              </Link>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs">{typeLabel}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={status?.color}>
+                          {status?.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs max-w-[160px]">
+                        {item.url ? (
+                          <a
+                            href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline truncate block"
+                          >
+                            {item.url}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
+                        {new Date(item.updated_at).toLocaleDateString("sk-SK")}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 justify-end">
+                          <Button size="sm" variant="ghost" className="h-7 text-xs" asChild>
+                            <Link to={`/admin/projects/${item.id}`}>Detail</Link>
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7"
+                            onClick={() => openEdit(item)}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-destructive"
+                            onClick={() => void remove(item.id)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
-                      )}
-                    </div>
-                    <Badge variant="outline" className={status?.color}>
-                      {status?.label}
-                    </Badge>
-                  </div>
-
-                  {item.url && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                      <a
-                        href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline truncate"
-                      >
-                        {item.url}
-                      </a>
-                    </div>
-                  )}
-
-                  {item.notes && (
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                        <FileText className="w-3.5 h-3.5 shrink-0" />
-                        Poznámka
-                      </div>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">{item.notes}</p>
-                    </div>
-                  )}
-
-                  {creds && (
-                    <Link
-                      to="/admin/passwords"
-                      className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                    >
-                      <KeyRound className="w-3 h-3" /> Prístupy v sekcii Heslá
-                    </Link>
-                  )}
-
-                  <CardActions item={item} onEdit={openEdit} onRemove={remove} updatedAt={item.updated_at} />
-                </div>
-              );
-            })}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
         )}
       </div>

@@ -37,6 +37,7 @@ import {
   Trash2,
   Pencil,
   UserRound,
+  ExternalLink,
 } from "lucide-react";
 import {
   adminLeadHref,
@@ -523,6 +524,11 @@ const AdminTasks = () => {
                           </Select>
                         </TableCell>
                         <TableCell className="text-right whitespace-nowrap">
+                          <Button size="icon" variant="ghost" title="Detail úlohy" asChild>
+                            <Link to={`/admin/tasks/${t.id}`}>
+                              <ExternalLink className="w-4 h-4" />
+                            </Link>
+                          </Button>
                           {t.lead_id && (
                             <Button
                               size="icon"

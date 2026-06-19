@@ -1,6 +1,12 @@
 /** CRITICAL: Plan Mode only — see GOVERNANCE.md. Ledger truth + reconciliation source of truth. */
 import type { FinanceLedgerRow, FinanceSnapshot, FinanceTruthLevel } from "./types";
 import { buildReconciliation } from "./buildReconciliation";
+import type {
+  HostingReconRow,
+  MarketingReconRow,
+  ProjectReconRow,
+  TaskReconRow,
+} from "./reconciliationEntityRows";
 import {
   FINANCE_TRUTH_DISCLAIMER,
   COMMISSION_STATUS_LABELS,
@@ -8,6 +14,12 @@ import {
   RENTAL_MONTH_STATUS_LABELS,
   TRUTH_LEVEL_LABELS,
 } from "./labels";
+import {
+  aggregateConfirmedEntityPayments,
+  resolvePaymentRecordOrigin,
+  resolvePayoutRecordOrigin,
+  financeSourceTableLabel,
+} from "./financeSourceLabels";
 
 type CommissionRow = {
   id: string;
@@ -128,6 +140,10 @@ export function buildFinanceSnapshot(input: {
   paymentRecords?: PaymentRecordRow[];
   payoutRecords?: PayoutRecordRow[];
   costRecords?: CostRecordRow[];
+  projects?: ProjectReconRow[];
+  marketing?: MarketingReconRow[];
+  tasks?: TaskReconRow[];
+  hosting?: HostingReconRow[];
   filterYear?: number;
 }): FinanceSnapshot {
   const {
@@ -138,6 +154,10 @@ export function buildFinanceSnapshot(input: {
     paymentRecords = [],
     payoutRecords = [],
     costRecords = [],
+    projects = [],
+    marketing = [],
+    tasks = [],
+    hosting = [],
     filterYear,
   } = input;
   const rows: FinanceLedgerRow[] = [];
@@ -160,15 +180,20 @@ export function buildFinanceSnapshot(input: {
 
   for (const pr of paymentRecords) {
     const tl = paymentTruthLevel(pr.truth_level);
+    const origin = resolvePaymentRecordOrigin(pr);
+    const client = pr.client_name ?? pr.customer_email;
+    const title = origin.entityLabel
+      ? `Platba · ${origin.detail}${client ? ` · ${client}` : ""}`
+      : client
+        ? `Platba · ${client}`
+        : pr.reference
+          ? `Platba · ${pr.reference}`
+          : "Platba (payment_records)";
     rows.push({
       id: `payment-record-${pr.id}`,
       kind: "payment_in",
       date: pr.paid_at.slice(0, 10),
-      title: pr.client_name
-        ? `Platba · ${pr.client_name}`
-        : pr.reference
-          ? `Platba · ${pr.reference}`
-          : "Platba (payment_records)",
+      title,
       amount: Number(pr.amount || 0),
       currency: "EUR",
       direction: "in",
@@ -183,16 +208,23 @@ export function buildFinanceSnapshot(input: {
       implementer: null,
       year: null,
       month: null,
+      linkedOriginTable: pr.source_table,
+      linkedOriginId: pr.source_id,
+      linkedOriginLabel: origin.entityLabel,
+      linkedOriginSublabel: origin.sublabel,
     });
   }
 
   for (const po of payoutRecords) {
     const tl = payoutTruthLevel(po.truth_level);
+    const origin = resolvePayoutRecordOrigin(po);
     rows.push({
       id: `payout-record-${po.id}`,
       kind: "payout_out",
       date: po.paid_at.slice(0, 10),
-      title: po.implementer ? `Výplata · ${po.implementer}` : "Výplata (payout_records)",
+      title: po.implementer
+        ? `Výplata · ${po.implementer}${po.source_table ? ` · ${origin.label}` : ""}`
+        : `Výplata · ${origin.detail}`,
       amount: Number(po.amount || 0),
       currency: "EUR",
       direction: "out",
@@ -207,6 +239,10 @@ export function buildFinanceSnapshot(input: {
       implementer: po.implementer,
       year: null,
       month: null,
+      linkedOriginTable: po.source_table,
+      linkedOriginId: po.source_id,
+      linkedOriginLabel: origin.label,
+      linkedOriginSublabel: null,
     });
   }
 
@@ -251,7 +287,7 @@ export function buildFinanceSnapshot(input: {
       statusLabel:
         c.payment_status === "paid"
           ? hasPayoutFact
-            ? `${COMMISSION_STATUS_LABELS.paid} · v payout_records`
+            ? `${COMMISSION_STATUS_LABELS.paid} · potvrdené v payout_records`
             : COMMISSION_STATUS_LABELS.paid
           : COMMISSION_STATUS_LABELS.unpaid,
       truthLevel: "workflow_only",
@@ -280,7 +316,7 @@ export function buildFinanceSnapshot(input: {
       statusLabel:
         e.payment_status === "paid"
           ? hasCostFact
-            ? `${EXPENSE_STATUS_LABELS.paid} · v cost_records`
+            ? `${EXPENSE_STATUS_LABELS.paid} · potvrdené v cost_records`
             : EXPENSE_STATUS_LABELS.paid
           : EXPENSE_STATUS_LABELS.unpaid,
       truthLevel: "workflow_only",
@@ -335,7 +371,7 @@ export function buildFinanceSnapshot(input: {
         direction: "in",
         statusLabel:
           hasPaymentFact && st === "paid"
-            ? `${RENTAL_MONTH_STATUS_LABELS.paid} · v payment_records`
+            ? `${RENTAL_MONTH_STATUS_LABELS.paid} · potvrdené v payment_records`
             : RENTAL_MONTH_STATUS_LABELS[st as keyof typeof RENTAL_MONTH_STATUS_LABELS] ?? st,
         truthLevel: "workflow_only",
         sourceTable: "rental_payments",
@@ -347,10 +383,14 @@ export function buildFinanceSnapshot(input: {
         implementer: null,
         year,
         month: m,
+        linkedOriginTable: hasPaymentFact ? "rental_payments" : null,
+        linkedOriginId: hasPaymentFact ? p.id : null,
+        linkedOriginLabel: hasPaymentFact ? (financeSourceTableLabel("rental_payments") ?? "Prenájmy") : null,
+        linkedOriginSublabel: null,
       });
     }
 
-    if (w.credits_used > 0) {
+    if (w.credits_used > 0 && !costSources.has(sourceKey("rental_credits", `${w.id}:${year}`) ?? "")) {
       rows.push({
         id: `rental-credit-${w.id}-${year}`,
         kind: "rental_credit_cost",
@@ -416,6 +456,8 @@ export function buildFinanceSnapshot(input: {
   if (payoutRecords.length > 0) sources.push("payout_records");
   if (costRecords.length > 0) sources.push("cost_records");
 
+  const entityPaymentsConfirmed = aggregateConfirmedEntityPayments(paymentRecords);
+
   const reconciliation = buildReconciliation({
     commissions,
     expenses,
@@ -424,6 +466,10 @@ export function buildFinanceSnapshot(input: {
     paymentRecords,
     payoutRecords,
     costRecords,
+    projects,
+    marketing,
+    tasks,
+    hosting,
     filterYear: year,
   });
 
@@ -450,6 +496,7 @@ export function buildFinanceSnapshot(input: {
       rentalMarkedUnpaid,
       rentalPotential,
       rentalCreditsCostDerived,
+      entityPaymentsConfirmed,
     },
     reconciliation,
   };

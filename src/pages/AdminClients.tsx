@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminDialog } from "@/components/admin/AdminDialog";
@@ -6,6 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { matchesSearchQuery } from "@/lib/searchMatch";
 import { adminCustomerHref, adminCustomerHrefById, adminLeadHref } from "@/lib/adminNav";
 import {
   ensureCustomerByEmail,
@@ -32,7 +41,6 @@ import {
   Server,
   Trash2,
   UserRound,
-  Users,
 } from "lucide-react";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { useAccessContext } from "@/hooks/useAccessContext";
@@ -57,12 +65,10 @@ function isLikelyRlsError(message: string): boolean {
 export default function AdminClients() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<ClientResult[]>([]);
   const [directory, setDirectory] = useState<UnifiedClientEntry[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [openLoading, setOpenLoading] = useState(false);
   const [directoryLoading, setDirectoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searched, setSearched] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateClientForm>(EMPTY_CREATE_FORM);
   const [createSaving, setCreateSaving] = useState(false);
@@ -74,7 +80,7 @@ export default function AdminClients() {
 
   const loadDirectory = useCallback(async () => {
     setDirectoryLoading(true);
-    const { entries, error: dirError } = await loadUnifiedClientDirectory(24);
+    const { entries, error: dirError } = await loadUnifiedClientDirectory(500);
     if (dirError) {
       setError(dirError);
     } else {
@@ -128,40 +134,20 @@ export default function AdminClients() {
     void loadDirectory();
   }, [loadDirectory, accessCtx.authChecking, accessCtx.role]);
 
-  const runSearch = useCallback(async (q: string) => {
-    const trimmed = q.trim();
-    if (!trimmed) {
-      setSuggestions([]);
-      setError(null);
-      setSearched(false);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    setSearched(true);
-    try {
-      const { rows, error: fetchError } = await fetchLookupWithMeta("client", trimmed, 12);
-      if (fetchError) {
-        setError(fetchError);
-        setSuggestions([]);
-      } else {
-        setSuggestions(rows.filter((r): r is ClientResult => r.kind === "customer" || r.kind === "lead"));
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Vyhľadávanie zlyhalo");
-      setSuggestions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const filteredDirectory = useMemo(() => {
+    if (!query.trim()) return directory;
+    return directory.filter((entry) =>
+      matchesSearchQuery(
+        query,
+        entry.displayName,
+        entry.email,
+        entry.customerId,
+        unifiedClientSectionSummary(entry),
+      ),
+    );
+  }, [directory, query]);
 
-  useEffect(() => {
-    const t = setTimeout(() => void runSearch(query), 300);
-    return () => clearTimeout(t);
-  }, [query, runSearch]);
-
-  const openCustomer = () => {
+  const openCustomer = async () => {
     const key = query.trim();
     if (!key) return;
     if (isCanonicalCustomerId(key)) {
@@ -173,8 +159,29 @@ export default function AdminClients() {
       if (href) navigate(href);
       return;
     }
-    if (suggestions.length === 1) {
-      openResult(suggestions[0]);
+    if (filteredDirectory.length === 1) {
+      openDirectoryEntry(filteredDirectory[0]);
+      return;
+    }
+    setOpenLoading(true);
+    try {
+      const { rows, error: fetchError } = await fetchLookupWithMeta("client", key, 12);
+      if (fetchError) {
+        setError(fetchError);
+        return;
+      }
+      const hits = rows.filter((r): r is ClientResult => r.kind === "customer" || r.kind === "lead");
+      if (hits.length === 1) {
+        openResult(hits[0]);
+      } else if (hits.length === 0) {
+        toast({ title: "Nenašiel sa klient ani lead", variant: "destructive" });
+      } else {
+        toast({ title: "Viac zhôd", description: "Upresnite vyhľadávanie alebo kliknite na riadok v zozname." });
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Vyhľadávanie zlyhalo");
+    } finally {
+      setOpenLoading(false);
     }
   };
 
@@ -302,7 +309,7 @@ export default function AdminClients() {
         </Button>
       }
     >
-      <div className="max-w-3xl space-y-6">
+      <div className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="client-search">Meno, e-mail, customer ID alebo lead</Label>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -312,10 +319,10 @@ export default function AdminClients() {
               placeholder="napr. ACME s.r.o., klient@firma.sk"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && openCustomer()}
+              onKeyDown={(e) => e.key === "Enter" && void openCustomer()}
             />
-            <Button onClick={openCustomer} disabled={!query.trim() || loading} className="min-h-10">
-              {loading ? (
+            <Button onClick={() => void openCustomer()} disabled={!query.trim() || openLoading} className="min-h-10">
+              {openLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <Search className="w-4 h-4" />
@@ -338,127 +345,120 @@ export default function AdminClients() {
           </div>
         )}
 
-        {loading && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Hľadám…
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">
+              Prehľad klientov
+              {!directoryLoading && query.trim() && (
+                <span className="font-normal text-muted-foreground ml-2">
+                  ({filteredDirectory.length} / {directory.length})
+                </span>
+              )}
+            </h2>
+            {directoryLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
           </div>
-        )}
-
-        {!loading && searched && !error && suggestions.length === 0 && query.trim() && (
-          <p className="text-sm text-muted-foreground italic py-4 text-center border rounded-lg">
-            Nenašli sa žiadni klienti ani leady pre „{query.trim()}“.
-          </p>
-        )}
-
-        {!loading && suggestions.length > 0 && (
-          <ul className="rounded-lg border border-border divide-y text-sm">
-            {suggestions.map((s) => (
-              <li key={`${s.kind}-${s.id}`}>
-                <button
-                  type="button"
-                  className="w-full text-left px-3 py-3 hover:bg-muted flex items-start gap-2 min-h-[44px]"
-                  onClick={() => openResult(s)}
-                >
-                  {s.kind === "customer" ? (
-                    <UserRound className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  ) : (
-                    <Users className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium truncate">{s.label}</span>
-                      <Badge variant="outline" className="text-[9px] h-4">
-                        {s.kind === "customer" ? "Klient" : "Lead"}
-                      </Badge>
-                      {s.meta?.promoted_from_lead && (
-                        <Badge variant="secondary" className="text-[9px] h-4">Z leadu</Badge>
-                      )}
-                    </div>
-                    {s.sublabel && (
-                      <div className="text-xs text-muted-foreground truncate">{s.sublabel}</div>
-                    )}
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {!query.trim() && (
-          <section className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold">Prehľad klientov</h2>
-              {directoryLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
-            </div>
-            {!directoryLoading && directory.length === 0 && (
-              <p className="text-sm text-muted-foreground italic">Zatiaľ žiadni klienti v databáze.</p>
-            )}
-            <div className="grid gap-2 sm:grid-cols-2">
-              {directory.map((entry) => (
-                <div
-                  key={entry.customerId || entry.email || entry.nameKey || entry.displayName}
-                  className="relative rounded-xl border p-3 hover:bg-muted/50 transition-colors min-h-[44px]"
-                >
-                  <button
-                    type="button"
-                    className="w-full text-left pr-8"
-                    onClick={() => openDirectoryEntry(entry)}
-                    disabled={!entry.customerId && !entry.email}
-                  >
-                    <div className="flex items-start gap-2">
-                      <UserRound className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm truncate">{entry.displayName}</p>
+          {!directoryLoading && directory.length === 0 && (
+            <p className="text-sm text-muted-foreground italic">Zatiaľ žiadni klienti v databáze.</p>
+          )}
+          {!directoryLoading && directory.length > 0 && filteredDirectory.length === 0 && (
+            <p className="text-sm text-muted-foreground italic py-4 text-center border rounded-xl">
+              Žiadna zhoda pre „{query.trim()}“.
+            </p>
+          )}
+          {!directoryLoading && filteredDirectory.length > 0 && (
+            <div className="rounded-xl border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Klient</TableHead>
+                    <TableHead>Projekty</TableHead>
+                    <TableHead>Hosting</TableHead>
+                    <TableHead>Prenájmy</TableHead>
+                    <TableHead>Sekcie</TableHead>
+                    <TableHead className="w-10" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredDirectory.map((entry) => (
+                    <TableRow key={entry.customerId || entry.email || entry.nameKey || entry.displayName}>
+                      <TableCell className="text-sm">
+                        <button
+                          type="button"
+                          className="text-left hover:underline text-primary font-medium disabled:opacity-50 disabled:no-underline"
+                          onClick={() => openDirectoryEntry(entry)}
+                          disabled={!entry.customerId && !entry.email}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <UserRound className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            {entry.displayName}
+                          </span>
+                        </button>
                         {entry.email && (
-                          <p className="text-xs text-muted-foreground truncate">{entry.email}</p>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{entry.email}</p>
                         )}
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {entry.projectCount > 0 && (
-                            <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
-                              <FolderKanban className="w-2.5 h-2.5" /> {entry.projectCount}
-                            </Badge>
-                          )}
-                          {entry.hostingCount > 0 && (
-                            <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
-                              <Server className="w-2.5 h-2.5" /> {entry.hostingCount}
-                            </Badge>
-                          )}
-                          {entry.rentalCount > 0 && (
-                            <Badge variant="outline" className="text-[9px] h-4 gap-0.5">
-                              <Globe className="w-2.5 h-2.5" /> {entry.rentalCount}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          {unifiedClientSectionSummary(entry)}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                  {entry.customerId && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="absolute top-2 right-2 h-8 w-8"
-                      title="Zmazať klienta"
-                      onClick={() =>
-                        void requestDelete({
-                          entityType: "customer",
-                          entityId: entry.customerId!,
-                          entityLabel: entry.displayName,
-                        })
-                      }
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  )}
-                </div>
-              ))}
+                        {entry.customerId && (
+                          <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">
+                            {entry.customerId}
+                          </p>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {entry.projectCount > 0 ? (
+                          <Badge variant="outline" className="text-[10px] gap-0.5">
+                            <FolderKanban className="w-2.5 h-2.5" /> {entry.projectCount}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {entry.hostingCount > 0 ? (
+                          <Badge variant="outline" className="text-[10px] gap-0.5">
+                            <Server className="w-2.5 h-2.5" /> {entry.hostingCount}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {entry.rentalCount > 0 ? (
+                          <Badge variant="outline" className="text-[10px] gap-0.5">
+                            <Globe className="w-2.5 h-2.5" /> {entry.rentalCount}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-[200px]">
+                        {unifiedClientSectionSummary(entry)}
+                      </TableCell>
+                      <TableCell>
+                        {entry.customerId && (
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8"
+                            title="Zmazať klienta"
+                            onClick={() =>
+                              void requestDelete({
+                                entityType: "customer",
+                                entityId: entry.customerId!,
+                                entityLabel: entry.displayName,
+                              })
+                            }
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          </section>
-        )}
+          )}
+        </section>
       </div>
       <DestructiveModal {...modalProps} />
       {createCloseGuard.closeGuardDialog}

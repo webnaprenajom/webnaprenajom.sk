@@ -1,6 +1,13 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { ArrowRight } from "lucide-react";
+import {
+  commissionHubStatusLabel,
+  commissionHubStatusTone,
+  hasConfirmedPayout,
+  payoutRecordByCommissionId,
+} from "@/lib/customerWorkbench/commissionHubTruth";
 import type { CustomerWorkbenchData } from "@/lib/customerWorkbench/types";
 
 interface Props {
@@ -11,19 +18,30 @@ type AuditLink = {
   id: string;
   label: string;
   amount: number;
-  status: "paid" | "unpaid" | "payout";
+  kind: "payment" | "commission";
+  commissionId?: string;
+  paymentStatus?: string;
+  paymentTruthLevel?: string;
   href: string;
 };
 
+function statusBadgeClass(tone: "warning" | "success" | "muted"): string {
+  if (tone === "success") return "border-green-500/40 text-green-700 dark:text-green-400";
+  if (tone === "warning") return "border-amber-500/40 text-amber-700 dark:text-amber-400";
+  return "border-muted-foreground/30 text-muted-foreground";
+}
+
 export function CustomerCommissionsAuditStrip({ data }: Props) {
   const links: AuditLink[] = [];
+  const payoutByCommission = payoutRecordByCommissionId(data.payoutRecords);
 
   data.paymentRecords.slice(0, 3).forEach((p) => {
     links.push({
       id: `rev-${p.id}`,
       label: `Platba ${new Date(p.paid_at).toLocaleDateString("sk-SK")}`,
       amount: Number(p.amount) || 0,
-      status: "paid",
+      kind: "payment",
+      paymentTruthLevel: p.truth_level,
       href: "/admin/finance?advanced=1&legacy=payments",
     });
   });
@@ -33,14 +51,12 @@ export function CustomerCommissionsAuditStrip({ data }: Props) {
       id: `comm-${c.id}`,
       label: c.title,
       amount: Number(c.amount) || 0,
-      status: c.payment_status === "paid" ? "payout" : "unpaid",
+      kind: "commission",
+      commissionId: c.id,
+      paymentStatus: c.payment_status,
       href: "/admin/finance?advanced=1&legacy=commissions",
     });
   });
-
-  const payoutByCommission = new Map(
-    data.payoutRecords.map((p) => [p.source_id, p]),
-  );
 
   if (links.length === 0) return null;
 
@@ -57,8 +73,15 @@ export function CustomerCommissionsAuditStrip({ data }: Props) {
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs">
         {links.map((link, i) => {
-          const commissionPayout =
-            link.id.startsWith("comm-") && payoutByCommission.get(link.id.replace("comm-", ""));
+          const payout =
+            link.kind === "commission" && link.commissionId
+              ? payoutByCommission.get(link.commissionId)
+              : undefined;
+          const confirmedPayout =
+            link.kind === "commission" && link.commissionId
+              ? hasConfirmedPayout(link.commissionId, data.payoutRecords)
+              : false;
+
           return (
             <div key={link.id} className="flex items-center gap-2">
               {i > 0 && <ArrowRight className="w-3 h-3 text-muted-foreground shrink-0" />}
@@ -66,29 +89,26 @@ export function CustomerCommissionsAuditStrip({ data }: Props) {
                 to={link.href}
                 className="rounded-lg border border-border px-2.5 py-1.5 hover:bg-muted/50 inline-flex flex-col gap-0.5 min-w-[100px]"
               >
-                <span className="font-medium truncate max-w-[140px]">{link.label}</span>
-                <div className="flex items-center gap-1.5">
+                <span className="font-medium truncate max-w-[160px]">{link.label}</span>
+                <div className="flex flex-wrap items-center gap-1.5">
                   <span className="tabular-nums font-semibold">{link.amount.toFixed(2)} €</span>
-                  <Badge
-                    variant="outline"
-                    className={`text-[9px] ${
-                      link.status === "paid"
-                        ? "border-green-500/40 text-green-700"
-                        : link.status === "payout"
-                          ? "border-green-500/40 text-green-700"
-                          : "border-amber-500/40 text-amber-700"
-                    }`}
-                  >
-                    {link.status === "paid"
-                      ? "Príjem"
-                      : link.status === "payout"
-                        ? "Vyplatené"
-                        : "Neuhradené"}
-                  </Badge>
-                  {commissionPayout && (
-                    <Badge variant="outline" className="text-[9px] border-green-500/40">
-                      payout ✓
-                    </Badge>
+                  {link.kind === "payment" && link.paymentTruthLevel && (
+                    <TruthLevelBadge level={link.paymentTruthLevel} className="text-[9px] h-4 px-1" />
+                  )}
+                  {link.kind === "commission" && link.commissionId && (
+                    <>
+                      <Badge
+                        variant="outline"
+                        className={`text-[9px] ${statusBadgeClass(
+                          commissionHubStatusTone(link.paymentStatus || "unpaid", confirmedPayout),
+                        )}`}
+                      >
+                        {commissionHubStatusLabel(link.paymentStatus || "unpaid", confirmedPayout)}
+                      </Badge>
+                      {payout && (
+                        <TruthLevelBadge level={payout.truth_level} className="text-[9px] h-4 px-1" />
+                      )}
+                    </>
                   )}
                 </div>
               </Link>
