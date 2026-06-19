@@ -149,3 +149,105 @@ export function summarizeCommissionPayoutTotals(
 
   return totals;
 }
+
+export interface ImplementerFinanceTotals {
+  paidAudited: number;
+  paidAuditedFact: number;
+  paidAuditedLegacy: number;
+  paidWorkflowUnaudited: number;
+  unpaid: number;
+  lineCount: number;
+}
+
+/** Vyplatené v implementer pohľade — auditované + workflow bez payoutu, bez dvojitého započítania. */
+export function implementerPaidDisplayTotal(totals: ImplementerFinanceTotals): number {
+  return totals.paidAudited + totals.paidWorkflowUnaudited;
+}
+
+export function resolveImplementerFinanceTruthLevel(
+  totals: Pick<ImplementerFinanceTotals, "paidAuditedFact" | "paidAuditedLegacy">,
+): FinanceTruthLevel {
+  if (totals.paidAuditedFact > 0) return "payout_fact";
+  if (totals.paidAuditedLegacy > 0) return "legacy_import";
+  return "workflow_only";
+}
+
+/**
+ * Per-implementer totals: payout_records majú prednosť pre „vyplatené“,
+ * workflow commission suma len ak linked payout neexistuje.
+ */
+export function implementerTotalsFromCommissionPayouts(
+  commissions: Array<CommissionLike & { implementer?: string | null; amount?: number | null }>,
+  payoutRecords: Array<PayoutRecordLike & { implementer?: string | null }>,
+): Map<string, ImplementerFinanceTotals> {
+  const map = new Map<string, ImplementerFinanceTotals>();
+  const commissionIds = new Set(commissions.map((c) => c.id));
+
+  const bump = (key: string, patch: Partial<ImplementerFinanceTotals>) => {
+    const cur: ImplementerFinanceTotals = map.get(key) ?? {
+      paidAudited: 0,
+      paidAuditedFact: 0,
+      paidAuditedLegacy: 0,
+      paidWorkflowUnaudited: 0,
+      unpaid: 0,
+      lineCount: 0,
+    };
+    map.set(key, {
+      paidAudited: cur.paidAudited + (patch.paidAudited ?? 0),
+      paidAuditedFact: cur.paidAuditedFact + (patch.paidAuditedFact ?? 0),
+      paidAuditedLegacy: cur.paidAuditedLegacy + (patch.paidAuditedLegacy ?? 0),
+      paidWorkflowUnaudited: cur.paidWorkflowUnaudited + (patch.paidWorkflowUnaudited ?? 0),
+      unpaid: cur.unpaid + (patch.unpaid ?? 0),
+      lineCount: cur.lineCount + (patch.lineCount ?? 0),
+    });
+  };
+
+  for (const c of commissions) {
+    const key = (c.implementer || "").trim();
+    if (!key) continue;
+    const info = resolveCommissionPayoutInfo(c, payoutRecords);
+    const amount = Number(c.amount || 0);
+    switch (info.status) {
+      case "unpaid_workflow":
+        bump(key, { unpaid: amount, lineCount: 1 });
+        break;
+      case "paid_workflow_unaudited":
+        bump(key, { paidWorkflowUnaudited: amount, lineCount: 1 });
+        break;
+      case "audited_payout_fact":
+        bump(key, {
+          paidAudited: info.auditedAmount,
+          paidAuditedFact: info.auditedAmount,
+          lineCount: 1,
+        });
+        break;
+      case "audited_legacy_import":
+        bump(key, {
+          paidAudited: info.auditedAmount,
+          paidAuditedLegacy: info.auditedAmount,
+          lineCount: 1,
+        });
+        break;
+    }
+  }
+
+  // ponytail: orphan payouts (bez commission v scope) — napr. payout bez commission riadku
+  for (const p of payoutRecords) {
+    if (p.source_table === "commissions" && p.source_id && commissionIds.has(p.source_id)) {
+      continue;
+    }
+    const key = (p.implementer || "").trim();
+    if (!key) continue;
+    const amount = Number(p.amount || 0);
+    if (amount <= 0) continue;
+    const isFact = p.truth_level === "payout_fact";
+    bump(key, {
+      paidAudited: amount,
+      paidAuditedFact: isFact ? amount : 0,
+      paidAuditedLegacy: isFact ? 0 : amount,
+      lineCount: 1,
+    });
+  }
+
+  return map;
+}

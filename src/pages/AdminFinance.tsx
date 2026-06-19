@@ -43,10 +43,16 @@ import {
   canAccessFinanceAdvanced,
   canAccessOperationalCrm,
   filterCommissionsForUser,
-  implementerTotalsFromCommissions,
+  filterPayoutRecordsForUser,
   resolveScopedCommissionEmpty,
   type AccessContext,
 } from "@/lib/rbac/permissions";
+import {
+  implementerPaidDisplayTotal,
+  implementerTotalsFromCommissionPayouts,
+  resolveImplementerFinanceTruthLevel,
+  type ImplementerFinanceTotals,
+} from "@/lib/finance/commissionPayoutStatus";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
 import { ScopedEmptyState } from "@/components/admin/rbac/ScopedEmptyState";
@@ -247,11 +253,19 @@ const AdminFinance = () => {
     [raw.commissions, accessCtx],
   );
 
+  const scopedPayoutRecords = useMemo(
+    () => filterPayoutRecordsForUser(raw.payoutRecords, accessCtx),
+    [raw.payoutRecords, accessCtx],
+  );
+
   const implementerTotals = useMemo(() => {
-    return Array.from(implementerTotalsFromCommissions(scopedCommissions).entries()).sort(
-      (a, b) => b[1].paid + b[1].unpaid - (a[1].paid + a[1].unpaid),
+    return Array.from(
+      implementerTotalsFromCommissionPayouts(scopedCommissions, scopedPayoutRecords).entries(),
+    ).sort(
+      (a, b) =>
+        implementerPaidDisplayTotal(b[1]) + b[1].unpaid - (implementerPaidDisplayTotal(a[1]) + a[1].unpaid),
     );
-  }, [scopedCommissions]);
+  }, [scopedCommissions, scopedPayoutRecords]);
 
   const settlementDraftsForGov = useMemo(
     () =>
@@ -412,6 +426,7 @@ const AdminFinance = () => {
             entityPayments={snapshot.totals.entityPaymentsConfirmed}
             implementerTotals={implementerTotals}
             commissions={scopedCommissions as CommissionRow[]}
+            payoutRecords={scopedPayoutRecords}
             activeIssueCount={activeIssueCount}
             scopedEmpty={scopedEmpty}
             showOrgKpis={showOrgFinance}
@@ -435,6 +450,7 @@ function DailyFinanceView({
   entityPayments,
   implementerTotals,
   commissions,
+  payoutRecords,
   activeIssueCount,
   scopedEmpty,
   showOrgKpis,
@@ -451,8 +467,16 @@ function DailyFinanceView({
     paymentsLegacyImport: number;
   };
   entityPayments: EntityPaymentTotals;
-  implementerTotals: [string, { paid: number; unpaid: number; count: number }][];
+  implementerTotals: [string, ImplementerFinanceTotals][];
   commissions: CommissionRow[];
+  payoutRecords: Array<{
+    source_table?: string | null;
+    source_id?: string | null;
+    amount?: number | null;
+    paid_at?: string;
+    truth_level?: string | null;
+    implementer?: string | null;
+  }>;
   activeIssueCount: number;
   scopedEmpty: ReturnType<typeof resolveScopedCommissionEmpty>;
   showOrgKpis: boolean;
@@ -522,7 +546,7 @@ function DailyFinanceView({
             {showOrgKpis ? "Provízie podľa realizátora" : "Vaše provízie"}
           </h2>
           <span className="text-xs text-muted-foreground">
-            {showOrgKpis ? "zo všetkých zdrojov (workflow)" : "len váš implementer záznam"}
+            {showOrgKpis ? "commissions + payout_records (bez dvojitého počítania)" : "len váš implementer záznam"}
           </span>
         </div>
         {implementerTotals.length === 0 ? (
@@ -546,30 +570,34 @@ function DailyFinanceView({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {implementerTotals.map(([name, t]) => (
+              {implementerTotals.map(([name, t]) => {
+                const paid = implementerPaidDisplayTotal(t);
+                const truthLevel = resolveImplementerFinanceTruthLevel(t);
+                return (
                 <TableRow
                   key={name}
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => setDetailImplementer(name)}
                 >
                   <TableCell className="font-medium">{name}</TableCell>
-                  <TableCell className="text-right text-green-600">{t.paid.toFixed(2)} €</TableCell>
+                  <TableCell className="text-right text-green-600">{paid.toFixed(2)} €</TableCell>
                   <TableCell className="text-right text-amber-600">{t.unpaid.toFixed(2)} €</TableCell>
-                  <TableCell className="text-right text-muted-foreground">{t.count}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">{t.lineCount}</TableCell>
                   <TableCell>
-                    <TruthLevelBadge level="workflow_only" />
+                    <TruthLevelBadge level={truthLevel} />
                   </TableCell>
                 </TableRow>
-              ))}
+              );
+              })}
             </TableBody>
           </Table>
           </div>
         )}
         {implementerTotals.length > 0 && (
           <p className="text-[10px] text-muted-foreground px-4 py-2 border-t border-border/60">
-            Zdroj: <code className="text-[10px]">commissions</code> (interný stav „vyplatené" / „nevyplatené",
-            workflow flag). Auditované, potvrdené výplaty s referenciou nájdete v Pokročilé → Záznamy →
-            Výplaty (<code className="text-[10px]">payout_records</code>).
+            Vyplatené: auditované sumy z <code className="text-[10px]">payout_records</code> (ak existujú) +
+            workflow provízie bez payoutu. Nezaplatené: <code className="text-[10px]">commissions</code> bez
+            linked payout. Bez dvojitého započítania commission + payout pre ten istý zdroj.
           </p>
         )}
       </section>
@@ -602,6 +630,7 @@ function DailyFinanceView({
         onOpenChange={(o) => !o && setDetailImplementer(null)}
         implementer={detailImplementer || ""}
         commissions={commissions}
+        payoutRecords={payoutRecords}
       />
     </div>
   );

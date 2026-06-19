@@ -23,6 +23,12 @@ import {
   sourceDetailHref,
 } from "@/lib/commissionSource";
 import { COMMISSION_STATUS_LABELS } from "@/lib/finance/labels";
+import {
+  COMMISSION_PAYOUT_STATUS_LABELS,
+  resolveCommissionPayoutInfo,
+  type PayoutRecordLike,
+} from "@/lib/finance/commissionPayoutStatus";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { paymentFormLabel } from "@/lib/paymentForm";
 import { adminCustomerHref } from "@/lib/adminNav";
 import { CommissionLinkBadge } from "@/components/admin/lookup/LinkStatusBadge";
@@ -37,9 +43,16 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   implementer: string;
   commissions: CommissionRow[];
+  payoutRecords?: PayoutRecordLike[];
 }
 
-function CommissionDetailRow({ c }: { c: CommissionRow }) {
+function CommissionDetailRow({
+  c,
+  payoutRecords,
+}: {
+  c: CommissionRow;
+  payoutRecords: PayoutRecordLike[];
+}) {
   const linkStatus = getCommissionLinkStatus(c);
   const sourceHref = sourceDetailHref(c.source_type as any, c.source_id);
   const sourceLabel =
@@ -48,6 +61,7 @@ function CommissionDetailRow({ c }: { c: CommissionRow }) {
       : c.source_type === "other"
         ? COMMISSION_SOURCE_LABELS.other
         : "Legacy";
+  const payoutInfo = resolveCommissionPayoutInfo(c, payoutRecords);
 
   return (
     <>
@@ -88,6 +102,22 @@ function CommissionDetailRow({ c }: { c: CommissionRow }) {
           {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
         </Badge>
       </TableCell>
+      <TableCell className="text-xs">
+        {payoutInfo.status === "audited_payout_fact" || payoutInfo.status === "audited_legacy_import" ? (
+          <div className="flex flex-col gap-1 items-start">
+            <TruthLevelBadge level={payoutInfo.truthLevel!} />
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+              {payoutInfo.auditedAmount.toFixed(2)} €
+            </span>
+          </div>
+        ) : payoutInfo.status === "paid_workflow_unaudited" ? (
+          <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground whitespace-nowrap">
+            {COMMISSION_PAYOUT_STATUS_LABELS.paid_workflow_unaudited}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
+      </TableCell>
       <TableCell className="text-xs text-muted-foreground max-w-[160px] truncate hidden md:table-cell">
         {c.note || "—"}
       </TableCell>
@@ -95,7 +125,13 @@ function CommissionDetailRow({ c }: { c: CommissionRow }) {
   );
 }
 
-export function FinanceImplementerDetailDialog({ open, onOpenChange, implementer, commissions }: Props) {
+export function FinanceImplementerDetailDialog({
+  open,
+  onOpenChange,
+  implementer,
+  commissions,
+  payoutRecords = [],
+}: Props) {
   const rows = useMemo(
     () =>
       commissions
@@ -112,8 +148,12 @@ export function FinanceImplementerDetailDialog({ open, onOpenChange, implementer
     const unpaid = rows.filter((r) => r.payment_status === "unpaid").reduce((s, r) => s + Number(r.amount || 0), 0);
     const linked = rows.filter((r) => getCommissionLinkStatus(r) === "linked").length;
     const legacy = rows.filter((r) => getCommissionLinkStatus(r) === "legacy").length;
-    return { paid, unpaid, count: rows.length, linked, legacy };
-  }, [rows]);
+    const audited = rows.reduce((s, r) => {
+      const info = resolveCommissionPayoutInfo(r, payoutRecords);
+      return s + (info.auditedAmount || 0);
+    }, 0);
+    return { paid, unpaid, count: rows.length, linked, legacy, audited };
+  }, [rows, payoutRecords]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -125,7 +165,8 @@ export function FinanceImplementerDetailDialog({ open, onOpenChange, implementer
           Všetky sekcie (prenájmy, hosting, projekty) + legacy riadky bez zdroja.
         </p>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-3">
-          <span className="text-green-600">Vyplatené: {totals.paid.toFixed(2)} €</span>
+          <span className="text-green-600">Vyplatené (workflow): {totals.paid.toFixed(2)} €</span>
+          <span className="text-green-600">Auditované výplaty: {totals.audited.toFixed(2)} €</span>
           <span className="text-amber-600">Nezaplatené: {totals.unpaid.toFixed(2)} €</span>
           <span className="text-muted-foreground">{totals.count} riadkov</span>
           <span className="text-muted-foreground">{totals.linked} prepojených</span>
@@ -149,13 +190,14 @@ export function FinanceImplementerDetailDialog({ open, onOpenChange, implementer
                     <TableHead className="text-right">Suma</TableHead>
                     <TableHead>Forma</TableHead>
                     <TableHead>Stav</TableHead>
+                    <TableHead>Výplata</TableHead>
                     <TableHead>Pozn.</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map((c) => (
                     <TableRow key={c.id}>
-                      <CommissionDetailRow c={c} />
+                      <CommissionDetailRow c={c} payoutRecords={payoutRecords} />
                     </TableRow>
                   ))}
                 </TableBody>
@@ -165,6 +207,7 @@ export function FinanceImplementerDetailDialog({ open, onOpenChange, implementer
               {rows.map((c) => {
                 const linkStatus = getCommissionLinkStatus(c);
                 const sourceHref = sourceDetailHref(c.source_type as any, c.source_id);
+                const payoutInfo = resolveCommissionPayoutInfo(c, payoutRecords);
                 const sourceLabel =
                   c.source_type && COMMISSION_SOURCE_LABELS[c.source_type as keyof typeof COMMISSION_SOURCE_LABELS]
                     ? COMMISSION_SOURCE_LABELS[c.source_type as keyof typeof COMMISSION_SOURCE_LABELS]
@@ -201,6 +244,10 @@ export function FinanceImplementerDetailDialog({ open, onOpenChange, implementer
                       <Badge variant="outline" className={`text-[10px] ${STATUS_CLASS[c.payment_status] ?? ""}`}>
                         {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
                       </Badge>
+                      {(payoutInfo.status === "audited_payout_fact" ||
+                        payoutInfo.status === "audited_legacy_import") && (
+                        <TruthLevelBadge level={payoutInfo.truthLevel!} />
+                      )}
                       <span className="text-xs text-muted-foreground">{paymentFormLabel(c.payment_form)}</span>
                     </div>
                     {c.note && <p className="text-xs text-muted-foreground">{c.note}</p>}

@@ -115,6 +115,14 @@ export function filterCommissionsForUser<T extends { implementer?: string | null
   return filterForUser(rows, ctx, (row) => ({ implementerName: row.implementer }));
 }
 
+export function filterPayoutRecordsForUser<T extends { implementer?: string | null }>(
+  rows: T[],
+  ctx: AccessContext,
+): T[] {
+  if (canSeeAllCommissions(ctx.role)) return rows;
+  return filterForUser(rows, ctx, (row) => ({ implementerName: row.implementer }));
+}
+
 export function commissionTotalsFromRows(
   rows: Array<{ amount?: number | null; payment_status?: string | null }>,
 ): { paid: number; unpaid: number; count: number } {
