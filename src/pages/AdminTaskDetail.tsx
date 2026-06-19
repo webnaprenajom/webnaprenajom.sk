@@ -20,6 +20,10 @@ import {
   type EntityPaymentRow,
 } from "@/lib/finance/entityPaymentBridge";
 import { financeCtxWithPayments, prefillFromTask } from "@/lib/finance/factDrafts";
+import {
+  isLegacyTaskFinance,
+  TASK_FINANCE_DEPRECATION_NOTE,
+} from "@/lib/tasks/taskFinanceModel";
 
 type TaskStatus =
   | "todo"
@@ -145,6 +149,7 @@ export default function AdminTaskDetail() {
   }
 
   const remaining = Number(task.amount || 0) - Number(task.deposit || 0);
+  const legacyFinance = isLegacyTaskFinance(task);
   const customerHref = adminCustomerHrefPreferred(task.customer_id, customerEmail);
   const depositSourceId = taskPaymentSourceId(task.id, "deposit");
   const fullSourceId = taskPaymentSourceId(task.id, "full");
@@ -164,6 +169,9 @@ export default function AdminTaskDetail() {
       }
     >
       <Tabs defaultValue="prehlad" className="space-y-4">
+        <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
+          {TASK_FINANCE_DEPRECATION_NOTE}
+        </p>
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="prehlad">Prehľad</TabsTrigger>
           <TabsTrigger value="provizie">Provízie</TabsTrigger>
@@ -198,9 +206,9 @@ export default function AdminTaskDetail() {
                 "—"
               )}
             </Field>
-            <Field label="Suma" value={fmt(Number(task.amount || 0))} />
-            <Field label="Záloha" value={fmt(Number(task.deposit || 0))} />
-            <Field label="Zostáva" value={fmt(remaining)} />
+            <Field label="Suma" value={legacyFinance ? fmt(Number(task.amount || 0)) : "— (na nadradenej entite)"} />
+            <Field label="Záloha" value={legacyFinance ? fmt(Number(task.deposit || 0)) : "—"} />
+            <Field label="Zostáva" value={legacyFinance ? fmt(remaining) : "—"} />
             <Field label="Lead">
               {task.lead_id ? (
                 <Link to={adminLeadHref(task.lead_id)} className="text-primary hover:underline">
@@ -235,32 +243,43 @@ export default function AdminTaskDetail() {
         </TabsContent>
 
         <TabsContent value="platby">
+          {!legacyFinance ? (
+            <p className="text-sm text-muted-foreground rounded-xl border p-4">
+              Platby úlohy nie sú podporované pre nový workflow model. Potvrdené platby zadávajte na
+              projekte, marketingu, prenájme alebo hostingu. Existujúce záznamy nižšie zostávajú len na
+              čítanie.
+            </p>
+          ) : null}
           <EntityPaymentRecordsPanel
             payments={linkedPayments}
             onSaved={() => void load()}
             variantLabel={(row) =>
               taskPaymentVariantLabel(row.source_id || "", task.id)
             }
-            createActions={[
-              {
-                key: "deposit",
-                label: "Potvrdiť zálohu do financií",
-                linkedExists: depositLinked,
-                disabled: !!depositHint,
-                hint: depositHint,
-                buildDraft: () =>
-                  prefillFromTask(task, "deposit", customerEmail, paymentCtx),
-              },
-              {
-                key: "full",
-                label: depositLinked ? "Potvrdiť doplatok do financií" : "Potvrdiť úhradu do financií",
-                linkedExists: fullLinked,
-                disabled: !!fullHint,
-                hint: fullHint,
-                buildDraft: () =>
-                  prefillFromTask(task, "full", customerEmail, paymentCtx),
-              },
-            ]}
+            createActions={
+              legacyFinance
+                ? [
+                    {
+                      key: "deposit",
+                      label: "Potvrdiť zálohu do financií",
+                      linkedExists: depositLinked,
+                      disabled: !!depositHint,
+                      hint: depositHint,
+                      buildDraft: () =>
+                        prefillFromTask(task, "deposit", customerEmail, paymentCtx),
+                    },
+                    {
+                      key: "full",
+                      label: depositLinked ? "Potvrdiť doplatok do financií" : "Potvrdiť úhradu do financií",
+                      linkedExists: fullLinked,
+                      disabled: !!fullHint,
+                      hint: fullHint,
+                      buildDraft: () =>
+                        prefillFromTask(task, "full", customerEmail, paymentCtx),
+                    },
+                  ]
+                : []
+            }
           />
         </TabsContent>
       </Tabs>

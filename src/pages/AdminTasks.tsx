@@ -46,6 +46,14 @@ import {
   adminCustomerHrefById,
 } from "@/lib/adminNav";
 import { resolveTaskCustomerFields, classifyTaskLink, TASK_LINK_STRENGTH_LABELS } from "@/lib/crmLookup/taskCustomerLink";
+import {
+  isLegacyTaskFinance,
+  isTaskFinanceStatus,
+  normalizeTaskFinancePayload,
+  TASK_FINANCE_DEPRECATION_NOTE,
+  taskParentLinkError,
+  taskStatusOptionsForForm,
+} from "@/lib/tasks/taskFinanceModel";
 
 type TaskStatus =
   | "todo"
@@ -290,6 +298,21 @@ const AdminTasks = () => {
       client_name: form.client_name,
       lead_id: form.lead_id || null,
     });
+    const parentErr = taskParentLinkError(linked);
+    if (parentErr) {
+      toast({ title: parentErr, variant: "destructive" });
+      setSaving(false);
+      return false;
+    }
+    const existing = form.id ? items.find((t) => t.id === form.id) : null;
+    const finance = normalizeTaskFinancePayload(
+      {
+        status: form.status,
+        amount: parseFloat(String(form.amount).replace(",", ".")) || 0,
+        deposit: parseFloat(String(form.deposit).replace(",", ".")) || 0,
+      },
+      existing,
+    );
     const payload = {
       title: form.title.trim(),
       description: form.description.trim() || null,
@@ -297,11 +320,11 @@ const AdminTasks = () => {
       lead_id: linked.lead_id,
       customer_id: linked.customer_id,
       assignee: form.assignee || null,
-      status: form.status,
+      status: finance.status,
       priority: form.priority,
       due_date: form.due_date || null,
-      amount: parseFloat(String(form.amount).replace(",", ".")) || 0,
-      deposit: parseFloat(String(form.deposit).replace(",", ".")) || 0,
+      amount: finance.amount,
+      deposit: finance.deposit,
     };
     const { error } = form.id
       ? await supabase.from("tasks").update(payload).eq("id", form.id)
@@ -335,6 +358,15 @@ const AdminTasks = () => {
   };
 
   const changeStatus = async (id: string, status: TaskStatus) => {
+    const row = items.find((t) => t.id === id);
+    if (row && !isLegacyTaskFinance(row) && isTaskFinanceStatus(status)) {
+      toast({
+        title: "Billing stavy už nie sú na úlohe",
+        description: "Financie zadávajte na nadradenej entite (projekt, marketing, prenájom…).",
+        variant: "destructive",
+      });
+      return;
+    }
     const { error } = await supabase.from("tasks").update({ status }).eq("id", id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else load();
@@ -349,6 +381,11 @@ const AdminTasks = () => {
       return true;
     });
   }, [items, statusFilter, assigneeFilter]);
+
+  const legacyFinanceCount = useMemo(
+    () => items.filter((t) => isLegacyTaskFinance(t)).length,
+    [items],
+  );
 
   const totals = useMemo(() => {
     const amount = filtered.reduce((s, t) => s + Number(t.amount || 0), 0);
@@ -369,9 +406,26 @@ const AdminTasks = () => {
   const isOverdue = (date: string | null, status: TaskStatus) =>
     !!date && status !== "done" && status !== "paid" && new Date(date) < new Date(new Date().toDateString());
 
+  const formIsLegacyFinance = useMemo(
+    () =>
+      !!form.id &&
+      isLegacyTaskFinance({
+        status: form.status,
+        amount: Number(form.amount) || 0,
+        deposit: Number(form.deposit) || 0,
+      }),
+    [form.id, form.status, form.amount, form.deposit],
+  );
+  const formStatusOptions = taskStatusOptionsForForm(
+    form.id
+      ? { status: form.status, amount: Number(form.amount) || 0, deposit: Number(form.deposit) || 0 }
+      : null,
+  );
+
   return (
     <AdminShell
-      title="Úlohy – aktívne zákazky"
+      title="Úlohy"
+      subtitle="Operatívny workflow — financie na nadradenej entite"
       backTo={{ label: "CRM", href: "/admin" }}
       actions={
         <Button onClick={() => openNew({ reset: true })} size="sm">
@@ -380,39 +434,43 @@ const AdminTasks = () => {
       }
     >
       <div className="space-y-4">
-        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
+          {TASK_FINANCE_DEPRECATION_NOTE}
+        </p>
+
+        <section className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="text-xs text-muted-foreground">Aktívne</div>
             <div className="text-2xl font-bold text-primary">{counts.active}</div>
           </div>
           <div className="rounded-xl border border-border bg-card p-4">
-            <div className="text-xs text-muted-foreground">Prijatá záloha</div>
-            <div className="text-2xl font-bold text-cyan-500">{counts.deposit_received}</div>
+            <div className="text-xs text-muted-foreground">Hotové</div>
+            <div className="text-2xl font-bold text-green-500">{counts.archived}</div>
           </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="text-xs text-muted-foreground">Poslať final FA</div>
-            <div className="text-2xl font-bold text-orange-500">{counts.send_final_invoice}</div>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="text-xs text-muted-foreground">Uhradené</div>
-            <div className="text-2xl font-bold text-emerald-500">{counts.paid}</div>
-          </div>
+          {legacyFinanceCount > 0 && (
+            <div className="rounded-xl border border-amber-500/30 bg-card p-4">
+              <div className="text-xs text-muted-foreground">Legacy billing úlohy</div>
+              <div className="text-2xl font-bold text-amber-600">{legacyFinanceCount}</div>
+            </div>
+          )}
         </section>
 
+        {legacyFinanceCount > 0 && (
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="text-xs text-muted-foreground">Suma (filter)</div>
+          <div className="rounded-xl border border-amber-500/20 bg-card p-4 opacity-90">
+            <div className="text-xs text-muted-foreground">Legacy suma (filter)</div>
             <div className="text-xl font-bold">{fmt(totals.amount)}</div>
           </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="text-xs text-muted-foreground">Prijaté zálohy</div>
+          <div className="rounded-xl border border-amber-500/20 bg-card p-4 opacity-90">
+            <div className="text-xs text-muted-foreground">Legacy zálohy</div>
             <div className="text-xl font-bold text-cyan-500">{fmt(totals.deposit)}</div>
           </div>
-          <div className="rounded-xl border border-border bg-card p-4">
-            <div className="text-xs text-muted-foreground">Zostáva uhradiť</div>
+          <div className="rounded-xl border border-amber-500/20 bg-card p-4 opacity-90">
+            <div className="text-xs text-muted-foreground">Legacy zostáva</div>
             <div className="text-xl font-bold text-orange-500">{fmt(totals.remaining)}</div>
           </div>
         </section>
+        )}
 
         <section className="flex flex-col sm:flex-row gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -451,9 +509,13 @@ const AdminTasks = () => {
                     <TableHead>Názov</TableHead>
                     <TableHead>Klient</TableHead>
                     <TableHead>Riešiteľ</TableHead>
-                    <TableHead className="text-right">Suma</TableHead>
-                    <TableHead className="text-right">Záloha</TableHead>
-                    <TableHead className="text-right">Zostáva</TableHead>
+                    {legacyFinanceCount > 0 && (
+                      <>
+                        <TableHead className="text-right">Suma</TableHead>
+                        <TableHead className="text-right">Záloha</TableHead>
+                        <TableHead className="text-right">Zostáva</TableHead>
+                      </>
+                    )}
                     <TableHead>Priorita</TableHead>
                     <TableHead>Stav</TableHead>
                     <TableHead className="text-right">Akcie</TableHead>
@@ -464,7 +526,9 @@ const AdminTasks = () => {
                     const cfg = STATUS_CONFIG[t.status];
                     const pcfg = PRIORITY_CONFIG[t.priority];
                     const overdue = isOverdue(t.due_date, t.status);
+                    const legacyFinance = isLegacyTaskFinance(t);
                     const remaining = Number(t.amount || 0) - Number(t.deposit || 0);
+                    const rowStatusOptions = taskStatusOptionsForForm(t);
                     return (
                       <TableRow key={t.id}>
                         <TableCell className={`text-xs whitespace-nowrap ${overdue ? "text-red-500 font-medium" : "text-muted-foreground"}`}>
@@ -507,11 +571,28 @@ const AdminTasks = () => {
                           )}
                         </TableCell>
                         <TableCell className="text-sm">{t.assignee || <span className="italic opacity-60">—</span>}</TableCell>
-                        <TableCell className="text-sm text-right font-semibold whitespace-nowrap">{fmt(Number(t.amount || 0))}</TableCell>
-                        <TableCell className="text-sm text-right whitespace-nowrap text-cyan-500">{fmt(Number(t.deposit || 0))}</TableCell>
-                        <TableCell className="text-sm text-right whitespace-nowrap text-orange-500">{fmt(remaining)}</TableCell>
+                        {legacyFinanceCount > 0 && (
+                          <>
+                            <TableCell className="text-sm text-right font-semibold whitespace-nowrap">
+                              {legacyFinance ? fmt(Number(t.amount || 0)) : <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell className="text-sm text-right whitespace-nowrap text-cyan-500">
+                              {legacyFinance ? fmt(Number(t.deposit || 0)) : <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                            <TableCell className="text-sm text-right whitespace-nowrap text-orange-500">
+                              {legacyFinance ? fmt(remaining) : <span className="text-muted-foreground">—</span>}
+                            </TableCell>
+                          </>
+                        )}
                         <TableCell>
-                          <Badge variant="outline" className={`text-[10px] ${pcfg.className}`}>{pcfg.label}</Badge>
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="outline" className={`text-[10px] ${pcfg.className}`}>{pcfg.label}</Badge>
+                            {legacyFinance && (
+                              <Badge variant="outline" className="text-[9px] text-amber-700 border-amber-500/30">
+                                Legacy billing
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Select value={t.status} onValueChange={(v) => changeStatus(t.id, v as TaskStatus)}>
@@ -519,7 +600,9 @@ const AdminTasks = () => {
                               <Badge variant="outline" className={`text-[10px] ${cfg.className}`}>{cfg.label}</Badge>
                             </SelectTrigger>
                             <SelectContent>
-                              {STATUS_ORDER.map((s) => <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>)}
+                              {rowStatusOptions.map((s) => (
+                                <SelectItem key={s} value={s}>{STATUS_CONFIG[s as TaskStatus].label}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -561,7 +644,7 @@ const AdminTasks = () => {
         }}
         size="lg"
         stickyFooter
-        title={form.id ? "Upraviť úlohu" : "Nová úloha / zákazka"}
+        title={form.id ? "Upraviť úlohu" : "Nová úloha"}
         footer={
           <>
             <Button variant="outline" onClick={() => taskCloseGuard.requestClose(closeTaskDialog)}>
@@ -616,23 +699,30 @@ const AdminTasks = () => {
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-muted-foreground">Suma (€)</label>
-              <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
+          {formIsLegacyFinance ? (
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+              <div>
+                <label className="text-xs text-muted-foreground">Suma (€) — legacy, len na čítanie</label>
+                <Input type="text" readOnly disabled value={form.amount} className="bg-muted/50" />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Záloha (€) — legacy, len na čítanie</label>
+                <Input type="text" readOnly disabled value={form.deposit} className="bg-muted/50" />
+              </div>
+              <p className="col-span-2 text-[11px] text-muted-foreground">
+                Finančné polia úlohy sú zastarané. Nové platby zadávajte na nadradenej entite.
+              </p>
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground">Prijatá záloha (€)</label>
-              <Input type="number" step="0.01" value={form.deposit} onChange={(e) => setForm({ ...form, deposit: e.target.value })} placeholder="0.00" />
-            </div>
-          </div>
+          ) : null}
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-xs text-muted-foreground">Stav</label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as TaskStatus })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {STATUS_ORDER.map((s) => <SelectItem key={s} value={s}>{STATUS_CONFIG[s].label}</SelectItem>)}
+                  {formStatusOptions.map((s) => (
+                    <SelectItem key={s} value={s}>{STATUS_CONFIG[s as TaskStatus].label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
