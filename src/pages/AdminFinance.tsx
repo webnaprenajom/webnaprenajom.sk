@@ -42,7 +42,7 @@ import {
   resolveScopedCommissionEmpty,
   type AccessContext,
 } from "@/lib/rbac/permissions";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
 import { ScopedEmptyState } from "@/components/admin/rbac/ScopedEmptyState";
 
