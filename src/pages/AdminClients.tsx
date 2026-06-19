@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminDialog } from "@/components/admin/AdminDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { adminCustomerHref, adminCustomerHrefById, adminLeadHref } from "@/lib/adminNav";
-import { isCanonicalCustomerId } from "@/lib/crmLookup/customers";
+import {
+  ensureCustomerByEmail,
+  findCustomerByEmail,
+  isCanonicalCustomerId,
+} from "@/lib/crmLookup/customers";
+import { validateFormEmail } from "@/lib/crmLookup/entitySaveHelpers";
 import { fetchLookupWithMeta } from "@/lib/crmLookup/fetchLookup";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import {
   loadUnifiedClientDirectory,
   type UnifiedClientEntry,
@@ -20,6 +27,7 @@ import {
   FolderKanban,
   Globe,
   Loader2,
+  Plus,
   Search,
   Server,
   Trash2,
@@ -34,6 +42,18 @@ import { supabase } from "@/integrations/supabase/client";
 
 type ClientResult = LookupResult & { kind: "customer" | "lead" };
 
+type CreateClientForm = { displayName: string; email: string };
+
+const EMPTY_CREATE_FORM: CreateClientForm = { displayName: "", email: "" };
+
+const CREATE_RLS_MSG =
+  "Nového klienta tu nie je možné vytvoriť — chýba oprávnenie na samostatný zápis. Skúste ho založiť cez lead (stav Dohodnutý/Zrealizovaný) alebo pri uložení prenájmu či projektu s rovnakým e-mailom.";
+
+function isLikelyRlsError(message: string): boolean {
+  const m = message.toLowerCase();
+  return m.includes("permission denied") || m.includes("row-level security") || m.includes("42501");
+}
+
 export default function AdminClients() {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -43,6 +63,10 @@ export default function AdminClients() {
   const [directoryLoading, setDirectoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searched, setSearched] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateClientForm>(EMPTY_CREATE_FORM);
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createFieldError, setCreateFieldError] = useState<string | null>(null);
   const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({
     onSuccess: () => void loadDirectory(),
   });
@@ -173,10 +197,110 @@ export default function AdminClients() {
     }
   };
 
+  const closeCreateDialog = useCallback(() => {
+    setCreateOpen(false);
+    setCreateForm(EMPTY_CREATE_FORM);
+    setCreateFieldError(null);
+  }, []);
+
+  const openCreateDialog = useCallback(() => {
+    setCreateForm(EMPTY_CREATE_FORM);
+    setCreateFieldError(null);
+    setCreateOpen(true);
+  }, []);
+
+  const discardCreateChanges = useCallback(() => {
+    setCreateForm(EMPTY_CREATE_FORM);
+    setCreateFieldError(null);
+  }, []);
+
+  const finishCreateSuccess = useCallback(
+    (customerId: string, toastInfo?: { title: string; description?: string }) => {
+      toast(toastInfo ?? { title: "Klient vytvorený" });
+      closeCreateDialog();
+      void loadDirectory();
+      navigate(adminCustomerHrefById(customerId));
+    },
+    [closeCreateDialog, loadDirectory, navigate],
+  );
+
+  const saveCreate = useCallback(async (): Promise<boolean> => {
+    setCreateFieldError(null);
+    const displayName = createForm.displayName.trim();
+    const emailRaw = createForm.email.trim();
+
+    if (!displayName) {
+      setCreateFieldError("Meno klienta je povinné.");
+      return false;
+    }
+    if (!emailRaw) {
+      setCreateFieldError("E-mail klienta je povinný.");
+      return false;
+    }
+    const emailCheck = validateFormEmail(emailRaw);
+    if (!emailCheck.valid || !emailCheck.normalized) {
+      setCreateFieldError(emailCheck.error ?? "E-mail klienta je povinný a musí byť platný.");
+      return false;
+    }
+
+    setCreateSaving(true);
+    try {
+      const existing = await findCustomerByEmail(emailCheck.normalized);
+      if (existing) {
+        finishCreateSuccess(existing.id, {
+          title: "Klient už existuje",
+          description: "Otvárame existujúci záznam s týmto e-mailom.",
+        });
+        return true;
+      }
+
+      const result = await ensureCustomerByEmail(emailCheck.normalized, displayName, {
+        allowReviewCreate: true,
+      });
+
+      if (result.blocked) {
+        setCreateFieldError(
+          result.warning ??
+            "Klienta nie je možné vytvoriť — nejednoznačná identita. Vyhľadajte existujúceho klienta vyššie.",
+        );
+        return false;
+      }
+
+      if (result.row?.id) {
+        finishCreateSuccess(
+          result.row.id,
+          result.warning
+            ? { title: "Klient pripravený", description: result.warning }
+            : undefined,
+        );
+        return true;
+      }
+
+      const failMsg = result.warning ?? "Klienta sa nepodarilo vytvoriť.";
+      setCreateFieldError(isLikelyRlsError(failMsg) ? CREATE_RLS_MSG : failMsg);
+      return false;
+    } finally {
+      setCreateSaving(false);
+    }
+  }, [createForm.displayName, createForm.email, finishCreateSuccess]);
+
+  const createCloseGuard = useAdminCloseGuard({
+    isOpen: createOpen,
+    current: createForm,
+    onSave: saveCreate,
+    onDiscard: discardCreateChanges,
+    saving: createSaving,
+  });
+
   return (
     <AdminShell
       title="Klienti"
       subtitle="Jednotný zoznam klientov naprieč prenájmami, projektmi a hostingom"
+      actions={
+        <Button onClick={openCreateDialog} size="sm">
+          <Plus className="w-4 h-4 mr-2" /> Nový klient
+        </Button>
+      }
     >
       <div className="max-w-3xl space-y-6">
         <div className="space-y-2">
@@ -337,6 +461,57 @@ export default function AdminClients() {
         )}
       </div>
       <DestructiveModal {...modalProps} />
+      {createCloseGuard.closeGuardDialog}
+      <AdminDialog
+        open={createOpen}
+        onOpenChange={(o) => {
+          if (!o) createCloseGuard.handleOpenChange(o, closeCreateDialog);
+        }}
+        size="sm"
+        title="Nový klient"
+        description="E-mail je povinný — slúži ako jednoznačný identifikátor klienta v CRM."
+        footer={
+          <>
+            <Button variant="outline" onClick={() => createCloseGuard.requestClose(closeCreateDialog)}>
+              Zrušiť
+            </Button>
+            <Button onClick={() => void saveCreate()} disabled={createSaving}>
+              {createSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Vytvoriť
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="create-client-name">Meno klienta</Label>
+            <Input
+              id="create-client-name"
+              value={createForm.displayName}
+              onChange={(e) => setCreateForm((f) => ({ ...f, displayName: e.target.value }))}
+              placeholder="napr. ACME s.r.o."
+              autoComplete="organization"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="create-client-email">E-mail klienta</Label>
+            <Input
+              id="create-client-email"
+              type="email"
+              value={createForm.email}
+              onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+              placeholder="klient@firma.sk"
+              autoComplete="email"
+            />
+          </div>
+          {createFieldError && (
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex gap-2 text-xs text-destructive">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <p>{createFieldError}</p>
+            </div>
+          )}
+        </div>
+      </AdminDialog>
     </AdminShell>
   );
 }
