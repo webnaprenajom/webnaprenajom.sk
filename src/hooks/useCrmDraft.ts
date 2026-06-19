@@ -10,27 +10,20 @@ import {
 const DEFAULT_DEBOUNCE_MS = 400;
 
 export interface UseCrmDraftOptions<T> {
-  /** Modal identifier, e.g. `lead-detail` */
   modalId: string;
-  /** Current route path, e.g. `/admin` */
   route: string;
-  /** Entity id or `new` for create flows */
   entityId: string | "new";
-  /** Whether the modal/form is currently open */
   isActive: boolean;
-  /** Live form data to autosave */
   data: T;
-  /** Baseline snapshot for dirty flag (captured when modal opens) */
   baseline?: T | null;
   normalize?: (value: T) => unknown;
   debounceMs?: number;
-  /** Called once when a stored draft should hydrate form state */
   onRestore: (data: T) => void;
 }
 
 /**
  * Autosave form drafts (debounced) + restore on modal open.
- * Flush on visibility hidden / beforeunload so tab-switch doesn't lose data.
+ * Restore applies only when draft is dirty AND differs from server baseline.
  */
 export function useCrmDraft<T>({
   modalId,
@@ -49,7 +42,6 @@ export function useCrmDraft<T>({
   const onRestoreRef = useRef(onRestore);
   onRestoreRef.current = onRestore;
 
-  // Capture baseline when modal opens
   useEffect(() => {
     if (isActive && baselineRef.current === null) {
       baselineRef.current = JSON.stringify(normalize(baseline ?? data));
@@ -61,15 +53,25 @@ export function useCrmDraft<T>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive]);
 
-  // Restore draft once per open cycle
   useEffect(() => {
     if (!isActive || restoredRef.current) return;
     restoredRef.current = true;
+
     const stored = loadCrmDraft<T>(key);
-    if (stored?.data) {
-      onRestoreRef.current(stored.data);
+    if (!stored?.data || !stored.meta?.dirty) {
+      if (stored) clearCrmDraft(key);
+      return;
     }
-  }, [isActive, key]);
+
+    const draftSnap = JSON.stringify(normalize(stored.data));
+    const baseSnap = baselineRef.current;
+    if (baseSnap !== null && draftSnap === baseSnap) {
+      clearCrmDraft(key);
+      return;
+    }
+
+    onRestoreRef.current(stored.data);
+  }, [isActive, key, normalize]);
 
   const flush = useCallback(() => {
     if (!isActive) return;
@@ -93,14 +95,12 @@ export function useCrmDraft<T>({
     saveCrmDraft(key, record);
   }, [isActive, data, entityId, key, modalId, normalize, route]);
 
-  // Debounced autosave
   useEffect(() => {
     if (!isActive) return;
     const t = window.setTimeout(flush, debounceMs);
     return () => window.clearTimeout(t);
   }, [isActive, data, debounceMs, flush]);
 
-  // Flush before tab hide / unload
   useEffect(() => {
     if (!isActive) return;
     const onHide = () => {
@@ -120,5 +120,10 @@ export function useCrmDraft<T>({
     baselineRef.current = JSON.stringify(normalize(data));
   }, [data, key, normalize]);
 
-  return { discardDraft, flushDraft: flush, draftKey: key };
+  const clearDraft = useCallback(() => {
+    clearCrmDraft(key);
+    baselineRef.current = null;
+  }, [key]);
+
+  return { discardDraft, clearDraft, flushDraft: flush, draftKey: key };
 }

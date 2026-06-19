@@ -1,30 +1,26 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import {
+  buildPilotRestoreKey,
   loadCrmViewState,
   saveCrmViewState,
   type CrmViewRestoreState,
 } from "@/lib/crmPersistence/viewRestoreStore";
 
 export interface UseCrmViewRestoreOptions {
-  /** Route this hook manages, e.g. `/admin/rentals` */
   route: string;
   modalId?: string;
   entityId?: string | null;
   section?: string;
-  /** Extra query params to persist (e.g. `{ edit: id }`) */
   query?: Record<string, string>;
-  /** Whether modal is currently open — only persist when true */
   isModalOpen?: boolean;
-  /** Called when returning to CRM tab with matching saved state */
   onRestore?: (state: CrmViewRestoreState) => void;
-  /** Skip restore (e.g. while auth loading) */
   enabled?: boolean;
 }
 
 /**
- * Persist last admin view/modal position; restore on visibility return to same route.
- * Never restores destructive confirm modals — caller must not pass those modalIds.
+ * Persist open modal while active; restore once per saved snapshot (no focus loops).
+ * Pilots must call clearCrmViewState() when modal closes (save / discard / clean close).
  */
 export function useCrmViewRestore({
   route,
@@ -39,37 +35,40 @@ export function useCrmViewRestore({
   const location = useLocation();
   const onRestoreRef = useRef(onRestore);
   onRestoreRef.current = onRestore;
-  const restoredRef = useRef(false);
+  const isModalOpenRef = useRef(isModalOpen);
+  isModalOpenRef.current = isModalOpen;
+  const appliedRestoreKeyRef = useRef<string | null>(null);
 
-  // Persist when modal open or section changes
   useEffect(() => {
-    if (!enabled) return;
-    if (!isModalOpen && !section && !entityId) return;
+    if (!enabled || !isModalOpen || !modalId) return;
     saveCrmViewState({
       route,
-      modalId: isModalOpen ? modalId : undefined,
+      modalId,
       entityId: entityId ?? undefined,
       section,
       query,
     });
   }, [enabled, route, modalId, entityId, section, query, isModalOpen]);
 
-  // Restore on mount + when tab becomes visible again
   useEffect(() => {
     if (!enabled || !onRestoreRef.current) return;
 
     const tryRestore = () => {
       if (location.pathname !== route) return;
+      if (isModalOpenRef.current) return;
+
       const saved = loadCrmViewState();
-      if (!saved || saved.route !== route) return;
-      if (saved.modalId && saved.modalId.includes("destructive")) return;
+      if (!saved || saved.route !== route || !saved.modalId) return;
+      if (saved.modalId.includes("destructive")) return;
+
+      const restoreKey = buildPilotRestoreKey(saved);
+      if (appliedRestoreKeyRef.current === restoreKey) return;
+
+      appliedRestoreKeyRef.current = restoreKey;
       onRestoreRef.current?.(saved);
     };
 
-    if (!restoredRef.current) {
-      restoredRef.current = true;
-      tryRestore();
-    }
+    tryRestore();
 
     const onVisible = () => {
       if (document.visibilityState === "visible") tryRestore();
@@ -77,4 +76,8 @@ export function useCrmViewRestore({
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [enabled, location.pathname, route]);
+
+  useEffect(() => {
+    if (isModalOpen) appliedRestoreKeyRef.current = null;
+  }, [isModalOpen]);
 }

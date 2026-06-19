@@ -55,6 +55,8 @@ import { useAccessContext } from "@/hooks/useAccessContext";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
 import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
+import { buildDraftKey, clearCrmDraft } from "@/lib/crmPersistence/draftStore";
+import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { filterRentalsForUser } from "@/lib/rbac/scopeHelpers";
 
 interface Implementer {
@@ -224,15 +226,6 @@ export default function AdminRentals() {
 
   const cloneRental = (w: RentalWebsite): RentalWebsite => JSON.parse(JSON.stringify(w));
 
-  const closeRentalEdit = useCallback(() => {
-    setCustomerFieldError(null);
-    setEditing(null);
-    setEditBaseline(null);
-    const next = new URLSearchParams(searchParams);
-    next.delete("edit");
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
-
   const openRentalEdit = useCallback((w: RentalWebsite) => {
     setCustomerFieldError(null);
     const clone = cloneRental(w);
@@ -247,15 +240,31 @@ export default function AdminRentals() {
     setEditing(blank);
   }, []);
 
-  const { discardDraft: discardRentalDraft } = useCrmDraft({
+  const { discardDraft: discardRentalDraft, clearDraft: clearRentalDraft } = useCrmDraft({
     modalId: "rental-edit",
     route: "/admin/rentals",
     entityId: editing?.id ? editing.id : "new",
     isActive: !!editing,
-    data: editing,
+    data: editing ?? editBaseline ?? emptyWebsite(),
     baseline: editBaseline,
     onRestore: (draft) => setEditing(draft as RentalWebsite),
   });
+
+  const closeRentalEdit = useCallback(() => {
+    if (editing) clearRentalDraft();
+    clearCrmViewState();
+    setCustomerFieldError(null);
+    setEditing(null);
+    setEditBaseline(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete("edit");
+    setSearchParams(next, { replace: true });
+  }, [clearRentalDraft, editing, searchParams, setSearchParams]);
+
+  const discardRentalChanges = useCallback(() => {
+    discardRentalDraft();
+    clearCrmViewState();
+  }, [discardRentalDraft]);
 
   useCrmViewRestore({
     route: "/admin/rentals",
@@ -265,9 +274,14 @@ export default function AdminRentals() {
     query: editing?.id ? { edit: editing.id } : undefined,
     enabled: !loading,
     onRestore: (state) => {
-      if (editing || !state.entityId) return;
-      const w = websites.find((x) => x.id === state.entityId);
-      if (w) openRentalEdit(w);
+      if (editing || !state.modalId || state.modalId !== "rental-edit") return;
+      if (state.entityId && state.entityId !== "new") {
+        const w = websites.find((x) => x.id === state.entityId);
+        if (w) openRentalEdit(w);
+        else clearCrmViewState();
+        return;
+      }
+      if (!state.entityId || state.entityId === "new") openNewRental();
     },
   });
 
@@ -276,8 +290,16 @@ export default function AdminRentals() {
     if (!editId || websites.length === 0) return;
     if (editing?.id === editId) return;
     const w = websites.find((x) => x.id === editId);
-    if (w) openRentalEdit(w);
-  }, [searchParams, websites, editing?.id, openRentalEdit]);
+    if (w) {
+      openRentalEdit(w);
+      return;
+    }
+    clearCrmDraft(buildDraftKey("rental-edit", editId));
+    clearCrmViewState();
+    const next = new URLSearchParams(searchParams);
+    next.delete("edit");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, websites, editing?.id, openRentalEdit, setSearchParams]);
 
   useEffect(() => {
     if (!editing?.id) return;
@@ -492,6 +514,7 @@ export default function AdminRentals() {
 
     toast({ title: editing.id ? "Aktualizované" : "Pridané" });
     discardRentalDraft();
+    clearCrmViewState();
     closeRentalEdit();
     await loadAll();
     return true;
@@ -501,7 +524,7 @@ export default function AdminRentals() {
     isOpen: !!editing,
     current: editing ?? emptyWebsite(),
     onSave: saveWebsite,
-    onDiscard: discardRentalDraft,
+    onDiscard: discardRentalChanges,
   });
 
   const cyclePayment = async (website: RentalWebsite, month: number) => {

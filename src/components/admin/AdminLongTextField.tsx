@@ -1,10 +1,9 @@
 import { cn } from "@/lib/utils";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
 
-/** Visible viewport ≈ first ~1000 chars before inner scroll (ponytail: fixed height heuristic). */
+/** Fixed viewport — ~1000 chars visible before inner scroll (ponytail: height heuristic). */
 export const ADMIN_LONG_TEXT_VISIBLE_CHARS = 1000;
-export const ADMIN_LONG_TEXT_MIN_HEIGHT = "min-h-[17.5rem]";
-export const ADMIN_LONG_TEXT_MAX_HEIGHT = "max-h-[17.5rem]";
+export const ADMIN_LONG_TEXT_FIELD_HEIGHT = "h-[17.5rem]";
 
 export interface AdminLongTextFieldProps {
   value: string;
@@ -13,16 +12,10 @@ export interface AdminLongTextFieldProps {
   label?: string;
   placeholder?: string;
   className?: string;
-  /** Show character count under field */
   showCount?: boolean;
-  /** Use date-prefix-on-focus behavior from NoteTextarea */
   withDatePrefix?: boolean;
 }
 
-/**
- * Unified notes / description / remark field for admin modals.
- * ~1000 chars visible without scroll; scrollbar appears when content exceeds viewport.
- */
 export function AdminLongTextField({
   value,
   onChange,
@@ -34,11 +27,12 @@ export function AdminLongTextField({
   withDatePrefix = true,
 }: AdminLongTextFieldProps) {
   const fieldClass = cn(
-    ADMIN_LONG_TEXT_MIN_HEIGHT,
-    ADMIN_LONG_TEXT_MAX_HEIGHT,
-    "overflow-y-auto resize-none",
+    ADMIN_LONG_TEXT_FIELD_HEIGHT,
+    "min-h-0 max-h-[17.5rem] overflow-y-auto resize-none",
     className,
   );
+
+  const nearLimit = value.length > ADMIN_LONG_TEXT_VISIBLE_CHARS;
 
   return (
     <div className="space-y-1.5">
@@ -70,8 +64,14 @@ export function AdminLongTextField({
         />
       )}
       {showCount && (
-        <p className="text-[11px] text-muted-foreground text-right tabular-nums">
+        <p
+          className={cn(
+            "text-[11px] text-right tabular-nums",
+            nearLimit ? "text-orange-600" : "text-muted-foreground",
+          )}
+        >
           {value.length.toLocaleString("sk-SK")} znakov
+          {nearLimit ? " · posúvajte pre viac" : ` · do ~${ADMIN_LONG_TEXT_VISIBLE_CHARS.toLocaleString("sk-SK")} bez scrollu`}
         </p>
       )}
     </div>

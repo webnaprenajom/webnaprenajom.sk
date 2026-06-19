@@ -18,6 +18,7 @@ import { AdminLongTextField } from "@/components/admin/AdminLongTextField";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
 import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
+import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
@@ -72,23 +73,17 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
   const [paymentDraft, setPaymentDraft] = useState<FactDraft | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
 
-  const closeHostingDialog = useCallback(() => {
-    setDialogOpen(false);
-    setCustomerFieldError(null);
-    const next = new URLSearchParams(searchParams);
-    next.delete("hosting");
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
-
-  const openHostingDialog = useCallback(() => {
-    const blank = emptyForm();
-    setFormBaseline(blank);
-    setForm(blank);
+  const openHostingDialog = useCallback((opts?: { reset?: boolean }) => {
+    if (opts?.reset !== false) {
+      const blank = emptyForm();
+      setFormBaseline(blank);
+      setForm(blank);
+    }
     setCustomerFieldError(null);
     setDialogOpen(true);
   }, []);
 
-  const { discardDraft: discardHostingDraft } = useCrmDraft({
+  const { discardDraft: discardHostingDraft, clearDraft: clearHostingDraft } = useCrmDraft({
     modalId: "hosting-create",
     route: "/admin/hosting",
     entityId: "new",
@@ -98,6 +93,23 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
     onRestore: (draft) => setForm(draft as ReturnType<typeof emptyForm>),
   });
 
+  const closeHostingDialog = useCallback(() => {
+    clearHostingDraft();
+    clearCrmViewState();
+    setDialogOpen(false);
+    setCustomerFieldError(null);
+    setForm(emptyForm());
+    setFormBaseline(emptyForm());
+    const next = new URLSearchParams(searchParams);
+    next.delete("hosting");
+    setSearchParams(next, { replace: true });
+  }, [clearHostingDraft, searchParams, setSearchParams]);
+
+  const discardHostingChanges = useCallback(() => {
+    discardHostingDraft();
+    clearCrmViewState();
+  }, [discardHostingDraft]);
+
   useCrmViewRestore({
     route: "/admin/hosting",
     modalId: "hosting-create",
@@ -106,7 +118,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
     query: dialogOpen ? { hosting: "new" } : undefined,
     onRestore: (state) => {
       if (dialogOpen || state.modalId !== "hosting-create") return;
-      openHostingDialog();
+      openHostingDialog({ reset: false });
     },
   });
 
@@ -120,7 +132,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
 
   useEffect(() => {
     if (searchParams.get("hosting") !== "new" || dialogOpen) return;
-    openHostingDialog();
+    openHostingDialog({ reset: false });
   }, [searchParams, dialogOpen, openHostingDialog]);
 
   const linkedIds = useMemo(
@@ -229,6 +241,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
         description: "Otváram detail záznamu…",
       });
       discardHostingDraft();
+      clearCrmViewState();
       setForm(emptyForm());
       setFormBaseline(emptyForm());
       closeHostingDialog();
@@ -244,7 +257,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
     isOpen: dialogOpen,
     current: form,
     onSave: save,
-    onDiscard: discardHostingDraft,
+    onDiscard: discardHostingChanges,
     saving,
   });
 
@@ -272,7 +285,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
         Hosting je oddelený od prenájmového streamu. Platobný fakt je voliteľný — bez auto-sync.
       </p>
       <div className="flex justify-end">
-        <Button size="sm" onClick={openHostingDialog}>
+        <Button size="sm" onClick={() => openHostingDialog({ reset: true })}>
           <Plus className="w-4 h-4 mr-1" /> Nový hosting
         </Button>
       </div>

@@ -12,7 +12,13 @@ export interface CrmViewRestoreState {
 
 const VIEW_KEY = "view:last";
 
+/** Dedup key — same snapshot is not restored twice per page session. */
+export function buildPilotRestoreKey(state: CrmViewRestoreState): string {
+  return `${state.route}:${state.modalId ?? ""}:${state.entityId ?? "new"}:${state.updatedAt}`;
+}
+
 export function saveCrmViewState(state: Omit<CrmViewRestoreState, "updatedAt">): void {
+  if (!state.modalId) return;
   const record: CrmViewRestoreState = { ...state, updatedAt: Date.now() };
   crmStorageSet(VIEW_KEY, JSON.stringify(record));
 }
@@ -23,6 +29,7 @@ export function loadCrmViewState(): CrmViewRestoreState | null {
   try {
     const parsed = JSON.parse(raw) as CrmViewRestoreState;
     if (!parsed?.route || !parsed.updatedAt) return null;
+    if (!parsed.modalId) return null;
     if (Date.now() - parsed.updatedAt > CRM_DRAFT_TTL_MS) {
       crmStorageRemove(VIEW_KEY);
       return null;

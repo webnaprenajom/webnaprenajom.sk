@@ -7,6 +7,12 @@ import {
   CRM_DRAFT_TTL_MS,
   pruneStaleCrmDrafts,
 } from "@/lib/crmPersistence/draftStore";
+import {
+  buildPilotRestoreKey,
+  clearCrmViewState,
+  saveCrmViewState,
+  loadCrmViewState,
+} from "@/lib/crmPersistence/viewRestoreStore";
 import { crmStorageRemove } from "@/lib/crmPersistence/storage";
 
 describe("crmPersistence draftStore", () => {
@@ -60,6 +66,29 @@ describe("crmPersistence draftStore", () => {
     });
     expect(pruneStaleCrmDrafts()).toBeGreaterThan(0);
     expect(loadCrmDraft(key)).toBeNull();
+  });
+});
+
+describe("crmPersistence viewRestoreStore", () => {
+  beforeEach(() => {
+    clearCrmViewState();
+  });
+
+  it("save requires modalId", () => {
+    saveCrmViewState({ route: "/admin" });
+    expect(loadCrmViewState()).toBeNull();
+    saveCrmViewState({ route: "/admin", modalId: "lead-detail", entityId: "x" });
+    expect(loadCrmViewState()?.modalId).toBe("lead-detail");
+  });
+
+  it("buildPilotRestoreKey dedups snapshots", () => {
+    const state = {
+      route: "/admin",
+      modalId: "lead-detail",
+      entityId: "abc",
+      updatedAt: 12345,
+    };
+    expect(buildPilotRestoreKey(state)).toBe("/admin:lead-detail:abc:12345");
   });
 });
 

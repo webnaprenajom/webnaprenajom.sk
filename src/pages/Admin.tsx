@@ -14,6 +14,11 @@ import {
   type LeadFormDraft,
 } from "@/lib/crmPersistence/leadFormDraft";
 import {
+  buildDraftKey,
+  clearCrmDraft,
+} from "@/lib/crmPersistence/draftStore";
+import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
+import {
   ARCHIVE_STATUSES,
   ASSIGNEES,
   Lead,
@@ -335,15 +340,6 @@ const Admin = () => {
     [leadFormSetters],
   );
 
-  const closeLeadModal = useCallback(() => {
-    setLeadCustomerError(null);
-    setSelected(null);
-    setLeadBaseline(null);
-    const next = new URLSearchParams(searchParams);
-    next.delete("lead");
-    setSearchParams(next, { replace: true });
-  }, [searchParams, setSearchParams]);
-
   const leadFormSnapshot = useMemo(
     () =>
       snapshotLeadFormState({
@@ -387,7 +383,7 @@ const Admin = () => {
     [leadFormSetters],
   );
 
-  const { discardDraft: discardLeadDraft } = useCrmDraft({
+  const { discardDraft: discardLeadDraft, clearDraft: clearLeadDraft } = useCrmDraft({
     modalId: "lead-detail",
     route: "/admin",
     entityId: selected?.id ?? "new",
@@ -397,6 +393,22 @@ const Admin = () => {
     onRestore: applyLeadDraft,
   });
 
+  const closeLeadModal = useCallback(() => {
+    if (selected?.id) clearLeadDraft();
+    clearCrmViewState();
+    setLeadCustomerError(null);
+    setSelected(null);
+    setLeadBaseline(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete("lead");
+    setSearchParams(next, { replace: true });
+  }, [clearLeadDraft, searchParams, selected?.id, setSearchParams]);
+
+  const discardLeadChanges = useCallback(() => {
+    discardLeadDraft();
+    clearCrmViewState();
+  }, [discardLeadDraft]);
+
   useCrmViewRestore({
     route: "/admin",
     modalId: "lead-detail",
@@ -405,9 +417,10 @@ const Admin = () => {
     query: selected ? { lead: selected.id } : undefined,
     enabled: !loading && !!userId,
     onRestore: (state) => {
-      if (selected || !state.entityId) return;
+      if (selected || !state.entityId || state.modalId !== "lead-detail") return;
       const target = leads.find((l) => l.id === state.entityId);
       if (target) openLead(target);
+      else clearCrmViewState();
     },
   });
 
@@ -417,8 +430,16 @@ const Admin = () => {
     if (!leadId || leads.length === 0) return;
     if (selected?.id === leadId) return;
     const target = leads.find((l) => l.id === leadId);
-    if (target) openLead(target);
-  }, [searchParams, leads, selected?.id, openLead]);
+    if (target) {
+      openLead(target);
+      return;
+    }
+    clearCrmDraft(buildDraftKey("lead-detail", leadId));
+    clearCrmViewState();
+    const next = new URLSearchParams(searchParams);
+    next.delete("lead");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, leads, selected?.id, openLead, setSearchParams]);
 
   // Keep ?lead= while detail modal is open (tab restore)
   useEffect(() => {
@@ -553,6 +574,7 @@ const Admin = () => {
     );
     setLeadCustomerError(null);
     discardLeadDraft();
+    clearCrmViewState();
     closeLeadModal();
     setSaving(false);
     return true;
@@ -562,7 +584,7 @@ const Admin = () => {
     isOpen: !!selected,
     current: leadFormSnapshot,
     onSave: handleSave,
-    onDiscard: discardLeadDraft,
+    onDiscard: discardLeadChanges,
     saving,
   });
 
