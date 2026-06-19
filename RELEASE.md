@@ -105,7 +105,33 @@ Run **after** all existing CRM migrations are applied. All are **additive** (no 
 | 4 | `20260609150000_finance_rules_hosting_governance.sql` | Rules, hosting, review items, policy settings |
 | 5 | `20260609160000_finance_review_cadence.sql` | Review due dates / snooze columns |
 
-### How to deploy
+### Post-finance migrations (required for current app — apply via same `db push`)
+
+After the 5 finance migrations above, the repo contains **~30 additional additive migrations** through `20260624200000`. Run:
+
+```powershell
+npx supabase link --project-ref YOUR_PROJECT_REF   # once
+npx supabase migration list                        # local vs remote
+npx supabase db push                               # applies pending only
+```
+
+**Critical for current app code (if missing, features break):**
+
+| File | Purpose |
+|------|---------|
+| `20260618550000_app_role_owner_enum.sql` | `app_role` enum: `owner`, `administrator` |
+| `20260619000001_rbac_owner_administrator.sql` | Role remap + `has_role` bridge (renamed from duplicate `19000000` timestamp) |
+| `20260619050000_marketing_records.sql` | `marketing_records` table |
+| `20260619100000_rls_owner_administrator.sql` | `is_crm_owner`, scoped RLS |
+| `20260621100000_crm_owner_bootstrap_helper.sql` | `grant_crm_owner_by_email()` — manual bootstrap |
+| `20260622100000_restore_private_has_role_rls_grant.sql` | Fix RLS `private.has_role` grant for authenticated |
+| `20260623100000_owner_user_management_gates.sql` | Owner-only settings RPC + policies |
+| `20260624100000_commissions_source_marketing_task.sql` | **`marketing` / `task` in `commissions.source_type` CHECK** |
+| `20260624200000_entity_agreed_fee.sql` | **`agreed_fee` on `project_notes` + `marketing_records`** |
+
+**Symptoms when pending:** marketing commission insert fails (CHECK violation); project/marketing payment drafts lack `agreed_fee` column.
+
+See also `supabase/DEPLOY.md` for overlap/repair notes and fresh-project bootstrap.
 
 **Option A — Supabase CLI (recommended)**
 

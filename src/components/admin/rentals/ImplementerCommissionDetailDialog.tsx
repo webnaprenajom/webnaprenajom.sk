@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,10 @@ import { COMMISSION_STATUS_LABELS } from "@/lib/finance/labels";
 import { customerHrefByClientName } from "@/lib/adminNav";
 import { bucketCommissionsBySection } from "@/lib/commissionFilters";
 import { detectRentalDualModelWarning } from "@/lib/finance/commissionConsistency";
+import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
+import type { FactDraft } from "@/lib/finance/factDrafts";
+import { resolveCommissionPayoutBridgeAfterMarkPaid } from "@/lib/finance/commissionPayoutBridge";
+import { resolveRentalJsonPayoutBridgeAfterMarkPaid } from "@/lib/finance/rentalCommissionPayoutBridge";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import {
   canToggleCommissionPaymentStatus,
@@ -76,6 +80,15 @@ export function ImplementerCommissionDetailDialog({
 }: Props) {
   const access = useAccessContext();
   const canTogglePaymentStatus = canToggleCommissionPaymentStatus(access, implementerName);
+  const [payoutFactDraft, setPayoutFactDraft] = useState<FactDraft | null>(null);
+  const [payoutFactOpen, setPayoutFactOpen] = useState(false);
+
+  const openPayoutBridge = (bridge: Awaited<ReturnType<typeof resolveCommissionPayoutBridgeAfterMarkPaid>>) => {
+    if (bridge.action === "open_dialog") {
+      setPayoutFactDraft(bridge.draft);
+      setPayoutFactOpen(true);
+    }
+  };
 
   const rentalRows = useMemo(() => {
     const rows: Array<{
@@ -210,6 +223,7 @@ export function ImplementerCommissionDetailDialog({
       return;
     }
     const next = current === "paid" ? "unpaid" : "paid";
+    const row = [...commissionRows, ...legacyRows].find((c) => c.id === id);
     await saveCommissionRow(id, { payment_status: next });
     if (access.userId) {
       void logAdminAuditEvent({
@@ -222,12 +236,20 @@ export function ImplementerCommissionDetailDialog({
         after: { payment_status: next },
       });
     }
+    if (next === "paid" && row) {
+      const full = commissions.find((c) => c.id === id);
+      if (full) {
+        const bridge = await resolveCommissionPayoutBridgeAfterMarkPaid(full);
+        openPayoutBridge(bridge);
+      }
+    }
   };
 
   const toggleRentalPaid = async (
     websiteId: string,
     impIndex: number,
     current: RentalImplementerPaymentStatus,
+    row: (typeof rentalRows)[number],
   ) => {
     if (!canTogglePaymentStatus) {
       toast({ title: commissionPaymentStatusDeniedMessage(), variant: "destructive" });
@@ -245,6 +267,27 @@ export function ImplementerCommissionDetailDialog({
         before: { payment_status: current },
         after: { payment_status: next },
       });
+    }
+    if (next === "paid") {
+      const customerEmail = row.clientName
+        ? clientEmailMap.get(row.clientName.trim().toLowerCase()) ?? null
+        : null;
+      const bridge = await resolveRentalJsonPayoutBridgeAfterMarkPaid(
+        {
+          websiteId,
+          websiteName: row.title,
+          implementer: implementerName,
+          year,
+          amount: row.paid,
+          customerEmail,
+          note: row.note || null,
+        },
+        commissions,
+      );
+      openPayoutBridge(bridge);
+      if (bridge.commissionId) {
+        onSaved();
+      }
     }
   };
 
@@ -357,7 +400,7 @@ export function ImplementerCommissionDetailDialog({
                         variant="outline"
                         disabled={!canTogglePaymentStatus}
                         className={`h-7 text-[10px] ${paymentStatusButtonClass(r.payment_status)}`}
-                        onClick={() => void toggleRentalPaid(r.websiteId, r.impIndex, r.payment_status)}
+                        onClick={() => void toggleRentalPaid(r.websiteId, r.impIndex, r.payment_status, r)}
                       >
                         {r.payment_status === "paid"
                           ? COMMISSION_STATUS_LABELS.paid
@@ -522,6 +565,18 @@ export function ImplementerCommissionDetailDialog({
         <div className="flex justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Zavrieť</Button>
         </div>
+
+        <FactConfirmDialog
+          open={payoutFactOpen}
+          onOpenChange={setPayoutFactOpen}
+          draft={payoutFactDraft}
+          mode="workflow"
+          onSaved={() => {
+            setPayoutFactOpen(false);
+            setPayoutFactDraft(null);
+            onSaved();
+          }}
+        />
       </DialogContent>
     </Dialog>
   );
