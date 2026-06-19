@@ -38,7 +38,7 @@ CRM: leads, rental_websites, commissions, rental_payments, expenses
 Finance (po migrácii): payment_records, payout_records, cost_records, finance_issue_dismissals, finance_rules, finance_hosting_records, finance_review_items, finance_review_cadence
 Customer identity: tabuľka `customers` EXISTUJE a je aktívna (migrácie 20260611100000_customers_foundation, 20260611100100_customers_email_backfill, 20260614000000_rc5_rental_customer_identity). customer_id FK je na leads, project_notes, rental_websites, hosting_records, commissions + rental_websites.customer_email backfill. Identity bridge cez email/name ostáva ako fallback pre záznamy bez customer_id. Loader: `loadCustomerHubAggregate` (Fáza 2b) vracia `CustomerHubAggregate` so sekčnými error stavmi cez `sectionFetch` — nikdy tichý `[]` bez `error`.
 
-Destructive delete (Fáza 2c): Všetky mazania klientov/hostingu/prenájmov idú cez `useDestructiveAction` → RPC precheck → `ConfirmDestructiveActionModal` → RPC execute. **Hard block** ak existujú `payment_fact` / `cost_fact` / `payout_fact`. Modal zobrazuje presný zoznam blokujúcich záznamov + CTA linky na Finance/Hosting/Customer hub.
+Destructive delete (Fáza 2c): Mazania **klientov, hostingu a prenájmov** idú cez `useDestructiveAction` → RPC precheck → `ConfirmDestructiveActionModal` → RPC execute. **Hard block** ak existujú `payment_fact` / `cost_fact` / `payout_fact`. Modal zobrazuje presný zoznam blokujúcich záznamov + CTA linky na Finance/Hosting/Customer hub. *(Note: lead delete v pipeline zatiaľ raw `.delete()` — backlog.)*
 
 ## FINANCE TRUTH LEVELS (NIKDY neignorovať)
 
@@ -91,6 +91,9 @@ Lead → Klient (customer/:key) → Rental website → payment_records → cost_
 - NIKDY nemaž legacy_import záznamy
 - NIKDY nemeň commission split v implementers JSON bez migrácie
 - VŽDY Plan Mode pred zmenou v 3+ súboroch
+- Governance: pozri **GOVERNANCE.md** (ownership, canonical moduly, inline-query pravidlá)
+- Plan Mode session: `VITE_PLAN_MODE=1` v `.env.local`; registry v `src/lib/governance/planMode.ts`
+- CRM edit modaly: preferuj **`useAdminCloseGuard`** (wrapuje `useUnsavedChangesGuard` + route blocker + UnsavedChangesAlertDialog)
 
 ## POST-RELEASE BACKLOG (neriešiť teraz)
 

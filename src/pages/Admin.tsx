@@ -1,3 +1,4 @@
+/** governance:inline-queries — do not expand; extract loaders to src/lib/ in Plan Mode (GOVERNANCE.md). */
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import LeadBulkBar from "@/components/admin/leads/LeadBulkBar";

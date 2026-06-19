@@ -1,3 +1,4 @@
+/** governance:inline-queries — do not expand; extract loaders to src/lib/ in Plan Mode (GOVERNANCE.md). */
 import { useEffect, useMemo, useState, useCallback, type ComponentProps } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";

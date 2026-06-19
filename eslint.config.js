@@ -4,6 +4,9 @@ import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
+// Governance: revenue-critical paths & Plan Mode rules — GOVERNANCE.md, src/lib/governance/planMode.ts
+// Pages marked governance:inline-queries must not grow supabase.from() without lib loaders + Plan Mode.
+
 export default tseslint.config(
   { ignores: ["dist"] },
   {

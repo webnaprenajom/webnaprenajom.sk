@@ -1,3 +1,4 @@
+/** CRITICAL: Plan Mode only — see GOVERNANCE.md. Ledger truth + reconciliation source of truth. */
 import type { FinanceLedgerRow, FinanceSnapshot, FinanceTruthLevel } from "./types";
 import { buildReconciliation } from "./buildReconciliation";
 import {
