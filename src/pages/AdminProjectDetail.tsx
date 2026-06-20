@@ -19,6 +19,7 @@ import {
 import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
 import { OperatingCostField } from "@/components/admin/OperatingCostField";
 import { AgreedPriceField, ENTITY_PAYMENTS_TAB_NOTE } from "@/components/admin/AgreedPriceField";
+import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompletenessBadge";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import {
   countConfirmedPayments,
@@ -281,6 +282,12 @@ export default function AdminProjectDetail() {
                   setProject({ ...project, agreed_fee: next > 0 ? next : null });
                   toast({ title: "Dohodnutá cena uložená" });
                 }}
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <PaymentCompletenessBadge
+                agreedPrice={project.agreed_fee}
+                confirmedPaid={confirmedRevenue}
               />
             </div>
             <div className="sm:col-span-2">

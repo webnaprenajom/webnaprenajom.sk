@@ -70,7 +70,7 @@ export function CustomerHubFinanceSnapshot({ finance, onOpenTab }: Props) {
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         <KpiCell
-          label="Tržby"
+          label="Potvrdené platby"
           value={`${finance.paymentsReceivedTotal.toFixed(2)} €`}
           tone="success"
           breakdown={[
@@ -79,7 +79,7 @@ export function CustomerHubFinanceSnapshot({ finance, onOpenTab }: Props) {
           ]}
         />
         <KpiCell
-          label="Náklady"
+          label="Potvrdené náklady"
           value={`${finance.costsTotal.toFixed(2)} €`}
           tone={finance.costsTotal > 0 ? "warning" : "default"}
           breakdown={[

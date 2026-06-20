@@ -1,5 +1,6 @@
 import { summarizeOpenTasks } from "@/lib/crmLookup/taskCustomerLink";
 import { resolveProfitDisplayContext } from "@/lib/profit/profitContext";
+import { countConfirmedPayments } from "@/lib/finance/entityPaymentBridge";
 import type {
   CommissionPayout,
   CustomerFinanceSummary,
@@ -220,13 +221,12 @@ export function computeCustomerFinanceSummary(
 ): CustomerFinanceSummary {
   let paymentsReceivedFactTotal = 0;
   let paymentsReceivedLegacyTotal = 0;
-  let paymentsReceivedTotal = 0;
   data.paymentRecords.forEach((p) => {
     const amount = Number(p.amount) || 0;
-    paymentsReceivedTotal += amount;
     if (p.truth_level === "payment_fact") paymentsReceivedFactTotal += amount;
     else if (p.truth_level === "legacy_import") paymentsReceivedLegacyTotal += amount;
   });
+  const paymentsReceivedTotal = paymentsReceivedFactTotal;
 
   const paymentsExpectedTotal = data.rentalPayments
     .filter((rp) => !rp.paid)
@@ -234,25 +234,26 @@ export function computeCustomerFinanceSummary(
 
   let costsFactTotal = 0;
   let costsLegacyTotal = 0;
-  let costsTotal = 0;
   data.costRecords.forEach((c) => {
     const amount = Number(c.amount) || 0;
-    costsTotal += amount;
     if (c.truth_level === "cost_fact") costsFactTotal += amount;
     else if (c.truth_level === "legacy_import") costsLegacyTotal += amount;
   });
+  const costsTotal = costsFactTotal;
+  const confirmedPaymentCount = countConfirmedPayments(data.paymentRecords);
 
   const grossProfit = resolveProfitDisplayContext({
     entityKind: "customer",
-    revenueKnown: data.paymentRecords.length > 0,
-    revenue: paymentsReceivedTotal,
-    operatingCost: costsTotal,
-    paymentRecordCount: data.paymentRecords.length,
+    revenueKnown: confirmedPaymentCount > 0,
+    revenue: paymentsReceivedFactTotal,
+    operatingCost: costsFactTotal,
+    paymentRecordCount: confirmedPaymentCount,
   });
 
   const payoutByImplementer = new Map<string, CommissionPayout>();
   let paidCommissionsTotal = 0;
   data.payoutRecords.forEach((p) => {
+    if (p.truth_level !== "payout_fact") return;
     const amount = Number(p.amount) || 0;
     paidCommissionsTotal += amount;
     const key = p.implementer || "Neznámy";

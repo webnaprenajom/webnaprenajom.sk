@@ -380,20 +380,20 @@ describe("computeCustomerFinanceSummary", () => {
     });
 
     const finance = computeCustomerFinanceSummary(data);
-    expect(finance.paymentsReceivedTotal).toBe(150);
+    expect(finance.paymentsReceivedTotal).toBe(100);
     expect(finance.paymentsReceivedFactTotal).toBe(100);
     expect(finance.paymentsReceivedLegacyTotal).toBe(50);
     expect(finance.paymentsExpectedTotal).toBe(30);
     expect(finance.costsTotal).toBe(20);
     expect(finance.costsFactTotal).toBe(20);
     expect(finance.grossProfit.canShowProfit).toBe(true);
-    expect(finance.grossProfit.profit).toBe(130);
+    expect(finance.grossProfit.profit).toBe(80);
     expect(finance.paidCommissionsTotal).toBe(15);
     expect(finance.paidCommissionsByImplementer).toEqual([
       { implementer: "Realizator A", total: 15, count: 1 },
     ]);
     expect(finance.netProfitCanShow).toBe(true);
-    expect(finance.netProfit).toBe(115);
+    expect(finance.netProfit).toBe(65);
   });
 
   it("does not show profit when there is no revenue and no cost", () => {

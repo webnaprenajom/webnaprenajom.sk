@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { isConfirmedPayment } from "@/lib/finance/entityPaymentBridge";
 import { Link } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
@@ -121,18 +122,18 @@ export function CustomerFinancePanel({ data, finance }: Props) {
   // Väzby: príjmy/náklady per prenájom (Golden Path: rental_websites -> payment/cost_records)
   const serviceRows = data.rentals.map((r) => {
     const income = data.paymentRecords
-      .filter((p) => p.rental_website_id === r.id)
+      .filter((p) => p.rental_website_id === r.id && isConfirmedPayment(p))
       .reduce((s, p) => s + (Number(p.amount) || 0), 0);
     const cost = data.costRecords
-      .filter((c) => c.rental_website_id === r.id)
+      .filter((c) => c.rental_website_id === r.id && c.truth_level === "cost_fact")
       .reduce((s, c) => s + (Number(c.amount) || 0), 0);
     return { id: r.id, name: r.name, income, cost };
   });
   const unlinkedIncome = data.paymentRecords
-    .filter((p) => !p.rental_website_id || !rentalIds.has(p.rental_website_id))
+    .filter((p) => (!p.rental_website_id || !rentalIds.has(p.rental_website_id)) && isConfirmedPayment(p))
     .reduce((s, p) => s + (Number(p.amount) || 0), 0);
   const unlinkedCost = data.costRecords
-    .filter((c) => !c.rental_website_id || !rentalIds.has(c.rental_website_id))
+    .filter((c) => (!c.rental_website_id || !rentalIds.has(c.rental_website_id)) && c.truth_level === "cost_fact")
     .reduce((s, c) => s + (Number(c.amount) || 0), 0);
 
   // História platieb — posledných ~12 mesiacov
@@ -142,7 +143,8 @@ export function CustomerFinancePanel({ data, finance }: Props) {
   );
   const rentalNameById = new Map(data.rentals.map((r) => [r.id, r.name]));
 
-  const revenueKnown = data.paymentRecords.length > 0;
+  const revenueKnown = finance.paymentsReceivedFactTotal > 0;
+  const confirmedPaymentCount = data.paymentRecords.filter(isConfirmedPayment).length;
 
   return (
     <div className="space-y-4">
@@ -151,7 +153,7 @@ export function CustomerFinancePanel({ data, finance }: Props) {
       {/* Finančný súhrn */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <FinanceMetric
-          label="Prijaté platby"
+          label="Potvrdené platby"
           value={`${finance.paymentsReceivedTotal.toFixed(2)} €`}
           tone="success"
           breakdown={[
@@ -166,7 +168,7 @@ export function CustomerFinancePanel({ data, finance }: Props) {
           breakdown={[{ level: "workflow_only", amount: finance.paymentsExpectedTotal }]}
         />
         <FinanceMetric
-          label="Náklady"
+          label="Potvrdené náklady"
           value={`${finance.costsTotal.toFixed(2)} €`}
           tone={finance.costsTotal > 0 ? "warning" : "default"}
           breakdown={[
@@ -204,14 +206,20 @@ export function CustomerFinancePanel({ data, finance }: Props) {
         />
       </div>
 
-      {finance.grossProfit.canShowProfit && (
+      {(finance.grossProfit.canShowProfit || finance.paymentsReceivedLegacyTotal > 0) && (
         <EntityProfitBanner
           entityKind="customer"
           revenue={finance.paymentsReceivedTotal}
           operatingCost={finance.costsTotal}
           revenueKnown={revenueKnown}
-          paymentRecordCount={data.paymentRecords.length}
+          paymentRecordCount={confirmedPaymentCount}
         />
+      )}
+      {finance.paymentsReceivedLegacyTotal > 0 && (
+        <p className="text-[10px] text-muted-foreground">
+          Legacy import {finance.paymentsReceivedLegacyTotal.toFixed(2)} € nie je potvrdený príjem — zobrazuje sa
+          len v rozpise vyššie.
+        </p>
       )}
 
       {snapshot.rows.length > 0 && (

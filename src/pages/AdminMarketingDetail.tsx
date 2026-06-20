@@ -24,6 +24,7 @@ import {
   ConfirmedLinkBadge,
 } from "@/components/admin/lookup/LinkStatusBadge";
 import { AgreedPriceField, ENTITY_PAYMENTS_TAB_NOTE } from "@/components/admin/AgreedPriceField";
+import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompletenessBadge";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import {
   countConfirmedPayments,
@@ -245,6 +246,12 @@ export default function AdminMarketingDetail() {
               setRecord({ ...record, agreed_fee: next > 0 ? next : null });
               toast({ title: "Dohodnutá cena uložená" });
             }}
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <PaymentCompletenessBadge
+            agreedPrice={record.agreed_fee}
+            confirmedPaid={confirmedRevenue}
           />
         </div>
         <div className="sm:col-span-2">

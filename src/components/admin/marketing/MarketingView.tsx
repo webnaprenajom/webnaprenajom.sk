@@ -15,6 +15,11 @@ import {
 } from "@/components/ui/table";
 import { matchesSearchQuery } from "@/lib/searchMatch";
 import { formatAgreedPrice } from "@/components/admin/AgreedPriceField";
+import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompletenessBadge";
+import {
+  buildConfirmedPaymentTotalsBySource,
+  confirmedPaidForEntity,
+} from "@/lib/finance/paymentCompleteness";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Pencil, Trash2, ExternalLink, FileText, Search } from "lucide-react";
 import { buildClientNameEmailMap, customerHrefByClientName } from "@/lib/adminNav";
@@ -43,6 +48,7 @@ export function MarketingView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
   const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
+  const [confirmedBySource, setConfirmedBySource] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     document.title = "Marketing | CRM";
@@ -51,9 +57,13 @@ export function MarketingView() {
 
   const load = async () => {
     setLoading(true);
-    const [recordsRes, leadsRes] = await Promise.all([
+    const [recordsRes, leadsRes, paysRes] = await Promise.all([
       supabase.from("marketing_records").select("*").order("updated_at", { ascending: false }),
       supabase.from("leads").select("name,email"),
+      supabase
+        .from("payment_records")
+        .select("source_table,source_id,amount,truth_level")
+        .eq("source_table", "marketing_records"),
     ]);
     if (recordsRes.error) {
       toast({ title: "Chyba", description: recordsRes.error.message, variant: "destructive" });
@@ -65,6 +75,7 @@ export function MarketingView() {
     if (!leadsRes.error && leadsRes.data) {
       setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
     }
+    setConfirmedBySource(buildConfirmedPaymentTotalsBySource(paysRes.data || []));
     setLoading(false);
   };
 
@@ -221,6 +232,7 @@ export function MarketingView() {
                   <TableHead>Kanál</TableHead>
                   <TableHead>Stav</TableHead>
                   <TableHead className="text-right">Dohodnutá cena</TableHead>
+                  <TableHead>Úhrada</TableHead>
                   <TableHead>URL</TableHead>
                   <TableHead>Aktualizované</TableHead>
                   <TableHead className="w-[120px]" />
@@ -280,6 +292,17 @@ export function MarketingView() {
                       </TableCell>
                       <TableCell className="text-xs text-right tabular-nums whitespace-nowrap">
                         {formatAgreedPrice(item.agreed_fee)}
+                      </TableCell>
+                      <TableCell>
+                        <PaymentCompletenessBadge
+                          compact
+                          agreedPrice={item.agreed_fee}
+                          confirmedPaid={confirmedPaidForEntity(
+                            confirmedBySource,
+                            "marketing_records",
+                            item.id,
+                          )}
+                        />
                       </TableCell>
                       <TableCell className="text-xs max-w-[160px]">
                         {item.url ? (

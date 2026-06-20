@@ -14,6 +14,11 @@ import {
 } from "@/components/ui/table";
 import { matchesSearchQuery } from "@/lib/searchMatch";
 import { formatAgreedPrice } from "@/components/admin/AgreedPriceField";
+import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompletenessBadge";
+import {
+  buildConfirmedPaymentTotalsBySource,
+  confirmedPaidForEntity,
+} from "@/lib/finance/paymentCompleteness";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -94,6 +99,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
   const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
+  const [confirmedBySource, setConfirmedBySource] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     document.title = cfg.docTitle;
@@ -102,9 +108,15 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
 
   const load = async () => {
     setLoading(true);
-    const [notesRes, leadsRes] = await Promise.all([
+    const [notesRes, leadsRes, paysRes] = await Promise.all([
       supabase.from("project_notes").select("*").order("updated_at", { ascending: false }),
       supabase.from("leads").select("name,email"),
+      mode === "projects"
+        ? supabase
+            .from("payment_records")
+            .select("source_table,source_id,amount,truth_level")
+            .eq("source_table", "project_notes")
+        : Promise.resolve({ data: [], error: null }),
     ]);
     if (notesRes.error) {
       toast({ title: "Chyba", description: notesRes.error.message, variant: "destructive" });
@@ -115,6 +127,11 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
     }
     if (!leadsRes.error && leadsRes.data) {
       setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
+    }
+    if (mode === "projects") {
+      setConfirmedBySource(buildConfirmedPaymentTotalsBySource(paysRes.data || []));
+    } else {
+      setConfirmedBySource(new Map());
     }
     setLoading(false);
   };
@@ -375,6 +392,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                   {mode === "projects" && (
                     <TableHead className="text-right">Dohodnutá cena</TableHead>
                   )}
+                  {mode === "projects" && <TableHead>Úhrada</TableHead>}
                   <TableHead>Aktualizované</TableHead>
                   <TableHead className="w-[120px]" />
                 </TableRow>
@@ -485,6 +503,19 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                       {mode === "projects" && (
                         <TableCell className="text-xs text-right tabular-nums whitespace-nowrap">
                           {formatAgreedPrice(item.agreed_fee)}
+                        </TableCell>
+                      )}
+                      {mode === "projects" && (
+                        <TableCell>
+                          <PaymentCompletenessBadge
+                            compact
+                            agreedPrice={item.agreed_fee}
+                            confirmedPaid={confirmedPaidForEntity(
+                              confirmedBySource,
+                              "project_notes",
+                              item.id,
+                            )}
+                          />
                         </TableCell>
                       )}
                       <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">

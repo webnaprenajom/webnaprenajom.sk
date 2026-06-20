@@ -232,10 +232,12 @@ export type CommissionPayout = {
  * (src/lib/profit) so "no revenue yet" / "cost without revenue" cases stay safe — never
  * implies profit when the revenue basis is unknown.
  *
- * Truth levels (CLAUDE.md): paymentsReceived* / costs* split fact vs legacy_import.
+ * Truth levels (CLAUDE.md): paymentsReceivedTotal = payment_fact only (confirmed cash).
+ * paymentsReceivedLegacyTotal = historický import (explicitne oddelené).
  * paymentsExpectedTotal = unpaid rental_payments rows (truth_level=workflow_only, sivá).
  */
 export type CustomerFinanceSummary = {
+  /** Confirmed incoming cash (payment_fact) — primary money truth. */
   paymentsReceivedTotal: number;
   paymentsReceivedFactTotal: number;
   paymentsReceivedLegacyTotal: number;
