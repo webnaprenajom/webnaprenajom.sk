@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2, Pencil, ExternalLink, UserRound } from "lucide-react";
+import { AdminListSearchInput } from "@/components/admin/AdminListSearchInput";
+import { matchesSearchQuery } from "@/lib/searchMatch";
 import {
   adminCustomerHref,
   adminLeadHref,
@@ -52,6 +54,7 @@ export default function AdminDesigns() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [emailLeadIdMap, setEmailLeadIdMap] = useState<Map<string, string>>(new Map());
   const [nameLeadIdMap, setNameLeadIdMap] = useState<Map<string, string>>(new Map());
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     void load();
@@ -122,6 +125,21 @@ export default function AdminDesigns() {
     setDeleting(null);
   };
 
+  const filtered = useMemo(() => {
+    if (!searchQuery.trim()) return rows;
+    return rows.filter((r) => {
+      const statusLabel = STATUSES.find((s) => s.v === r.status)?.label;
+      return matchesSearchQuery(
+        searchQuery,
+        r.client_name,
+        r.email,
+        r.design_url,
+        r.notes,
+        statusLabel,
+      );
+    });
+  }, [rows, searchQuery]);
+
   return (
     <AdminShell
       title="Zaslané dizajny"
@@ -132,11 +150,20 @@ export default function AdminDesigns() {
         </Button>
       }
     >
+      <div className="space-y-4">
+        <AdminListSearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Hľadať klienta, e-mail, URL, status…"
+          disabled={loading}
+        />
       <Card className="overflow-hidden">
         {loading ? (
           <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : rows.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground text-sm">Zatiaľ žiadne zaslané dizajny.</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-12 text-center text-muted-foreground text-sm">Žiadna zhoda pre vyhľadávanie.</div>
         ) : (
           <div className="overflow-x-auto">
             <Table className="text-xs">
@@ -151,7 +178,7 @@ export default function AdminDesigns() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r) => {
+                {filtered.map((r) => {
                   const st = STATUSES.find((s) => s.v === r.status);
                   const leadId =
                     leadIdByEmail(r.email, emailLeadIdMap) ??
@@ -206,6 +233,7 @@ export default function AdminDesigns() {
           </div>
         )}
       </Card>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

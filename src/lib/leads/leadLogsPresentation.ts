@@ -24,7 +24,7 @@ export function resolveLeadLogsLoadState(opts: {
 
 export function leadLogsScopeDescription(role: AppRole | null): string {
   if (isOwner(role)) {
-    return "Zobrazujú sa všetky zmeny leadov (status, typ, priradenie, poznámky) a systémové notifikácie. Nezahŕňa admin_audit_log zo Settings.";
+    return "Zdroj: tabuľka lead_logs — zmeny leadov (status, typ, priradenie, poznámky), notifikácie a koleso. Nezahŕňa projekty, financie, hosting ani admin_audit_log zo Settings. Export = aktuálne filtrovaný zoznam (max. 1000 načítaných záznamov).";
   }
   if (isAdministrator(role)) {
     return "Zobrazujú sa logy len pre leady priradené vášmu menu realizátora (team profile). Ostatné záznamy nie sú viditeľné.";

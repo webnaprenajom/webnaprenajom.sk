@@ -64,6 +64,8 @@ import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { buildDraftKey, clearCrmDraft } from "@/lib/crmPersistence/draftStore";
 import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { filterRentalsForUser } from "@/lib/rbac/scopeHelpers";
+import { matchesSearchQuery } from "@/lib/searchMatch";
+import { AdminListSearchInput } from "@/components/admin/AdminListSearchInput";
 import { useImplementerRegistryOptions } from "@/hooks/useImplementerSelectOptions";
 import {
   type RentalImplementer,
@@ -185,6 +187,7 @@ export default function AdminRentals() {
   const [editing, setEditing] = useState<RentalWebsite | null>(null);
   const [editBaseline, setEditBaseline] = useState<RentalWebsite | null>(null);
   const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [searchQuery, setSearchQuery] = useState("");
   const [pricesOpen, setPricesOpen] = useState<RentalWebsite | null>(null);
   const [pricesDraft, setPricesDraft] = useState<Record<number, string>>({});
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
@@ -739,6 +742,21 @@ export default function AdminRentals() {
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
+  const filteredWebsites = useMemo(() => {
+    if (!searchQuery.trim()) return websites;
+    return websites.filter((w) =>
+      matchesSearchQuery(
+        searchQuery,
+        w.name,
+        w.url,
+        w.client_name,
+        w.source,
+        w.note,
+        ...(w.implementers || []).map((i) => i.name),
+      ),
+    );
+  }, [websites, searchQuery]);
+
   const statusStyle = (st: PaymentStatus) => {
     switch (st) {
       case "invoice":
@@ -875,6 +893,12 @@ export default function AdminRentals() {
           <span className="inline-flex items-center gap-1.5"><Euro className="w-3 h-3 text-primary"/> Klikni € pre úpravu ceny pre konkrétny mesiac</span>
         </div>
 
+        <AdminListSearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Hľadať web, klienta, URL, realizátora…"
+        />
+
         <div className="rounded-lg border border-border bg-card overflow-x-auto">
           <Table>
             <TableHeader>
@@ -900,7 +924,14 @@ export default function AdminRentals() {
                   </TableCell>
                 </TableRow>
               )}
-              {websites.map((w) => {
+              {websites.length > 0 && filteredWebsites.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={20} className="text-center text-muted-foreground py-10">
+                    Žiadna zhoda pre vyhľadávanie.
+                  </TableCell>
+                </TableRow>
+              )}
+              {filteredWebsites.map((w) => {
                 const stats = yearStats(w);
                 const credits = Number(w.credits_used) || 0;
                 const creditCost = credits * CREDIT_COST;

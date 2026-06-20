@@ -30,6 +30,8 @@ import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { buildDraftKey, clearCrmDraft } from "@/lib/crmPersistence/draftStore";
 import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { filterTasksForUser } from "@/lib/rbac/scopeHelpers";
+import { matchesSearchQuery } from "@/lib/searchMatch";
+import { AdminListSearchInput } from "@/components/admin/AdminListSearchInput";
 import {
   Loader2,
   Plus,
@@ -170,6 +172,7 @@ const AdminTasks = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("active");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm());
@@ -424,9 +427,26 @@ const AdminTasks = () => {
       if (statusFilter === "archived" && t.status !== "done") return false;
       if (statusFilter !== "all" && statusFilter !== "active" && statusFilter !== "archived" && t.status !== statusFilter) return false;
       if (assigneeFilter !== "all" && (t.assignee || "") !== assigneeFilter) return false;
+      if (searchQuery.trim()) {
+        const statusLabel = STATUS_CONFIG[t.status]?.label;
+        const priorityLabel = PRIORITY_CONFIG[t.priority]?.label;
+        if (
+          !matchesSearchQuery(
+            searchQuery,
+            t.title,
+            t.description,
+            t.client_name,
+            t.assignee,
+            statusLabel,
+            priorityLabel,
+          )
+        ) {
+          return false;
+        }
+      }
       return true;
     });
-  }, [items, statusFilter, assigneeFilter]);
+  }, [items, statusFilter, assigneeFilter, searchQuery]);
 
   const legacyFinanceCount = useMemo(
     () => items.filter((t) => isLegacyTaskFinance(t)).length,
@@ -518,7 +538,13 @@ const AdminTasks = () => {
         </section>
         )}
 
-        <section className="flex flex-col sm:flex-row gap-3">
+        <section className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <AdminListSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Hľadať úlohu, klienta, riešiteľa…"
+            className="flex-1"
+          />
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-[240px]"><SelectValue /></SelectTrigger>
             <SelectContent>

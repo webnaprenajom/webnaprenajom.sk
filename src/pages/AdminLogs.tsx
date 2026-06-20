@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Search, AlertTriangle, Info } from "lucide-react";
+import { Loader2, Search, AlertTriangle, Info, Download } from "lucide-react";
 import { adminCustomerHref, adminLeadHref } from "@/lib/adminNav";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { isCrmUser } from "@/lib/rbac/permissions";
@@ -31,6 +31,7 @@ import {
   leadLogsScopeDescription,
   resolveLeadLogsLoadState,
 } from "@/lib/leads/leadLogsPresentation";
+import { downloadLeadLogsExport } from "@/lib/leads/leadLogsExport";
 
 interface LogRow {
   id: string;
@@ -162,7 +163,7 @@ const AdminLogs = () => {
           <p>{leadLogsScopeDescription(access.role)}</p>
         </div>
 
-        <section className="flex flex-col sm:flex-row gap-3">
+        <section className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -186,6 +187,24 @@ const AdminLogs = () => {
               <SelectItem value="wheel_spin">Koleso šťastia</SelectItem>
             </SelectContent>
           </Select>
+          {loadState === "ok" && filtered.length > 0 && (
+            <div className="flex gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => downloadLeadLogsExport(filtered, "csv")}
+              >
+                <Download className="w-4 h-4 mr-1" /> CSV ({filtered.length})
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => downloadLeadLogsExport(filtered, "txt")}
+              >
+                <Download className="w-4 h-4 mr-1" /> TXT ({filtered.length})
+              </Button>
+            </div>
+          )}
         </section>
 
         <section className="rounded-xl border border-border bg-card overflow-hidden">

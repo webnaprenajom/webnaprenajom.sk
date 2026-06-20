@@ -202,6 +202,23 @@ export function FinanceReconciliation({
     }
   };
 
+  const confirmAsValid = async (issue: ReconciliationIssue) => {
+    const key = issue.issueKey ?? buildIssueKey(issue);
+    try {
+      await dismissIssue({
+        issueKey: key,
+        issueType: issue.kind,
+        dismissalType: "false_positive",
+        reason: "Potvrdené ako validné",
+      });
+      toast({ title: "Označené ako validné" });
+      onSaved();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Chyba";
+      toast({ title: "Chyba", description: msg, variant: "destructive" });
+    }
+  };
+
   const sectionIssues = useMemo(() => {
     const visibleSet = new Set(visibleIssues.map((i) => i.issueKey ?? buildIssueKey(i)));
     return PRIMARY_ISSUE_SECTIONS.map((section) => ({
@@ -217,8 +234,9 @@ export function FinanceReconciliation({
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Výnimky medzi workflow a potvrdenými faktmi ({year} pre prenájmy). Úlohy sú legacy — skryté v
-        primárnom zozname. Zamietnuté: {dismissals.length}.
+        Výnimky medzi workflow a potvrdenými faktmi ({year} pre prenájmy). Kvalita a duplicity:{" "}
+        <strong>Potvrdiť</strong> = validné (skryje issue), <strong>Zamietnuť</strong> = všeobecné
+        dismiss. Legacy úlohy sú skryté v primárnom zozname. Zamietnuté: {dismissals.length}.
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -267,6 +285,7 @@ export function FinanceReconciliation({
               onAction={openAction}
               onDismiss={setDismissTarget}
               onRevoke={handleRevoke}
+              onConfirmValid={(issue) => void confirmAsValid(issue)}
             />
           ))}
         </div>
@@ -289,6 +308,7 @@ export function FinanceReconciliation({
               onAction={openAction}
               onDismiss={setDismissTarget}
               onRevoke={handleRevoke}
+              onConfirmValid={(issue) => void confirmAsValid(issue)}
               readOnlyActions
             />
           </CollapsibleContent>
@@ -306,10 +326,11 @@ export function FinanceReconciliation({
       <Dialog open={!!dismissTarget} onOpenChange={(o) => !o && setDismissTarget(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Dismiss issue</DialogTitle>
+            <DialogTitle>Zamietnuť problém</DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground">
-            Skryje issue v aktívnom pohľade. Nemení source dáta.
+            Skryje issue v aktívnom pohľade. Nemení source dáta. Pre validné duplicity radšej použite
+            „Potvrdiť“.
           </p>
           <div className="space-y-2">
             <label className="text-xs text-muted-foreground">Typ</label>
@@ -326,7 +347,7 @@ export function FinanceReconciliation({
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDismissTarget(null)}>Zrušiť</Button>
-            <Button onClick={() => void submitDismiss()}>Dismiss</Button>
+            <Button onClick={() => void submitDismiss()}>Zamietnuť</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -342,6 +363,7 @@ function IssueSectionTable({
   onAction,
   onDismiss,
   onRevoke,
+  onConfirmValid,
   readOnlyActions = false,
 }: {
   title: string;
@@ -351,6 +373,7 @@ function IssueSectionTable({
   onAction: (issue: ReconciliationIssue) => void;
   onDismiss: (issue: ReconciliationIssue) => void;
   onRevoke: (issueKey: string) => void;
+  onConfirmValid: (issue: ReconciliationIssue) => void;
   readOnlyActions?: boolean;
 }) {
   return (
@@ -377,6 +400,7 @@ function IssueSectionTable({
               const actionable = !readOnlyActions && isIssueActionable(issue, ctx) && !dismissed;
               const actionLabel = getIssueActionLabel(issue);
               const dismissable = isIssueDismissable(issue) && !dismissed;
+              const confirmValidOnly = dismissable && !actionable && !readOnlyActions;
               const sourceHint = formatReconciliationSourceHint(issue.sourceTable, issue.sourceId);
               return (
                 <TableRow key={`${issue.kind}-${key}-${idx}`}>
@@ -405,8 +429,18 @@ function IssueSectionTable({
                   </TableCell>
                   <TableCell className="space-x-1">
                     {actionable && actionLabel && (
-                      <Button size="sm" variant="outline" className="text-[10px] h-7" onClick={() => onAction(issue)}>
+                      <Button size="sm" variant="default" className="text-[10px] h-7" onClick={() => onAction(issue)}>
                         {actionLabel}
+                      </Button>
+                    )}
+                    {confirmValidOnly && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-[10px] h-7"
+                        onClick={() => onConfirmValid(issue)}
+                      >
+                        Potvrdiť
                       </Button>
                     )}
                     {dismissable && (

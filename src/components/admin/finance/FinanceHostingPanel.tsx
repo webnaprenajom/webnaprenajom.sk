@@ -22,6 +22,8 @@ import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
+import { AdminListSearchInput } from "@/components/admin/AdminListSearchInput";
+import { matchesSearchQuery } from "@/lib/searchMatch";
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
 import {
   hasSourceLinkedRecord,
@@ -72,6 +74,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
   const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
   const [paymentDraft, setPaymentDraft] = useState<FactDraft | null>(null);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const openHostingDialog = useCallback((opts?: { reset?: boolean }) => {
     if (opts?.reset !== false) {
@@ -144,6 +147,20 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
       ),
     [ctx.paymentRecords],
   );
+
+  const filteredRecords = useMemo(() => {
+    if (!searchQuery.trim()) return records;
+    return records.filter((r) =>
+      matchesSearchQuery(
+        searchQuery,
+        r.client_name,
+        r.customer_email,
+        r.provider,
+        r.note,
+        r.acquired_by,
+      ),
+    );
+  }, [records, searchQuery]);
 
   const save = async (): Promise<boolean> => {
     const clientLabel = form.client_name.trim();
@@ -284,13 +301,23 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
       <p className="text-xs text-muted-foreground">
         Hosting je oddelený od prenájmového streamu. Platobný fakt je voliteľný — bez auto-sync.
       </p>
-      <div className="flex justify-end">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <AdminListSearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Hľadať klienta, poskytovateľa, poznámku…"
+          className="flex-1 max-w-md"
+        />
         <Button size="sm" onClick={() => openHostingDialog({ reset: true })}>
           <Plus className="w-4 h-4 mr-1" /> Nový hosting
         </Button>
       </div>
       {records.length === 0 ? (
         <p className="text-sm text-muted-foreground py-8 text-center border rounded-xl">Žiadne hosting záznamy.</p>
+      ) : filteredRecords.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-8 text-center border border-dashed rounded-xl">
+          Žiadna zhoda pre vyhľadávanie.
+        </p>
       ) : (
         <div className="rounded-xl border overflow-x-auto">
           <Table>
@@ -306,7 +333,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {records.map((r) => {
+              {filteredRecords.map((r) => {
                 const identity = resolveCustomerIdentity({
                   customerEmail: r.customer_email,
                   clientName: r.client_name,

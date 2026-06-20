@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Copy, Eye, Link as LinkIcon, Trash2 } from "lucide-react";
+import { AdminListSearchInput } from "@/components/admin/AdminListSearchInput";
+import { matchesSearchQuery } from "@/lib/searchMatch";
 
 interface Signature {
   id: string;
@@ -40,6 +42,7 @@ export default function AdminSignatures() {
   const [rows, setRows] = useState<Signature[]>([]);
   const [viewing, setViewing] = useState<Signature | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     void load();
@@ -81,6 +84,24 @@ export default function AdminSignatures() {
     toast({ title: "Skopírované", description: "Link na objednávku" });
   };
 
+  const filtered = useMemo(() => {
+    if (!searchQuery.trim()) return rows;
+    return rows.filter((r) =>
+      matchesSearchQuery(
+        searchQuery,
+        r.client_name,
+        r.company,
+        r.email,
+        r.phone,
+        r.plan,
+        r.package_name,
+        r.signature_name,
+        r.notes,
+        r.ico,
+      ),
+    );
+  }, [rows, searchQuery]);
+
   return (
     <AdminShell
       title="Podpisy objednávok"
@@ -103,11 +124,20 @@ export default function AdminSignatures() {
           </p>
         </Card>
 
+        <AdminListSearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Hľadať klienta, firmu, e-mail, balík…"
+          disabled={loading}
+        />
+
         <Card className="overflow-hidden">
           {loading ? (
             <div className="p-12 flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
           ) : rows.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground text-sm">Zatiaľ žiadne podpisy.</div>
+          ) : filtered.length === 0 ? (
+            <div className="p-12 text-center text-muted-foreground text-sm">Žiadna zhoda pre vyhľadávanie.</div>
           ) : (
             <div className="overflow-x-auto">
               <Table className="text-xs">
@@ -125,7 +155,7 @@ export default function AdminSignatures() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((r) => (
+                  {filtered.map((r) => (
                     <TableRow key={r.id} className="hover:bg-muted/50">
                       <TableCell className="whitespace-nowrap">{new Date(r.signed_at).toLocaleString("sk-SK")}</TableCell>
                       <TableCell>

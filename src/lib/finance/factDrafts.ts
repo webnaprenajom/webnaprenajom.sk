@@ -452,19 +452,19 @@ export function financeCtxWithPayments(
 export function getIssueActionLabel(issue: ReconciliationIssue): string | null {
   switch (issue.kind) {
     case "workflow_incoming":
-      return "Vytvoriť confirmed payment";
+      return "Potvrdiť platbu";
     case "workflow_outgoing_commission":
-      return "Vytvoriť confirmed payout";
+      return "Potvrdiť výplatu";
     case "workflow_outgoing_expense":
-      return "Vytvoriť confirmed cost";
+      return "Potvrdiť náklad";
     case "entity_missing_payment_fact":
-      return "Potvrdiť platbu do financií";
+      return "Potvrdiť platbu";
     case "task_missing_payment_deposit":
     case "task_missing_payment_full":
       return null;
     case "legacy_no_reference":
     case "legacy_imprecise_paid_at":
-      return "Potvrdiť ako fact";
+      return "Potvrdiť záznam";
     default:
       return null;
   }
