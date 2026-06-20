@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -21,8 +21,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, AlertTriangle, Info } from "lucide-react";
 import { adminCustomerHref, adminLeadHref } from "@/lib/adminNav";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { isCrmUser } from "@/lib/rbac/permissions";
+import {
+  leadLogsEmptyMessage,
+  leadLogsNoAccessMessage,
+  leadLogsScopeDescription,
+  resolveLeadLogsLoadState,
+} from "@/lib/leads/leadLogsPresentation";
 
 interface LogRow {
   id: string;
@@ -73,37 +81,47 @@ const actionLabel = (log: { action: string; field: string | null }) => {
 
 const AdminLogs = () => {
   const navigate = useNavigate();
+  const access = useAdminAccess();
   const [logs, setLogs] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState<string>("all");
 
-  useEffect(() => {
-    document.title = "CRM Logy | Web na prenájom";
-    void loadLogs();
-  }, []);
+  const loadLogs = useCallback(async () => {
+    if (!isCrmUser(access.role)) {
+      setLogs([]);
+      setLoadError("Nemáte CRM rolu pre čítanie histórie.");
+      setLoading(false);
+      return;
+    }
 
-  const loadLogs = async () => {
     setLoading(true);
+    setLoadError(null);
     const { data, error } = await supabase
       .from("lead_logs")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
-      const msg = error.message;
+      setLoadError(error.message);
+      setLogs([]);
       toast({
         title: "Chyba načítania histórie",
-        description: msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("row-level")
-          ? `${msg} — História leadov je dostupná len pre owner účet (RLS).`
-          : msg,
+        description: error.message,
         variant: "destructive",
       });
     } else {
       setLogs((data || []) as LogRow[]);
     }
     setLoading(false);
-  };
+  }, [access.role]);
+
+  useEffect(() => {
+    if (access.authChecking) return;
+    document.title = "CRM Logy | Web na prenájom";
+    void loadLogs();
+  }, [access.authChecking, loadLogs]);
 
   const filtered = useMemo(() => {
     return logs.filter((l) => {
@@ -123,12 +141,27 @@ const AdminLogs = () => {
     });
   }, [logs, search, actionFilter]);
 
+  const loadState = resolveLeadLogsLoadState({
+    loading: loading || access.authChecking,
+    error: loadError,
+    rowCount: logs.length,
+    role: access.role,
+  });
+
+  const isFilteredEmpty = loadState === "ok" && filtered.length === 0;
+
   return (
     <AdminShell
       title="CRM Logy – História zmien"
+      subtitle="Audit trail zmien leadov (nie Settings admin_audit_log)"
       backTo={{ label: "CRM", href: "/admin" }}
     >
       <div className="space-y-4">
+        <div className="rounded-lg border border-border/60 bg-muted/20 p-3 flex gap-2 text-xs text-muted-foreground">
+          <Info className="w-4 h-4 shrink-0 mt-0.5 text-primary" />
+          <p>{leadLogsScopeDescription(access.role)}</p>
+        </div>
+
         <section className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -137,10 +170,11 @@ const AdminLogs = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
+              disabled={loadState === "no_access" || loadState === "loading"}
             />
           </div>
           <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]" disabled={loadState === "no_access" || loadState === "loading"}>
               <SelectValue placeholder="Akcia" />
             </SelectTrigger>
             <SelectContent>
@@ -155,12 +189,31 @@ const AdminLogs = () => {
         </section>
 
         <section className="rounded-xl border border-border bg-card overflow-hidden">
-          {loading ? (
+          {loadState === "loading" ? (
             <div className="py-16 flex items-center justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="py-16 text-center text-muted-foreground">Žiadne logy</div>
+          ) : loadState === "no_access" ? (
+            <div className="py-16 px-6 text-center space-y-2">
+              <AlertTriangle className="w-8 h-8 mx-auto text-amber-500" />
+              <p className="font-medium text-sm">Prístup zamietnutý</p>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                {leadLogsNoAccessMessage(access.role)}
+              </p>
+            </div>
+          ) : loadState === "error" ? (
+            <div className="py-16 px-6 text-center space-y-2">
+              <AlertTriangle className="w-8 h-8 mx-auto text-destructive" />
+              <p className="font-medium text-sm">Chyba načítania</p>
+              <p className="text-sm text-muted-foreground">{loadError}</p>
+              <Button size="sm" variant="outline" onClick={() => void loadLogs()}>
+                Skúsiť znova
+              </Button>
+            </div>
+          ) : loadState === "empty" || isFilteredEmpty ? (
+            <div className="py-16 px-6 text-center text-muted-foreground text-sm">
+              {leadLogsEmptyMessage(access.role, isFilteredEmpty)}
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
