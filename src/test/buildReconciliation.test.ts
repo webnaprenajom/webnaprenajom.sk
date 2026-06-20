@@ -154,7 +154,7 @@ describe("buildReconciliation entity gaps", () => {
     expect(inactive.issues.filter((i) => i.kind === "entity_missing_payment_fact")).toHaveLength(0);
   });
 
-  it("flags task deposit and full gaps separately", () => {
+  it("flags task deposit and full gaps separately (legacy finance only)", () => {
     const { issues } = buildReconciliation({
       ...emptyBase(),
       tasks: [

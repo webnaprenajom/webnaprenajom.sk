@@ -12,17 +12,18 @@ import { adminCustomerHrefPreferred, adminLeadHref } from "@/lib/adminNav";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { isValidEntityId } from "@/lib/crmLookup/resolveFormCustomerLink";
 import {
-  entityHasLinkedPaymentInRows,
   loadTaskPaymentRecords,
-  taskPaymentCreateHint,
-  taskPaymentSourceId,
   taskPaymentVariantLabel,
   type EntityPaymentRow,
 } from "@/lib/finance/entityPaymentBridge";
-import { financeCtxWithPayments, prefillFromTask } from "@/lib/finance/factDrafts";
+import {
+  canCreateTaskCommissions,
+  TASK_COMMISSION_LEGACY_HINT,
+  TASK_FINANCE_ROUTING_NOTE,
+  TASK_PAYMENT_LEGACY_HINT,
+} from "@/lib/tasks/taskFinanceCleanup";
 import {
   isLegacyTaskFinance,
-  TASK_FINANCE_DEPRECATION_NOTE,
 } from "@/lib/tasks/taskFinanceModel";
 import {
   isOrphanTask,
@@ -153,7 +154,6 @@ export default function AdminTaskDetail() {
     () => PRIORITY_CONFIG[task?.priority ?? "normal"],
     [task?.priority],
   );
-  const paymentCtx = useMemo(() => financeCtxWithPayments(linkedPayments), [linkedPayments]);
 
   if (loading || !task) {
     return (
@@ -169,27 +169,32 @@ export default function AdminTaskDetail() {
   const legacyFinance = isLegacyTaskFinance(task);
   const orphan = isOrphanTask(task);
   const parentHref = taskParentDetailHref(task.parent_type, task.parent_id);
+  const parentFinanceLabel =
+    isValidTaskParentType(task.parent_type) && task.parent_id
+      ? `Financie — ${TASK_PARENT_TYPE_LABELS[task.parent_type]}`
+      : null;
   const customerHref = adminCustomerHrefPreferred(task.customer_id, customerEmail);
-  const depositSourceId = taskPaymentSourceId(task.id, "deposit");
-  const fullSourceId = taskPaymentSourceId(task.id, "full");
-  const depositLinked = entityHasLinkedPaymentInRows("tasks", depositSourceId, linkedPayments);
-  const fullLinked = entityHasLinkedPaymentInRows("tasks", fullSourceId, linkedPayments);
-  const depositHint = taskPaymentCreateHint(task, "deposit", depositLinked, depositLinked);
-  const fullHint = taskPaymentCreateHint(task, "full", fullLinked, depositLinked);
 
   return (
     <AdminShell
       title={task.title}
       subtitle={task.client_name || "Bez klienta"}
       actions={
-        <Button size="sm" variant="outline" onClick={() => navigate("/admin/tasks")}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Späť
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {parentHref && parentFinanceLabel && (
+            <Button asChild size="sm" variant="default">
+              <Link to={parentHref}>{parentFinanceLabel}</Link>
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={() => navigate("/admin/tasks")}>
+            <ArrowLeft className="w-4 h-4 mr-1" /> Späť
+          </Button>
+        </div>
       }
     >
       <Tabs defaultValue="prehlad" className="space-y-4">
         <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
-          {TASK_FINANCE_DEPRECATION_NOTE}
+          {TASK_FINANCE_ROUTING_NOTE}
         </p>
         {orphan && (
           <p className="text-xs text-amber-700 dark:text-amber-400 border border-amber-500/30 rounded-lg p-3 bg-amber-500/5">
@@ -281,47 +286,35 @@ export default function AdminTaskDetail() {
             customerId={task.customer_id}
             defaultTitle={task.title}
             revenueKnown={false}
+            disableCreate={!canCreateTaskCommissions()}
+            createDisabledHint={TASK_COMMISSION_LEGACY_HINT}
           />
         </TabsContent>
 
-        <TabsContent value="platby">
-          {!legacyFinance ? (
-            <p className="text-sm text-muted-foreground rounded-xl border p-4">
-              Platby úlohy nie sú podporované pre nový workflow model. Potvrdené platby zadávajte na
-              projekte, marketingu, prenájme alebo hostingu. Existujúce záznamy nižšie zostávajú len na
-              čítanie.
+        <TabsContent value="platby" className="space-y-3">
+          <p className="text-sm text-muted-foreground rounded-xl border p-4 bg-muted/20">
+            {TASK_PAYMENT_LEGACY_HINT}
+            {parentHref ? (
+              <>
+                {" "}
+                <Link to={parentHref} className="text-primary hover:underline font-medium">
+                  Otvoriť financie parent entity →
+                </Link>
+              </>
+            ) : null}
+          </p>
+          {linkedPayments.length > 0 && (
+            <p className="text-[11px] text-amber-700 dark:text-amber-400">
+              Legacy task platby (len na čítanie) — {linkedPayments.length} záznam(ov).
             </p>
-          ) : null}
+          )}
           <EntityPaymentRecordsPanel
             payments={linkedPayments}
             onSaved={() => void load()}
             variantLabel={(row) =>
               taskPaymentVariantLabel(row.source_id || "", task.id)
             }
-            createActions={
-              legacyFinance
-                ? [
-                    {
-                      key: "deposit",
-                      label: "Potvrdiť zálohu do financií",
-                      linkedExists: depositLinked,
-                      disabled: !!depositHint,
-                      hint: depositHint,
-                      buildDraft: () =>
-                        prefillFromTask(task, "deposit", customerEmail, paymentCtx),
-                    },
-                    {
-                      key: "full",
-                      label: depositLinked ? "Potvrdiť doplatok do financií" : "Potvrdiť úhradu do financií",
-                      linkedExists: fullLinked,
-                      disabled: !!fullHint,
-                      hint: fullHint,
-                      buildDraft: () =>
-                        prefillFromTask(task, "full", customerEmail, paymentCtx),
-                    },
-                  ]
-                : []
-            }
+            createActions={[]}
           />
         </TabsContent>
       </Tabs>

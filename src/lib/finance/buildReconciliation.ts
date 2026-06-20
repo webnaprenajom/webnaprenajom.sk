@@ -11,6 +11,7 @@ import type {
 } from "./reconciliationEntityRows";
 import { buildIssueKey } from "./issueKeys";
 import { formatReconciliationSourceHint } from "./financeSourceLabels";
+import { isLegacyTaskFinance } from "@/lib/tasks/taskFinanceModel";
 
 type CommissionRow = {
   id: string;
@@ -295,6 +296,8 @@ function reconcileEntityPaymentGaps(
   }
 
   for (const t of tasks) {
+    if (!isLegacyTaskFinance(t)) continue;
+
     const dep = Number(t.deposit ?? 0);
     if (
       dep > 0 &&

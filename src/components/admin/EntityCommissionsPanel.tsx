@@ -63,6 +63,9 @@ interface Props {
   operatingCost?: number;
   revenueKnown?: boolean;
   paymentRecordCount?: number;
+  /** Batch 3: block new commission rows (e.g. task source). */
+  disableCreate?: boolean;
+  createDisabledHint?: string;
 }
 
 function emptyForm(defaultTitle?: string): CommissionFormState & { id: string } {
@@ -88,6 +91,8 @@ export function EntityCommissionsPanel({
   operatingCost = 0,
   revenueKnown = true,
   paymentRecordCount,
+  disableCreate = false,
+  createDisabledHint,
 }: Props) {
   const access = useAccessContext();
   const canWrite = canWriteCommissions(access);
@@ -358,10 +363,21 @@ export function EntityCommissionsPanel({
           <span className="text-green-600">Vyplatené: {totals.paid.toFixed(2)} €</span>
           <span className="text-amber-600">Nezaplatené: {totals.unpaid.toFixed(2)} €</span>
         </div>
-        <Button size="sm" onClick={openNew} className="min-h-9" disabled={!canWrite}>
+        <Button
+          size="sm"
+          onClick={openNew}
+          className="min-h-9"
+          disabled={!canWrite || disableCreate}
+          title={disableCreate ? createDisabledHint : undefined}
+        >
           <Plus className="w-4 h-4 mr-1" /> Nová provízia
         </Button>
       </div>
+      {disableCreate && (
+        <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
+          {createDisabledHint}
+        </p>
+      )}
       {!canWrite && (
         <p className="text-[10px] text-muted-foreground italic">
           Úpravy provízií môže vykonať len administrátor. Zobrazené záznamy podliehajú vášmu rozsahu prístupu.

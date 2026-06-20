@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import type { ReconciliationIssue } from "./types";
+import { isTaskFinanceReconciliationIssueKind } from "@/lib/tasks/taskFinanceCleanup";
 import type {
   HostingReconRow,
   MarketingReconRow,
@@ -245,17 +246,11 @@ export function prefillFromReconciliationIssue(
   }
 
   if (issue.kind === "task_missing_payment_deposit" && issue.sourceId) {
-    const taskId = issue.sourceId.replace(/:deposit$/, "");
-    const t = ctx.tasks?.find((r) => r.id === taskId);
-    if (!t) return null;
-    return prefillFromTask(t, "deposit", t.customer_email ?? null, ctx);
+    return null;
   }
 
   if (issue.kind === "task_missing_payment_full" && issue.sourceId) {
-    const taskId = issue.sourceId.replace(/:full$/, "");
-    const t = ctx.tasks?.find((r) => r.id === taskId);
-    if (!t) return null;
-    return prefillFromTask(t, "full", t.customer_email ?? null, ctx);
+    return null;
   }
 
   return null;
@@ -463,9 +458,10 @@ export function getIssueActionLabel(issue: ReconciliationIssue): string | null {
     case "workflow_outgoing_expense":
       return "Vytvoriť confirmed cost";
     case "entity_missing_payment_fact":
+      return "Potvrdiť platbu do financií";
     case "task_missing_payment_deposit":
     case "task_missing_payment_full":
-      return "Potvrdiť platbu do financií";
+      return null;
     case "legacy_no_reference":
     case "legacy_imprecise_paid_at":
       return "Potvrdiť ako fact";
@@ -475,6 +471,9 @@ export function getIssueActionLabel(issue: ReconciliationIssue): string | null {
 }
 
 export function isIssueActionable(issue: ReconciliationIssue, ctx: FinanceRawContext): boolean {
+  if (isTaskFinanceReconciliationIssueKind(issue.kind)) {
+    return false;
+  }
   if (
     issue.kind === "potential_duplicate" ||
     issue.kind === "missing_counterparty" ||
