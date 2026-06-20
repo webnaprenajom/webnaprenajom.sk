@@ -456,7 +456,6 @@ const AdminFinance = () => {
             scopedEmpty={scopedEmpty}
             showOrgKpis={showOrgFinance}
             implementerLabel={access.implementerName}
-            year={year}
             onOpenAdvanced={() => {
               if (!canAccessFinanceAdvanced(access.role)) return;
               const next = new URLSearchParams(searchParams);

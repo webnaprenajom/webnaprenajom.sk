@@ -339,8 +339,8 @@ export function FinanceReconciliation({
               onChange={(e) => setDismissType(e.target.value as "dismissed" | "false_positive")}
               className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
             >
-              <option value="false_positive">Known false positive</option>
-              <option value="dismissed">Dismissed (všeobecne)</option>
+              <option value="false_positive">Známy false positive</option>
+              <option value="dismissed">Všeobecné zamietnutie</option>
             </select>
             <label className="text-xs text-muted-foreground">Dôvod (voliteľné)</label>
             <Input value={dismissReason} onChange={(e) => setDismissReason(e.target.value)} placeholder="Prečo je to OK?" />
@@ -413,7 +413,7 @@ function IssueSectionTable({
                     </Badge>
                     {dismissed && (
                       <Badge variant="secondary" className="text-[10px] ml-1">
-                        {dismissed.dismissal_type === "false_positive" ? "FP" : "DIS"}
+                        {dismissed.dismissal_type === "false_positive" ? "OK" : "Zam."}
                       </Badge>
                     )}
                   </TableCell>

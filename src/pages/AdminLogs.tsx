@@ -133,6 +133,7 @@ const AdminLogs = () => {
           (l.lead_name || "").toLowerCase().includes(q) ||
           (l.lead_email || "").toLowerCase().includes(q) ||
           (l.changed_by_email || "").toLowerCase().includes(q) ||
+          (l.action || "").toLowerCase().includes(q) ||
           (l.field || "").toLowerCase().includes(q) ||
           (l.old_value || "").toLowerCase().includes(q) ||
           (l.new_value || "").toLowerCase().includes(q)
@@ -153,8 +154,8 @@ const AdminLogs = () => {
 
   return (
     <AdminShell
-      title="CRM Logy – História zmien"
-      subtitle="Audit trail zmien leadov (nie Settings admin_audit_log)"
+      title="História leadov"
+      subtitle="Zmeny v pipeline leadov — nie plný CRM audit (viď info nižšie)"
       backTo={{ label: "CRM", href: "/admin" }}
     >
       <div className="space-y-4">

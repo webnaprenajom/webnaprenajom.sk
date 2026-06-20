@@ -25,7 +25,8 @@ describe("leadLogsPresentation", () => {
   });
 
   it("scopes help text by role", () => {
-    expect(leadLogsScopeDescription("owner")).toContain("všetky");
+    expect(leadLogsScopeDescription("owner")).toContain("lead_logs");
+    expect(leadLogsScopeDescription("owner")).not.toContain("všetky zmeny");
     expect(leadLogsScopeDescription("administrator")).toContain("priradené");
   });
 
