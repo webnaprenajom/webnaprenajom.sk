@@ -58,7 +58,21 @@ describe("crmUserDirectory", () => {
     const bob = managed.find((u) => u.userId === "u2")!;
     const aliceDup = managed.find((u) => u.userId === "u3")!;
     expect(bob.missingProfile).toBe(false);
+    expect(bob.profileActive).toBe(true);
     expect(aliceDup.missingProfile).toBe(true);
+    expect(aliceDup.inactiveProfile).toBe(false);
+  });
+
+  it("detects orphan active profile without CRM role", () => {
+    const orphan = buildCrmManagedUsers(
+      [{ userId: "ox", email: "orphan@x.com", authDisplayName: "Orphan" }],
+      [],
+      [{ user_id: "ox", display_name: "Orphan", implementer_name: "Peter", active: true }],
+      ["Peter"],
+    )[0];
+    expect(orphan.orphanActiveProfile).toBe(true);
+    expect(orphan.implementerName).toBe("Peter");
+    expect(orphan.riskFlags.some((f) => f.includes("Orphan"))).toBe(true);
   });
 
   it("sorts risky users first then alphabetically", () => {
@@ -109,6 +123,8 @@ describe("owner user management guards", () => {
       teamDisplayName: null,
       implementerName: null,
       profileActive: false,
+      inactiveProfile: false,
+      orphanActiveProfile: false,
       displayName: "Owner A",
       missingProfile: false,
       riskFlags: [],
@@ -126,6 +142,8 @@ describe("owner user management guards", () => {
       teamDisplayName: null,
       implementerName: null,
       profileActive: false,
+      inactiveProfile: false,
+      orphanActiveProfile: false,
       displayName: "Owner B",
       missingProfile: false,
       riskFlags: [],

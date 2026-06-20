@@ -14,6 +14,10 @@ export type CrmManagedUser = AuthDirectoryRow & {
   teamDisplayName: string | null;
   implementerName: string | null;
   profileActive: boolean;
+  /** team_profiles row exists but active=false (offboarded implementer). */
+  inactiveProfile: boolean;
+  /** active profile without CRM role — historical inconsistency. */
+  orphanActiveProfile: boolean;
   displayName: string;
   missingProfile: boolean;
   riskFlags: string[];
@@ -54,6 +58,12 @@ export function buildRiskFlags(
   const flags: string[] = [];
   if (isAdministrator(role) && !profile?.active) {
     flags.push("Chýba team profile — provízie neuvidí");
+  }
+  if (!role && profile?.active) {
+    flags.push("Orphan team profile — účet bez CRM role");
+  }
+  if (profile && !profile.active && profile.implementer_name) {
+    flags.push("Neaktívny team profile");
   }
   if (isOwner(role) && !profile?.active) {
     flags.push("Owner bez team profile (OK pre plný prístup)");
@@ -107,6 +117,8 @@ export function buildCrmManagedUsers(
       teamDisplayName,
       implementerName: prof?.active ? prof.implementer_name : null,
       profileActive: !!prof?.active,
+      inactiveProfile: !!prof && !prof.active,
+      orphanActiveProfile: !!prof?.active && !role,
       displayName: resolveUserDisplayName({
         email: d.email || d.userId,
         authDisplayName: d.authDisplayName,

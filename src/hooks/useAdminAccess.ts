@@ -79,8 +79,9 @@ export const useAdminAccess = (): AppAccessState => {
     if (role) {
       const { data: profile } = await supabase
         .from("team_profiles")
-        .select("implementer_name,display_name")
+        .select("implementer_name,display_name,active")
         .eq("user_id", user.id)
+        .eq("active", true)
         .maybeSingle();
       if (profile) {
         implementerName = profile.implementer_name;

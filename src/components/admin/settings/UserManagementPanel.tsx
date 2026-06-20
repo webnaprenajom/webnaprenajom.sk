@@ -35,6 +35,10 @@ import {
   userMatchesSearch,
   type CrmManagedUser,
 } from "@/lib/admin/crmUserDirectory";
+import {
+  buildTeamProfileDeactivateUpdate,
+  normalizeTeamDisplayName,
+} from "@/lib/admin/teamProfileLifecycle";
 
 type PendingAction =
   | {
@@ -61,6 +65,13 @@ type PendingAction =
       implementer: string;
       displayName: string;
       previous: string | null;
+    }
+  | {
+      kind: "edit_display";
+      userId: string;
+      userLabel: string;
+      displayName: string;
+      implementerName: string;
     };
 
 const CRM_ROLES: AppRole[] = ["owner", "administrator"];
@@ -75,6 +86,7 @@ export function UserManagementPanel() {
   const [newDisplayName, setNewDisplayName] = useState("");
   const [selectedAddUserId, setSelectedAddUserId] = useState<string | null>(null);
   const [addSearch, setAddSearch] = useState("");
+  const [displayNameDrafts, setDisplayNameDrafts] = useState<Record<string, string>>({});
 
   const filteredManaged = useMemo(() => {
     return filterManagedUsers(withRole, filters).sort(sortUsersForManagement);
@@ -101,7 +113,19 @@ export function UserManagementPanel() {
     });
   }, [loading, withoutRole.length]);
   const usersMissingProfile = withRole.filter((u) => u.missingProfile);
+  const orphanProfiles = withoutRole.filter((u) => u.orphanActiveProfile);
   const implementerOptions = assigneeSelectOptions();
+
+  const deactivateTeamProfile = async (userId: string, implementerName: string | null) => {
+    if (!implementerName?.trim()) return;
+    const payload = buildTeamProfileDeactivateUpdate(userId, implementerName);
+    const { error } = await supabase.from("team_profiles").update(payload).eq("user_id", userId);
+    if (error) {
+      toast({ title: "Team profile", description: error.message, variant: "destructive" });
+      return false;
+    }
+    return true;
+  };
 
   const executeAddUser = async (action: Extract<PendingAction, { kind: "add" }>) => {
     const { error: roleErr } = await supabase
@@ -168,10 +192,18 @@ export function UserManagementPanel() {
   };
 
   const executeRemoveRole = async (action: Extract<PendingAction, { kind: "remove" }>) => {
+    const user = withRole.find((u) => u.userId === action.userId);
     const { error } = await supabase.from("user_roles").delete().eq("id", action.roleRowId);
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
       return;
+    }
+    if (user?.implementerName) {
+      const ok = await deactivateTeamProfile(action.userId, user.implementerName);
+      if (!ok) {
+        void reload();
+        return;
+      }
     }
     if (actorId) {
       void logAdminAuditEvent({
@@ -180,7 +212,8 @@ export function UserManagementPanel() {
         targetType: "user",
         targetId: action.userId,
         summary: `Odstránená rola ${action.role} pre ${action.userLabel}`,
-        before: { role: action.role },
+        before: { role: action.role, implementer: user?.implementerName ?? null },
+        after: { team_profile: user?.implementerName ? "deactivated" : null },
       });
     }
     toast({ title: "Rola odstránená" });
@@ -207,6 +240,7 @@ export function UserManagementPanel() {
   };
 
   const executeChangeRole = async (action: Extract<PendingAction, { kind: "change_role" }>) => {
+    const user = withRole.find((u) => u.userId === action.userId);
     const { error } = await supabase
       .from("user_roles")
       .update({ role: action.toRole })
@@ -215,6 +249,13 @@ export function UserManagementPanel() {
       toast({ title: "Zmena roly", description: error.message, variant: "destructive" });
       return;
     }
+    if (action.fromRole === "administrator" && action.toRole === "owner" && user?.implementerName) {
+      const ok = await deactivateTeamProfile(action.userId, user.implementerName);
+      if (!ok) {
+        void reload();
+        return;
+      }
+    }
     if (actorId) {
       void logAdminAuditEvent({
         actorUserId: actorId,
@@ -222,11 +263,23 @@ export function UserManagementPanel() {
         targetType: "user",
         targetId: action.userId,
         summary: `${action.userLabel}: ${action.fromRole} → ${action.toRole}`,
-        before: { role: action.fromRole },
-        after: { role: action.toRole },
+        before: { role: action.fromRole, implementer: user?.implementerName ?? null },
+        after: {
+          role: action.toRole,
+          team_profile:
+            action.fromRole === "administrator" && action.toRole === "owner" && user?.implementerName
+              ? "deactivated"
+              : undefined,
+        },
       });
     }
-    toast({ title: "Rola zmenená" });
+    toast({
+      title: "Rola zmenená",
+      description:
+        action.toRole === "administrator" && !user?.profileActive
+          ? "Priraďte implementera — bez team profile neuvidí provízie."
+          : undefined,
+    });
     void reload();
   };
 
@@ -297,6 +350,49 @@ export function UserManagementPanel() {
     });
   };
 
+  const executeEditDisplayName = async (action: Extract<PendingAction, { kind: "edit_display" }>) => {
+    const display_name = normalizeTeamDisplayName(action.displayName, action.implementerName);
+    const { error } = await supabase
+      .from("team_profiles")
+      .update({ display_name })
+      .eq("user_id", action.userId);
+    if (error) {
+      toast({ title: "Zobrazované meno", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (actorId) {
+      void logAdminAuditEvent({
+        actorUserId: actorId,
+        actionType: AUDIT_ACTION_TYPES.team_profile_updated,
+        targetType: "user",
+        targetId: action.userId,
+        summary: `${action.userLabel}: display name → ${display_name}`,
+        after: { display_name },
+      });
+    }
+    toast({ title: "Zobrazované meno uložené" });
+    void reload();
+  };
+
+  const editDisplayName = (user: CrmManagedUser, displayName: string) => {
+    if (!user.implementerName) return;
+    setPending({
+      kind: "edit_display",
+      userId: user.userId,
+      userLabel: userActionLabel(user),
+      displayName,
+      implementerName: user.implementerName,
+    });
+  };
+
+  const cleanupOrphanProfile = async (user: CrmManagedUser) => {
+    if (!user.implementerName) return;
+    const ok = await deactivateTeamProfile(user.userId, user.implementerName);
+    if (!ok) return;
+    toast({ title: "Orphan profil deaktivovaný" });
+    void reload();
+  };
+
   const confirmPending = async () => {
     if (!pending) return;
     const p = pending;
@@ -305,6 +401,7 @@ export function UserManagementPanel() {
     if (p.kind === "remove") await executeRemoveRole(p);
     if (p.kind === "change_role") await executeChangeRole(p);
     if (p.kind === "assign") await executeAssignProfile(p);
+    if (p.kind === "edit_display") await executeEditDisplayName(p);
   };
 
   if (loading) {
@@ -352,6 +449,17 @@ export function UserManagementPanel() {
         </div>
       )}
 
+      {orphanProfiles.length > 0 && (
+        <div className="rounded-lg border border-orange-500/40 bg-orange-500/10 p-3 text-xs flex gap-2">
+          <AlertTriangle className="w-4 h-4 text-orange-600 shrink-0" />
+          <p>
+            <strong>{orphanProfiles.length}</strong> auth účet(ov) má aktívny team profile bez CRM role
+            (historický stav). Pri opätovnom onboardingu môže blokovať meno realizátora — deaktivujte v
+            zozname nižšie.
+          </p>
+        </div>
+      )}
+
       <CrmUserDirectoryFilters filters={filters} onChange={setFilters} />
 
       <ul className="divide-y rounded-xl border text-sm">
@@ -378,7 +486,57 @@ export function UserManagementPanel() {
                     Chýba team profile
                   </Badge>
                 )}
+                {user.profileActive && user.role === "administrator" && (
+                  <Badge variant="outline" className="text-[10px] text-green-600 border-green-500/40">
+                    Aktívny realizátor
+                  </Badge>
+                )}
+                {user.inactiveProfile && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    Neaktívny profil
+                  </Badge>
+                )}
               </div>
+              {user.role === "administrator" && user.profileActive && user.implementerName && (
+                <div className="flex flex-wrap gap-2 items-end justify-end w-full">
+                  <div className="space-y-1 min-w-[10rem]">
+                    <Label className="text-[10px] text-muted-foreground">Zobrazované meno</Label>
+                    <div className="flex gap-1">
+                      <Input
+                        className="h-8 text-xs"
+                        value={
+                          displayNameDrafts[user.userId] ??
+                          user.teamDisplayName ??
+                          user.implementerName
+                        }
+                        onChange={(e) =>
+                          setDisplayNameDrafts((prev) => ({
+                            ...prev,
+                            [user.userId]: e.target.value,
+                          }))
+                        }
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs shrink-0"
+                        onClick={() =>
+                          editDisplayName(
+                            user,
+                            displayNameDrafts[user.userId] ??
+                              user.teamDisplayName ??
+                              user.implementerName ??
+                              "",
+                          )
+                        }
+                      >
+                        Uložiť
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex flex-wrap gap-2 items-end justify-end">
                 <div className="space-y-1">
                   <Label className="text-[10px] text-muted-foreground">Rola</Label>
@@ -476,6 +634,25 @@ export function UserManagementPanel() {
                   }}
                 >
                   <CrmUserIdentity user={user} compact />
+                  {user.orphanActiveProfile && (
+                    <div className="px-2.5 pb-2 flex flex-wrap gap-2 items-center">
+                      <Badge variant="destructive" className="text-[10px]">
+                        Orphan profil
+                      </Badge>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[10px]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void cleanupOrphanProfile(user);
+                        }}
+                      >
+                        Deaktivovať profil
+                      </Button>
+                    </div>
+                  )}
                 </button>
               </li>
             );
@@ -540,6 +717,8 @@ export function UserManagementPanel() {
             ? "Odstrániť rolu používateľa?"
             : pending?.kind === "assign"
               ? "Uložiť team profile?"
+              : pending?.kind === "edit_display"
+                ? "Uložiť zobrazované meno?"
               : pending?.kind === "change_role"
                 ? "Zmeniť rolu používateľa?"
                 : "Pridať používateľa s rolou?"
@@ -559,12 +738,17 @@ export function UserManagementPanel() {
                 <p>Owner má plný prístup k CRM, nastaveniam a všetkým províziám.</p>
               )}
             </>
-          ) : pending?.kind === "remove" ? (
+          ) :           pending?.kind === "remove" ? (
             <>
               <p>
                 Odstránite rolu {pending.role} pre <strong>{pending.userLabel}</strong>.
               </p>
               <p>Používateľ stratí prístup k CRM, ak nemá inú rolu.</p>
+              {withRole.find((u) => u.userId === pending.userId)?.implementerName && (
+                <p>
+                  Aktívny team profile realizátora bude deaktivovaný — meno bude možné znovu priradiť.
+                </p>
+              )}
             </>
           ) : pending?.kind === "change_role" ? (
             <>
@@ -575,6 +759,9 @@ export function UserManagementPanel() {
                 <p>
                   Po zmene musí mať team profile s menom realizátora, inak neuvidí provízie.
                 </p>
+              )}
+              {pending.fromRole === "administrator" && pending.toRole === "owner" && (
+                <p>Aktívny team profile realizátora bude deaktivovaný (owner nepotrebuje scoped provízie).</p>
               )}
               {pending.toRole === "owner" && (
                 <p>Owner má plný prístup k CRM a financiám.</p>
@@ -588,6 +775,18 @@ export function UserManagementPanel() {
               </p>
               {pending.previous && <p>Predtým: {pending.previous}</p>}
             </>
+          ) : pending?.kind === "edit_display" ? (
+            <>
+              <p>
+                Uložiť zobrazované meno pre <strong>{pending.userLabel}</strong>?
+              </p>
+              <p>
+                Nové meno: <strong>{normalizeTeamDisplayName(pending.displayName, pending.implementerName)}</strong>
+              </p>
+              <p className="text-muted-foreground">
+                Meno realizátora v províziách ({pending.implementerName}) sa nemení.
+              </p>
+            </>
           ) : null
         }
         confirmLabel={
@@ -595,7 +794,9 @@ export function UserManagementPanel() {
             ? "Odstrániť rolu"
             : pending?.kind === "assign"
               ? "Uložiť profil"
-              : "Potvrdiť"
+              : pending?.kind === "edit_display"
+                ? "Uložiť meno"
+                : "Potvrdiť"
         }
         destructive={pending?.kind === "remove"}
         onConfirm={confirmPending}
