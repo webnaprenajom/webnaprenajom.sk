@@ -10,6 +10,7 @@ import {
   type QuickCreateKind,
 } from "@/components/admin/customerWorkbench/CustomerQuickCreateDialogs";
 import { CommunicationSummaryPanel } from "@/components/admin/customerWorkbench/CommunicationSummaryPanel";
+import { CustomerCredentialsPanel } from "@/components/admin/customerWorkbench/CustomerCredentialsPanel";
 import { CustomerFinancePanel } from "@/components/admin/customerWorkbench/CustomerFinancePanel";
 import { CustomerCommissionsAuditStrip } from "@/components/admin/customerHub/CustomerCommissionsAuditStrip";
 import { CustomerFlowTimeline } from "@/components/admin/customerHub/CustomerFlowTimeline";
@@ -67,7 +68,6 @@ import {
   Globe,
   ListTodo,
   Loader2,
-  Lock,
   Plus,
 } from "lucide-react";
 
@@ -499,11 +499,6 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
                             confirmedPaid={payment.confirmedPaid}
                             completeness={payment}
                           />
-                          {n.has_credentials && (
-                            <Badge variant="outline" className="text-[10px] gap-0.5">
-                              <Lock className="w-2.5 h-2.5" /> prístupy
-                            </Badge>
-                          )}
                         </>
                       }
                       href={`/admin/projects/${n.id}`}
@@ -513,6 +508,16 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
                 </ul>
               )}
             </TabPanel>
+          </TabsContent>
+
+          {/* Heslá */}
+          <TabsContent value="hesla" className="mt-4 space-y-3">
+            <SectionErrorBanner error={sectionError("credentials")} onRetry={onReload} />
+            <CustomerCredentialsPanel
+              credentials={data.credentials}
+              ctx={workbenchCtx}
+              onReload={onReload}
+            />
           </TabsContent>
 
           {/* Marketing */}

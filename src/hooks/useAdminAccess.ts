@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/lib/rbac/permissions";
+import { clearStaleAuthSession } from "@/lib/auth/clearStaleAuthSession";
 import { isCrmUser, resolveAppRoleFromRows } from "@/lib/rbac/permissions";
 
 /** Server-side role check when user_roles SELECT is empty (RLS/timing). */
@@ -111,6 +112,8 @@ export const useAdminAccess = (): AppAccessState => {
         }
 
         if (!user) {
+          await clearStaleAuthSession();
+          if (!active) return;
           setState({ ...initialState, authChecking: false });
           return;
         }

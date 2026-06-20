@@ -1,5 +1,5 @@
-import { ProjectNotesView } from "@/components/admin/projectNotes/ProjectNotesView";
+import { CustomerCredentialsView } from "@/components/admin/customerCredentials/CustomerCredentialsView";
 
 export default function AdminPasswords() {
-  return <ProjectNotesView mode="passwords" />;
+  return <CustomerCredentialsView />;
 }

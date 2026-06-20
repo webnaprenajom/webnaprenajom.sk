@@ -110,6 +110,7 @@ export function syncLegacyCredentialColumns(credentials: AccessCredential[]): {
   };
 }
 
+/** @deprecated Writes belong in customer_credentials — legacy project_notes columns are read-only transitional data. */
 export function credentialsForSave(
   editing: Partial<Pick<ProjectNote, "url" | "username" | "password" | "access_credentials">>,
   credentials: AccessCredential[],

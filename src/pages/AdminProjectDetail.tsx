@@ -16,7 +16,6 @@ import {
   ConfirmedLinkBadge,
   EstimatedLinkBadge,
 } from "@/components/admin/lookup/LinkStatusBadge";
-import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
 import { OperatingCostField } from "@/components/admin/OperatingCostField";
 import { AgreedPriceField, ENTITY_PAYMENTS_TAB_NOTE } from "@/components/admin/AgreedPriceField";
 import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompletenessBadge";
@@ -31,6 +30,10 @@ import { financeCtxWithPayments, prefillFromProject } from "@/lib/finance/factDr
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { buildTaskCreateHref } from "@/lib/tasks/taskParentModel";
+import {
+  buildProjectRelatedQueryPlan,
+  type ProjectRelatedLinkMode,
+} from "@/lib/admin/projectRelatedEntities";
 
 const PROJECT_TYPE_LABELS: Record<string, string> = {
   wordpress: "WordPress",
@@ -48,6 +51,7 @@ export default function AdminProjectDetail() {
   const [lead, setLead] = useState<{ id: string; name: string; email: string | null } | null>(null);
   const [relatedHosting, setRelatedHosting] = useState<any[]>([]);
   const [relatedRentals, setRelatedRentals] = useState<any[]>([]);
+  const [relatedLinkMode, setRelatedLinkMode] = useState<ProjectRelatedLinkMode>("estimated");
   const [linkedPayments, setLinkedPayments] = useState<EntityPaymentRow[]>([]);
 
   const confirmedRevenue = useMemo(() => sumConfirmedPayments(linkedPayments), [linkedPayments]);
@@ -88,26 +92,51 @@ export default function AdminProjectDetail() {
       );
     }
 
-    const email = normalizeEmail(row.customer_email);
-    const clientName = row.client_name?.trim();
+    const relatedPlan = buildProjectRelatedQueryPlan({
+      customer_id: row.customer_id,
+      customer_email: row.customer_email,
+      client_name: row.client_name,
+    });
+    setRelatedLinkMode(relatedPlan.linkMode);
 
-    if (email) {
+    if (relatedPlan.hosting === "customer_id" && relatedPlan.customerId) {
       tasks.push(
         supabase
           .from("hosting_records")
           .select("id,client_name,provider,monthly_price,active")
-          .ilike("customer_email", email)
+          .eq("customer_id", relatedPlan.customerId)
           .then(({ data: h }) => setRelatedHosting(h || [])),
       );
+    } else if (relatedPlan.hosting === "customer_email" && relatedPlan.hostingEmail) {
+      tasks.push(
+        supabase
+          .from("hosting_records")
+          .select("id,client_name,provider,monthly_price,active")
+          .ilike("customer_email", relatedPlan.hostingEmail)
+          .then(({ data: h }) => setRelatedHosting(h || [])),
+      );
+    } else {
+      setRelatedHosting([]);
     }
-    if (clientName) {
+
+    if (relatedPlan.rentals === "customer_id" && relatedPlan.customerId) {
       tasks.push(
         supabase
           .from("rental_websites")
           .select("id,name,url,monthly_price,client_name,created_at")
-          .ilike("client_name", clientName)
+          .eq("customer_id", relatedPlan.customerId)
           .then(({ data: r }) => setRelatedRentals(r || [])),
       );
+    } else if (relatedPlan.rentals === "client_name" && relatedPlan.rentalClientName) {
+      tasks.push(
+        supabase
+          .from("rental_websites")
+          .select("id,name,url,monthly_price,client_name,created_at")
+          .ilike("client_name", relatedPlan.rentalClientName)
+          .then(({ data: r }) => setRelatedRentals(r || [])),
+      );
+    } else {
+      setRelatedRentals([]);
     }
 
     tasks.push(
@@ -179,7 +208,15 @@ export default function AdminProjectDetail() {
           <TabsTrigger value="platby">Platby</TabsTrigger>
           <TabsTrigger value="suvisiace">Súvisiace</TabsTrigger>
           <TabsTrigger value="hesla" asChild>
-            <Link to="/admin/passwords">Heslá ↗</Link>
+            <Link
+              to={
+                project.customer_id
+                  ? `/admin/customer/id/${project.customer_id}?tab=hesla`
+                  : "/admin/passwords"
+              }
+            >
+              Heslá ↗
+            </Link>
           </TabsTrigger>
         </TabsList>
 
@@ -345,15 +382,21 @@ export default function AdminProjectDetail() {
 
         <TabsContent value="suvisiace" className="space-y-4">
           <p className="text-xs text-muted-foreground">
-            Nižšie uvedené väzby sú odhadované podľa e-mailu alebo mena klienta — nie sú uložené ako FK prepojenie.
+            {relatedLinkMode === "canonical"
+              ? "Súvisiace záznamy načítané podľa customer_id (kanonická väzba klienta)."
+              : "Nižšie uvedené väzby sú odhadované podľa e-mailu alebo mena klienta — chýba customer_id na projekte."}
           </p>
           <section className="rounded-xl border bg-card p-4 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-semibold">Hosting</h3>
-              <EstimatedLinkBadge />
+              {relatedLinkMode === "canonical" ? <ConfirmedLinkBadge /> : <EstimatedLinkBadge />}
             </div>
             {relatedHosting.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">Žiadny hosting s rovnakým e-mailom.</p>
+              <p className="text-xs text-muted-foreground italic">
+                {relatedLinkMode === "canonical"
+                  ? "Žiadny hosting pre tohto klienta."
+                  : "Žiadny hosting s rovnakým e-mailom."}
+              </p>
             ) : (
               <ul className="text-sm space-y-1 list-disc pl-4">
                 {relatedHosting.map((h) => (
@@ -369,10 +412,14 @@ export default function AdminProjectDetail() {
           <section className="rounded-xl border bg-card p-4 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-sm font-semibold">Prenájmy</h3>
-              <EstimatedLinkBadge />
+              {relatedLinkMode === "canonical" ? <ConfirmedLinkBadge /> : <EstimatedLinkBadge />}
             </div>
             {relatedRentals.length === 0 ? (
-              <p className="text-xs text-muted-foreground italic">Žiadne prenájmy s podobným menom klienta.</p>
+              <p className="text-xs text-muted-foreground italic">
+                {relatedLinkMode === "canonical"
+                  ? "Žiadne prenájmy pre tohto klienta."
+                  : "Žiadne prenájmy s podobným menom klienta."}
+              </p>
             ) : (
               <ul className="text-sm space-y-1 list-disc pl-4">
                 {relatedRentals.map((r) => (
@@ -387,8 +434,15 @@ export default function AdminProjectDetail() {
           </section>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             <KeyRound className="w-3.5 h-3.5" />
-            Prístupy a heslá:{" "}
-            <Link to="/admin/passwords" className="text-primary hover:underline">
+            Prístupy a heslá klienta:{" "}
+            <Link
+              to={
+                project.customer_id
+                  ? `/admin/customer/id/${project.customer_id}?tab=hesla`
+                  : "/admin/passwords"
+              }
+              className="text-primary hover:underline"
+            >
               sekcia Heslá
             </Link>
           </p>

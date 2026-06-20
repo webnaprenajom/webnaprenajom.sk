@@ -1,0 +1,5 @@
+id,name,revenue_stream_kind,default_rate,implementer,active,note,created_at,updated_at
+36d8a4a2-4968-42b8-a78f-5bcd04864920,Prenájom — default implementér podiel,rental,30,,t,Foundation only. Aktuálne split je stále v rental_websites.implementers JSON — tento rule je referenčný default.,2026-06-15 00:18:55.677036+00,2026-06-15 00:18:55.677036+00
+760969fe-6192-435e-987d-47aedfab37c8,Projekt — default,project,30,,t,Manuálne provízie v commissions module.,2026-06-15 00:18:55.677036+00,2026-06-15 00:18:55.677036+00
+82102863-8efc-42c2-8003-c4a51f4efcc9,Hosting — default,hosting,0,,t,"Hosting bez provízie, kým hosting_record.commissionable = true.",2026-06-15 00:18:55.677036+00,2026-06-15 00:18:55.677036+00
+25a743d9-f6cf-4d3d-b74b-20e63321e7e9,Ostatný poplatok,other_fee,0,,t,Jednorazové poplatky mimo rental/hosting.,2026-06-15 00:18:55.677036+00,2026-06-15 00:18:55.677036+00

@@ -1,5 +1,5 @@
-import { supabase } from "@/integrations/supabase/client";
-import { findCustomerById } from "@/lib/crmLookup/customers";
+import { findCustomerByEmail, findCustomerById } from "@/lib/crmLookup/customers";
+import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
 import type { CustomerRow } from "@/lib/crmLookup/customers";
 import type { LoadCustomerWorkbenchInput } from "./loadCustomerWorkbench";
 
@@ -15,24 +15,22 @@ export async function resolveCustomerIdentity(
   input: LoadCustomerWorkbenchInput,
 ): Promise<ResolvedCustomerIdentity> {
   let customerId: string | null = null;
-  let resolvedEmail = input.routeMode === "email" ? input.routeValue : "";
+  let resolvedEmail = "";
   let canonicalCustomer: CustomerRow | null = null;
   const viewMode = input.routeMode;
 
   if (input.routeMode === "id") {
     const cust = await findCustomerById(input.routeValue);
     canonicalCustomer = cust;
-    customerId = cust?.id ?? input.routeValue;
-    resolvedEmail = cust?.email ?? "";
+    customerId = cust?.id ?? null;
+    resolvedEmail = normalizeEmail(cust?.email) ?? "";
   } else {
-    const { data: custRow } = await supabase
-      .from("customers")
-      .select("id,email,display_name,metadata,created_at,updated_at")
-      .eq("email", input.routeValue)
-      .maybeSingle();
-    if (custRow) {
-      canonicalCustomer = custRow as CustomerRow;
-      customerId = custRow.id;
+    resolvedEmail = normalizeEmail(input.routeValue) ?? "";
+    const cust = await findCustomerByEmail(input.routeValue);
+    if (cust) {
+      canonicalCustomer = cust;
+      customerId = cust.id;
+      resolvedEmail = normalizeEmail(cust.email) ?? resolvedEmail;
     }
   }
 
@@ -41,7 +39,9 @@ export async function resolveCustomerIdentity(
       ? `customer_id.eq.${customerId},email.ilike.${resolvedEmail}`
       : customerId
         ? `customer_id.eq.${customerId}`
-        : null;
+        : resolvedEmail
+          ? `email.ilike.${resolvedEmail}`
+          : null;
 
   return { customerId, resolvedEmail, canonicalCustomer, viewMode, leadFilter };
 }

@@ -31,6 +31,9 @@ dist-ssr
 # Generated migration reports (keep directory via .gitkeep)
 scripts/migration/reports/migration-report-*
 scripts/migration/reports/review-queue-*
+scripts/migration/reports/promote-plan-*
+scripts/migration/reports/promote-skipped-*
+scripts/migration/reports/user-roles-mapping-*
 
 # Local / tooling caches
 .cursor

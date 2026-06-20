@@ -1,0 +1,780 @@
+id,name,email,phone,message,type,consultation_date,consultation_time,language,created_at,status,notes,updated_at,source,temperature,assigned_to,amount,status_changed_at,imported,import_batch,follow_up_date,customer_id
+3ce5c737-c618-4aa2-b4d0-a885e449c67a,123inzercia.sk,@,,Web: http://123inzercia.sk/ | Dátum z hárku: Február,ai,,,sk,2026-04-26 21:07:24.18781+00,lost,nebol zaujem,2026-06-15 06:49:10.822289+00,Email skript,cold,Maroš,,2026-04-28 06:02:09.994429+00,f,,,
+4c3d177e-d4cd-4ffd-bdad-2d9ba90cad37,Super deti,superdeti.ke@gmail.com,,,ai,,,sk,2026-06-08 23:56:47.987+00,send_offer,"",2026-06-15 08:21:57.932801+00,Google,,Peter,,2026-06-08 23:56:52.751792+00,f,,,f936cbf1-fc8c-4672-a555-780dc0997ee7
+7752437d-f363-40c0-8444-8e4d7bac2399,Aqua škola,aquaskola@aquaskola.sk,0905546310,,ai,,,sk,2026-06-07 13:38:16.148+00,send_offer,https://www.aquaskola.sk/,2026-06-15 08:22:18.271028+00,Google,,Peter,,2026-06-07 13:38:20.981593+00,f,,,88c221f4-6ee0-4cee-a070-a555d8c4c417
+4fb3010c-4f95-40be-bdd0-df2c0e13884f,Karol Rosmány,karol@design.sk,+421905601881,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art90,,,,2026-05-07 21:14:34.791743+00,t,art4_iii_2026_05,,b6a95f22-5e7f-4173-ab5b-a0b0b98e6f14
+8e2195f0-ac25-4fbd-bca9-0a6f04fe7db9,100percentpure,info@100percentpure.sk,,"seo optimalizacia, nasadenie ppc reklami,",repair,,,sk,2026-02-18 23:00:00+00,won,"250/100*70=175e~205usdt
+0xb7b41C1F16fFBA3c0624B874eFAC9B595521aE07",2026-06-15 00:18:55.677036+00,Email script,neutral,Maroš,250.00,2026-05-16 13:49:31.336358+00,f,,,de3e136e-469c-47f2-9308-00a962ef124f
+749942d9-a952-42b4-acb6-848767650381,Cielene.sk,linda@cielene.sk,,"29,4,2026 = Zatial iba SEO opravu a optimalizacia webu, Zakaznik bol iba kontaktovany kedze prejavil zaujem, cakam na dalsie otazky a podklady od zakaznika.",consultation,,,sk,2026-04-29 07:00:52.395+00,lost,Nema zaujem,2026-06-15 00:18:55.677036+00,Email script,cold,Maroš,,2026-05-19 06:50:50.167336+00,f,,,a1b39588-a90c-408e-96a9-e465e5e06ff1
+62cbb191-a858-43fa-8915-bcc24a97cdef,Monika Zsolnaiová,office@acsr.sk,948 592 562,Firma: Acsr.sk | Web: Mám web | Rozpočet: 1000 – 3000 € | Problém: Zlý dizajn | Cieľ: Lepšia dôveryhodnosť | Zdroj: wp_funnel_boost | Dátum z hárku: 2026-02-06 16:30:31,redesign,,,sk,2026-04-26 21:07:24.187+00,reminder_silent,"Odoslana ponuka
+
+20.5.2026- volal som s klientkou a vyjadrila sa ze za taky mesiac si vieme.dat 30min call kde si prejdeme co presne je potrebne urobit na webe",2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-05-20 16:20:40.843993+00,f,,,1a770ef3-19e5-4d09-abbc-082542d6f483
+1fb2e945-c7d2-43f4-94f8-b5ebdecb3176,test,exitqo@gmail.com,05156156,"Typ webu: Firemný web
+Biznis: Landing page (predajná stránka)
+Funkcie: Galérie & médiá, Online platby, SEO optimalizácia, GDPR & SSL, Push notifikácie, Rezervácie, E-commerce
+Model: Mesačný paušál 69€/mes
+Ponuka: Tvoj unikátny biznis si zaslúži poriadny stroj ✨
+Poznámka: asdasdasd",ai,,,sk,2026-06-15 07:26:36.449752+00,new,,2026-06-15 07:26:36.449752+00,ai-kalkulacka,,,,2026-06-15 07:26:36.449752+00,f,,,
+e22322c6-743f-4683-996e-9c075e7c77bb,Blzk.sk,info@blzk.sk,,Firma: som v jednani s klientom | Web: https://blzk.sk/ | Dátum z hárku: Marec,redesign,,,sk,2026-04-26 21:07:24.187+00,order,"28.4.2026- zalohova fa je zaplatena, caka sa na podklady od klienta.
+
+1.6.2026 - volal som s klientom a potvrdil ze tento tyzden posle vsetky podklady",2026-06-15 00:18:55.677036+00,Email skript,hot,Peter,650.00,2026-05-06 16:37:12.051687+00,f,,,4c634e7e-95ef-45ac-8b02-b04f88421c62
+33aa350d-f399-4fd4-8227-211dbca71220,Miriam Čunderlíková,ivan.vincenc@gmail.com,+421905233992,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art93,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,dde8fe1a-3ed3-406e-85fe-3624d425ad25
+adcfb851-b7cf-49ec-8a22-9e54061bde70,Mäso výroba,rusin@masovyroba.com,0911322856,,ai,,,sk,2026-06-07 13:43:10.451+00,send_offer,https://www.masovyroba.com/,2026-06-15 08:22:07.165771+00,FB,,Peter,,2026-06-07 13:43:18.335501+00,f,,,4ab81c86-6f6f-46c6-941b-180801e974e9
+23e5991a-8063-49a1-9879-98be0a5d062c,Janka Hollá,jankah5@gmail.com,+421905148916,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art91,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,2f55c7b1-74fa-40cf-93fc-7f4fdf1f1012
+2b976d42-c213-4439-9077-0b4c109dbfa6,Dado Vlado,thing@azet.sk,+421903227900,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art140,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,66df39ee-3a49-4d31-bcfc-eee8ba9ed5c1
+aa71bfaf-9180-4b10-ae6b-a4f11433c53e,Alžbeta Frimová,bluone@bluone.sk,+421 905 867 708,"🎁 Zľavový kód: WIN5-ZSCU7
+
+Dobrý deň,
+
+mám záujem o správu jestvujúceho webu www.bluone.sk - jeho zálohu, aktualizáciu a v prípade noviniek aj ich dopĺňanie. Ďakujem za vypracovanie a zaslanie ponuky.",offer,,,sk,2026-06-12 12:51:15.307+00,contacted,"15.6.2026 - poslane info
+",2026-06-15 08:34:24.3575+00,offer-email-cta,,Peter,,2026-06-12 14:16:01.58378+00,f,,,38f1688e-a20d-4e93-b4eb-d91692cee0e1
+bfa4d3c4-18bc-45b6-a122-2644953d7b9d,Marek Hudák,hudak.dekors@gmail.com,+421911582133,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art141,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5b3bf862-21be-42cc-ac32-d616fab5871e
+a338b0c6-03f1-4ae3-bb4a-c3a2bf6bfe21,Happyswim,office@happyswim.sk,,,ai,,,sk,2026-06-08 23:59:50.865+00,send_offer,"",2026-06-15 08:21:41.937475+00,Google,,Peter,,2026-06-08 23:59:55.076356+00,f,,,dff7d154-6951-4a6b-a9e3-eb276b2d4ac4
+0470b6c1-4023-443d-a3f4-d618d279ed48,Ján Lida,kamenictvidiamond@gmail.com,,,ai,,,sk,2026-06-15 20:32:23.197018+00,won,15.6.2026 -,2026-06-15 20:32:39.506011+00,,,,,2026-06-15 20:32:39.227711+00,f,,,b38d2327-11ec-46f6-a003-7854ba80c947
+98c81746-fef8-4aa6-8a6e-6e98ef407ad5,Patrik Bariš,motorest.drietoma@gmail.com,+421908055137,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art111,,,,2026-05-07 21:15:12.701117+00,t,art4_iii_2026_05,,38714ce5-2ef7-4b1d-b463-16d7186747fa
+b1b55528-375b-4333-9742-a640fa502b78,DC TerraPro s.r.o.,dusan.capkovic@gmail.com,+421944446613,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art130,,,,2026-05-16 15:18:15.170443+00,t,art4_iii_2026_05,,941030af-eb62-4449-ac50-b35c324df0e5
+99a7ef58-d5ac-4765-bc50-2aaf4391af58,Recepcia,x,905500350,Firma: Antiradary | Web: https://www.antiradary.sk/ | Dátum z hárku: 2026-02-19 15:38:37,ai,,,sk,2026-04-26 21:07:24.18781+00,lost,volal som mu ale nemal zaujem,2026-04-29 22:01:50.313032+00,Email skript,cold,,,2026-04-26 22:37:49.939617+00,f,,,
+e56e48f4-d444-4d3b-85dc-dd3a35b08a7b,Ivan Kollárik,kollarik@sotiha.sk,+421905727386,"Typ webu: Firemný web
+Biznis: Prezentácia firmy
+Funkcie: Multi-jazyčnosť, Vlastný dizajn, GDPR & SSL
+Model: WordPress jednorazovo ~840€
+Ponuka: Tvoja firma si zaslúži profi web bez starostí ✨",ai,,,sk,2026-06-03 18:34:03.236+00,contacted,"5.6.2026 - chce web na prenajom ktory bude prezentovat uctovnicke sluzby, chce zachovat farby a logo, dizajn chce modernejsi a krajsi, ked bude spokojny bude chciet aj dalsi web.
+
+Navrhol som mu moznost neist do wordpress ale na prenajom, nebranil sa.
+
+https://web.archive.org/web/20250220051801/https://sotiha.sk/
+
+5.6.2026 - klient dostal navrh webu a cakame ako sa vyjadry.
+
+8.6.2026 - volal som s klientom, link dostal, dizajn si pozrel a zajtra sa ma vyjadrit.
+
+12.6.2026 - klient nakoniec nechce web sotiha.sk ale chce web fkveca.sk. Tento web ma byt pre miestny futbalovy klub a ma obsahovat napojenie api aby dokazal zobrazovat vysledky v danych ligach kde hraju ziaci, dorastencia muzi v danom klube. Na webe je potrebne mat nejake crm aby sa tam dalo pridavat a odpberat mena hracov. Web ma mat sekciu pre sponzorov. 
+
+15.6.2026 -  zistil sim ze je mozne ziskat bezplatny widget pre zobrazovanie dat o klube a lige na : https://embed.sportnet.online/
+15.6.2026 - je ale potrebne aby manazer klubu kontaktoval IT oddelenie sfz na: jan.letko@futbalsfz.sk 
+15.6.2026 - poslal som email a ma sa vyjadrit
+
+18.6.2026 - zakanik ma zaujem o web, chce jednoduche crm rozhranie aby si vedel zmenit mena sponzorov alebo fotky stadiona alebo texty na webe.
+18.6.2026 - Web ma zobrazovat data ktore si bude tahat cez api, cize mena hracov, ligy v ktorych hraju, odohrate a nasledujuce zapasy v sezone, historiu sezon a zapasov, podstranku zo sponzormi a ludmi ktory sa o klub staraju, galeriu kde butu fotky stadiona a ine, konatktny formular, organizacnu strukturu klubu, prepojenei na fb a ig.
+",2026-06-18 12:52:18.35049+00,ai-kalkulacka,hot,Maroš,,2026-06-05 10:05:56.359327+00,f,,2026-06-22,0d5234ae-4947-4b14-aae8-8acb2ef13208
+88a1cb35-0a09-4e4b-99d4-1f20fb4b01d5,Zuzana Bejlek,zuzana@bejlek.sk,+421903220022,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art110,,,,2026-05-16 16:25:23.693773+00,t,art4_iii_2026_05,,0299a96f-fc4f-4a73-a93b-acc2ba2ffd69
+3ea7efd8-960a-4ca4-84e7-db04b38ba2d6,Róbert Friedrich,spravca@reality69.sk,+421948919111,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art112,,,,2026-05-16 16:26:17.616341+00,t,art4_iii_2026_05,,1a818b17-9953-431d-98c8-d4d20435c7a4
+7db50814-5f33-44ea-ac3f-90f8f1e2b6df,Juraj Ščerba,interierantik@gmail.com,+421907668764,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art115,,,,2026-05-16 16:26:43.101704+00,t,art4_iii_2026_05,,a93918a5-5c12-421a-b639-1c0416c0319d
+5cfc7140-1975-4b2c-9c51-6a3e83a6e19c,Frantisek Šmikniar,ssmikniar@gmail.com,+421903542180,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art143,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1d5bbb94-2798-43cb-ac89-1b072611f64a
+792f0a3c-30cb-47c2-a945-8774302b9339,Biomicroneelding.sk,x,+421907222110,Firma: +421907222110 | Web: https://biomicroneelding.sk/ | Dátum z hárku: Marec,eshop,,,sk,2026-04-26 21:07:24.18781+00,contacted,Presmerovaný na sqtbeauty.sk,2026-04-29 22:01:50.313032+00,Email skript,neutral,,,2026-04-27 22:36:09.342127+00,f,,,
+b82eb266-4adc-4ae6-b44e-cb00ade8271c,foams4sports.sk,v.zima@foams4sports.sk,+421 907 772322,"18.6.2026 - zakaznik chce dlhodobe partnerstov, najprv ale opravit wordpress web, neskor po spokojnosti z jeho strany aj mesacnu spravu webu.
+treab mu zavolat a postaj aj emailom nejaku ideu ako by sme to vedeli podchitit a co vieme za aku cenu dodat. Zatial si web spravuje sam ale robi len minimalne upravy lebo je laik. web mu vyrobila firma ale sam povedal ze je to mali rodiiny biznis a nema na to aby platil velke peniaze za opravy a spravu. Osobny odhad je 30-50 eur za spravu a hosting spolu a mozno 350e za jednorazove opravy a nasadenie google kampane",repair,,,sk,2026-06-18 13:30:01.19+00,contacted,"",2026-06-18 13:30:30.439797+00,Email script,,Maroš,,2026-06-18 13:30:01.190442+00,f,,2026-06-23,
+dfe99145-2517-49e1-aa05-059d9739f005,Peter Gajdoš,peter.gajdos@bvmusic.sk,+421905616233,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art116,,,,2026-05-16 16:26:57.346831+00,t,art4_iii_2026_05,,4523e793-50a9-4308-b17d-53759c4421b8
+58543b50-0f90-4f76-b76c-8c81b61be2c7,Miroslav Kralik,kralik@goodway.sk,+421911405795,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art125,,,,2026-05-16 16:27:20.283013+00,t,art4_iii_2026_05,,5f8c696e-a72a-4796-9df5-30da16fbe9f9
+a9b89377-25d0-4d44-b4fa-090c10f5821a,Milan Novota,milan@mikamont.sk,+421905491070,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art133,,,,2026-05-16 16:27:35.345598+00,t,art4_iii_2026_05,,d5af7f46-5d2a-4c0f-9317-f1dd0f99663f
+fee954d6-cf01-418e-a839-238a1bdd2633,Dejwid Dejwide Śpalek,dejwide@gmail.com,+421944124550,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art136,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,3dab82f4-3496-405e-adb4-999fb6db7963
+e6b02bd2-6fad-456e-a9f4-9e523986eacd,Zoltan Hutar,zolindes@gmail.com,+421907728122,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art137,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,109733c8-6943-478a-837c-af398341237f
+dc4efb60-e77d-4f05-a7bc-65dd94bbec03,Jozef Kunka,jozefkunka1971@gmail.com,+421907850971,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art138,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e6be264e-81c7-49d7-89b7-47856c6c7084
+48c0f55a-4642-40df-8f56-b064e9c6cada,Peter Zifčak,zifcak1@azet.sk,+421940333011,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art139,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e59a2e11-051f-4233-953e-483ad1d8ad9f
+5dd65209-e10d-4bb9-b1b3-d52124ec49d7,Vnatorin,vnatorin@gmail.com,+421908201087,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art344,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,c821caae-4ebf-4360-acc0-b6d5f29cc927
+10af9fcb-9900-43d0-bf03-6ab5a4c9f012,Timotej,timotejcuha@gmail.com,421919000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art404,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,fe7422a3-e220-4922-bb99-15fb48647bdf
+a7ef629b-0ab5-48fe-b64e-900edfb88723,Michal,ontkoc.michal@gmail.com,421910000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art405,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b7412ad3-2066-4302-a5f9-0f73d4c828ca
+d82450cb-a631-4d57-89ed-38c1c9c8d7a5,František,pavlik.frantisek1@gmail.com,421911000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art406,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,8f02b95a-8189-4017-980d-7c5634f57a51
+6ac7a463-fb9b-4f09-aa08-98b7fa015e87,Slavomíra,peterfloris13@gmail.com,421915000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art407,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1349fa6c-60dc-48be-ad9a-e858bc0bec4b
+2c5adeae-c22e-44aa-8b5e-f29e8e241d20,Bianka,biankaskalosova@centrum.sk,421908000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art408,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,15d96327-f542-4019-8fce-3ca9c846fb27
+3678b24a-2168-42a2-b998-fe2663946a1f,Dopravastahovanie,unknown,+421911210774,"7.5.2026 - klient chce web na prenajom dodaviek s rezervacnym systemom, seo optimalizovany a basic google reklamu.",consultation,,,sk,2026-05-08 05:26:35.096+00,reminder_silent,"7.5.2026 - nasa pinuka isla klientovy v telefonickom rozhovore.
+49e/ mesiac webnaprenajom
+950e - jednorazovo wp web
+200e - jednorazovo za nastavenie google reklami
+
+18.5.2026 - s klientom som volal a ponukol som mu akciovu cenu 49e/mesiac.
+cena sa mu pozdavala a zvazuje dalsie kroky.",2026-05-19 06:21:12.77165+00,,neutral,Maroš,,2026-05-18 10:24:33.660019+00,f,,,
+3453c6b5-e5ec-4363-be4f-91e823262ee3,fotoobal.sk,info2fotoobal.sk,,5.6.2026 - klient sa pytal ci vieme opravit web aj ked tam ma custom app na webe.. odpovedal som a cakame ci sa klient ozve.,repair,,,sk,2026-06-05 10:18:59.114+00,contacted,"",2026-06-08 06:00:35.982676+00,Email script,,Maroš,,2026-06-05 10:18:59.114776+00,f,,,
+22609120-09b4-4106-9422-5c9e4d982105,Gréta Dánielová,greta.danielova@gmail.com,,"https://www.danex.sk/
+
+Dôvody re-dizajnu: Zastaraný dizajn, Chýbajúce funkcie",eshop,,,sk,2026-04-20 06:41:24.649744+00,reminder,Redizajn - Shoptet - https://www.danex.sk/,2026-06-15 00:18:55.677036+00,Priamo,hot,Peter,,2026-04-27 13:19:24.091689+00,f,,,85eaf522-60cc-4026-9ac5-1bab4584c71b
+f50ef3d2-c291-432c-8e84-a75e4b1140cd,mercedes,mersiholeckova2006@gmail.com,+421902333066,"Podnikanie: asfaltovanie | Cieľ: prezentácia firmy | Termín: čo najskôr (asap) | Máte web: nie, ešte nemám | Zdroj: IG – Ad video - Wolwerin - skrateny",ai,,,sk,2026-04-01 17:43:50+00,lost,už netreba,2026-06-15 00:18:55.677036+00,FB reklama,cold,Matuš,,2026-04-27 13:20:13.328863+00,f,,,e65b218b-037b-4070-8cd7-a806b98e5d82
+31fd6639-5bd4-48ac-b9f8-1790d3114390,Branislav Nebrastav,nebrastav@gmail.com,+421915824062,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art88,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,f2d48208-8968-468a-9d67-c5984019da41
+2ad88047-7076-4f85-9e03-4fab62a25f13,diju.sk,kanas@diju.sk,,"29,4,2026 - klientovy som napisal email kde som mu odporucil nas web na prenajom za 49e/mesiac",ai_solution,,,sk,2026-04-29 17:50:24.032+00,reminder_silent,19.5.2026 - klient kontaktovany s opatovnou ponukou a aj som zaslal pdf prezentaciu nasich sluzieb,2026-06-15 00:18:55.677036+00,Email script,neutral,Maroš,,2026-05-19 09:49:40.503544+00,f,,,fdcdc544-04b3-4beb-9f06-9e5ab44304a7
+f93eef2b-9d90-40cd-89b6-48a9dcee8315,Dagmar Vícenová,vicenova.dagmar@gmail.com,+421908769032,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art89,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a10f3b2e-66b7-45fd-bc32-d8359fd57e32
+82d27222-1d03-4ce4-8536-32a412bb3d46,Peter Haluškajs,haluskapetko22@gmail.com,+421944811538,"Podnikanie: Jo | Cieľ: prezentácia firmy | Termín: do 1 mesiaca | Máte web: áno, ale chcem lepšiu | Zdroj: FB – Ad banner - Claude hook",ai,,,sk,2026-04-04 09:15:27+00,reminder,nieje dostupny,2026-06-15 00:18:55.677036+00,FB reklama,neutral,Matuš,,2026-04-27 13:20:16.285401+00,f,,,1985de86-1369-4c0e-8827-7554eb8124cc
+33e6fbf0-fa0f-437c-8ce6-780087d86def,Cumulus.sk,cumulus@cumulus.eu.sk,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.cumulus.eu.sk/ | Služba: Klinika,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,bf6dfe7e-4b0e-40fb-b3dd-0f00e6c035ea
+30f9c7fb-2cfc-4a44-bdde-f9e4bb081c30,Expertinazlato.sk,frantoprekop1@gmail.com,0908962705,1.6.2026 - klient chce web na prenajom a google basic reklamu,ai_solution,,,sk,2026-06-01 10:39:30.419+00,won,"Klient potrebujem web na prenajom aby bol rychly, responzivny a putavy pre zakaznikov. 
+Potrebuje aj zakladnu google reklamu raz nastavit a nechat bezat.
+
+Cena je dohodnuta na 49e/mesiac
+15% zlava na prve 3 mesiace
+
+budeme migrovat domenu, hosting, emaily.
+Teraz je na exohostingu.
+
+Zmeny v textoch:
+1. v sekcii spolupraca treba do motivacneho programu pridat este ze moznsot ziskat firemen dovolenky 2x rocne
+
+2. Aké sú výhody investovania do zlata so mnou?
+Investičné zlato po celom Slovensku ponúkam s unikátnou kombináciou priameho spojenia s rafinériou a mincovňou -> nahradit mincovnami. 
+
+",2026-06-15 00:18:55.677036+00,Email script,hot,Maroš,,2026-06-05 12:48:20.14891+00,f,,,22927792-8114-4d7c-ac89-62b891308dd7
+eef6114c-3b17-49b1-8afd-5a0da91e0cdf,dimael.sk,hosteldimael@gmail.com,+421 947 911 946,"12.6.2026 - klientka chce zmodernizovat web, je naklonena aj zmene platformi, chce si ale nechat rezervacny system ktory tam teraz je, chce odstranit restauraciu z header, chce krajsie fotky mozno za pomoci AI, chce seo optimalizaciu, lepsie predajne texty, lepsie CTR buttons, chce zobrazovat recenzie z google, chce zobrazovat recenzie z megaubytovanie, chce lepsi admin aby si tam vedela sama robit pripadne mensie upravy.",redesign,,,sk,2026-06-12 14:52:54.161+00,contacted,rezervacny system je previo.sk,2026-06-15 00:18:55.677036+00,Email script,,Maroš,,2026-06-12 14:52:54.161482+00,f,,2026-06-15,d7f76857-c934-42d5-992b-b4ae42e3ea0a
+0e2ace15-a96c-4d36-94b7-1e22d5fc9edf,Kamenictvi Diamond,kamenictvidiamond@gmail.com,+420770621171,"Podnikanie: Kamenárstvo | Cieľ: získavať zákazníkov | Termín: čo najskôr (asap) | Máte web: mám, ale nefunguje dobre | Zdroj: FB – Ad banner - Claude hook",ai_solution,,,sk,2026-03-30 14:28:28+00,won,Completed,2026-06-15 00:18:55.677036+00,FB reklama,hot,Peter,35.00,2026-04-27 22:32:29.980969+00,f,,,b38d2327-11ec-46f6-a003-7854ba80c947
+1957848d-7104-40a9-a62f-495dc0b3662a,Zuzana Gumbirová,zgumbirova@hotmail.com,+421903556991,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art92,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,30e8d876-3c5f-4311-adc7-ef43523c9ce9
+f0f9e2d1-af88-4e09-a35b-702f6e46ae28,Koliba Vrchrieka,koliba.vrchrieka@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.hauzi.sk/chata-koliba-vrchrieka | Služba: chata,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,fc72bf91-4661-402f-9e3f-2e036bcf1900
+cd193633-74e0-45f2-864b-b842ef4f05df,Chata Dáša,chatadasa1@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.hauzi.sk/chata-dasa-high-tatras | Služba: chata,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,6c9feb1b-1aea-4dfd-a37a-daf5634698ff
+ec538874-7f50-42d0-9c51-275f29171667,Chata Jamystar,chatajamystar@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.hauzi.sk/chata-jamystar | Služba: chata,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,4ea6694a-39d9-4bbe-af85-aedd22f2d31d
+c2acfd76-67cc-44ed-b3f6-63ca2ded70cb,Bystrinka Tale,bystrinka.tale@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.penzionbystrinka.sk/ | Služba: penzion,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,a0350598-1f77-4023-bfd7-318bbe4254e3
+bd2846d6-8d54-421d-826d-56c53210ec31,Chata Poloma,chatapoloma@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.hauzi.sk/chata-poloma | Služba: chata,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,bf2f1381-5a54-4e40-a74b-b346f9758c9a
+346b2964-be12-4a87-9ec4-9453d9edae6b,Kaletova Janka,kaletova.janka@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://jk-autodiely.webnode.sk/ | Služba: autodiely,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,de1c6b08-a585-4822-bea4-9951a693497c
+9e415991-59a7-415c-b200-7006b4be53d6,Coxx,coxxkontakt@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.coxx.sk/ | Služba: eshop,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,2919d587-5efc-4c6d-a19a-030b8a1bc66b
+16965fa5-668d-46cf-805e-eb857c0890c0,Aatuh.sk,atuh@centrum,,Web: https://aatuh.sk/ | Dátum z hárku: Február,redesign,,,sk,2026-04-26 21:07:24.187+00,lost,"poslany reminder
+20.5.2026 - nema prachy, nechce nic",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-19 09:50:06.318371+00,f,,,f8be1698-93dd-4659-abe2-05dfc1753f03
+e348a955-8f33-44f5-9b24-b4c8bfb11739,Martin Taubert,taubert.sro@gmail.com,+421940797461,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art124,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b6ede9ef-bcdd-46a3-835f-c1b190ae96c8
+d4adb927-6bac-4828-8cf8-52a579e48341,stanislav.oriabinec@gmail.com,stanislav.oriabinec@gmail.com,+421918833229,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art127,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,984ba063-7158-424f-868e-98c9bf94ccc4
+c3b06655-1b4d-4327-a8bf-6153088fb808,Matúš Ličák,family.partners.po@gmail.com,+421918419977,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art128,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,62877a1e-3b69-4f64-ada1-0733b0a80057
+3fdb3677-a2ad-4f1d-abc2-10fb4fdf9195,Milan Caban,milan.caban@seznam.cz,+421940848771,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art152,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,dccf9e33-0941-4a3e-b213-2505ed7f5374
+e6decd47-6a3a-4c38-823b-564f70fb558e,Autonaplyn,info@autonaplyn.sk,,,redesign,,,sk,2026-05-18 15:48:57.167637+00,reminder_silent,,2026-06-15 00:18:55.677036+00,FB,,,,2026-05-09 22:43:36.894+00,f,,,d1d90531-e6f7-4380-8ad9-36b73dd43a46
+23909770-7e60-4d67-9eb4-f60d60dddc42,Alexander Goroľ,gorolalexander3@gmail.com,+421948550288,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art157,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,7a32c437-f689-4fff-b3fe-cbe2dc54f1c2
+7c944481-ad25-4ba3-ad0f-760ffff44fb1,Ki Ko podlahy,kiko@kikopodlahy.sk,+421907299828,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art155,,,,2026-05-16 15:19:52.314856+00,t,art4_iii_2026_05,,aafa13a9-68b5-4b5c-9a58-62c693b0fb3d
+4b20a076-636a-483e-90ef-2939c6195d38,Milos Hruby,miloshruby@yahoo.com,+421903747770,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art167,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,aed8e2da-42d5-4cd6-924a-df4319980ad9
+f1472097-5e4c-4d93-a05f-0022afefce1e,Michal Vecny Rebel Biacovsky,bibi2231@azet.sk,+421902628561,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art168,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b8a220e6-ecbb-46c2-bbf1-6b848d12d9f6
+3be24641-2c0c-42c2-90ef-80da4a1b1c70,Vladimír Halčin,halcinvladimir@zoznam.sk,+421904603924,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art169,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,614924d9-6158-445b-8888-fdda2357b13f
+8d5f7238-a434-4844-a2e3-c6d3efd6055c,Klaudia Horváthová,klaudia.smrticova@gmail.com,+421900000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art170,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a83c2420-e43a-4fe7-bebf-8be1b1ebc80c
+f4d68fdb-16a0-40cc-9f0c-37537335c34c,Roberto Quattropanetti,4panetti@gmail.com,+421905612064,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art171,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,fcc6044c-6366-4af0-8c8e-f133b56927b2
+06c683ef-6f37-47f6-93d2-2e9c53d2bb58,Mária Baumanová,33marika33@azet.sk,+421911491649,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art172,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,234c9923-27d2-457a-8d58-2031d5402371
+815c973f-d994-489d-8999-ebb71aff9a63,Bohuslav Strella,bohuslav.strella@gmail.com,+421910740522,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art173,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e02d1c30-6c8a-431c-8b4f-7c3e84d3e186
+e86efa1e-e75b-48b5-8dc8-80ac67f421b9,Jan Valigursky,valigurskyjan@gmail.com,+421905298635,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art174,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e52ad4a9-3031-4d01-ab56-11628d4aee73
+f5848ff2-1960-40a5-9284-b37d463fd30a,Lubomir Kyska,lubokyska@gmail.com,+421944944321,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art175,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,dc8436cc-8e09-4e07-9f6f-255504b91b87
+9a185e45-ab4b-40f1-93ac-731bcbc36f80,Luboslav Chvasta,chvastaluboslav@gmail.com,+421905130152,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art177,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,883097cd-5361-415d-897f-a4bc5ac26b37
+f0e7c43e-1783-4cdf-8694-7715ecc50eb2,Roman Martinčič,evam@evam.sk,+421914700301,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art142,,,,2026-05-16 16:28:42.485651+00,t,art4_iii_2026_05,,7c370c3d-24da-48d9-939d-4cec2d74e05a
+6dc1d416-1846-49ee-8604-310b6b43fd36,Jozef Cedula,unifach@unifach.sk,+421905612456,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art144,,,,2026-05-16 16:29:00.09063+00,t,art4_iii_2026_05,,cac23328-357b-4185-8bec-038c10087873
+019052ba-cbd3-4960-9ba8-a2be89dc6e4d,Rastislav Teličák,tera.sk.sro@gmail.com,+421908114911,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art176,,,,2026-05-16 16:30:11.862098+00,t,art4_iii_2026_05,,949f98ae-d4d9-49e0-b5ee-580ea59640ca
+52846ae6-f4ac-4f9f-97b7-7688c4465525,Radoslav,info@gsh.sk,421919000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art65,,,,2026-05-16 16:31:51.111273+00,t,art4_iii_2026_05,,e979988d-8f3a-429a-bf91-94a54cef9221
+e00dd38e-728d-4285-a83b-aec574df0396,Sauna zulu,sauna.zulu@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://saunazulu.webnode.sk/ | Služba: Sauna,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,d6ecdfd1-ab46-4c6b-ad3d-2b89c678d78d
+d7926a9e-c50a-4bcf-af8b-1665c1f728bc,Jaroslav,drevenakvt@gmail.com,+421908049948,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art7,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,6d57898e-bb15-467f-b4da-3a6e11333030
+77719ebb-5f5e-415f-a284-b9d027029133,miriam,chaulemiriam@yahoo.de,421908362163,"Podnikanie: Chudnutie a zdravie | Cieľ: predaj produktov | Termín: čo najskôr (asap) | Máte web: nie, ešte nemám | Zdroj: FB – Ad banner - Claude hook",ai,,,sk,2026-04-05 21:37:21+00,reminder,Matúš - zrušila ma,2026-06-15 00:18:55.677036+00,FB reklama,neutral,Matuš,,2026-04-27 13:17:58.149371+00,f,,,c8f9df2d-da85-4638-8577-f80b3725dc09
+ae7a00f4-3808-4ddf-bf6e-84ed17cfe5fe,Mario,kristinalavova766@gmail.com,+421917673237,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art21,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,ac1c8e2d-5307-48ec-860c-dd97512a1618
+332d5d9b-3667-44dd-b87d-785c56f36a8b,Aquakids,petra@aquakids.sk,,,ai,,,sk,2026-06-08 23:57:52.855+00,send_offer,"",2026-06-15 08:21:48.166884+00,Google,,Peter,,2026-06-08 23:57:57.749501+00,f,,,d1f7575c-0526-483e-9d56-b3c6a7150ece
+8757df81-8efe-41e3-a2c0-fc68ad945727,Andrej,andrej.stetka98@gmail.com,421903619845,"Podnikanie: Stavebnictvo | Cieľ: prezentácia firmy | Termín: čo najskôr (asap) | Máte web: áno, ale chcem lepšiu | Zdroj: IG – Ad video - Banner - Firmy",ai,,,sk,2026-04-06 07:19:23+00,contacted,Matúš - Momentálne nemá záujem ale keď to bude aktuálne tak sa oze,2026-06-15 00:18:55.677036+00,FB reklama,neutral,Matuš,,2026-04-27 13:18:01.352413+00,f,,,c7997f17-8a73-4758-966e-651941465dfe
+3734f2fb-734d-401f-87fd-30e24165a867,Snauko,salujem@gmail.com,421918000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art29,,,,2026-05-16 14:16:57.320921+00,t,art4_iii_2026_05,,ab47f477-71a0-440d-a740-3a5e84e43d91
+4b75e260-0ab8-4f4b-b0b6-4dc0a0b2b435,Patrik,ambrapatrick9@gmail.com,421951000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art26,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b006751a-7b72-45cc-9ad8-c75c0989c30e
+a8afc0a2-42fd-4dbe-9065-f5e00555a199,Mis?o,misoadamec99@gmail.com,950897672,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art30,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,7cfc5411-735c-4229-b08d-bcd888549103
+e8733dd8-beb7-49e5-9437-274a2c56f005,Robert,robertkokavec2178@gmail.com,421950000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art32,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,36c63512-5cc8-423e-8aed-4ee26b7b5d8a
+96ea000d-220a-403a-aac1-59ee3325584a,Vincent,v.ivanecky@gmail.com,421908000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art34,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,d1fcc431-cb99-4b77-8f52-8c7c97be9e18
+b0aae016-d4d3-4fe3-8dff-32fbb8bfa9d3,Marek,marekmachac8@gmail.com,421911000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art35,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a3c5d1d3-9eab-4a5d-929f-137cc5616304
+1f21ed31-8956-433b-a391-74a73011576e,Michal,mslezaak@gmail.com,421907000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art36,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,0279888a-3c55-4176-be74-ac4bd1727300
+467b7132-ceee-4979-9c19-efa335c023ab,Erik,eriksonzuzu@gmail.com,,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art37,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,ad44f613-55a4-41bf-b4d3-a7f4febd8eba
+131e1357-f688-4c16-b3e7-75940f39b0e4,Slavomir,bakalarslavo@gmail.com,421906000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art38,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,f4ad6983-b3d8-48e2-9f46-d0454a75cac6
+55fa65dc-c730-4097-bb35-03af0cd74248,Zoltan,zoltanhalgas@gmail.com,421918000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art39,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,d910c43f-bdd6-4811-9aac-839501b7f80b
+f36dc0c8-58d7-4f11-bd77-3be39db4e97e,Patrik,jakubkovic.patrik@gmail.com,421944000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art40,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a6fc11fd-341d-430b-b2b3-41cd2df00242
+93999d3d-fcfb-44de-8213-dd37684bd08d,Viliam,viliam.simunic@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art41,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,314ce437-9834-45a2-ad44-26e58fa6940e
+2d4ddd8d-ea85-48a3-b589-3401559d6921,Erik,polovnikmaxo@gmail.com,,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art42,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,d3b8f052-dbeb-41b7-b057-14a5d2a368cb
+1f340e6d-5f87-4cac-9e14-345529f40802,Pavel,p.bobrik@happy-cleaning.sk,421909000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art33,,,,2026-05-07 21:16:15.845746+00,t,art4_iii_2026_05,,548d79ea-57be-4568-9836-c6c1f12ac027
+0b91f765-f1fb-4cc1-8d36-8ce03d8a0bdc,Juraj Grman,Regirosk@gmail.com,+421910719269,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art23,,,,2026-05-08 20:49:52.11495+00,t,art4_iii_2026_05,,a8e6a8ee-724e-4221-8737-27ebffba5fc3
+a9f63537-1968-4e6e-bcd5-cd1b50f4d051,Mario,plesnikmario3@gmail.com,421908000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art24,,,,2026-05-08 20:50:23.304864+00,t,art4_iii_2026_05,,fcadc324-0c00-404f-aa70-a917972856eb
+dbfce0e5-ab49-4d1c-8ffd-f42ea64ff83f,Román,romangrulo2@gmail.com,+421902227757,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art4,,,,2026-05-08 20:50:52.711051+00,t,art4_iii_2026_05,,9a40e679-f5ae-41f3-9eb7-ed6e26d9dd10
+2caf3bd5-0d2e-478e-a462-db81b184a4fd,Advokat Krnac,info@advokatkrnac.sk,,web na prenajom,ai_solution,,,sk,2026-03-03 23:00:00+00,won,"",2026-06-15 00:18:55.677036+00,Email script,hot,Peter,49.00,2026-04-28 04:22:39.521825+00,f,,,c685a7db-f6cd-4d91-b7e4-8c06cc649073
+d930536d-eacc-46e9-b809-ff5a0eb2c646,Milos,milosbau@gmx.de,,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art28,,,,2026-05-16 14:17:30.895071+00,t,art4_iii_2026_05,,a9792787-bfad-40ae-a18e-462111797765
+7a1b6ac7-ff59-4cd8-a855-27beb752d2a6,Marián Malec,Kot.palcek@gmail.com,421904442384,"Podnikanie: Cestovanie | Cieľ: získavať zákazníkov | Termín: len sa informujem | Máte web: nie, ešte nemám | Zdroj: FB – Ad video - Wolwerin - skrateny",ai,,,sk,2026-04-08 07:14:04+00,lost,Matúš - zrušene ani nezvoní telefón,2026-06-15 00:18:55.677036+00,FB reklama,cold,Matuš,,2026-04-27 13:18:20.012863+00,f,,,39110c7f-419b-47f2-8bbf-b912b109e31d
+84a81460-c03d-459d-8fc9-7ef72516d932,ŠVAB,svabddd@centrum.sk,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://svabddd.sk/ | Služba: deratizer,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:01.270701+00,f,,,06c03214-ef94-40d3-a059-46140a08f98c
+e24be1f8-81d8-4e2d-ab91-505bb7218018,Pietroart.sk,peterbacenko@gmail.com,+421902360972,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art19,,Peter,,2026-05-16 14:22:06.209543+00,t,art4_iii_2026_05,,8f7732cb-e7eb-4e14-971c-3d8f1bae9760
+5095ddd5-b0cc-47b8-91d4-74de145b5dee,Proaperix,proaperix@gmail.com,+421948730401,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art18,,,,2026-05-16 14:22:57.488022+00,t,art4_iii_2026_05,,c1340c64-157c-4432-bf4c-dee18aedf1fa
+4d38c34c-fee9-4132-ae9e-d509678147de,Mdpozastav,mdpozastav@gmail.com,+421905217262,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art17,,,,2026-05-16 14:24:14.742807+00,t,art4_iii_2026_05,,94d7a19d-0a58-4a5b-9ede-ccb41b74b6a7
+894355da-8383-4225-93e9-6ab209a1cc3e,Sessiosk,sessiosk@gmail.com,+421905591684,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art16,,,,2026-05-16 14:25:10.206143+00,t,art4_iii_2026_05,,8ea773fa-6e87-4bf8-9256-2f8ce9f506fe
+a50b5a6a-90c9-4906-b583-538a6797d120,Axaasistent,axaasistent@zoznam.sk,+421917699736,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art15,,,,2026-05-16 14:25:40.350251+00,t,art4_iii_2026_05,,fabb63b9-bbe4-44a8-bb22-18887802725a
+a179ba71-cc4e-4c38-b166-1552fe5657a9,"Lukya, s.r.o.",vjurkuliak2@gmail.com,+421948089515,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art14,,,,2026-05-16 14:26:35.544831+00,t,art4_iii_2026_05,,91dee929-c880-4ad4-abf4-f87bb101a598
+3b1016d1-ef8b-4a4c-a488-95c08e14efc1,Rofa Painting,robertfarkas420@gmail.com,+421948708703,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art13,,,,2026-05-16 14:27:09.658983+00,t,art4_iii_2026_05,,ed1e7ad3-79fc-4e65-85b8-fb826fcaf0d3
+174e5439-c8b8-4042-80a7-c18c63968235,LAVOK Group,lavokgroup@gmail.com,+421901701494,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art11,,,,2026-05-16 14:28:25.07847+00,t,art4_iii_2026_05,,c8366562-1806-493b-af92-5dc3e41b27a3
+1df652da-e54b-49bd-a463-e196320818af,Ko-pra,koprabb@gmail.com,+421903552688,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art10,,,,2026-05-16 14:29:01.691305+00,t,art4_iii_2026_05,,7ae21a3f-47c8-4660-9aee-75e123a53165
+9cf04a5e-c564-4582-a986-82dd24c31c73,HARMONY SERVIS,jan.kadasi@gmail.com,+421911886885,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art9,,,,2026-05-16 14:32:00.04033+00,t,art4_iii_2026_05,,5dfc1eb0-1e7a-4776-b106-30d807bfab4f
+44052e3c-7292-4fa9-afdd-af9f6bfa5d7b,PJetro stav,peto.janosik88@gmail.com,+421901713659,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art8,,,,2026-05-16 14:32:46.044251+00,t,art4_iii_2026_05,,329fe4ba-f303-43b1-839a-f5006cc6e62b
+63a264e4-8fca-4468-84e9-741a691f14a7,DAFI,viglasskyjulius23@gmail.com,+421949692483,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art6,,,,2026-05-16 14:33:26.686032+00,t,art4_iii_2026_05,,d4f8fece-a52f-4827-84cf-5f4350ccce93
+0b368148-d7e8-42c8-8eeb-0ba29dab36a2,Robert,robertmihom@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art31,,,,2026-05-16 14:35:46.85574+00,t,art4_iii_2026_05,,d0b82ce4-5c91-4657-a80e-84699f7c53eb
+297818d2-9331-47be-93f4-fa78147fde2e,Zdenka,dizajn@i-dizajn.sk,+421903810404,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art22,,,,2026-05-16 16:30:38.036156+00,t,art4_iii_2026_05,,ac16a02b-6928-4ad7-b7df-267387eb45d0
+c37db6d1-4677-4190-9081-cb91c074efd6,Ing Andrejko,ab.stavbauer@gmail.com,908363581,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art25,,,,2026-05-16 16:30:53.893272+00,t,art4_iii_2026_05,,118ee76c-68df-4e37-95b8-c8376a6bb9ca
+605f783e-9866-43fe-b3f3-448d33add210,Branislav,branislav.hokina@gmail.com,421912000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art43,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,d1eb0fcf-8e4e-4413-ba14-5df4e2a828c0
+83c29282-bf5b-4d44-87a7-63c0918b84fb,juraj,juraj237@gmail.com,421919000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art44,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,bd167288-8b1f-4611-83a1-9d4305821d39
+b156eba4-6e51-40f9-bd0d-eab12052ed90,Lukáš,skaloslukas0@gmail.com,421945000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art45,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,c0315a1b-7cb8-49ba-b516-fe2008bce937
+4e7cbc0e-e0fd-4bc1-9faa-b86eec2e1786,Stanislav,stanislavd43@gmail.com,421906000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art46,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,6c207b3c-cd30-4dc6-8c10-9c863a10eeb8
+b1c45ddc-f2d0-4916-88ab-96338f80c9e0,Ivan,i.mracko@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art47,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a0efb57e-65c2-4ec6-a6d4-c15fd75c7dc9
+9c151d2b-d5c3-420d-866d-d18f1d099de1,Brano,profiobkladabir@gmail.com,421912000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art48,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,6b05e497-ac1f-48d7-9fde-826087c06bdb
+1a45899c-bf7f-415f-b342-16e9f5be7b63,Marcel Krotký,info@brana-namieru.sk,,Web: brana-namieru.sk | Služba: Redizajn | Dátum z hárku: 18.3,redesign,,,sk,2026-04-26 21:07:24.187+00,lost,"Poslana ponuka - brana-namieru.sk
+19.5.2026 - klient kontaktovany ale nemal zaujem",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-19 07:11:12.501879+00,f,,,124e21ef-b397-4ac8-a0ad-19989a6b355b
+c4f4ac67-6004-491a-8fd8-5a3ac32a8e9e,Peter,kocian1984@gmail.com,421911000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art52,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,c7d5de9d-0918-4717-b97f-de91ab71a900
+1b107234-49b9-4294-b7b5-193889b7c25d,Lubos,lubo.lubiscak@gmail.com,421917000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art53,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5d3c3496-0158-497d-acb8-ba249a90ac0a
+3ffd5aa4-b8b2-403c-b36d-192afe336c48,Kinsel,janiklesnik514@gmail.com,421916000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art54,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1805f393-299e-4b69-9d01-05c2625b5d11
+5f9a43b6-b0f1-40a3-94ea-ff1a3911b7c1,Peter,matecoslovakia05@gmail.com,421912000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art55,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,db2f2582-f770-4317-b020-5ce5386f6484
+9beb1e1d-48c7-4749-82d2-ee375ed02396,Jaromír,Jaromirzoricak@gmail.com,421918000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art56,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,2aa09ec8-3858-409b-87e4-13b45a946f24
+8851dfb6-c6db-4199-b6e1-9e94bf8cc286,Jozef,jozocedula@gmail.com,421906000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art57,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e3b9ec73-628b-4e07-8c71-3021545dc456
+7fc8ceeb-5614-42e3-8276-377ab9381699,Lukas,lukasplacko82@gmail.com,421945000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art58,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,3da89bb7-2307-4ce0-bbb2-8782fee340d6
+28e841a6-5484-49fe-8ff6-bd44cbdbc460,Vlastimil,vlastimilkuchanuk@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art59,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,6de6f0da-a9e3-4210-b2e3-de371ca99ec9
+84337bc1-76d5-40dc-b12d-6f370d40dd8f,Richard,richard.t7@post.sk,,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art60,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,0c2449ec-d31a-49e0-ab3c-b90a79291f4d
+5a7e60d6-3b1a-47b9-a87e-e10a40c69e53,František,stiavnickapozicovna@gmail.com,421949000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art49,,,,2026-05-07 21:16:35.172754+00,t,art4_iii_2026_05,,b2a93f75-87f2-49e9-b306-05f5b4c5a8d8
+d5c3645f-1139-4a7c-8f26-ea06601c0be3,jan,JankoFise@azet.sk,421911000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art61,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e765cec9-6008-4168-8104-b93b5e86fd4f
+681c5224-61bc-45f1-9e95-f0d7a3d2be62,Richard,rkubin@centrum.sk,421906000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art62,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e5ce1c80-e97d-42d8-8458-7f82f495b5bc
+7c2eda23-d2e3-4741-8e2f-9560a64d93ff,DPFbezdemontaze,info@dpfbezdemontaze.sk,,novy web pre klienta hosting salelogics,ai,,,sk,2026-03-31 22:00:00+00,won,"",2026-06-15 00:18:55.677036+00,Email script,hot,Peter,350.00,2026-04-28 04:43:31.548105+00,f,,,5a262b5a-22cf-46ca-b074-2dde6d8aae5d
+d0633464-eb35-466c-98b3-15089d1e4056,Martin,inteles@inteles.sk,421908000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art50,,,,2026-05-16 16:31:25.610087+00,t,art4_iii_2026_05,,ca65f929-972f-4fca-8c41-0426d85c2ce7
+ee3acbf0-4313-4929-a73f-a536eaac43d7,Advokatibratislava.sk,ellinger@advokati-bratislava.sk,0948 455 465,Web: https://advokatibratislava.sk/ | Dátum z hárku: Február,ai,,,sk,2026-04-26 21:07:24.187+00,reminder_silent,19.5.2026 - klient bol kontaktovany telefonicky a chcel poslat este raz aktualnu cp.,2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-20 10:07:05.600815+00,f,,,576b1a6d-2c5b-4fb1-8db0-0bc39ab458ca
+1060e6d2-255b-4198-8957-54dc0deef62c,Oscar Starinsky,starinsky@pipistrelacademy.sk,421903420200,"Podnikanie: Letecka skola | Cieľ: získavať zákazníkov | Termín: do 1 mesiaca | Máte web: áno, ale chcem lepšiu | Zdroj: IG – Ad video - Wolwerin - skrateny",ai,,,sk,2026-04-08 09:40:25+00,lost,Matúš- dali web robiť inej firme,2026-06-15 00:18:55.677036+00,FB reklama,cold,Matuš,,2026-04-27 13:18:27.942563+00,f,,,24acfb22-105f-4908-b9ab-89c56dffe69c
+0867ffe8-5094-4f79-9c94-6f503e46e170,Mino,minofrano@gmail.com,940634491,Firma: WooAcademy | Web: Mám e-shop | Rozpočet: Do 1000 € | Problém: Málo objednávok | Cieľ: Zvýšiť predaje | Zdroj: wp_funnel_boost | Dátum z hárku: 2026-02-08 10:52:46,eshop,,,sk,2026-04-26 21:07:24.18781+00,lost,Konkurencia,2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-04-28 06:02:15.322736+00,f,,,09e92621-22af-4e12-84a6-d2d72c23e391
+eaec2d9e-ede0-4264-8323-14a28a47c374,bertolino,no-email-5@import.local,911720188,Web: https://www.bertolino.sk/ | Dátum z hárku: 8.3.2026,ai,,,sk,2026-04-26 21:07:24.18781+00,lost,"poslany reminder
+",2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-04-28 06:02:23.197389+00,f,,,f6a06ff7-b0bc-4ea4-8902-0352e4c717e9
+4d2cd68f-14f8-4d0c-9ba0-050a3276f166,Pavel Polednak,pavel@polednak.cz,421948813242,"Podnikanie: Autoskola D a C + E doprava | Cieľ: získavať zákazníkov | Termín: do 1 mesiaca | Máte web: mám, ale nefunguje dobre | Zdroj: FB – Ad video - Wolwerin - skrateny",ai,,,sk,2026-04-11 18:02:20+00,reminder,Matúš - Nedvíha ak by sa ozval mam ho ulozenho poriešim,2026-06-15 00:18:55.677036+00,FB reklama,neutral,Matuš,,2026-04-27 13:18:32.247843+00,f,,,a33f7af6-c587-4cb9-806c-981afae20632
+6498ebcb-3b41-4397-8e09-ac1ac4476bd0,Vojček Pavol,vojcekpavol@gmail.com,421952554542,"Podnikanie: taxisluzba | Cieľ: získavať zákazníkov | Termín: len sa informujem | Máte web: nie, ešte nemám | Zdroj: FB – Ad banner - Claude hook",ai,,,sk,2026-04-13 07:00:17+00,reminder,Matúš - Nedvíha ak by sa ozval mam ho ulozenho poriešim,2026-06-15 00:18:55.677036+00,FB reklama,neutral,Matuš,,2026-04-27 13:18:34.848563+00,f,,,631c3c80-2ab5-4ec1-8cb9-4861c74afc6d
+347ef311-1f84-4f64-81cc-707c42043dce,Juraj,info@ostrenoze.sk,+421 948 528 825,Web: ostrenoze.sk | Služba: Oprava eshopu | Dátum z hárku: 18.3,eshop,,,sk,2026-04-26 21:07:24.18781+00,contacted,Ostrenoze.sk - pisal na WA ale potom neodpisal,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:37:27.06237+00,f,,,2849403e-cf04-4a89-9d00-9641ecea8461
+cf05bfe5-0e96-43ae-ac7e-7cb0d0b7f219,Boskop,sklad.boskop1@gmail.com,,Web: boskop.sk | Služba: Modernizácia webu | Dátum z hárku: 18.3,redesign,,,sk,2026-04-26 21:07:24.18781+00,contacted,Poslana ponuka,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:37:30.438674+00,f,,,41bcf240-0d0c-446d-9a65-fdc8c4ad80a4
+529c2ddf-c6f6-4b9c-b0e2-f129157662a5,Airexplore.sk,info@airexplore.sk,,Web: https://airexplore.sk/ | Dátum z hárku: Február,ai,,,sk,2026-04-26 21:07:24.187+00,lost,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-04-28 06:02:56.581819+00,f,,,1331a5d2-1869-4fc5-999a-5b3345474d74
+d44e9d1a-c859-4169-814a-d3b03fb606b9,Aileader.sk,info@aileader.sk,421 907 655 705,Web: https://aileader.sk/ | Dátum z hárku: Február,ai,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:37:17.761748+00,f,,,86bd5c28-dddc-498b-b438-7726c4a7a315
+ef79a7a6-e56f-4a5c-9c73-43b3b70d8568,Lubomir Ilavsky,Info@premiere-group.sk,421905276764,"Podnikanie: Lyziarska skola | Cieľ: získavať zákazníkov | Termín: len sa informujem | Máte web: áno, ale chcem lepšiu | Zdroj: IG – Ad video - Wolwerin - skrateny",ai,,,sk,2026-04-14 20:36:00+00,reminder,Matúš - Nedvíha ak by sa ozval mam ho ulozenho poriešim,2026-06-15 00:18:55.677036+00,FB reklama,neutral,Matuš,,2026-04-27 13:18:37.769106+00,f,,,6f6937fc-eca9-4e7d-8b7c-3a58e5da65b5
+7430b0e6-6a44-48ed-a08e-a29416c496e5,Akomyslietpozitivne.sk,skolenie@akomyslietpozitivne.sk,+421 902 920 929,Web: https://akomyslietpozitivne.sk/ | Dátum z hárku: Február,ai,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:37:15.126897+00,f,,,8e565c21-996d-4d47-b857-dd655d0a7067
+8b6d63ef-7ef2-4d70-b965-6b0d9de8bc69,Bdz.sk,bdz@bdz.sk,,Web: https://bdz.sk/ | Dátum z hárku: Marec,ai,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:38:09.388866+00,f,,,65d8aff5-50f3-435c-8e55-a8cb96240e7c
+8743d412-19b5-4a92-a2e6-aa623d5eba27,ThreeNedx/3NEDX,solarned2@hotmail.com,421905615992,"Podnikanie: 3D gravírovanie do krištálu | Cieľ: predaj produktov | Termín: do 1 mesiaca | Máte web: nie, ešte nemám | Zdroj: FB – Ad video - Wolwerin - skrateny",eshop,,,sk,2026-04-16 14:15:28+00,reminder,treba este raz posalť email povedal že si robi sito a že bude čakať na ten email ktory tam je a poedzte že som dnes snim volal,2026-06-15 00:18:55.677036+00,FB reklama,neutral,Matuš,,2026-04-27 13:19:19.933234+00,f,,,42b65a68-dadb-4d35-8f44-1e71e4c2b514
+449d43c6-0873-44dd-a2d5-f1a8524a831d,Markéta Křenová,marketa.krenova@a2b.sk,907436386,Firma: a2b | Web: Mám web | Rozpočet: Do 1000 € | Zdroj: wp_funnel_boost | Dátum z hárku: 2026-02-03 9:53:41,ai,,,sk,2026-04-26 21:07:24.18781+00,contacted,"",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-04-28 06:03:19.345332+00,f,,,81911013-09d0-4f3f-9996-c9f7539873f8
+7ce59f0a-5365-46ae-8d28-320a0d7d4db3,Akves.sk,info@akves.sk,,Web: https://akves.sk/ | Dátum z hárku: Február,eshop,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:37:16.000834+00,f,,,7f4bb7d8-520e-4ae6-a023-c7dce8a924c1
+c0ac48ce-36b5-43ea-b927-2db8afc47b1b,Chaletpolarka.sk,info@chaletpolarka.sk,+421 910 771 334,Firma: volali sme spolu a ma sa vyjadrit po velkej noci | Web: https://chaletpolarka.sk/ | Dátum z hárku: Marec,redesign,,,sk,2026-04-26 21:07:24.187+00,contacted,"volali sme spolu, bude chciet novy web ale az v lete
+
+5.6.2026 - klient nas eviduje ale nemal cas sa tomu venovat, ozvat sa o 3 mesiace.",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-04-27 17:16:29.629441+00,f,,2026-09-02,d75eb447-0d69-44bc-a80b-ebac8036b694
+9eeb6479-8230-4043-8d65-1c85cddc0808,Agrodotacie.sk,podpora@agrodotacie.sk,,Web: https://agrodotacie.sk/ | Dátum z hárku: Február,ai,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:37:19.188515+00,f,,,8ed637ff-d741-4b5f-b7df-9a8c0442cce5
+2222f75a-c196-4f1a-8f26-0ca76e7e6e40,Benel.sk,benel@benel.sk,,Web: https://benel.sk/ | Dátum z hárku: Marec,redesign,,,sk,2026-04-26 21:07:24.187+00,lost,"19.5.2026 - klient si vyziadal aktualnu CP, poslal som. 49e/mesiac",2026-06-15 00:18:55.677036+00,Email skript,hot,Maroš,,2026-06-05 13:25:51.665385+00,f,,,eb475f5e-6923-4b98-847f-f10c13daff6a
+6492bf85-df85-4b0c-beac-76c077eb8500,Demi-finance.sk,shop@demro.sk,,Web: https://demi-finance.sk/ | Dátum z hárku: APRIL,redesign,,,sk,2026-04-26 21:07:24.18781+00,lost,Joomla,2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-19 07:30:42.377371+00,f,,,bf3723a3-9440-4ecf-8408-6a47edba2443
+03a345e3-d041-40e0-b2c0-4920418dbf88,chobotinky.sk,podpora@chobotinky.sk,,Web: chobotinky.sk | Dátum z hárku: APRIL,ai,,,sk,2026-04-26 21:07:24.18781+00,reminder,"",2026-06-15 00:18:55.677036+00,Email skript,neutral,Peter,,2026-04-27 18:50:11.005591+00,f,,,b2a6c8c0-5f21-4030-a602-ed7041a0ecbe
+8eeef72b-2731-4e21-8110-59b76b52c3dd,clinicservice.sk,info@clinicservice.sk,,Web: clinicservice.sk | Dátum z hárku: APRIL,ai,,,sk,2026-04-26 21:07:24.18781+00,contacted,"",2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:37:14.002814+00,f,,,48dc1d39-7a80-4c3d-b10e-c075fa6839e3
+3706b4de-c85b-4701-aa02-193afdde213a,castillomiklas.sk,daniela@castillomiklas.sk,,Web: castillomiklas.sk | Dátum z hárku: APRIL,ai,,,sk,2026-04-26 21:07:24.18781+00,contacted,"",2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:36:46.446929+00,f,,,b459e89d-8848-4bfc-94a9-767a1f9b853f
+203b3b69-00b0-4f84-8a07-a7bd3b16e416,Artport.sk,info@artport.sk,,Web: https://artport.sk/ | Dátum z hárku: Február,ai,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:36:40.882939+00,f,,,d6a45fa2-0c70-466f-b9e3-6d2e42df1075
+99320aa5-d4a4-4f9f-b852-1fbb12fa0bba,Chalupkyzazriva.sk,kollar1966@gmail.com,,Web: https://chalupkyzazriva.sk/ | Dátum z hárku: Marec,redesign,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:36:39.909584+00,f,,,9badd8f5-0199-4a54-a2c5-6c4806dd43e3
+b398279c-d6bd-4d11-8d46-d85d18560629,Carsonline.sk,info@carsonline.sk,,Web: https://carsonline.sk/ | Dátum z hárku: Marec,redesign,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:36:39.049393+00,f,,,ac9fe85c-5c52-4897-9716-5296e4bd93d3
+9d67794c-f1cd-46f8-b233-51f40c0cc934,Eurotrading.sk,info@eurotrading.sk,,Web: https://eurotrading.sk/index.php | Dátum z hárku: Marec,ai,,,sk,2026-04-26 21:07:24.18781+00,lost,"strasny chuj, nevolat",2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-04-27 13:19:36.627562+00,f,,,3a1dde50-0e35-49b9-91c1-af48de8229c5
+e47ae79c-61ee-4f68-9b74-91c2ee2c2d3d,Peter,p.macak84@gmail.com,421911000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art63,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,393d035f-4b28-4894-8f5e-9c947cade341
+cb55ba65-a995-4a4f-95f5-5259552ae0a7,cisteniekobercov.sk,ahoj@cisteniekobercov.sk,,Web: cisteniekobercov.sk | Dátum z hárku: APRIL,ai,,,sk,2026-04-26 21:07:24.187+00,lost,19.5.2026 - nema zaujem,2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-05-19 07:41:52.684895+00,f,,,c6c72797-c078-42bd-9dcd-a956d8a11399
+6b4567b6-4bd0-4420-a08e-02291fa8b688,AB-obchod,abobchod@abobchod.sk,,Redizajn eshopu a nastavenie Apollo sablony,redesign,,,sk,2026-01-31 23:00:00+00,won,"",2026-06-15 00:18:55.677036+00,Email skript,hot,Peter,600.00,2026-04-28 04:20:09.249662+00,f,,,a251aea9-d553-47c8-90e1-14cad8b10add
+f82eed3b-d1c9-4244-b452-346b31e85c3c,Baterix,info@baterix.sk,,Novy katalog + eshop pre klienta na wp+woo,eshop,,,sk,2026-04-14 22:00:00+00,won,"",2026-06-15 00:18:55.677036+00,Email script,hot,Peter,1500.00,2026-05-14 18:55:53.215794+00,f,,,d6755a37-7995-42d6-8645-bbaeb8342a4c
+0f94ad40-3579-4efb-bd93-aa19258babb2,Viera Dobročáni,info@corollab.sk,,Web: corollab.sk | Dátum z hárku: APRIL,repair,,,sk,2026-04-26 21:07:24.187+00,contacted,"19.5.2026 - zakaznicka chce najprv nacenit oprvu povodneho a zvazuje ale nie je vobec presvedcena o prejdeny na web na prenajom, pockaj na email co ti odpise a potom daj cp.",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-19 10:20:32.73402+00,f,,,5c34de11-bf4b-4db7-a16a-5d89c800c7d1
+fb33f0ce-1b31-49e3-9ad4-a3c35008ef71,Akhydroizol.sk,andy1974@centrum.sk,,Firma: volat v aprili | Web: https://akhydroizol.sk/ | Zdroj: Maros | Dátum z hárku: Február,repair,,,sk,2026-04-26 21:07:24.187+00,lost,"28.4.2026- som v jednani s klientom, bude chciet seo opravy webu",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-28 05:42:42.849432+00,f,,,a5372003-46b2-4b3e-ac27-57557c4ff18e
+85ab0b39-62d8-46f0-b116-e647ae4a2030,platinumcitycard.sk,info@platinumcitycard.sk,,Web: platinumcitycard.sk | Dátum z hárku: APRIL,ai,,,sk,2026-04-26 21:07:24.187+00,lost,19.5.2026 - nema zaujem,2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-05-19 07:58:10.381538+00,f,,,7f267c82-2f74-427a-95dd-7fe2b9b12bc6
+708ef6d3-a8a2-4ef5-87a0-977520db582e,czemag.sk,info@czemag.sk,,Firma: Odporucit migraciu na shoptet | Web: czemag.sk | Dátum z hárku: APRIL,eshop,,,sk,2026-04-26 21:07:24.187+00,lost,"Neni wordpress ani shoptet - Odporucit migraciu na shoptet
+19.5.2026 - nema zaujem",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-19 10:05:41.490693+00,f,,,0b924dbb-de5c-4376-861f-67f113015b57
+1c1d4ec7-7be1-4d60-88cf-7b2a6c00f7b1,Emporium welness,recepcia@emporiumwellness.sk,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.emporiumwellness.sk/ | Služba: Welness,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,eeb07922-8f68-4c13-b95e-59da27d60a1f
+92333a67-6c59-4718-876c-d728d7c14839,fuski.sk,predaj@fuski.sk,,9.6.2026 - klient reagoval na emali a mame si dat vediet 16.6.2026,consultation,,,sk,2026-06-09 12:59:26.516+00,new,"",2026-06-15 00:18:55.677036+00,Email script,,Maroš,,2026-06-09 12:59:26.516937+00,f,,2026-06-16,96f7a589-bca3-4332-a6d9-cba8bb291338
+93995564-c315-4586-97db-71f91608080f,Campingtime.sk,info@campingtime.sk,+421907781580,Web: https://campingtime.sk/ | Dátum z hárku: Marec,ai,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:38:23.378785+00,f,,,264460e6-7dc3-42dc-ab4d-dc7f7e54bd71
+f57a9abb-c83b-4c07-9b63-22ec7a17f3dc,Budstraka.sk,info@budstraka.sk,,Web: https://budstraka.sk/ | Dátum z hárku: Marec,eshop,,,sk,2026-04-26 21:07:24.18781+00,reminder,Shoptet - poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:38:22.804826+00,f,,,604ddde6-64c2-4d48-ab40-8891c4161c11
+c063505a-502a-498f-9bd8-e6b56d95829c,Arlena.sk,chudikova.alena@arlena.sk,,Web: https://arlena.sk/ | Dátum z hárku: Február,redesign,,,sk,2026-04-26 21:07:24.18781+00,contacted,pani je trosku mimo,2026-06-15 00:18:55.677036+00,Email skript,cold,,,2026-04-26 22:38:14.56054+00,f,,,927b2827-e89a-4443-93de-d57cc94d9342
+00663ee5-bdce-408d-ab49-73b57d0fa636,Agrodruzstvo,agrodruzstvo.banova@gmail.com,,,ai,,,sk,2026-06-09 00:01:09.988+00,send_offer,"",2026-06-15 08:21:35.711895+00,Google,,Peter,,2026-06-09 00:01:16.954849+00,f,,,535ad93d-c357-4a74-8093-b4303fac4302
+03adaadf-4de2-4e51-a84b-82dd4a0839e9,Blanz.sk,info@bilanz.sk,,Web: https://bilanz.sk/ | Dátum z hárku: Marec,consultation,,,sk,2026-04-26 21:07:24.18781+00,reminder,poslany reminder - vyzera ako novy dizajn,2026-06-15 00:18:55.677036+00,Email skript,neutral,,,2026-04-26 22:38:08.740644+00,f,,,57a43f1c-9da4-4d17-bf14-56323cbf3c91
+087a5acd-2058-4138-a974-e112c05b44ab,Baurus.sk,info@baurus.sk,,Firma: technicka oprava webu - Maros | Web: https://www.baurus.sk/ | Služba: 200e | Zdroj: Maros | Dátum z hárku: Marec,redesign,,,sk,2026-04-26 21:07:24.18781+00,lost,"stratila zaujem, FA nevyplati ",2026-06-15 00:18:55.677036+00,Email skript,cold,,,2026-04-26 22:33:49.37572+00,f,,,61aa0959-857c-47d0-adfe-2fe5563825b5
+fca03fa5-6861-44db-9e69-cb540239412e,Puredent,puredentkosice@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,lost,Urobila Konkurencia (priestor na marketing),2026-06-15 00:18:55.677036+00,Google,cold,Peter,,2026-04-29 15:31:10.089505+00,f,,,6ccc2f68-121e-4235-903f-ac76c5c093db
+c5142e91-ecdb-481c-9c9c-b334c2eb3348,cpn@cpndesign.sk,cpn@cpndesign.sk,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.cpndesign.sk/ | Služba: reklamka,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:00:45.939808+00,f,,,f709f921-f579-4877-9878-01ad66805b74
+9ef58cee-994d-4506-a880-5323e6625cc4,info@kuraaprtmnt.sk,info@kuraaprtmnt.sk,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://kuraaprtmnt.sk/ | Služba: apartman,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:00:47.973446+00,f,,,9f5eea9d-c71e-43b9-862f-87d01f339fa2
+9ca6cf64-bcc9-4585-9451-73a8937cf156,triemkov@gmail.com,triemkov@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.triemkov.sk/ | Služba: odpad,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:00:52.695114+00,f,,,30d8e4e6-5c76-466e-aed4-256c90b04132
+6399604a-c93d-4a06-a0d8-0a62f41386d9,solariakosice@solariakosice.sk,solariakosice@solariakosice.sk,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.solariakosice.sk/#sec-7be4 | Služba: solarium,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:07.365632+00,f,,,ec32bc0b-8fee-40bf-91b2-f6d51492a7f8
+52b71620-0d76-4b2f-a658-7c9cc2779150,Gréta Dánielová,greta.danielova@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.danex.sk/ | Priamo,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:09.767598+00,f,,,85eaf522-60cc-4026-9ac5-1bab4584c71b
+739e8f38-e860-4f8d-9035-617272173845,Imunocare,info@imunocare.sk,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://imunocare.sk/ | Služba: Doktor,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:12.226857+00,f,,,52e5b6f2-2ed8-47c0-bca7-8ff4904c732a
+35f696b7-14bc-4f18-ae47-d418bddd23a7,Mini relax mier,prevadzka.sutus@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://minirelaxmier.sk/ | Služba: Masaže,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:14.312723+00,f,,,04043e73-5845-4cbc-91cd-d81365187886
+bf15376a-c2be-4880-8631-76a65fa900cf,Art time,nomen@art-time.sk,917440720,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: www.art-time.sk | Služba: Škola | Čaká sa,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:23.208142+00,f,,,cc59b1a1-4988-4b80-8b27-d4239b146236
+70333319-bb98-497a-952a-acfdab3d8789,Santa,stahovanie@santastahovanie.sk,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.santastahovanie.sk/ | Služba: Stahovanie,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:25.094705+00,f,,,6d2437b0-1e74-4b10-983b-da112c68c863
+9373238c-850f-4efa-aff2-fb5d55df8506,Litva Fitness,kristynac02@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://litvafitness.sk/. | Služba: Fitko | Pripomenut sa,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:28.61493+00,f,,,9c8336ac-4ba1-404f-b9a6-1f1215c010d9
+b7c302fb-ee95-480a-b286-926d9370cf3c,martin.jankura@gmail.com,martin.jankura@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://martinjankura.tattoo/ | Služba: tater,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:30.358929+00,f,,,096c7165-0ee6-44d6-a429-975e3ee48483
+64b04b3e-1da6-470f-bc5a-c6a4a08891b0,Kovačova,kovacova.bellebeauty@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,Služba: Salon | Bazos,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:33.769969+00,f,,,370aa993-ddcb-44d6-8504-1beba8d9b8d2
+edf8d8fa-82cb-45ca-89a6-d20a7646cb72,Marek Halax,marekkornel@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,Služba: Elektrikar | Bazos,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:35.604309+00,f,,,e45b2804-4f43-4778-8234-6f402539516f
+7379fb85-3e50-4d6a-88ec-63c73e5f7c00,Peter Zonca,peter.zonca@sunland.tech,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: sunland.tech | Služba: fotovoltika | Matuš,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:38.082731+00,f,,,e52adcb7-d5d2-43a0-8a02-0cc733f65183
+344506e3-d876-4337-bf77-1654e7f67bd8,Michal Jastraban,michal.jastraban@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,Svadobny web portal,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:40.192571+00,f,,,280c1f5c-f9e9-4a65-8c72-dcf63ad02714
+864882f3-6116-43e6-afaa-7054ac812823,thefaceclubke@gmail.com,thefaceclubke@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.thefc.sk/Home.html | Služba: gastro,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:42.637631+00,f,,,037afd0a-a78c-458f-95c1-aa23c792c86e
+0796da6e-a970-4ade-adda-681052d27c98,lured@lured.sk,lured@lured.sk,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://lured.sk/ | Služba: salon,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:44.97574+00,f,,,14d84e7d-5707-416b-8170-5718e66ffb5c
+dbbff146-ccc9-40fd-84ee-89ed43ea2355,rezervacie@chatasustiak.eu,rezervacie@chatasustiak.eu,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.chatasustiak.eu/kontakt.html | Služba: chata,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:51.063069+00,f,,,b61996cc-598b-4f90-bc08-c3d3079fa75d
+abd8d723-ee4c-4ad7-a277-aa867db29b2b,santa@compacta.sk,santa@compacta.sk,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: http://www.compacta.sk/ | Služba: prerabky,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:01:53.050443+00,f,,,3d5b0018-64b8-43a5-a285-4851dc6bf98e
+9bf73c7d-f84b-4e95-9174-3a811ae02463,Martin,martinbandyk@gmail.com,421912000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art64,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a4d254e2-b81d-49ca-8020-9d87e95bd3e5
+33e9a834-ee36-44b8-a5e5-013629d8204a,Bloombee.sk,info@bloombee.sk,,Web: https://bloombee.sk/ | Dátum z hárku: Marec,eshop,,,sk,2026-04-26 21:07:24.187+00,lost,"poslany reminder
+20.5.2026 - nema zaujem",2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-05-20 14:31:44.31354+00,f,,,c0070e33-3962-43c0-8ae3-ab50234d18ea
+70130e20-7a6b-4b08-b022-ae6910efc450,Blueservis.sk,info@blueservis.sk,0908476208,Web: http://www.blueservis.sk/ | Dátum z hárku: Marec,redesign,,,sk,2026-04-26 21:07:24.187+00,lost,"poslany reminder
+20.5.2026 - nema zaujem",2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-05-20 16:18:59.827832+00,f,,,1a623964-ae4e-4369-802f-638850a9b701
+01407019-cb36-4d6d-a2af-efe00c088b42,Detektor lzi,akruks@akruks.sk,,"Opravit web + zakladne SEO
+
+dopísať ALT texty k obrázkom – pomôže to SEO aj prístupnosti
+prekonvertovať hlavné obrázky do WebP/AVIF pre rýchlejšie načítanie
+pri viac jazykoch nastaviť hreflang, aby Google vedel, ktorá verzia je pre ktoré publikum
+nastaviť HSTS (Strict – Transport-Security) pre bezpečnejšie HTTPS",repair,,,sk,2026-04-28 05:00:34.34+00,lost,20.5.2026 - nema zaujem,2026-06-15 00:18:55.677036+00,Email script,cold,Maroš,199.00,2026-05-20 16:19:49.258549+00,f,,,fb1d5296-37ea-4b80-b453-72708485e91f
+d4bfdf40-7227-4f1b-bf33-970844dc865c,Roman Valo,roman.valo@gmail.com,421903770869,"Podnikanie: Predaj elektro aut | Cieľ: web | Máte web: nie, ešte nemám",ai,,,sk,2026-04-15 12:00:00+00,reminder_silent,Matúš - 24.04.2026 ozval sa spätne je potrebneho kontaktovať 28.04 (Utorok) 14:00 - 16:00 + Návrh webu na otmto odkaze ktorý mu bol poslaný ako ponuka,2026-06-15 00:18:55.677036+00,Priamo,hot,Peter,,2026-05-24 22:46:00.034451+00,f,,,768f0633-991e-48eb-a8d0-ab08f2518e1f
+d73e0398-508e-4734-a2b2-ec7d6a1900bc,horaren.eu@gmail.com,horaren.eu@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.horaren.eu/ | Služba: chata,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:00:41.571014+00,f,,,4ac0e485-77f0-4193-8424-1ce843e19754
+167fdd35-35a9-4f3a-8a9d-a1aa337ec980,zrubovydomnasamote@gmail.com,zrubovydomnasamote@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.zrubovydomnasamote.sk// | Služba: chata,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:00:43.945239+00,f,,,c6a500e6-a18c-455d-b9f5-605ee381f2e7
+13ba80cd-d38b-43a8-a421-9b8c6bc02a3f,matovcikj@gmail.com,matovcikj@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.montana-residence.eu/el-clasico.html | Služba: chata,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:00:50.221576+00,f,,,853577d0-d4e0-406b-8701-f7aa454a067f
+7496c1e7-9381-4721-97fd-dc5067cf4d30,aprentsro@gmail.com,aprentsro@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: https://www.hauzi.sk/chalupa-pod-sixovkou | Služba: chalupa,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:00:54.934567+00,f,,,2e63c122-93c5-45a5-a774-c9fa023442be
+9cff817c-cfb2-4f02-841c-e7e6bbfcf1fd,chatapatuch@gmail.com,chatapatuch@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666158+00,contacted,URL: http://www.chatapatuch.sk/ | Služba: chata,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-04-28 06:00:56.83265+00,f,,,1bdad9d3-9536-48e3-8f7f-4d17cb93f1e1
+ad187473-7ef2-4236-ae1f-4713c690d189,demi-finance,demovic@demi-finance.sk,,"vytvoriť a pripojiť sitemapu (sitemap.xml) pre lepšie prechádzanie stránok
+dopísať ALT texty k obrázkom – pomôže to SEO aj prístupnosti
+prekonvertovať hlavné obrázky do WebP/AVIF pre rýchlejšie načítanie",repair,,,sk,2026-04-27 17:12:06.255+00,lost,"pri viac jazykoch nastaviť hreflang, aby Google vedel, ktorá verzia je pre ktoré publikum
+nastaviť HSTS (Strict – Transport-Security) pre bezpečnejšie HTTPS
+
+chce prist k nam pravdepodobn etakze odkomunikovat co to technicky obnasa a aky je postup.
+
+
+Jednalo sa o JOOMLA platformu a tu nerobime. Volal som s klientom a zrusil som deal.",2026-06-15 00:18:55.677036+00,Email script,neutral,Maroš,,2026-04-28 06:42:30.959481+00,f,,,2e149313-aaa6-4039-94b0-02fe4715e3c1
+23b32476-1c6e-4a74-a374-8dcf0c8d1d87,Peter,peterdjchromy@icloud.com,421911000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art68,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,bfb1e3cd-dfcc-42af-9c5a-f819bedf18aa
+bd778495-c7d1-425d-9b26-e23398435299,Tibor,tibor.pecha@gmail.com,421941000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art69,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1e08790e-2492-4bd9-8783-ec8f4b9a0830
+fd8f72b0-3fbd-4703-b347-be07be8ecadc,Slavo,osipcakslavomir@gmail.com,421918000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art70,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,8eb84dc3-5f44-4198-bf9b-814473548d8a
+088b5c0f-564e-4c4e-97d9-7e25a89a9d37,anabella.sk,info@anabella.sk,,,eshop,,,sk,2026-04-27 17:07:34.532+00,lost,"Zmigrovat eshop na shoptet, postavit uplne novy, viac v email chaine
+
+19.5.2026 - klient nema zaujem",2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-05-19 06:57:33.955675+00,f,,,a947ac38-5dee-452e-b975-6446d13448e0
+a9835465-a212-490e-9fd6-3c890eb3902c,Ceskakeramika.sk,bakera@bakera.sk,,Web: https://ceskakeramika.sk/ | Dátum z hárku: Marec,redesign,,,sk,2026-04-26 21:07:24.187+00,lost,poslany reminder,2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-19 09:49:59.77795+00,f,,,13922086-d95d-4c64-b24e-94852c1a7d3e
+a5782598-2670-4b2d-a5bc-85ff9491f1a3,Mira Trizmova,mira.mirafilm@gmail.com,+421910901133,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art76,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1baa6520-eece-4b70-921f-31430be128aa
+c4000d1b-7d1c-438a-aea7-2aeed0295b25,Tomas Janicek,Tomas.janicek4@gmail.com,+421908700550,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art77,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b9167674-2e22-45d6-a2f2-99134a214312
+2a130fd8-3276-4dab-bceb-77468e20083f,peter briestensky,Peter.briestensky@gmail.com,+421905344239,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art80,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,2cca9132-21e9-4b9b-b3f1-044155ff2ded
+098bf6a0-22a2-40d9-8789-3bf62bd7da1b,Peter Pompa,pompapost@gmail.com,+421903638512,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art81,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,cf255da2-b441-461f-bc56-24b976c01d8b
+0f696bc4-0ab3-4d4f-90ce-cd1ac0033c02,Marek Kriška,mk@compuarts.sk,0903 642016,Web: compuarts.sk | Dátum z hárku: APRIL,ai,,,sk,2026-04-26 21:07:24.187+00,reminder_silent,"20.5.2026 - volal som s klientom, ma sa ozvat, zaslam som mu moje tel cislo lebo akurat nemohol rozpravat.",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-20 12:06:49.420972+00,f,,,2a78d7d9-c473-4d68-a819-91d7016fb1c9
+416af662-a958-473e-af16-954aac85a3ba,Juraj Ujmiak,jurajujmiak@centrum.sk,+421904022365,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art83,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,ed789905-5dab-4785-b25a-97775eda6b26
+ce7e1ec5-d23e-4191-9c6d-532492a0786d,Donxrichibarber.sk,manager@donxrichibarber.sk,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.donxrichibarber.sk/ | Služba: barber,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,a5775101-e483-44aa-905d-8e744028709e
+6c4a5cf4-f377-473c-9a96-2f53fb826db2,Mara,mareng@centrum.sk,+421949201955,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art85,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,61aaffd0-67f0-4993-93ce-7ac1c59295f1
+43d52638-2255-44cf-989c-ff1c3f58cd17,Iveta Pirselova,iveta.pirselova@gmail.com,+421904507684,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art86,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e3101377-3e1f-4981-9dba-b5101510a933
+cf75da72-420a-4727-8ee4-f4bf727692b8,Jano Sedlacek,jsedlacek@gaya.sk,+421908278042,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art87,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,9d6513ac-e9ad-4e06-8c0b-e2a95ae4555f
+b4d056e3-cd82-43e8-a3bb-b3723b03d8ad,Libor,Lichrap1@gmail.com,421950000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art67,,,,2026-05-04 17:12:33.608878+00,t,art4_iii_2026_05,,a8933e87-bff6-4013-96ed-a2288afcdd53
+4b2e8ea2-5fae-46e8-96ec-e16c082c24e8,Cernan reality,cernan.reality@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.cernan-reality.sk/ | Služba: realitka,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,c9e21ec1-6103-45d3-9d4b-e21350ea2ba9
+9579c456-995d-469f-957e-0aef7a339dfa,RH Dry Mont,rhdrymont@gmail.com,421911000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art75,,,,2026-05-16 14:39:14.40919+00,t,art4_iii_2026_05,,32077ea3-7d29-470e-b450-628865a2761f
+4647a8a6-4527-48bd-b651-b6641852390b,Sando,skrine@azet.sk,421916000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art74,,,,2026-05-16 14:40:39.609399+00,t,art4_iii_2026_05,,c15b9ca1-3b6e-4c7a-8d28-ab302299c1ee
+7c188d0e-3e24-4fa9-a9c8-a8b7f531c1e8,Renalex s.r.o.,Alexander.varodi1@gmail.com,421919000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art73,,,,2026-05-16 14:42:08.835825+00,t,art4_iii_2026_05,,e1ade6ba-dc99-4e4d-9dca-c583e689e0fa
+c4c9b4b2-4b45-41f3-8069-6f26867a2826,FOLVARG-STAV s.r.o.,badzojan1@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art72,,,,2026-05-16 14:43:28.645612+00,t,art4_iii_2026_05,,b92a92c8-44bd-4128-932a-82b6eaa3d973
+28263859-5a34-43da-b68a-a40e171f711a,Stavebné práce,stavebneprace.paukov@gmail.com,421918000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art71,,,,2026-05-16 14:44:21.915485+00,t,art4_iii_2026_05,,689de20f-350a-49ae-9bee-7aee6154ac09
+a93d6fb8-2888-4a9c-91ca-9f8f980476ec,Peter Ondrejka,photofreak.sk@gmail.com,+421907735317,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art78,,,,2026-05-16 16:32:19.748027+00,t,art4_iii_2026_05,,81b4b221-26fa-412d-9453-5906f0af33fe
+32b11a87-266b-4584-9420-04d6103fb882,Stevo Amg,autobazaramg@gmail.com,+421915866378,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art79,,,,2026-05-16 16:32:36.764637+00,t,art4_iii_2026_05,,344e2461-02ee-4926-915a-40cd553a2ce2
+b07ffb28-e7b7-4380-b307-37cf205e4cbc,Miroslav Miskai,klima.systemsk@gmail.com,+421905506588,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art82,,,,2026-05-16 16:32:52.653207+00,t,art4_iii_2026_05,,bb0978fc-82bc-4451-b6bc-64e8437d9957
+d1ed32fc-bb73-4050-ae7b-0b5779ff4a77,Igor Balaz,g12sro@gmail.com,+421905623465,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art84,,,,2026-05-16 16:33:05.843334+00,t,art4_iii_2026_05,,fd8668cc-4766-4048-9b93-1a1b72dcbd40
+e0bb44cf-14b7-48aa-a891-8bb65492370d,Miloš Koukal,muno.munosro@gmail.com,+421948577299,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art179,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5fb5b0d1-a918-4a8e-a7d6-8082ff4b004b
+80af0605-57f9-407f-9476-ebd407c8b282,Jan Taschnocha,janko.tasnocha@gmail.com,+421911077883,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art180,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,8a3da38b-c842-4bf0-a57c-b31358018fdb
+93c3bbcd-6db8-4694-9ea6-2069d7a24a0d,Peter Chlebek,peterchlebek28@gmail.com,+421908147342,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art181,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,04b02d98-9dd6-4b0b-ad19-0a55c084c908
+cd7d3f65-7e0d-403d-a985-4f0e937d03b9,Patrik Špirko,patrik.spirko@gmail.com,+421907305304,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art183,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,3177c4fa-38c1-4bac-9e84-867a1266332c
+eae122a9-c0f5-4d3a-990d-183e46f72e7d,Tom Tom Dobos,tomas.dobos1@gmail.com,+421944349019,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art184,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,73b0ccb6-b2d4-4163-98a5-67aa29d9be9a
+7ceda3ff-8611-4e44-99ec-b99978cdbe18,Ján Popaďák,popadak@gmail.com,+421905652204,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art185,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,9edad103-e69f-41c8-a573-4802361e789a
+60b5fbb8-c199-4d6d-8d2f-948f76a91df6,BORO,Peterborovsky@azet.sk,+421905481600,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art186,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,77c28aae-7b3d-4a23-a0d1-d491e080a919
+a87de4c3-f800-442d-8ec2-cabf1e0fa8a5,Vitali_Lučiano,Lvo.development@gmail.com,+421951414083,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art190,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,aacb8b39-61ef-41d3-b87f-e094f5cd00e0
+cbc8e280-6b60-4822-b184-338655439163,Tono Budzák,tonobudzak@gmail.com,+421903127081,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art191,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,fa3a5825-aa76-46f5-8b7b-9c18fe67c01a
+d1b1b2fd-6803-4d9d-aea4-134e629c4489,Michal Strmen,Strmen.projekt@gmail.com,+421918446487,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art192,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,44e22335-de70-44cb-959b-f0a4ffc73d29
+b392b40b-f6dc-4a0c-b05a-c09f1551aa26,Stanislav Gladič,stano.gla@cetrum.sk,+421905485255,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art193,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,24198cf6-0129-4d07-8e2a-7eb4c811ea06
+f3f1dd74-362f-4cb5-b159-0ac7378af740,Roman Kudela,kudelar25@gmail.com,+421949842404,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art195,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b3f12281-4776-4a65-9d4f-c08040cec135
+df7bf813-414a-4d51-a89f-ab94323dff6d,Milos Cernohorsky,miloscernohorsky@gmail.com,+421903563558,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art196,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,3035a739-0093-456c-8a54-45d1bbcf90f3
+d7073119-060e-44e0-9187-01ec20698c73,Maros Kopana,666kopa@gmail.com,+421949382787,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art197,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a5c25ade-8103-4b64-9feb-eea59cc166cd
+ac2a3e2e-d900-4c9b-beb9-99649d54b031,Tomas Bertok,tomasbertok@gmail.com,+421948100277,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art198,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,efc0b9da-b6e2-475d-81b9-00634af8726c
+771796f1-c465-437d-ae8b-a643d1dbfabe,Adam Hanudel,hanudela@gmail.com,+421949332422,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art200,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,08872148-60f0-482c-a02d-b58c7702c62c
+91511b10-38e9-4a04-a659-29b2cc099ee1,Karcsi Csányi,csikar56@gmail.com,+421910375060,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art201,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,7b0fe7eb-73a3-4c82-8302-e5ffda393536
+4be68902-11fd-4fc2-9402-c01228f03bea,Peter Baluch,pbstav@gmail.com,+421917984185,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art202,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,96c0023d-8182-4e28-8075-99c7c3110c17
+ca2299b6-0b2c-43aa-a70b-ca4ec02a2f63,Matúš Biznár,matus.biznar@centrum.sk,+421911880028,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art203,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b4e57926-716c-437a-892a-7480ee47af02
+78af6673-591d-49b4-bfdd-e2ab821dea32,Erika Vargaestokova,erika.idzyne@gmail.com,+421905745598,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art204,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5ffd4834-c296-4075-b44e-067251feb854
+bc7efdb9-47a3-49de-bbeb-6ee3cea06207,Jozef Lukacik,nagov111@gmail.com,+421904192848,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art205,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,d6960534-400b-43ac-ab2c-eaa466a73863
+6da7272a-6ee0-4c59-95e2-e2c0e2a9527e,Marián Babinsky,babinskym@gmail.com,+421903800864,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art206,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b3306a9c-3f37-45e7-801e-b6294c7fa894
+3e3dba33-b30b-4fb5-a167-11350c883b9e,David Dendis,ddscreativegroup@gmail.com,+421944923924,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art207,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,f055f399-94c7-4066-bee4-8606a4a1f744
+d75599a6-f83a-46d5-8ebf-b1d473d5d50d,Attila Degner,degnerattila2@gmail.com,+421915605375,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art208,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,548a1333-9e1c-4f6a-9e13-99d71f9b7a29
+a31ff37d-36f2-4418-b48e-1215fd4bc4da,Jaroslav Iker,jaroslav.iker@gmail.com,+421902338031,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art209,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,554751a3-b0c1-45ab-8ac9-b094062c8686
+3334f2f1-2fff-4618-b263-ccc5295f35e0,Marian Meravy,marian.meravy@gmail.com,+421905716486,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art210,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,d9689c39-796e-4600-8658-05bc4094cfd9
+c039f441-6120-4a8c-aa97-96c6d31eaf6c,Adriana Horvatova,adricku@azet.sk,+421903819019,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art211,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,3a8abec4-87a6-4f5e-b1d2-aa431839ac70
+d6a569da-c87c-4e71-a6b7-9811c37c0db4,Katka Nechalová,nechalovakatka@gmail.com,+421905981345,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art212,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,2d422397-0abb-4e02-8116-b11154b2bfc9
+fcb387ac-5c6d-46e1-aacb-881024328100,Lubo Ondruška,ondruskal@gmail.com,+421917720805,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art213,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1a434a7b-c621-4d30-a701-ca33defbaeb7
+b5e4cf94-3219-47bc-b63c-786e36a797fa,Jurko Bobocký,bobockykrby@gmail.com,+421907897420,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art214,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,14127342-7782-47db-9226-b23df34f4918
+9c9a1993-9df4-49bd-b468-53daff52c299,WandWall,wandwallcreative@gmail.com,+421915498480,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art216,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e9df90fb-8ac5-407d-9529-62bbc927662f
+9caf2363-5b51-4c31-b41a-fa1411521251,Patrik Polák,zarodom@gmail.com,+421948912388,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art217,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e9349dce-eabb-4685-8e61-833fc6cc2e65
+308689a7-79a1-44b5-b6e0-49e01e9eb215,Jan Kazimir,kasaj@mail.telekom.sk,+421903247065,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art218,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,55c3189e-005d-4c21-9fcb-6c4740f97911
+09537167-f8c8-41bf-8fe0-6b033604e8ff,Emil Moravec,moravecemil@gmail.com,+421911536939,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art228,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,7b10d283-334f-4710-bd03-38814f15f2f9
+6753d33e-becc-463c-afde-fcc69d7d9e60,Bosko Corda,cordabosko@gmail.com,+421905971966,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art229,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,828e9e26-7272-46ba-b649-f5d26d27cdcb
+f53b120a-b9a1-4e39-b7d1-f012ed486fb5,Jozef Psica,jozo089@gmail.com,+421910129752,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art231,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,47057072-a0cf-4fe3-8048-ff7858e15223
+1bea1197-441e-4acd-8825-7dacd72366be,Juraj Šimunek,simunekjj@gmail.com,+421904525084,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art232,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,3ba15319-8c3d-4bc8-a6f4-dd405007817e
+69dfc3eb-1f1e-4bb6-92d5-5d7349fb394e,Dus?an Bi?zik,dusan.bizik@gmail.com,+421915445273,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art233,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,7ffc9e8a-3238-4dbf-9777-e2719d37a64e
+dbe1810f-8414-4ef3-8fe8-01c4736e3b89,Majo Abraham,abraham.marian238@gmail.com,+421917840428,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art235,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a89f5b4b-a76f-4a70-8780-a150394534f8
+8a8c4017-dc20-43cb-9196-8f54e5b89862,Maria Bariova,bari@bari.sk,+421905516066,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art188,,,,2026-05-07 21:17:58.526981+00,t,art4_iii_2026_05,,bfb939b0-0675-4d6d-9399-2562e59ece9f
+4e3189b0-96bd-49a1-b855-3f8002459a0f,Daniel Finďo,daniel@findo.sk,+421905506606,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art189,,,,2026-05-07 21:18:34.555702+00,t,art4_iii_2026_05,,937fb3f8-d3c0-44bf-8493-ce1b0f914b50
+d64f6152-28df-4abb-b87a-917ca08ddab9,Zdenko Harabin,harabin@harabing.sk,+421908222440,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art230,,,,2026-05-07 21:20:01.227272+00,t,art4_iii_2026_05,,9759f69e-f0cc-416b-980e-4a60bb64bc0d
+227d0e87-791d-4dac-a3cc-10ffa0ef03a2,Branislav Hokina,info@hoki.sk,0911787803,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art215,,,,2026-05-16 15:26:29.271272+00,t,art4_iii_2026_05,,8084a3e2-6f63-4230-b941-1dd367e21c6d
+7d670e7a-e1bf-4942-8e86-cb1981d93713,TRONT s.r.o.,s.skulavik@gmail.com,+421948323050,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art194,,,,2026-05-16 15:27:09.746893+00,t,art4_iii_2026_05,,1a58c620-837f-44d5-ac9f-2e94020b98c1
+b37f8c94-d3d9-45b6-9c19-12d105a73b80,Milan Skaličan  SKALKO,profiobkladac@gmail.com,+421904516684,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art199,,,,2026-05-16 16:33:49.711062+00,t,art4_iii_2026_05,,5d98e60a-8f10-49d6-8bf7-b7353fc121d6
+df1c6cc3-5a6a-4cf6-a987-2b11e13a6792,Daniel Nagy,danielnagy802@gmail.com,+421948291508,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art236,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,51a9793c-465b-4944-93c4-f51f80684d54
+bd24993e-22bf-4712-869b-b2547b8202f6,Femibuild,femibuild@gmail.com,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.femibuild.sk/ | Služba: stavebne prace,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,9ca2b032-72f7-4176-8703-f26d63dde097
+35bcf4fe-d0e1-4917-870c-775901ffcdc7,Pavol Fidler,pavolfidler@gmail.com,+421905975800,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art238,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5a816119-4e7a-4a8e-b4a5-ec83342eceb1
+2516f794-550e-4f67-9e55-14bcc9b526e0,Peter Stranava,peterpestra121@gmail.com,+421918434071,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art239,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,977e80a9-247e-4012-bc86-1aa948713dba
+3ce4db26-0912-418e-b8d7-0e2256126e18,Jozef Neománi,Jneomani@gmail.com,+421948210288,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art240,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,c3089890-d497-4af1-bffe-607416347f2b
+1cf23322-64eb-45f4-9cdd-368b73e6fdc5,granzer jurgova,lucitaina@gmail.com,+421911097324,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art241,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,336910c5-e46b-46df-8772-bbc47d9e7a68
+b7a5a4b2-af4c-4d08-98cf-e738194348cd,Dávid David Hrbatý,hrbaty101@gmail.com,+421908308521,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art242,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e7fd3bff-9eb9-4068-8f63-8ecc64452a3e
+d882d1e3-bfcc-4573-9488-99e3226607c5,Trubíni,l.trubini@gmail.com,+421918126900,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art243,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,20e1bcf6-f83b-4eb8-a146-20bacdb27b1f
+3ec5d808-9d98-452f-a10c-3b3e63fde405,Gjon Markaj,mgjon73@yahoo.com,+421948016956,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art244,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,28692e66-7d51-4bf4-a1b2-f8c0ba5d0216
+42919b9b-b469-49da-ade0-de555b38bee5,Peter Antušák,antusak.peter@gmail.com,+421918977241,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art261,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,f664df1e-a1cc-41f3-b128-f967818820b5
+0acc16a7-514e-4dd6-b0a3-bde4117e7d13,Jozef Feketik,j.feketik@gmail.com,+421905561803,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art262,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,77c7b331-d178-438a-b50e-e82602ddd85b
+41b9ac16-585e-4f39-950b-acb3dcc99f0c,Radoslav Škríp,radoskrip@gmail.com,+421905100200,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art263,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,3ea9d417-7a7f-46e8-9158-edaff2b6d06b
+9508cd8e-f6cb-40e2-a19a-a4fd1323380e,Miroslav Majak,mirecc333@gmail.com,+421940760771,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art264,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,580f8cf8-1794-4273-a10e-4e5f938f7f3e
+1962ab47-6fd6-4630-ade8-e7a8d52fae88,Pöcz Louis King,poczlajos@zoznam.sk,+421910618867,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art265,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5cd7149e-3743-4db6-9122-46839533154d
+7657bb58-3f52-4d6d-bb41-cd40ee69e112,Stanislav Bujňák,pucimir@icloud.com,+421902209392,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art266,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,215e3615-69a9-4718-a76a-08ac656363e8
+e89cbff2-911b-425a-bac0-a9ae2c126872,Pavol Štec,pavolstec85@gmail.com,+421918549206,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art267,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b3d89ff0-4fe1-4122-aa70-b23567c985e8
+9146b32a-8805-4684-8335-d4fd87946f27,Braen Petrakovič,brianpetrakovic@gmail.com,+421908059652,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art268,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e19178b3-a4c9-4d8b-98b7-47ff99a87c27
+52d80e7d-96ab-4f88-9a4a-edc94f301b59,Miriama Procklová,procklova@yahoo.com,+421918974734,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art269,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,41c0489d-c1ce-4939-844e-4bd18fa37d4e
+dd0ccbcf-4c0b-45f8-8a7b-f963745e2b55,Igor Paňko,faanky1igi@gmail.com,+421905770845,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art270,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a8909ae0-91f3-4199-bd3c-1d8ed6664bd8
+01bfabc3-8064-41c3-a968-539c77e2be93,Kosar Jozef,kosarjozsef@gmail.com,+421910621000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art271,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,7a6e096e-0988-4b92-915d-9a555742fb1c
+99ead605-da13-47e9-b95f-c025d078f311,Ladislav Dužda,ladislavduzda35@gimail.com,+421910358347,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art272,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,45188f81-7fdb-4b36-8e75-8454bdf70a9a
+556a22e6-3750-4c76-af11-2446a69f3168,Zeljko Milic,istenem.ba@gmail.com,+421950223418,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art273,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,0fd84987-a01a-4db9-a17b-062351adcebc
+abc988aa-d1fc-4776-8768-c1e8da0466dd,Monika Hadnaďova,hadnadm@centrum.sk,+421905520179,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art274,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,9be54ddf-8ad7-45f8-a1b4-cfedd954fbe9
+cd358c94-07e1-4e60-8fb7-8ce8c3b14190,Jan Lalik,montastavsk@gmail.com,+421905105064,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art275,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,9c70203b-0ed5-4bcb-92e5-c4dbb1e830ff
+b7c88ced-06ad-4791-960e-74ce9177a662,David Prokop,prokopdav@seznam.cz,+420603775725,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art276,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,10724718-73b7-4609-826c-301fb47a16bc
+ab6a9ae7-d9db-4554-bfab-06050900f6c2,Dana Kvasnicová,kvasnicova.dana@gmail.com,+421904622350,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art277,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1a873698-d281-4edf-a58e-a33288c78d25
+11ae9936-d5bf-4441-bb34-5ee7993e4f3f,Marian Lukac,lukostav@azet.sk,+421903423347,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art278,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,dec8eb5e-0bcb-4ec6-9b2c-f216dc9c4602
+3e29cc10-6238-41e7-8f17-6a0db23a146e,Simona.Marsalovicova,marsalovicova.simona@gmail.com,0915537642,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art279,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,58d9fddf-41b9-4fd8-8bcc-441931ad4e2b
+c57d8a6e-7970-4d5b-90b9-45b38e385c90,Ma su,masuku02@gmail.com,+421903164261,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art280,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,223c694c-29ad-4f88-8bf7-aca914f2a861
+861e7779-b652-4993-8a26-fa9253a28452,Marek Sekáč,mareksekac331@gmail.com,+421918190455,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art281,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b1ac011a-7787-49d1-bea4-9f253b4a4207
+b3b07e9f-e2ae-456e-b585-5d9600a7a94a,Boris,Borissc.men@gmail.com,0940733989,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art282,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,44196844-9739-48c8-b850-99304eb86cd4
+a09b5897-8520-4b24-aa5b-f7dc725d5bac,Juraj Virostko,jurajvirostko1@azet.sk,+421948306856,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art283,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,37acac98-292a-4cd1-928c-c287060ca8d4
+0a061a3d-8f6b-41f6-82b0-d171c9c2ac89,amigo25,roman.chlapovic2212@gmail.com,+421903138685,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art284,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5421118f-7c8e-47cd-b443-c85968ab844e
+da14436c-d7ac-479b-9f11-c6b5ede6c0e2,Michal Magdolen,michal.magdolen77@gmail.com,+421918846614,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art285,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,bb2f029b-4399-4e36-8fd4-d54778982042
+a19a1903-d509-4bef-85f4-06337a626994,lubomir krcmarik,krcmarik.lubomir@gmail.com,+421905176050,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art286,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a9acb7df-2332-46b3-a522-ecf96b2b9a6a
+6b082e72-7f5f-4649-81e7-a8f794020563,Michal Kucek,miso.kucek@gmail.com,+421911905020,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art287,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,59c1b3e9-a48e-43c1-9301-6d7c37b236d6
+4da8bfd7-52be-4449-a784-7999607c20c6,Ludo Plavu,plavuludo@gmail.com,+421910905649,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art289,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,da81cd6c-d765-4d2d-aae8-02c285667588
+a7d2c264-8e4d-4516-b1cc-7ee73e6c21e9,Oros Tomas,Oros.tomas@gmail.com,+421902700444,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art290,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,58ce9801-15e5-4087-97f5-2182231113ac
+1e98c816-3c0b-4185-86d5-307ac43a6398,Tibor Sala,tibor35@azet.sk,+421948598338,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art291,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,d4e55aa6-53ba-4602-9c56-39d062524de0
+87020e86-8b60-4ee0-9063-37056a2096fd,Ivan Dohnany,glevarcan@gmail.com,+421905602450,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art292,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,fb8d1ad1-9ffc-41b1-ad7d-ca27ce94fcc8
+af650ebb-5588-4b29-95f3-b9de112ffc88,Slavo Turcin,F7slovak@gmail.com,+421905754076,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art293,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,bb337ce0-33bc-4838-a57f-6590b87ead78
+612242d6-f1bc-4864-8cea-a9c515d0fc15,Marcel Bratko,marcelmbcolours@gmail.com,+421905780120,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art294,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e570aecd-3225-4865-a4b9-900a50391583
+b6d43692-81be-4bee-b84e-076f705464f7,Lukas Placko,lukasplacko84@gmail.com,+421944544133,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art295,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,eca5b748-0624-4336-9f62-2ebc1e3d23c3
+a76f6b07-0f89-41d1-aac1-31c4bafab538,Igor Palkovič,specma277@gmail.com,+421948726627,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art296,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,4d69d686-b508-4614-a50b-8ebed63cba82
+d21a79ba-6642-4a73-9f72-88f42d7b840a,Jozef Elexa,obchod@elexwaters.sk,+421907957175,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art288,,,,2026-05-16 15:25:40.992037+00,t,art4_iii_2026_05,,2bc3db27-22e8-43e5-8d9a-a3707f42047e
+e77478d5-9419-4fef-975c-b11417596d5f,Marek Sute,md.objednavky@gmail.com,+421903676141,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art237,,,,2026-05-16 16:34:47.922218+00,t,art4_iii_2026_05,,49baa671-7dd9-4b2f-b449-79a8bb4e625b
+a14069a0-be54-425d-94e9-a77ef9897742,Martin Strašifták,djredface1@gmail.com,+421948206558,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art298,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,42c0f28f-0d8c-4f00-81fa-f6a4ead4a9be
+49efe029-6f7b-4b74-a430-ba854feb5b5f,Tomas Mesik,tomikshemko@gmail.com,+421949855630,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art299,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,7c0141cd-e8c7-4c01-9a3a-8e3cd13a8b5d
+aab70ca6-a500-45e9-9529-6c1b274c8f9c,Jozef JoJo Bratina,bratina.jozef@gmail.com,+421944096186,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art300,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,4e905b46-c7af-4d1d-9486-08262d885cb5
+9272613f-2fea-49fd-80ec-d4e4c206e870,NOVAVES,kucharovic.jergus@gmail.com,0948681133,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art302,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,8e88a7c6-8545-4825-90e4-ec7b39439986
+c508efe0-db5f-4f63-9ab1-0a0965c99a74,Peter Hurný,peterhurnypeter@gmail.com,+421907955243,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art303,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,0360cfef-8bd6-4fc7-823c-eaf778da4d25
+2ed88545-9648-4be3-b484-0d8b13465b33,Ivan Borič,ivankoboric63@gmail.com,+421903308003,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art304,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e4330312-8d30-4ca2-94c8-f8cef27be5a7
+6baa5fbb-6a57-42e8-8973-6718cd8c53d4,Peter Brezina,samocompany@seznam.cz,+421948444065,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art305,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,023af81e-b603-4af4-8505-29e6b3ae9d41
+2d022ff2-c015-40c7-8913-34647b44a57b,Juraj Danko,jurajdanko68@gmail.com,+421949681123,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art306,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,3fd68493-b5a8-472f-9197-f38f1692884c
+39f6b94f-4816-4b2e-925c-e1894c6fc2bc,Filips Ozyy,ozabalfilip@gmail.com,+421918447378,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art307,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,21951b64-25a3-4118-9563-9de8b90d11c7
+8b8d1610-faf5-4f66-82b2-89e72cb38c7b,Pavel Kečkeš,pavelkeckes@gmail.com,+421908788771,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art308,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,0cfc78c7-b4cc-4bdb-852d-6b989e916b0b
+b458db78-bcce-48f7-9d43-4e64645ac156,Michal Zlatohlavek,m.zlatohlavek@centrum.sk,+421917365547,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art309,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,6cb0a28c-ef93-483f-8d70-aad91cc4b886
+61bfaf53-b608-4e44-9864-41123a19b30f,Jan Jancek Brienik,jan.brienik@gmail.com,+421949809500,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art310,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,f28aa2e1-961e-456f-adc3-fb82a5e6fed7
+54a56a9b-7805-481d-8a8b-be5f66dd9e49,Robert Fehér,robertfhr@gmail.com,+421908720310,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art311,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,9929ff0a-292a-4f85-a0ff-a13872461eb2
+61cbdb94-fcc2-421b-af2f-f0274fc9bc2b,Cestovatel.D,davidjakubasek@gmail.com,+421918546360,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art313,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,befeca36-b5c5-4089-b56d-a8b78ea9a681
+87ba1c16-c650-4fe0-951c-90fa15aac233,Fenik Juraj,jurajfenik80@gmail.com,+421903268525,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art315,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,03a0a5c6-f208-4a8b-9e36-4f842784333c
+382533e0-d70a-4f57-8c64-1f5ddea44955,Miroslav Poliak,mipol.servis@gmail.com,+421904388717,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art316,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b5859345-b66b-4afe-95d7-58a6a78f05bf
+34e1237c-63d0-41c6-9299-193385cc1057,Augustin Hanuliak,gustohano@gmail.com,+421905666450,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art317,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,63dfb9e2-d11f-41da-8b05-cd13f0c2eaaf
+33833ba8-046d-470e-b9b2-1d1450cd880b,Maroš Chmura,cmaros222@gmail.com,+421903917799,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art318,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,81477060-a499-4de6-bb65-c81e571ab474
+9f8970cc-87ce-4b6a-b1b9-2fa478a51abe,Oxur Stavebná Sro,vladorusko@gmail.com,+421905977542,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art320,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,04aadbf4-763c-4c21-aca4-294c6f118281
+b37c2e28-9bde-425b-8cc7-497c704ad888,Šimon Zsolt Frenko,zsoltfrenko24@gmail.com,+421948760412,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art321,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e9551231-aa82-42e1-9f40-67aefbaa4f07
+aca3f8b3-ab16-45eb-b9ae-06cb64b42388,Peter Belko,peter.belko102@gmail.com,+421903492913,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art322,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,07d87a64-f30a-4c7d-9efa-172ceaa90acf
+b8a795b8-abc2-478f-9983-ef05cdad12aa,Róbert Szabó,robert.szabo.rps@seznam.cz,+421948765200,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art339,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,2d7e8cf0-f55e-424e-b8c5-48d28b706549
+2ff02813-fde0-4344-8fc1-076e6ddf0942,Jozef Adamek,jozsko.1@atknet.sk,+421908175006,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art340,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a4dcd79a-7147-4dd5-a5e4-5b221c532de5
+a7944074-34d1-47df-8c4a-3236f583e717,Ján Pravotiak,janopravotiak@gmail.com,+421905756192,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art341,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1b46c41c-909a-4f2c-8438-f32ac43c5bfb
+3bea8c37-40c9-4800-b630-c1c1f246d00c,Jozef Babuša,jozefbabusa2@gmail.com,+421948588810,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art342,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a0f91814-327b-4fda-b314-9e4efa519d6b
+42b395ac-40e9-4ee1-b78d-872ea7f7d7ab,Ivan Caresro,isancaresro@gmail.com,+421903635050,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art343,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a84f2f5e-08fc-4b24-8891-c4607f2659a9
+40d16493-27a1-4511-830f-8875fbfaf79c,Marian Gašpar,mariangaspar30@gmail.com,+421918780381,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art345,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,9d65a085-a83e-41db-ad7d-0c8018a96ffa
+42d661af-e3de-4577-a8e5-e282c8241cf5,Matúš Avel,matasavel@gmail.com,0910222552,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art346,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,35577aef-de0d-4015-8f6e-5fa7b718c802
+f31355ed-d973-47ed-9145-664d5e53864b,Miroslav Rafaj,Info@kotva.net,+421905523933,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art325,,,,2026-05-16 15:24:19.76036+00,t,art4_iii_2026_05,,f08cbe06-b2ff-40f8-a766-21387a51fd8b
+61563de4-e5e8-40f0-b081-4164b09698f6,Slavomir GIBEJ,gibon@gibon.sk,+421905259916,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art319,,,,2026-05-16 15:24:40.602382+00,t,art4_iii_2026_05,,ae38dd76-1806-4ef5-acce-d7fee4c008c7
+ca4d693f-a1a9-4c9f-b714-ee140c2a894d,Bratislavskí chalani,bratislavastavbar@gmail.com,+421950311988,,ai,,,sk,2026-05-04 11:32:21.150436+00,send_offer,,2026-06-16 06:50:32.361452+00,Art312,,,,2026-06-16 06:50:32.361452+00,t,art4_iii_2026_05,,dd8d0e82-f3fc-4d97-8021-afe6bea28bb9
+1f10f055-15a7-4806-a6b0-5cf4bd5df01e,Roman Horatschek,roman.h@rh-group.eu,+421904013300,,ai,,,sk,2026-05-04 11:32:21.150436+00,send_offer,,2026-06-16 06:52:18.798084+00,Art301,,,,2026-06-16 06:52:18.798084+00,t,art4_iii_2026_05,,b45ecca6-a326-45a4-bea7-1d6263db8d14
+d5ea3947-e252-4555-b8e6-9a0968a5a515,Peter Pacák,pp.plywoods@gmail.com,+421904484210,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art337,,,,2026-05-16 16:36:29.18659+00,t,art4_iii_2026_05,,427a645b-42c2-4642-910d-34b3c7da1918
+9690f808-63a0-448b-bf01-c3ee0d0341fc,Horizral Energy sro,horizral@gmail.com,+421917460849,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art338,,,,2026-05-16 16:36:46.895332+00,t,art4_iii_2026_05,,b7f94b08-d36b-43b1-97bb-8ccb92209212
+4e860d2d-1dc8-49c7-abaa-f0384a853a55,Dávid Tomko,davidtomko70@gmail.com,+421904625471,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art349,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,61f385ef-ee43-4d91-aedb-645b947bc57d
+fdc7b97f-95c1-4891-bb08-ecbf4401bb3e,Rado Stankovič,rado.stankovic@gmail.com,+421918454544,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art350,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,15097248-4473-4077-b04c-9f1182556f72
+8cf49cb3-ecc9-4c48-9abd-d810da2f5330,Miro Petrus,miro.petrus159@gmail.com,+421911123851,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art351,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,de4593f9-57e2-40ec-bb26-aa0596637589
+b9adfd3d-34d0-409f-9b34-81554b5310d9,Ivan Nagy,ivannagy2112@gmail.com,+421944288139,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art353,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,cfe44d0a-df5a-4fd9-9da6-99fdb54dd59b
+3a7becf5-6630-474f-b813-d60de1e1c7d0,Jozef Sedlák,jozefsedlakjopo@gmail.com,+421949166662,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art354,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,d57000a6-eca6-4c56-8e02-b04226a0ad8d
+fd2fa4d8-821b-4ec1-ad90-3d4c678608b0,Marcel,marcel1222@azet.sk,+421908330227,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art355,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,232ae057-5ceb-42c4-8f08-54538768f5f4
+d0358c8a-fd94-430b-a00f-820f4cf59e8e,K. Mihok,kr.mihok@gmail.com,+421917749914,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art356,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1e97d8e6-952e-4134-a899-38cdccd38c30
+27a64527-e9a5-46af-a6b5-d54eef6f2673,Rada Cibitor,radacitibor@gmail.com,0918762112,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art359,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,54730223-2b41-4a86-a4f8-3b81fa59cafb
+a28c34ef-2454-491e-a7cc-5a7348c3a767,Melicherčík,melichercik.mm@gmail.com,+421948440637,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art360,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,c53519c0-80f2-4ca6-bf9b-d3d49f94be38
+41e05ffb-9735-4505-9cb3-9c2062bf9892,Milada,milada.cadrikova@seznam.cz,+421949320066,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art361,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b27f1cc8-4b8c-4ddf-9170-664e93a477cd
+b647d52f-ad0c-4f77-956e-6e994bedf469,Antonia,tomkova.antonia@gmail.com,+421907079279,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art362,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e9780dc7-feac-4ccb-aad9-b721597fa2fa
+4ac7915b-622a-4446-b5e0-3e4b6bf92131,Fedorčák,zdenek.fedorcak@post.sk,+421905980485,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art363,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,7a09fa0c-5b36-4c27-a364-c7f08d335673
+5d5ad282-fb6e-4a50-ac79-280cf972e068,Adriána,aleskova07@gmail.com,+421904413493,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art364,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,d4bace19-9d0d-4aff-9dd4-29c5bc2aa939
+640f67cb-9937-4017-9951-693a34388000,Magda,strakova.magda2@gmail.com,+421911516495,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art365,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a28e3e1a-9cdf-41f9-8f98-70a1d4fd35fb
+35175457-453c-4c10-9a18-3d53eb84f1c8,Lubos,lubos.suru@gmail.com,0915977406,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art366,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,c4d7502b-29f2-49c8-9677-2585feec6c46
+6c3bbc56-c533-416a-b373-8f3e34e3dd96,Jarmila,bujtarova.j@gmail.com,+421902315268,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art367,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,c8cc9485-7b67-4869-95cf-317b85b95d97
+3b79aba5-12ec-4444-8aa5-c5226ac85dd9,Jaroslav,jaroslavd018@gmail.sk,+421910120998,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art370,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,4ee157fa-eff5-42ad-8380-a6097cdd1172
+097e0761-a082-42bc-9e28-7d95b2ac5492,Mária,mitrikovam@gmail.com,421906000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art371,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,87f2277f-cf27-454c-89f9-894a58259e55
+4d963d02-5aad-44a5-bc6a-1465b68d767a,Denisa,denisaivancinova73@gmail.com,421903000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art372,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a5e9d536-3640-4b03-bb6e-3c0026539627
+3ddd5584-dc7e-42a1-9260-d434e7265176,Ladislav,laci774@azet.sk,421908000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art374,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,acae4a61-68bf-434f-ba46-d0e36ba0bd34
+269a87d7-c0cd-4223-a290-aac2c33112a5,#jakedslovakia,info@linova.sk,+421905603675,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art368,,,,2026-05-16 16:37:24.510446+00,t,art4_iii_2026_05,,2878dd2c-d020-4949-a704-503723f338b3
+f5876474-35d5-4838-8497-3d67db7aafe7,Tomáš,tomi.fordos@gmail.com,421903000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art376,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,ddced7a7-98db-4533-b1fa-99676f228da8
+1b5621f8-61a9-420b-8033-be2f932a3f38,Marcel,marcelhabara@gmail.com,910318688,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art377,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,c56a805f-d3b3-43ad-9265-c388077414a1
+f5190d0e-cf70-44c8-b4b4-7fde3ab85b43,Adam,adam.vichr@gmail.com,421950000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art378,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,299e3335-5051-4a17-bed5-9b4f3b0f0179
+b938e442-9b82-48aa-8c35-c3da1b775ca1,Jan,jfservis.opel@gmail.com,421905000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art373,,,,2026-05-16 16:37:42.860751+00,t,art4_iii_2026_05,,a79b2d50-8d7b-4a82-b067-91e3ba82ef50
+2a58d265-559b-4116-b62f-abe66be86f41,Blažena,blazkagunarova.196@gmail.com,421949000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art380,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,809a3734-518a-4e60-8fb6-28c6e4f84140
+d51170f7-791a-4ce1-8378-140fa76cb110,Martin,stepankovatina@gmail.com,421903000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art381,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,c945aa15-d46e-419f-b465-a7d008c10d62
+5168b338-c8a8-4cf5-96e1-c10b4290b6af,Saška,alexvasilova@gmail.com,421919000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art382,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5ea3ae6a-5d27-4bd0-a3e8-d81c9c9f2406
+ef03a1b9-fb8f-46a7-b444-fbd84a1413e1,Gabriela,miomed@miomed.sk,421906000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art383,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,9267564e-c085-46fb-b252-217e490b616a
+28086e63-cf9a-463a-b7f9-1c657d104c61,Ján,janvalasik@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art384,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,99f91e9c-fd59-4a02-97a0-bf5cc53c1883
+8ee5524e-cfda-4a4d-a946-9b0ea09922c5,Len,eriknr46@gmail.com,421918000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art385,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1f92677b-9867-477a-99b6-d14d810225c0
+6ae20574-9066-4f60-b732-19f0b1426242,Lubo,lubomirpokus@gmail.com,421905000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art386,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,aa0ab312-1b2c-421e-8105-3521adc8ff57
+1e2cbb9e-b6b6-427a-9a23-28465670bf37,Eva,evasmejkal@gmail.com,421905000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art387,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,3a66db96-e18e-4b63-b3e4-d2fce99596de
+c18680b0-6822-4383-84e5-aee6d63df37b,Veronika,vera.kozmetika@gmail.com,421906000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art390,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,78b90283-5f7a-44f3-bb7f-81033437ab86
+dffba771-c7a1-425b-918f-610b9e1123cf,Vladimíra,vladimirakukolova@gmail.com,421915000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art391,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e605f982-aabf-420e-ab74-7c0f9abda44e
+b3883b9e-43d8-47c7-8297-3fc012aac180,Wanda,bebawanda@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art392,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,517731e8-ee67-45f6-8ec4-05a8989fb28d
+93749d83-03fb-48c2-a27a-700697d83ff5,Matúš,matuschocholacek@icloud.com,421948000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art393,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a0ba3c1b-947f-43b1-9dca-3a0ff00459ab
+2419b868-35af-4772-b0c7-93dfc8b1ef45,Veronika,veronika.didicova@gmail.com,421906000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art394,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b54f19f2-bdc2-42bf-8a2e-2579b098c929
+6ad77efb-0909-4420-84e4-b1229f12e7bd,Simona Meszarosova,simonka161274@gmail.com,421916000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art395,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b2cf7061-02b5-4436-bcea-ac0821d4a2a2
+f5553668-c2b5-403e-a209-14660572284f,Peter,petttomo@gmail.com,421909000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art396,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,9c5f167f-aa4b-4e2d-a8ab-142280c80d6a
+f3957122-b55a-44f3-aa8c-5f143d3d293c,Eugen,neco585@gmail.com,421911000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art397,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,24f9b6e7-614b-45f0-8320-b90a04d22b7d
+186c0cbc-0769-4526-8f58-033f7aef0551,Patrícia,stevanakova@gmail.com,421911000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art401,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a41e566f-446b-4a35-b3d5-f043eaaf5c85
+d850e0bd-3bd0-4713-8795-9a90da3dbf05,Natália,nemckova.nana@gmail.com,4210510000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art402,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,9c917a0d-058d-45b7-94f8-bc99a15c7b07
+6c1d5194-87e4-48c5-a5dd-b4f09971af7a,Baba,e.miskolciova@gmail.com,421948000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art403,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,0141d7b0-fe66-4cd8-9ead-e7bd2e5286fa
+48534d35-72e6-4ca2-9b35-013dbcf2d3da,Mediator Košice,info@mediator-kosice.sk,,,redesign,,,sk,2026-04-27 13:51:18.666+00,reminder_silent,URL: https://www.mediator-kosice.sk/ | Služba: mediatorka,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,233553c4-188f-4987-86dc-9fc93342b7f0
+da13b3b9-96a9-43a6-a553-c0471e81f9f7,Emil,klaucoe@gmail.com,421907000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art409,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e7c827fb-1432-43dd-8a97-e878af027623
+ba6b3bce-d78d-43fc-8844-13a337c407ba,Alexandra,sandrap@centrum.sk,421903000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art410,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b604eadb-536f-4396-8f07-9eba69642723
+03785edb-f276-47f1-a3b0-2f5937e8c015,Rene?,reneszecsenyi@gmail.com,421908000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art411,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a13e3645-d54c-49e8-9a76-0ecd6e536650
+2d747963-6109-4615-a6dd-45d9bdfd1589,Andrea,hornakovadrea111@gmail.com,421949000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art412,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,bfac8f7f-ad7b-4081-ab30-65840cae2568
+0d621ece-4301-43cc-882d-4f14395d1328,Maja,robo.salon@gmail.com,421907000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art413,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,1fd7bf05-d824-490d-857d-d386e7b24edb
+15477ad8-b344-43f9-b286-06e13961ced6,Piero,molnar.ceas@gmail.com,905173393,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art414,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,84e82e75-0626-4fde-862c-9a88e77220c2
+775a7081-a663-4399-a338-c62221bdce17,Domyvrakusku.sk,sverak@domyvrakusku.sk,,4.5.2026- pani si objednala teams konzultaciu v piatok o 10:00,ai_solution,,,sk,2026-05-04 15:22:04.8+00,reminder_silent,"8.5.2026 - pripravit CP na 2x web ( jedne pre domyvrakusku.sk a druhy prezentacny web pre produkt )
+Oba weby cez lavable.
+14.5.2026 - poslana prezentacia a ponuka na 99e za 2 weby.
+2.6.2026 - stale sa k tomu nedostala, ze sa jej mam ozvat za 2 tyzdne ze uz bude urcite vidiet.
+",2026-06-15 00:18:55.677036+00,Email script,hot,Maroš,99.00,2026-05-18 10:24:02.028903+00,f,,2026-06-16,1c6a6501-1178-436e-a830-6f624ad3fb5f
+8444fffa-da4f-4682-a4ca-4ba2b44f91c8,Roman,romanbolech7@gmai.com,421905000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art416,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,ed7089c2-9cc9-40ec-86ac-0edec6e89c18
+ac182e94-14f6-490d-9cec-91c66562fe3f,Andrea,andrea.novomeska@centrum.sk,421912000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art417,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,8e35c74b-c19e-4444-a78d-c00037e1ba09
+8ad49565-1a7e-45a4-9acc-5ccab79882eb,Dominika,dominnie@gmail.com,421908000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art418,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5c57f01a-3745-458c-9094-df11d3831716
+8673ea2e-83e4-41e5-b841-4451ed575019,Mária,ka1m@azet.sk,421915000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art419,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,5c74ad62-d566-4c81-9fe1-2001ba5c22ce
+631733c3-38f1-4807-91c2-34f6ecbae6f2,Milan,milan.straka2711@gmail.com,421902000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art421,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,329aa8c4-4450-4dbf-a955-eab0f8f67a1e
+13d12fd4-af02-4cd8-be26-4c7d9be5576c,Iveta,ivetkabugarova@gmail.com,421915000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art422,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,861c3174-846a-49b6-8419-519132edf4f0
+b4d16d9b-276e-4b51-adce-38bea85c913c,Juraj,melisek.j@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art423,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,60efdcfd-cb7a-4dc0-ad9d-be623bbd00b4
+40073361-0c73-4cc2-b163-f63a33e0685e,Adam,adam.kavcak@gmail.com,42190800000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art424,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,2b120f79-d596-476b-8e7f-a9546b71d019
+41aa1c6f-1a2c-425a-82d6-a816e4e89ed2,Ladislav,zajtko@gmail.com,421918000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art425,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,a4b8d929-7f40-48d3-8292-f2a585b5382d
+7661861b-fc47-4e56-958b-ae6485e725d5,Tatiana,tatianazsebiova@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art426,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,f17d3517-42fa-4517-9c71-d19258b9554b
+6ffd955b-b624-46eb-821f-cd0fe09a46e4,Tatiana,tatianafulekova@centrum.sk,421908000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art427,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,deee909b-bdfe-4c12-a70b-baca56b63e16
+81a8369a-2496-4209-b95e-3dae8938f70c,Boris,aparthousebratislava@gmail.com,421903000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art428,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,f2dec624-07d0-42a8-9e9f-bf79b997a0d2
+8efbccc0-9a30-4ab0-ad07-6ff562faa547,Lucia Lujza,lulu.fujasz@gmail.com,421908000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art429,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,642b98c8-9091-4d74-842b-2fb19d4c852c
+bfa03cc4-cf8a-411e-8a4c-0a4ea71f8f08,Marián,mariandlugos666@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art430,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,2f55bddb-cd9d-4cf0-8613-9c3891227f87
+37ebf798-04b9-4557-8149-6635f2a7a4c5,igortabacek,igortabacek@gmail.com,421903000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art431,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,74c7a067-b7d4-4ab8-a0b3-c50dbf4a94f0
+533c766e-6d64-4068-ade6-e4c6426af172,Michal,certek.michal@gmail.com,421909000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art432,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e0dee7bb-9f91-4a80-ac9d-3cf9884178b6
+98982bc0-3061-4851-a158-1ce2d0fab702,Peter,p3check@centrum.sk,421917000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art415,,,,2026-05-16 16:38:41.621332+00,t,art4_iii_2026_05,,05b3f61a-5cd9-4bf6-958a-57ce1d4741a1
+925fedcc-0f5a-415c-be7e-46769dff38c9,Ján,jan.vlzak@gmail.com,421948000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art434,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,40a97877-1621-404f-b1f7-6f181e2c10e8
+ebb8b0ff-e9b3-42d3-84b3-e4b64fb964b7,Lenka Gajdošová,gajdos.lenka@gmail.com,421904000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art436,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,b48ef739-bf9a-4aa7-b1eb-717c21bd4949
+db05b396-cda1-4966-8b9a-09ebae6d8265,Jozef,smoliga@centrum.cz,421902000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,new,,2026-06-15 00:18:55.677036+00,Art437,,,,2026-05-04 11:32:21.150436+00,t,art4_iii_2026_05,,e44fd4fe-ad0a-46a1-a3e1-3778d941843d
+df1eadca-44ff-4e75-9ef7-3f4829ade372,Mafrestav.sk,stavbyvychod@gmail.com,,,redesign,,,sk,2026-05-08 13:16:30+00,reminder_silent,"",2026-06-15 00:18:55.677036+00,FB,,Peter,,2026-05-09 22:45:03.784+00,f,,,c56a9d89-0f33-4eeb-a86e-a7d1ef36fe08
+43302ec3-47d0-43a7-86f7-44bc142861ca,Kucharskeoblecenie.sk,"decore@decore.sk, peter@decore.sk",0905962718,Web: http://www.kucharskeoblecenie.sk/ | Dátum z hárku: Marec,ai,,,sk,2026-04-26 21:07:24.187+00,contacted,"19.5.2026 - volal som zo zakaznikom a mal zaujem iba o reklamu ppc za 200e pre decore.sk,  poslal som mu cp na:
+peter@decore.sk
+
+25.5.2026 - klient potrebuje este cas na upravu webu aby tam mal vsetko na co chce cielit reklamu. Ma sa ozvat sam a ak by sa neozval, treba mu zavolat koncom juna.",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-19 11:04:15.832645+00,f,,2026-06-30,a5a7b489-e56c-49fe-bc52-6fbaee42d460
+4cd1b42b-df0f-4642-8a4d-323b1ebc0a0d,Michal,michal@mkproduction.sk,421904000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art433,,,,2026-05-07 21:21:57.40388+00,t,art4_iii_2026_05,,20cfccd2-0798-4572-8ade-1d141e299408
+77c97a67-a84f-4f50-ae97-16e2adc679a8,Donovalley.sk,obsajsnik@donovalley.sk,,5.5.2026 - klient dostal email s dvomi ukazakami nasich prac kedze si ich vyziadal.,ai,,,sk,2026-05-05 14:55:26.885+00,reminder_silent,"19.5.2026 - volal som s klientom a ze sa maju do 2 tyzdnou rozhodnut vo firme ci sa pojde web upravovat alebo nie. Ozvat sa 2.6.2026 
+
+5.6.2026 - volal som s klientom a ze sa mam ozvat koncom juna ",2026-06-15 00:18:55.677036+00,Email script,neutral,Maroš,,2026-05-18 10:24:04.550783+00,f,,2026-06-30,759000e5-4fcb-48dc-a727-d6b9d56a2f12
+690316b7-0c92-455c-a553-3abd350f6be4,Julius,Szaraz@led.sk,421906000000,,ai,,,sk,2026-05-04 11:32:21.150436+00,send_offer,,2026-06-16 06:57:27.676381+00,Art398,,,,2026-06-16 06:57:27.676381+00,t,art4_iii_2026_05,,756a7898-7f49-4862-aae3-2c58b88e353d
+f6ab4e83-99ca-4ee0-9b0f-e9454091d45e,Balancedkids.eu,balancedkids.eu@gmail.com,,Redizajn,redesign,,,sk,2026-05-10 20:04:44.271+00,reminder_silent,Chceli WP riešenie ,2026-06-15 00:18:55.677036+00,Direct,,Peter,,2026-05-18 10:24:53.493752+00,f,,,f1f64fae-eeb0-414e-afc2-13b91efdc98e
+ee8d5a7e-4313-46c0-8400-d11f0de59b83,Bozz.sk,bozz@bozz.sk,+421 904 665 637,AI web na prenajom za 29e/mesiac,ai,,,sk,2026-04-28 02:38:37.403+00,won,"29.4.2026- poslal som zakaznikovy navrh, cakam na vyjadrenie: https://bozz-reborn-magic.lovable.app/#kontakt
+Z navrhom weby suhlasi.
+informaciu a cislo kde sa zobrazuje cislo kolko rokov ma prax nezobrazovat.
+
+domena: bozz.sk
+email: bozz@bozz.sk
+
+
+FA udaje:
+Zdenka Ujjobbágyová
+ICO: 562 443 47
+DIC: 108 054 80 40
+Tabakova 15
+044 14, Čaňa
+
+7.5.2026 - web hotovy, prihlasovacie udaje:
+meno: bozz@bozz.sk
+heslo: xUj!.Cd3jQ-249E_
+
+",2026-06-15 00:18:55.677036+00,Email skript,hot,Peter,29.00,2026-05-18 10:29:20.039611+00,f,,,c42710a7-8399-4cb5-ae64-f7d2af8b3e1c
+4cc7e002-349d-4408-b7a0-e8adc4b0e541,Doggiesdream.sk,info@doggiesdream.sk,,"6.7.2026 - klient kontaktovany, chcel riesenie ohladom opravy woocomerce alebo migraciu na shoptet. Ma sa rozhodnut a dat vediet.",eshop,,,sk,2026-05-07 09:19:47.644+00,reminder_silent,"19.5.2026 - klient kontaktovany, eviduje nasu ponuku, zatial ni eje rozhodnuty ale ze urite tento rok chce urobit nejaku opravu / modernizaciu webu. Ozve sa sam.",2026-06-15 00:18:55.677036+00,Email script,neutral,Maroš,,2026-05-18 10:24:25.621583+00,f,,,e0db0d8e-5cbb-4ae1-9438-4cbc27e904a1
+ca1328b4-5fdb-4277-89eb-bd6da08b5f39,Alfatower.sk,info@alfatower.sk,,Web: https://alfatower.sk | Dátum z hárku: Február,redesign,,,sk,2026-04-26 21:07:24.187+00,contacted,"19.5.2026 - klient nema zaujem o web ale o IG/FB kampan, ozvat sa zaciatkom jula",2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-19 09:56:08.804592+00,f,,2026-07-03,fc3ee394-2201-448d-90ee-bfa0f85e5575
+ad9403ad-218f-4fb6-bf74-14343395b9dc,Felixwines.sk,matej@felixwines.sk,,"2.6.2026 - klient ma vlastne MRP a platobne brany a zvazuje prechod na shoptet z wp a woo.
+Poslal som mu ponuku co vieme urobit a zastresit.",eshop,,,sk,2026-06-02 10:24:23.872+00,lost,8.6.2026 - s klientom som volal a vyjadril sa ze zatial nepotrebuje migraciu eshopu a ani nic menit. Ulozil si cislo s tym ze ak bude niec v buducnosti tak sa pripadne ozve.,2026-06-15 00:18:55.677036+00,Email script,,Maroš,,2026-06-08 12:25:15.506719+00,f,,,586b455d-ad48-4ee2-b111-db4b78218906
+20fd60b9-af9c-493d-95d0-bd52fc084622,Stefan,bornwillld@azet.sk,+421948121070,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art5,,,,2026-05-07 19:24:17.569233+00,t,art4_iii_2026_05,,25a713c5-cc4b-4fab-a3bb-ec9597c0f5b9
+b3dc8847-951d-48d2-9461-04780039ba85,Mikulaš Kántor,kantor@kantor.sk,+421905443689,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art187,,,,2026-05-07 21:17:24.033464+00,t,art4_iii_2026_05,,61dc4acb-b14f-4a15-b725-468ad479278d
+3198d96a-d688-4ca9-b697-04467de279a1,Maritn Potanka,Potanka@rpfbau.at,+421915937328,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art314,,,,2026-05-07 21:20:36.191179+00,t,art4_iii_2026_05,,90071384-46fe-4f26-a5c7-b35ffdc81f1a
+cc2f752c-bfb4-4341-87a5-13c76ce20911,Katarina,sutarikova@imbiz.sk,421904000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art375,,,,2026-05-07 21:21:12.389833+00,t,art4_iii_2026_05,,979db0e5-1447-4771-bcfb-0f30cabb0799
+91085ef9-e3fd-4ca9-b478-f2b80ebee53b,Lelkeš,zarpa@zarpa.sk,0907787089,"Typ webu: Firemný web
+Biznis: Malá / stredná firma
+Funkcie: Vlastný dizajn
+Model: Mesačný paušál 49€/mes
+Ponuka: Profesionálna prezentácia pre tvoj biznis ✨",ai,,,sk,2026-04-29 15:31:31.741+00,lost,"7.5.2025 - zakaznik kontaktovany, zaujem ma ale ze mu mam zavolat 11.5.2026 po 10:00
+12.5.2026- chce lending page aby sme mu vygenerovali na ukazku ako by mohol jeho web vyzerat.
+Chce pouzit fotky ktoru uz ma na webe aj na novy web.
+Chce upravit fotky s AI aby boli krajsie a sytejsie farby a chce aj jednu forky sedacej supravy umiestnit do priestoru v i teriey. Ked sa mu to bude pacit je ochotny zaplatit za upravu takychto fotiek.
+Treba mu poslat ten vizual landing page a jednu fotku gauca v interiery na skusku do emailu.
+13.5.2026 - isiel email s ponukou na zarpa@zarpa.sk",2026-06-15 00:18:55.677036+00,ai-kalkulacka,hot,Maroš,,2026-05-28 05:43:27.98104+00,f,,,fd813e5c-cdb1-4e82-aa87-1c89c10d0b42
+74a7365e-f266-4cef-a31a-04dac2337dbe,"KERAS-STAV, s.r.o.",stano.pp@centrum.sk,,,ai,,,sk,2026-05-16 14:20:10.320798+00,reminder_silent,,2026-06-15 00:18:55.677036+00,Art,,Peter,,2026-05-09 22:43:53.262+00,f,,,e2d5837e-85d0-479c-92d9-7c9c9b606505
+834522fa-c4a9-4723-ac33-83334e73ecdc,Stanislav,stano.pp@centrum.sk,+421910103591,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art20,,,,2026-05-08 20:49:27.521741+00,t,art4_iii_2026_05,,e2d5837e-85d0-479c-92d9-7c9c9b606505
+f9229041-c664-4159-96b2-bc19ec6fc9ee,Brassmusicacademy.sk,info@brassmusicacademy.sk,,,redesign,,,sk,2026-05-06 18:12:10.989+00,reminder_silent,Re-dizajn + marketing,2026-06-15 00:18:55.677036+00,Google,,Peter,,2026-05-09 22:45:03.784+00,f,,,24fa9fc1-16c9-4f00-9475-e047dc75e91b
+7ae29bab-8f2c-4c9a-804c-d782abd66a92,Lukač,judr.lukac@gmail.com,,,consultation,,,sk,2026-05-08 10:43:47.251595+00,reminder_silent,Poslana ponuka,2026-06-15 00:18:55.677036+00,Matúš,,Peter,,2026-05-09 23:21:28.481+00,f,,,064d02c0-a0da-497f-80c0-ee2a2dd509da
+55429f3f-a90c-4f5c-bede-db1df427e2ca,DCacademy,info@dcacademy.sk,,8.5.2026 - klientka chce online konzultaciu,ai_solution,,,sk,2026-05-08 11:58:17.697+00,won,"9.5.2026 - meeting cez zoom o 14:00
+9.5.2026- dohodnute, pani chce moderny web s tym.ze chce mat crm kde si bude schvalovat recenzie co jej zakaznici cez formular na jej webe pridavaju a zaroven v crm bude moct editovat testy ktore ma na webe a vyhodnocovat ich atd. 
+FA zaplatena. 
+Web chce mat do pondelka 11.5.2026 hotovy kedze zacina kampan.
+Na web pouzit texty ktore ma teraz na starom webe, druhy jazyk rustina.
+Preniest domenu a zmigrovat vsetky emails k nam tak aby nestratila ziadnu historiu.",2026-06-15 00:18:55.677036+00,Email script,hot,Peter,49.00,2026-05-11 05:14:27.946078+00,f,,,9430cd24-2a36-4112-80e1-552febd09ff9
+a96d2f8a-be33-4487-a5b8-64da3873e82d,Zaharova,zaharova2307@gmail.com,+79277001698,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art12,,,,2026-05-16 14:27:48.297283+00,t,art4_iii_2026_05,,7ac1a21b-bf5f-4036-b97d-12e216e4dedc
+5ff8ba70-58a0-4345-b64f-3992f5bd44b7,Dagmar Chochlacova,apartmany@agata.sk,421904000000,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art379,,,,2026-05-16 15:22:20.058815+00,t,art4_iii_2026_05,,010d0b87-324a-4cf0-ad3a-eef412732adb
+b1670a02-94d6-46c8-8147-0074336ce455,Juraj Kolesár,koli@koli.sk,+421905423071,,ai,,,sk,2026-05-04 11:32:21.15+00,send_offer,"",2026-06-15 00:18:55.677036+00,Art297,,,,2026-05-16 15:25:09.052701+00,t,art4_iii_2026_05,,997ecb94-bc76-4a52-8d78-ca0b839dddce
+f24efad4-af21-48a4-9bdf-cd22a3ecfb1a,geve.sk,gluck@geveklinika.sk,+421 903 606 446,12.6.2026 - volal som s klientom a dohodli sme si osobne stretnutie na 15.6.2026 o 11:00 na klinike geve v KE.,consultation,,,sk,2026-06-12 16:05:13.195+00,contacted,"Typ webu: Firemný web
+Biznis: Prezentácia firmy
+Funkcie: Analytika, GDPR & SSL, Formuláre, Recenzie, Galérie & médiá, SEO optimalizácia, AI chatbot, Online platby, CRM systém, Rezervácie
+Model: Mesačný paušál 69€/mes
+Ponuka: Tvoj online biznis bez technických starostí ✨
+Poznámka: Dohodnut stretnutie -vid email z dnešného dňa
+
+15.6.2026 - stretnutie dopadlo dobre, je zaujem o dlhodobu spolupracu ale je potrebne dodat 2 vyzuali ako by web mohol vyzerat. ASAP!!.",2026-06-15 10:47:03.066172+00,Email script,hot,Maroš,,2026-06-12 16:05:13.19573+00,f,,2026-06-15,0153e093-be22-4c21-9c3e-6bf13f389605
+3fb2d056-aedf-4ec2-b369-850b8f63a51f,Damskabielizen.sk,mohac@mohac.sk,,"zakaznik chce eshop na shoptete, sablona STEP, balik business, cca 10 kategorii, do kazdej nahodit 2 produkty a zbytok si uz bude nahadzovat sam, rozdelit eshop na default maloobchod ale po prihlaseni vie registrovany zakaznik vidiet velkoobchodne ceny a podmienky,",eshop,,,sk,2026-04-27 22:00:00+00,won,"platba v cash
+zakupit domenu: www.damskabielizen.sk
+vytvorit email: info@damskabielizen.sk
+eshop bude mat cca 500 produktov
+Eshop zaregistrovat na:
+ICO: 51234530
+
+7.5.2026 - iban: SK25 7500 0000 0040 2668 ČSOB banka
+
+majitel učtu MNBA sro.
+
+Kategorie: 1. nohavičky
+
+                2. trička
+
+                3. tielka
+
+                4. body
+
+                5. supravy
+
+                6. leginy, spodničky, kombinetky,
+
+                7. panska bielizen
+
+                8. detska bielizen
+
+                9. kozmetika
+
+              10. ostatne
+
+ Doprava: shoptet balik
+napojit na platobnu branu shoptet
+Pouzit dizajn a styl podla vlastneho uvazenia, tak aby to ladilo pre zenske zakaznicky a styl produktov
+Texty z AI opat aby bolo predajne a stylove k produktom.
+Spomenut ze ""sme  uz 16 rokv vyhradnym dovozcom produktov Belinay na slovenko"".
+Fotky neorezavat a mozu obsahovat aj logo belinay
+Texty k fotkam jednoduche a predajne, pouzit AI.
+
+14.5.2026 - objednat business tarif na shoptete a nasledne vyklikat shoptet pay
+
+https://791622.myshoptet.com/admin/shoptet-pay-online-platobne-karty/#/promo
+info@damskabielizen.sk
+xice-ow-fahe
+
+",2026-06-15 00:18:55.677036+00,Maros,hot,Peter,1000.00,2026-05-18 20:00:48.900045+00,f,,,e974d06e-41e7-4aaf-adca-41511fbfbc80
+7d92fb98-2a1c-4734-b807-40d3aee37b7d,Ing.Anton Cech,alkask@alkask.sk,905730300,"Firma: ALKA SK, s.r.o. | Web: Mám e-shop | Rozpočet: Do 1000 € | Problém: Slabý výkon | Cieľ: Zlepšiť UX | Zdroj: wp_funnel_boost | Dátum z hárku: 2026-02-11 8:38:37",eshop,,,sk,2026-04-26 21:07:24.187+00,lost,"19.5.2026 - klient mal zaujem o redizajn, modernizaciu a seo optimalizaciu pre epokladna.sk
+poslal som mu ponuku. Che ostat na wp a woo ale che modernejsi a rychejsi web.
+poslana cenova ponuka na 1900 eur 
+20.5.2026 - Cp bola zamietnuta z dovodu ze je nad ich budget. Budget si stanovili do 1000 eur.",2026-06-15 00:18:55.677036+00,Email skript,cold,Maroš,,2026-05-20 09:54:25.496722+00,f,,,ccd7982f-5755-48a3-a7dd-4eb02ef8776c
+f1aa0743-b3dd-46e9-9128-2d82d3940532,Marek galanek,info@geer.sk,+421911325580,"Typ webu: Firemný web
+Biznis: Malá / stredná firma
+Funkcie: SEO optimalizácia, Galérie & médiá, Recenzie
+Model: WordPress jednorazovo ~590€
+Ponuka: Tvoja profi prezentácia na WordPresse ✨",ai,,,sk,2026-06-11 11:18:50.360165+00,contacted,,2026-06-15 00:18:55.677036+00,ai-kalkulacka,,,,2026-06-11 13:27:09.886141+00,f,,,c7381136-d725-4463-a500-c839feeafd87
+664e977d-07e7-46c1-aae8-f91f9acce0b9,Reality69,spravca@reality69.sk,,,ai,,,sk,2026-05-30 23:05:16.189688+00,send_offer,,2026-06-15 00:18:55.677036+00,Google,,,,2026-05-30 23:10:09.156515+00,t,2026-05-30-google,,1a818b17-9953-431d-98c8-d4d20435c7a4
+ec44ed6a-a273-472d-aac1-53ef5e2558dd,cinejessy.sk + faces.sk,richard.kardhordo@icloud.com,,2.6.2026 - klientovy som zaslal CP.,ai,,,sk,2026-06-02 10:07:56.291+00,lost,"",2026-06-15 00:18:55.677036+00,Email script,neutral,Maroš,,2026-06-05 12:48:05.393302+00,f,,2026-06-09,59f6e0d6-0769-48a0-a584-3e95f08aa21b
+07c93bca-b5ee-4425-92f4-0467b00e5389,https://chatascheelit.sk/,info@chatascheelit.sk,+421 907 182 191,Web: https://chatascheelit.sk/ | Dátum z hárku: Marec,ai,,,sk,2026-04-26 21:07:24.187+00,reminder_silent,20.5.2026 - ma zaujem a chce novy web kde bude mat aj dalsiu chatu ktoru stavi a ze ozvat sa po lete niekedy,2026-06-15 00:18:55.677036+00,Email skript,neutral,Maroš,,2026-05-20 11:58:30.039295+00,f,,2026-09-30,5f0a5a93-9459-4ed5-a20f-e55698d4d0db
+0f7adcba-3f05-4c4b-8380-08bfec52bc22,Sydent.sk,sydent@sydent.sk,+421 907 722 945,"8.6.2026 - klient chce zistit preco mu traffic na webe ktory mu prichadza z platenej google reklami nerobi konverziu, co ma na webe zle alebo nespravne ze ludia neklikaju a neobjednavaju sa atd..
+Poslal som mu analyzu a navrh.",consultation,,,sk,2026-06-08 08:19:18.232877+00,contacted,,2026-06-15 00:18:55.677036+00,Email script,,Maroš,,2026-06-08 08:19:18.232877+00,f,,,9f8546c2-33e7-4408-bfa2-312ddf045fb5
+a1359102-a55c-4215-9d48-898eb27d7cfd,Miloš Zágoršek,milos@zazitok.sk,+421 905 225 924,"Web: zazitok.sk (Wix), quintaessentia.sk ",redesign,,,sk,2026-04-26 21:07:24.187+00,scheduled,"19.5.2026 - chcem novy web namiesto zazitok.sk, chce aby bol novy web maximalne putavy pre cloveka a aby bol moderny a seo optimalizovany. Potrebuje na webe odprzentovat vsetky svoje sluzby ktore ponuka.
+Treba urobit dizajn landing page a odprezentovat mu to s tym ze vieme to skalovat a posuvat stale na vyssi level, pridavat funkcie atd..
+
+20.5.2026 - email s dizajnom a pop[isom isiel, cakam na vyjadrenie
+https://event-sparkle-mix.lovable.app/eventy
+
+5.6.2026 - klient stale tvrdi ze so spoluprace chce ist ale musi si poriadne premysliet co vlastne chce s webom robit a ako. Nevolat mu iba cakat a on sa ozve.
+",2026-06-15 00:18:55.677036+00,Email skript,hot,Maroš,,2026-05-19 15:32:20.499507+00,f,,2026-06-10,a5ff3315-d995-4e38-bbd2-f8cadfa34473
+93152f28-ed5a-49ff-ad97-fb2f504571f6,furnee.sk,info@furnee.sk,,"10.6.2026 - klient chcel navrhy co by sme mu dokazali urobit v ramci seo optimalizacie, marketingu, automatizacii aby zviditelnil web a dosiahol viac konverzii.. Isiel mu email s detailnym popisom co robime a vyzvou na dodanie ci ma zaujem o spolupraacu alebo nie.",eshop,,,sk,2026-06-10 06:21:11.963+00,contacted,"",2026-06-15 00:18:55.677036+00,Email script,,Maroš,,2026-06-10 06:21:11.963447+00,f,,2026-06-15,03042f52-0c3d-451a-b2fc-29f7d3a0c127
+c9add9fd-a9e6-48b6-81c8-94b8302aa907,naturalpeptides.eu,elena@evd.sk,+421 905 955 444,"27.6.2026 - zakaznicka sa ozvala ze chce zobrat svoj eshop naturalpeptides.eu od sucasneho spravcu a hlada noveho spravcu pre eshop. Eshop bezi na woo+wp.
+za posledny rok mala spustene kampane na google+ socky a platila mesacne dane kampane ale je v strate 12k a preto prestala platit a stopla kampane. Zvazuje co dalej.",eshop,2026-06-15 22:00:00+00,,sk,2026-05-27 12:16:50.737+00,contacted,"Klientke som ponukol standardnu cenu 50e za mesacnu spravu eshopu.
+
+11.6.2026 - opravit generovanie FA pretoze teraz za vygeneruje FA ale bez DPH a ona tam potrebuje mat DPH polozku na FA aj aj v uctovnictne eshopu.
+vytvorit a naucit asistentku ako sa vytvaraju zlavove kody ktore si budu dalej vytvarat sami a davat svojim klientom, chcu mat aj prehlad kolko kodov maju, ktore kody boly kolkokrat pouzite atd..",2026-06-15 00:18:55.677036+00,email script,hot,Maroš,,2026-06-11 13:39:32.465196+00,f,,,da5422e1-5405-4780-924c-d0a1261b245a
+975f98f8-f615-4330-afad-deca61c47366,gevorkyan.eu,marketing@gevorkyan.sk,+421 911 041 522,"12.6.2026 - velka firma, maju zaujem o: priebežná kontrola funkčnosti, aktualizácie, technická údržba a pohotovosť v prípade problémov.
+zalohy a mensie upravy textov a obrazkov si riesia interne.
+Chcu stabilnu a dlhodobu spolupracu.",consultation,,,sk,2026-06-12 16:58:56.62+00,contacted,13.6.2026 - CP zaslana,2026-06-15 00:18:55.677036+00,Email script,,Maroš,,2026-06-12 16:58:56.620849+00,f,,2026-06-19,3c5bd5f9-2412-4a5e-b240-942de0695eef
+e96195a2-e9bd-4db5-9a62-ed6f62504d6b,Pavel Krásný,obchod@mareti.sk,+421 911 721 724,"Typ webu: Firemný web
+Biznis: Landing page (predajná stránka)
+Funkcie: Galérie & médiá, SEO optimalizácia, Analytika, Recenzie, GDPR & SSL, Formuláre
+Model: Mesačný paušál 69€/mes
+Ponuka: Tvoj biznis si zaslúži profi web bez vstupných nákladov ✨",ai,,,sk,2026-05-06 15:08:36.327+00,reminder_silent,"6.5.2026 - ma zaujem o landing page, musi obsahovat vsetko co si klient zvolil pri vypisani formulara, logo a farby musia zostat nezmenene. Chce aby sme mu poslali 1-2 navrhy a od toho sa odpichne dalej. 
+Email a domena je na webglobe a chce aby to tam aj zostalo.
+K formularu doposle dodatocne otazky a veci co tam chce mat aby mu ludia na landing page vyplnali.
+
+7.5.2026 - email s dvoma dizajnami zaslany zakaznikovy.
+LINK 1: https://mareti-sk-revamp.lovable.app/
+LINK 2: https://mareti-sparkle-web.lovable.app/#top
+
+7.5.2026 - klient sa ozval a chce ist do riesenie LINK 1 ( web s podstrankami ) ale s tym ze chce pouzit formular ktory je hned na zaciatku webu v LINK 2. Tento formular chce dat na zaciatok webu a a zamenit ho za tu fotku ktora tam teraz je v LINK 1 na pravej strane.
+
+Dalej pozaduje tieto upravy v podstrankach:
+
+Podstranka ""Dvere"" : ak pride klient na podstranku dvere tak musi dostat na vyber z 2 kategorii a to ""dvere skladom"" a ""dvere na objednavku""
+dvere skladom: presmeruje to klienta rovno na eshop
+dvere na objednavku: posle klienta na dalsi podstranku kde sa mu zobrzia 6 rozny vyrobcovia, pripadne mu vyskoci okno kde sa zobrazia 6 vyrobcovia z ktorych si vyberie a dostane pdf katalog daneho vyrobcu.
+
+Podstranka ""Parkety"" 
+rovnaky scenar ako na podstranke ""Dvere"" 
+
+Podstranka ""Galeria""
+ukazat realizacie tak ako je to teraz ale dat moznost ze ak si clovek klikne na nejaku realizaciu tak aby sa mu zobrazili aj dalsi efotky z danej realizacie.
+
+Podstranka ""Referencie""
+zakaznik chce mat moznost automaticky zobrazovat recenzie ktore ma teraz na google a aj na FB. zistit ci sa to da a ako.. ak sa to nebude dat tak potom si zakaznik vyberie z jednej z moznosti bud google alebo FB.
+
+Podstranka ""Kontakt"" 
+je zatial v poriadku a netreba nic doplnat.
+
+Po zaslani tohto finalneho vizualu a odsuhlaseni z klientovej strany ze ideme do spoluprace je potrebne klientovy zaslat FA na 69e/mesiac a poziadat ho o zaplatenie.
+
+Klientovy treba vysvetlit ako bude fungovat jeho email a domena ked ostane u sucasneho providera webglobe.sk a na co sa ma pripravit.
+
+7.5.2026 - klient chce modernizovat aj eshop, ma zaujem o novu sablonu a modernejsi vzhlad. Isla mu ponuka 1199e za redizajn eshopu +200e za sablonu.
+
+11.5.2026 - klientovy som volal a povedal ze ponuku co sme mu dali si musi rozmysliet a ze nemame mu volat a ze ked bude zaujem on sa ozve.
+
+18.5.2026 - volal som mu a ze do konca tyzdna da vediet.
+
+29.5.2026 - stale nemal cas sa na to pozriet ale ze to ma oznacene a ked na to pride ozve sa
+
+",2026-06-15 00:18:55.677036+00,ai-kalkulacka,neutral,Maroš,69.00,2026-05-18 10:24:18.077078+00,f,,,999a639d-ab06-4bc0-a235-c27cbba47aef
+865c0daa-646b-46ea-ba21-288ccee13959,Abu Randy,marketing@garaz415.cz,,,ai,,,sk,2026-06-06 20:24:30.374+00,send_offer,"",2026-06-15 00:18:55.677036+00,FB,,,,2026-06-07 13:40:27.375949+00,f,,,eefaab3f-5ad3-4aea-a9dc-03f57e214a9b
+5a571ba6-9595-4118-98c2-833670b732d8,geobunky-geojunix.sk/,obchod@geobunky-geojunix.sk,,11.6.2026 - klient chce aby sme sa mu ozvali a pripadne sa stretli v KE v pondelok .,consultation,,,sk,2026-06-11 12:03:25.932+00,contacted,"",2026-06-15 00:18:55.677036+00,Email script,,Maroš,,2026-06-11 12:03:25.932559+00,f,,2026-06-15,1eb8aa78-dda8-441a-8387-5581063bb972
+e8be2dcc-c854-4126-8220-adddf55f53ec,garimedia.sk,pr@garimedia.sk,,11.6.2026 - klient dostal email s navrhom AI webu.,ai,,,sk,2026-06-11 06:51:31.967+00,contacted,https://glisten-web-craft.lovable.app/,2026-06-15 00:18:55.677036+00,Email script,,Maroš,,2026-06-11 06:51:31.967152+00,f,,2026-06-14,eb6f573d-b369-4fb2-a901-f69e1c66e4b7
+1f29d790-084c-4cda-b131-0603ca5edc50,Fixwood.sk,durisova@fixwood.sk,+421 908 081 197,4.6.2026 - klinet napisal ze ma zaujem o konzultaciu a ze sa mu mam ozvat 8.6.2026.,consultation,,,sk,2026-06-04 05:34:51.392+00,new,"8.6.2026 - Klientka ma zaujem o SEO na webe, o zrychlenie webu a aj o google reklamu.
+
+Mam jej poslat nejaku ponuku co vieme robit a za kolko.
+
+Email s CP bol poslany.
+
+12.6.2026 - zavolat az koncom juna",2026-06-15 00:18:55.677036+00,Email script,hot,Maroš,,2026-06-04 05:34:51.392967+00,f,,2026-06-30,bfdc539a-57f4-4d81-8118-c84b9d6572a6
+20d51c08-4485-44ec-ad16-059145d39bc5,Filip Olsavsky,info@filipolsavsky.sk,,"8.6.2026 - klient si chcel zavolat, dal som na seba kontakt a cakam.",ai,,,sk,2026-06-08 15:36:15.428+00,contacted,"8.6.2026 - poslan CP aj s linkom na dizajn.
+
+https://request-muse-forge.lovable.app/
+
+10.6.2026 - zopar dodatocnych odpovedi na otazky ktore klient mal a cakame na finalne rozhodnutie
+
+12.6.2026 - zatial sa nerozhodol ale ze ked sa rozhodne pre nas tak nam da vediet.
+",2026-06-15 00:18:55.677036+00,Email script,neutral,Maroš,,2026-06-08 15:36:15.428144+00,f,,2026-06-30,0c74df4a-bb5f-4e89-a44f-6b7f3ec3ee01
+f992f905-09a0-49a4-9d41-de1644acd40b,femi.sk,femigroupslovakia@gmail.com,,12.6.2026 - klient chce zaslat nezavaznu ukazku ako by mohol vyzerat jeho novy web,ai,,,sk,2026-06-12 17:18:08.358+00,contacted,"",2026-06-15 00:18:55.677036+00,Email script,,Maroš,,2026-06-12 17:18:08.358637+00,f,,2026-06-19,3c9d8a1f-f0c5-4f7b-88f5-6164836a6cbb
+5714c0f9-976c-4916-905d-7796e6d9d24d,fiore-sk.sk,fiore-sk@fiore-sk.sk,+421  903 273 885,3.6.2026 - klientovy som poslal CP na google marketing a zaroven odporicil migraciu na shoptet.,eshop,,,sk,2026-06-03 06:53:52.153+00,contacted,"8.6.2026 - klient je opatrny, chce posunut web a predaje ale ze zatial ked tak zacat iba s mansimi vecami a ked bude spolupraca uspesna a bude vidiet ze veci idu dobrym smerom tak bude chciet aj viac.
+
+Najprv sme sa dohodli na google reklame za 250e ale ze to vsetko musi este prebrat s manzelkou a mam sa mu ozvat o 2 dni v stredu.
+
+10.6.2026 - dohodnuta reklama, kontaktoval som tomasa, ma pripravit 2x baner nejake klucove slova, popisy na co sa bude reklama zameriavat atd, nasledne to zaslem majitelovy na schvalenie.
+Poslal som majitelovy popis kampane a 2x baner na schvalenie.
+
+12.6.2026 - ideme do spoluprce ale cakam na klienta ma sa ozvat v pondelok
+
+16.6.2026 -  klient pisal sms ze zaciatkom jula aby som sa ozval",2026-06-16 09:58:09.181615+00,Email script,hot,Maroš,,2026-06-03 06:53:52.153317+00,f,,2026-07-03,d2cb157e-e8a8-4ab6-b08a-eb9ca7179a3a
+1f961539-44c2-49fb-a966-8f8c5e25ca6c,firmynapredaj.sk + veracons.sk,"info@firmynapredaj.sk , info@veracons.sk",+421 918 528 291,3.6.2026 - klient si chce zavolat v piatok 5.6.2026,repair,2026-06-04 22:00:00+00,10:00,sk,2026-06-03 10:25:14.94+00,scheduled,"5.6.2026 - klientke som odoslal CP a navrh na spolupracu, ma 2 weby a zacneme najprv jednym, ked bude spokojna dame aj druhy. Ma zaujem o SEO a google ads.
+
+8.6.2026 - klient suhlasil, zaciname pracovt, idealne rozdelenie je:
+
+Maros: SEO popisy a nadpisy
+Peter: pluginy, update webu a zrychlenie 
+Tomas: google kampan jednorazova analyza, nastavenie a sppustenie s budgetom 2e na den
+
+Cena za prvy web je dnohodnuta na 350e ( z toho 100e pre Tomasa, zbytok si delia maros a peter)
+
+FA zaslana a cakame na uhradu, hned potom sa vieme pustit do prace.
+fakturacne udaje:
+VERACONS s.r.o.
+Šípová 57/1, 949 01, Nitra
+0918 528 291
+info@veracons.sk
+IČO: 53601815
+IČ DPH: SK2121423931
+Zodpovedná osoba:
+Veronika Schmidtová – konateľ
+
+10.6.2026 - zaciname pracovat na webe firmynapredaj.sk podla vyssie napisaneho rozdelenia. Kolegov som informoval cez email. Pristupy od majitelky mame zozfielane cez email ktory nam zaslala.
+
+14.6.2026 - zakaznikca dostala email s vykonanymi pracami.
+
+17.6.2026 - zakaznicka suhlasi s dalsou spolupracouba ziada zaslat druhu polovicu FE za web firmynapreda, zaroven ziada oo zacatie prac na zrychleni, precisteni a seo optimalizacii webu veracons. Tento web ale bez plateneho marektingu.
+
+",2026-06-17 12:32:33.786513+00,Email script,hot,Maroš,350.00,2026-06-08 09:40:41.85103+00,f,,2026-06-05,bde6d45b-f928-487d-9f1c-fbaa2f49c0a9

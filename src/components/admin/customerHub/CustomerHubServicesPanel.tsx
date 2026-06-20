@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NOTE_STATUS_LABEL, SIGNATURE_STATUS_LABEL } from "@/lib/customerWorkbench/constants";
 import type { CustomerWorkbenchData } from "@/lib/customerWorkbench/types";
-import { Globe, Lock, Server } from "lucide-react";
+import { FolderKanban, Globe, Server } from "lucide-react";
 
 interface Props {
   data: CustomerWorkbenchData;
@@ -60,11 +60,6 @@ function buildServiceRows(data: CustomerWorkbenchData): ServiceRow[] {
       active,
       href: `/admin/projects/${n.id}`,
       statusLabel: NOTE_STATUS_LABEL[n.status] || n.status,
-      meta: n.has_credentials ? (
-        <Badge variant="outline" className="text-[10px] gap-0.5">
-          <Lock className="w-2.5 h-2.5" /> prístupy
-        </Badge>
-      ) : undefined,
     });
   });
 
@@ -90,7 +85,7 @@ function buildServiceRows(data: CustomerWorkbenchData): ServiceRow[] {
 const KIND_ICON = {
   rental: Globe,
   hosting: Server,
-  project: Lock,
+  project: FolderKanban,
   signature: Globe,
 };
 

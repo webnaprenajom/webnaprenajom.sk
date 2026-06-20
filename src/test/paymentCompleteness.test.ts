@@ -84,6 +84,7 @@ describe("computeCustomerFinanceSummary confirmed cash", () => {
     notes: [],
     marketing: [],
     hosting: [],
+    credentials: [],
     wheels: [],
     designs: [],
     logs: [],

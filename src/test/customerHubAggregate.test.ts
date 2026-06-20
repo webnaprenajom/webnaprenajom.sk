@@ -19,6 +19,7 @@ const emptyData = (overrides: Partial<CustomerWorkbenchData> = {}): CustomerWork
   notes: [],
   marketing: [],
   hosting: [],
+  credentials: [],
   wheels: [],
   designs: [],
   logs: [],

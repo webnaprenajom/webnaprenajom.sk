@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Lock } from "lucide-react";
+import { clearStaleAuthSession } from "@/lib/auth/clearStaleAuthSession";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -17,17 +18,28 @@ const Auth = () => {
   useEffect(() => {
     document.title = "Admin prihlásenie | Web na prenájom";
 
+    let active = true;
+
+    const routeIfSignedIn = async () => {
+      await clearStaleAuthSession();
+      if (!active) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) navigate("/admin", { replace: true });
+    };
+
+    void routeIfSignedIn();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
+      if (event === "SIGNED_IN" && session?.user) {
         navigate("/admin", { replace: true });
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/admin", { replace: true });
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {

@@ -84,6 +84,23 @@ export type HostingBrief = {
   created_at: string;
 };
 
+export type CustomerCredentialBrief = {
+  id: string;
+  category: string;
+  label: string | null;
+  url: string | null;
+  login: string | null;
+  password: string | null;
+  note: string | null;
+  linked_entity_type: string | null;
+  linked_entity_id: string | null;
+  batch_id: string | null;
+  customer_id: string | null;
+  customer_email: string | null;
+  client_name: string | null;
+  updated_at: string;
+};
+
 export type CommissionBrief = {
   id: string;
   title: string;
@@ -198,6 +215,7 @@ export type CustomerWorkbenchData = {
   notes: ProjectNote[];
   marketing: MarketingBrief[];
   hosting: HostingBrief[];
+  credentials: CustomerCredentialBrief[];
   wheels: Wheel[];
   designs: Design[];
   logs: LeadLog[];
@@ -211,6 +229,8 @@ export type CustomerWorkbenchData = {
   paymentRecordsError?: string | null;
   costRecordsError?: string | null;
   payoutRecordsError?: string | null;
+  /** True when hub used tier-3 client_name matching (lower confidence). */
+  usedClientNameFallback?: boolean;
 };
 
 export type WorkbenchSummary = {
@@ -268,6 +288,7 @@ export type WorkbenchTabId =
   | "prehlad"
   | "komunikacia"
   | "projekty"
+  | "hesla"
   | "marketing"
   | "prenajmy"
   | "hosting"
@@ -304,6 +325,7 @@ export type CustomerHubSections = {
   tasks: SectionResult<Task[]>;
   rentals: SectionResult<Rental[]>;
   hosting: SectionResult<HostingBrief[]>;
+  credentials: SectionResult<CustomerCredentialBrief[]>;
   notes: SectionResult<ProjectNote[]>;
   marketing: SectionResult<MarketingBrief[]>;
   commissions: SectionResult<CommissionBrief[]>;

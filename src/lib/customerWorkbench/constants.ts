@@ -43,6 +43,7 @@ export const WORKBENCH_TABS = [
   { id: "prehlad", label: "Prehľad" },
   { id: "komunikacia", label: "Komunikácia" },
   { id: "projekty", label: "Projekty" },
+  { id: "hesla", label: "Heslá" },
   { id: "marketing", label: "Marketing" },
   { id: "prenajmy", label: "Prenájmy" },
   { id: "hosting", label: "Hosting" },

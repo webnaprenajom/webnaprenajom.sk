@@ -1,6 +1,6 @@
-import { hasAnyCredentials } from "@/lib/projectCredentials";
+import { annotateNotesWithCanonicalCredentialFlags } from "@/lib/customerWorkbench/canonicalCredentials";
+import { allowClientNameHubFallback } from "@/lib/customerWorkbench/hubFallbackPolicy";
 import { supabase } from "@/integrations/supabase/client";
-import type { Json } from "@/integrations/supabase/types";
 import type { CommunicationEventRow } from "@/lib/communication/types";
 import type { LoadCustomerWorkbenchInput } from "./loadCustomerWorkbench";
 import { resolveCustomerIdentity } from "./resolveCustomerIdentity";
@@ -13,6 +13,7 @@ import type {
   CustomerWorkbenchData,
   Design,
   HostingBrief,
+  CustomerCredentialBrief,
   Lead,
   LeadLog,
   PaymentRecord,
@@ -28,6 +29,9 @@ import type {
 
 const taskSelect =
   "id,title,status,amount,deposit,due_date,updated_at,client_name,lead_id,customer_id,parent_type,parent_id" as const;
+
+const noteSelect =
+  "id,title,client_name,url,status,agreed_fee,updated_at" as const;
 
 const linkRank = (matchedBy: Task["matchedBy"]) =>
   matchedBy === "customer_id" ? 0 : matchedBy === "lead_id" ? 1 : 2;
@@ -136,6 +140,7 @@ async function fetchPayoutRecordsForCommissionIds(
 function workbenchFromSections(
   identity: Awaited<ReturnType<typeof resolveCustomerIdentity>>,
   sections: CustomerHubSections,
+  usedClientNameFallback: boolean,
 ): CustomerWorkbenchData {
   return {
     canonicalCustomer: identity.canonicalCustomer,
@@ -147,6 +152,7 @@ function workbenchFromSections(
     notes: sections.notes.data,
     marketing: sections.marketing.data,
     hosting: sections.hosting.data,
+    credentials: sections.credentials.data,
     wheels: sections.wheels.data,
     designs: sections.designs.data,
     logs: sections.leadLogs.data,
@@ -160,6 +166,7 @@ function workbenchFromSections(
     paymentRecordsError: sections.payments.error,
     costRecordsError: sections.costs.error,
     payoutRecordsError: sections.payouts.error,
+    usedClientNameFallback,
   };
 }
 
@@ -191,6 +198,8 @@ export async function loadCustomerHubAggregate(
   const leadRows = leadsSection.data;
   const leadIds = leadRows.map((l) => l.id);
   const leadNames = Array.from(new Set(leadRows.map((l) => (l.name || "").trim()).filter(Boolean)));
+  const useClientNameFallback =
+    allowClientNameHubFallback(customerId, resolvedEmail) && leadNames.length > 0;
 
   const taskQueries: Promise<{ data: Task[] | null; error: { message: string } | null }>[] = [];
   if (customerId) {
@@ -217,7 +226,7 @@ export async function loadCustomerHubAggregate(
       }>,
     );
   }
-  if (leadNames.length) {
+  if (useClientNameFallback) {
     taskQueries.push(
       supabase.from("tasks").select(taskSelect).in("client_name", leadNames) as unknown as Promise<{
         data: Task[] | null;
@@ -241,7 +250,7 @@ export async function loadCustomerHubAggregate(
       }>,
     );
   }
-  if (leadNames.length) {
+  if (useClientNameFallback) {
     rentalQueries.push(
       supabase
         .from("rental_websites")
@@ -297,7 +306,7 @@ export async function loadCustomerHubAggregate(
     noteQueries.push(
       supabase
         .from("project_notes")
-        .select("id,title,client_name,url,status,agreed_fee,username,password,access_credentials,updated_at")
+        .select(noteSelect)
         .eq("customer_id", customerId) as unknown as Promise<{
         data: Array<Record<string, unknown>> | null;
         error: { message: string } | null;
@@ -308,18 +317,18 @@ export async function loadCustomerHubAggregate(
     noteQueries.push(
       supabase
         .from("project_notes")
-        .select("id,title,client_name,url,status,agreed_fee,username,password,access_credentials,updated_at")
+        .select(noteSelect)
         .ilike("customer_email", resolvedEmail) as unknown as Promise<{
         data: Array<Record<string, unknown>> | null;
         error: { message: string } | null;
       }>,
     );
   }
-  if (leadNames.length) {
+  if (useClientNameFallback) {
     noteQueries.push(
       supabase
         .from("project_notes")
-        .select("id,title,client_name,url,status,agreed_fee,username,password,access_credentials,updated_at")
+        .select(noteSelect)
         .in("client_name", leadNames) as unknown as Promise<{
         data: Array<Record<string, unknown>> | null;
         error: { message: string } | null;
@@ -343,12 +352,7 @@ export async function loadCustomerHubAggregate(
             url: (n.url as string) ?? null,
             status: n.status as string,
             agreed_fee: n.agreed_fee != null ? Number(n.agreed_fee) : null,
-            has_credentials: hasAnyCredentials({
-              url: (n.url as string) ?? null,
-              username: (n.username as string) ?? null,
-              password: (n.password as string) ?? null,
-              access_credentials: n.access_credentials as Json,
-            }),
+            has_credentials: false,
             updated_at: n.updated_at as string | undefined,
           });
         }
@@ -357,7 +361,88 @@ export async function loadCustomerHubAggregate(
     notes = Array.from(seenNotes.values());
     notesError = noteErrors.length ? noteErrors.join("; ") : null;
   }
+
+  const credentialQueries: Promise<{
+    data: Array<Record<string, unknown>> | null;
+    error: { message: string } | null;
+  }>[] = [];
+  if (customerId) {
+    credentialQueries.push(
+      supabase
+        .from("customer_credentials")
+        .select(
+          "id,category,label,url,login,password,note,linked_entity_type,linked_entity_id,batch_id,customer_id,customer_email,client_name,updated_at",
+        )
+        .eq("customer_id", customerId) as unknown as Promise<{
+        data: Array<Record<string, unknown>> | null;
+        error: { message: string } | null;
+      }>,
+    );
+  }
+  if (resolvedEmail) {
+    credentialQueries.push(
+      supabase
+        .from("customer_credentials")
+        .select(
+          "id,category,label,url,login,password,note,linked_entity_type,linked_entity_id,batch_id,customer_id,customer_email,client_name,updated_at",
+        )
+        .ilike("customer_email", resolvedEmail) as unknown as Promise<{
+        data: Array<Record<string, unknown>> | null;
+        error: { message: string } | null;
+      }>,
+    );
+  }
+  if (useClientNameFallback) {
+    credentialQueries.push(
+      supabase
+        .from("customer_credentials")
+        .select(
+          "id,category,label,url,login,password,note,linked_entity_type,linked_entity_id,batch_id,customer_id,customer_email,client_name,updated_at",
+        )
+        .in("client_name", leadNames) as unknown as Promise<{
+        data: Array<Record<string, unknown>> | null;
+        error: { message: string } | null;
+      }>,
+    );
+  }
+  let credentials: CustomerCredentialBrief[] = [];
+  let credentialsError: string | null = null;
+  if (credentialQueries.length) {
+    const credentialResults = await Promise.all(credentialQueries);
+    const credentialErrors: string[] = [];
+    const seenCredentials = new Map<string, CustomerCredentialBrief>();
+    credentialResults.forEach((res, i) => {
+      if (res.error) credentialErrors.push(`credentials query ${i + 1}: ${res.error.message}`);
+      (res.data || []).forEach((row) => {
+        const id = row.id as string;
+        if (!seenCredentials.has(id)) {
+          seenCredentials.set(id, {
+            id,
+            category: row.category as string,
+            label: (row.label as string) ?? null,
+            url: (row.url as string) ?? null,
+            login: (row.login as string) ?? null,
+            password: (row.password as string) ?? null,
+            note: (row.note as string) ?? null,
+            linked_entity_type: (row.linked_entity_type as string) ?? null,
+            linked_entity_id: (row.linked_entity_id as string) ?? null,
+            batch_id: (row.batch_id as string) ?? null,
+            customer_id: (row.customer_id as string) ?? null,
+            customer_email: (row.customer_email as string) ?? null,
+            client_name: (row.client_name as string) ?? null,
+            updated_at: row.updated_at as string,
+          });
+        }
+      });
+    });
+    credentials = Array.from(seenCredentials.values()).sort(
+      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+    );
+    credentialsError = credentialErrors.length ? credentialErrors.join("; ") : null;
+  }
+  notes = annotateNotesWithCanonicalCredentialFlags(notes, credentials);
   const notesSection = { data: notes, error: notesError, loaded: true };
+  const credentialsSection = { data: credentials, error: credentialsError, loaded: true };
 
   const marketingQueries: Promise<{
     data: Array<Record<string, unknown>> | null;
@@ -385,7 +470,7 @@ export async function loadCustomerHubAggregate(
       }>,
     );
   }
-  if (leadNames.length) {
+  if (useClientNameFallback) {
     marketingQueries.push(
       supabase
         .from("marketing_records")
@@ -448,7 +533,7 @@ export async function loadCustomerHubAggregate(
       }>,
     );
   }
-  if (leadNames.length) {
+  if (useClientNameFallback) {
     hostingQueries.push(
       supabase
         .from("hosting_records")
@@ -560,7 +645,7 @@ export async function loadCustomerHubAggregate(
       supabase.from("payment_records").select(paymentSelect).ilike("customer_email", resolvedEmail),
     );
   }
-  if (leadNames.length) {
+  if (useClientNameFallback) {
     paymentQueries.push(
       supabase.from("payment_records").select(paymentSelect).in("client_name", leadNames),
     );
@@ -597,6 +682,15 @@ export async function loadCustomerHubAggregate(
         .in("source_id", noteIds),
     );
   }
+  if (marketingIds.length) {
+    costQueries.push(
+      supabase
+        .from("cost_records")
+        .select(costSelect)
+        .eq("source_table", "marketing_records")
+        .in("source_id", marketingIds),
+    );
+  }
   if (hostingIds.length) {
     costQueries.push(
       supabase
@@ -606,7 +700,7 @@ export async function loadCustomerHubAggregate(
         .in("source_id", hostingIds),
     );
   }
-  if (leadNames.length) {
+  if (useClientNameFallback) {
     costQueries.push(supabase.from("cost_records").select(costSelect).in("client_name", leadNames));
   }
   let costRecords: CostRecord[] = [];
@@ -680,7 +774,7 @@ export async function loadCustomerHubAggregate(
     seenDesigns.set(d.id, { ...d, matchedBy: "email" });
   });
   let designsError = designsByEmailSection.error;
-  if (leadNames.length) {
+  if (useClientNameFallback) {
     const designsByNameSection = await fetchSection(
       "designs",
       () =>
@@ -800,6 +894,7 @@ export async function loadCustomerHubAggregate(
     tasks: tasksSection,
     rentals: rentalsSection,
     hosting: hostingSection,
+    credentials: credentialsSection,
     notes: notesSection,
     marketing: marketingSection,
     commissions: commissionsSection,
@@ -814,7 +909,7 @@ export async function loadCustomerHubAggregate(
     leadLogs: leadLogsSection,
   };
 
-  const workbench = workbenchFromSections(identity, sections);
+  const workbench = workbenchFromSections(identity, sections, useClientNameFallback);
 
   return { identity, sections, workbench };
 }

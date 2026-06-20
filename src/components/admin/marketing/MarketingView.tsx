@@ -30,6 +30,7 @@ import {
   MARKETING_CHANNELS,
   MARKETING_STATUSES,
   MARKETING_STATUS_COLORS,
+  MARKETING_LIST_SELECT,
   emptyMarketingRecord,
 } from "./shared";
 import { MarketingRecordEditDialog } from "./MarketingRecordEditDialog";
@@ -58,7 +59,7 @@ export function MarketingView() {
   const load = async () => {
     setLoading(true);
     const [recordsRes, leadsRes, paysRes] = await Promise.all([
-      supabase.from("marketing_records").select("*").order("updated_at", { ascending: false }),
+      supabase.from("marketing_records").select(MARKETING_LIST_SELECT).order("updated_at", { ascending: false }),
       supabase.from("leads").select("name,email"),
       supabase
         .from("payment_records")

@@ -70,6 +70,7 @@ export function computeWorkbenchSummary(
       data.notes.length +
       data.marketing.length +
       data.hosting.length +
+      data.credentials.length +
       data.wheels.length +
       data.designs.length +
       data.commEvents.length +
@@ -314,6 +315,9 @@ export function computeUnresolvedIssues(
   }
   if (data.designs.some((d) => d.matchedBy === "client_name")) {
     issues.push("Niektoré dizajny spárované len podľa mena");
+  }
+  if (data.usedClientNameFallback) {
+    issues.push("Časť dát spárovaná len podľa mena klienta — overte správnosť");
   }
   return issues;
 }

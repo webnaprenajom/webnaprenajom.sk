@@ -44,15 +44,45 @@ export const emptyProjectNote: Partial<ProjectNote> = {
   lead_id: null,
   project_type: "wordpress",
   url: "",
-  username: "",
-  password: "",
-  access_credentials: [],
   notes: "",
   status: "in_progress",
 };
 
-export const MASKED_PASSWORD = "••••••••";
+/** List load — excludes legacy credential columns (canonical store: customer_credentials). */
+export const PROJECT_LIST_SELECT =
+  "id,title,client_name,customer_email,customer_id,lead_id,project_type,url,notes,status,updated_at,operating_cost,agreed_fee" as const;
 
-export { hasAnyCredentials as hasCredentials } from "@/lib/projectCredentials";
+const LEGACY_CREDENTIAL_KEYS = new Set([
+  "username",
+  "password",
+  "access_credentials",
+]);
 
-export type ProjectNotesViewMode = "projects" | "passwords";
+/** Delivery-only project_notes write — never mutates legacy credential columns. */
+export function buildProjectNoteDeliveryPayload(
+  editing: Partial<ProjectNote>,
+  linked: {
+    client_name: string | null;
+    customer_email: string;
+    customer_id: string;
+    lead_id: string | null;
+  },
+): Record<string, unknown> {
+  const payload = {
+    title: editing.title!.trim(),
+    client_name: linked.client_name || null,
+    customer_email: linked.customer_email,
+    customer_id: linked.customer_id,
+    lead_id: linked.lead_id || editing.lead_id || null,
+    project_type: editing.project_type || null,
+    url: editing.url?.trim() || null,
+    notes: editing.notes || null,
+    status: editing.status || "in_progress",
+  };
+  for (const key of Object.keys(payload)) {
+    if (LEGACY_CREDENTIAL_KEYS.has(key)) {
+      throw new Error(`project_notes delivery payload must not include legacy credential field: ${key}`);
+    }
+  }
+  return payload;
+}

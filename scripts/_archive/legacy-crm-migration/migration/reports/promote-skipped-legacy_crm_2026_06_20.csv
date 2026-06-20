@@ -1,0 +1,47 @@
+source_file,legacy_id,outcome,detail,review_queue
+leads.csv,3ce5c737-c618-4aa2-b4d0-a885e449c67a,skip_ambiguous_identity,Missing customer_id; no export customer for email — no auto-create,yes
+leads.csv,1fb2e945-c7d2-43f4-94f8-b5ebdecb3176,skip_ambiguous_identity,Missing customer_id; no export customer for email — no auto-create,yes
+leads.csv,b82eb266-4adc-4ae6-b44e-cb00ade8271c,skip_ambiguous_identity,Missing customer_id; no export customer for email — no auto-create,yes
+hosting_records.csv,ea940195-31a5-489b-a88d-d18254f8f399,skip_ambiguous_identity,No customer_id or bridge email,yes
+hosting_records.csv,c972c247-6d7d-483c-8a49-c2c8d3ab1f8f,skip_ambiguous_identity,No customer_id or bridge email,yes
+hosting_records.csv,b12d0b44-e20a-4851-a182-018f5c152f98,skip_ambiguous_identity,No customer_id or bridge email,yes
+rental_payments.csv,0b1e134b-2d1b-40d4-886d-cb3a6df5660b,skip_orphan_fk,website_id=570bec50-43a7-4656-bf51-076bf08365c7 missing in staging and team,yes
+rental_payments.csv,bb66f8aa-0c68-49d8-85f7-c29cf6f08364,skip_orphan_fk,website_id=ba8de981-2435-452f-abfb-c93737ed0e13 missing in staging and team,yes
+rental_payments.csv,d4aa1432-6a8a-4fb8-b94f-20db6b255d08,skip_orphan_fk,website_id=6e2453b0-c4db-4b83-8b1f-26f4d578377d missing in staging and team,yes
+rental_payments.csv,244660c6-7fb6-46ad-97cf-6c6b9ab543b6,skip_orphan_fk,website_id=383c6b9e-4a57-4c9d-891d-3ac0cc863322 missing in staging and team,yes
+rental_payments.csv,f2aace9c-84b0-4c26-92ec-3f9bfaf7bbaf,skip_orphan_fk,website_id=570bec50-43a7-4656-bf51-076bf08365c7 missing in staging and team,yes
+rental_payments.csv,20249e67-f80c-4525-b989-44d1efd339ba,skip_orphan_fk,website_id=1fe2031b-61e8-4a65-a3d0-a0bd550e5e02 missing in staging and team,yes
+rental_payments.csv,9d5a60d7-a1d9-4ae0-a817-46dd7f480ea4,skip_orphan_fk,website_id=383c6b9e-4a57-4c9d-891d-3ac0cc863322 missing in staging and team,yes
+rental_payments.csv,0d79e9ce-3eb2-47f9-a0d0-26b4e9bd7609,skip_orphan_fk,website_id=570bec50-43a7-4656-bf51-076bf08365c7 missing in staging and team,yes
+rental_payments.csv,a975ba0c-900e-4690-872e-befa59815f0e,skip_orphan_fk,website_id=ba8de981-2435-452f-abfb-c93737ed0e13 missing in staging and team,yes
+rental_payments.csv,ee900b28-ab8a-4822-8e3b-f256977ef62c,skip_orphan_fk,website_id=6b79e6f1-6271-4433-80a1-abc036f5404a missing in staging and team,yes
+rental_payments.csv,820e628d-8536-4d3a-b726-7737269112fb,skip_orphan_fk,website_id=9794d927-d1af-465b-b8ce-a868a7f45623 missing in staging and team,yes
+rental_payments.csv,1dba2cd4-21b9-4dcb-949f-a1c0b42bf7d6,skip_orphan_fk,website_id=9794d927-d1af-465b-b8ce-a868a7f45623 missing in staging and team,yes
+rental_payments.csv,8c983eb7-1802-407b-a148-61d7cefe508c,skip_orphan_fk,website_id=dc51f4e2-fd80-4d00-95cf-8a4130a4d722 missing in staging and team,yes
+rental_payments.csv,e5cbd007-305f-45da-99a1-94bd9d1e82f0,skip_orphan_fk,website_id=5e950efa-0b55-4b71-bc88-75d4029f726c missing in staging and team,yes
+rental_payments.csv,211f1c2d-ff7a-42bf-a647-e565a82e27cf,skip_orphan_fk,website_id=1fe2031b-61e8-4a65-a3d0-a0bd550e5e02 missing in staging and team,yes
+rental_payments.csv,c224fd4b-d920-4ee7-a7ef-d94419fd03cb,skip_orphan_fk,website_id=ba8de981-2435-452f-abfb-c93737ed0e13 missing in staging and team,yes
+rental_payments.csv,15b0ec09-172c-400a-ad20-c8c68dda2646,skip_orphan_fk,website_id=1fe2031b-61e8-4a65-a3d0-a0bd550e5e02 missing in staging and team,yes
+rental_payments.csv,1cd2ab3b-43d9-48b2-ae5c-c016cc73e884,skip_orphan_fk,website_id=1fe2031b-61e8-4a65-a3d0-a0bd550e5e02 missing in staging and team,yes
+rental_payments.csv,31ce894d-9e4b-4bbb-accb-ea4240fb487e,skip_orphan_fk,website_id=dc51f4e2-fd80-4d00-95cf-8a4130a4d722 missing in staging and team,yes
+rental_payments.csv,4cf40009-bab4-46f4-8286-ce5f7862ea85,skip_orphan_fk,website_id=9794d927-d1af-465b-b8ce-a868a7f45623 missing in staging and team,yes
+rental_payments.csv,233b23aa-23aa-4e9e-bfcb-be90e81a5e13,skip_orphan_fk,website_id=38d07878-94d1-4af2-a902-316c71658fa8 missing in staging and team,yes
+rental_payments.csv,4a0bb843-601b-401f-b441-05604d67e72c,skip_orphan_fk,website_id=5e950efa-0b55-4b71-bc88-75d4029f726c missing in staging and team,yes
+rental_payments.csv,874310be-6816-49da-8309-8311b22f7484,skip_orphan_fk,website_id=6b79e6f1-6271-4433-80a1-abc036f5404a missing in staging and team,yes
+payment_records.csv,3d4a9c1a-9027-434b-b73c-fe985b30149f,skip_orphan_fk,rental_website_id=570bec50-43a7-4656-bf51-076bf08365c7 missing in staging and team,yes
+payment_records.csv,9737759d-7c10-4973-a0c1-4e64561b2e08,skip_orphan_fk,rental_website_id=383c6b9e-4a57-4c9d-891d-3ac0cc863322 missing in staging and team,yes
+payment_records.csv,bf34b105-e4ef-4f63-8295-061ec8cce92c,skip_orphan_fk,rental_website_id=1fe2031b-61e8-4a65-a3d0-a0bd550e5e02 missing in staging and team,yes
+payment_records.csv,3af13f60-45b8-46f1-ad8b-b262352607ca,skip_orphan_fk,rental_website_id=1fe2031b-61e8-4a65-a3d0-a0bd550e5e02 missing in staging and team,yes
+payment_records.csv,fa6b4756-b110-4a86-8ee2-e62dcd27a07c,skip_orphan_fk,rental_website_id=1fe2031b-61e8-4a65-a3d0-a0bd550e5e02 missing in staging and team,yes
+payment_records.csv,18c51b7f-8a50-4600-8553-85f4fbf3401d,skip_orphan_fk,rental_website_id=ba8de981-2435-452f-abfb-c93737ed0e13 missing in staging and team,yes
+payment_records.csv,3d0bf46b-3594-4fab-aea5-6b47a393a3be,skip_orphan_fk,rental_website_id=1fe2031b-61e8-4a65-a3d0-a0bd550e5e02 missing in staging and team,yes
+payment_records.csv,485b48ab-74a7-4d99-95f8-ed2275b5a7b1,skip_orphan_fk,rental_website_id=dc51f4e2-fd80-4d00-95cf-8a4130a4d722 missing in staging and team,yes
+payment_records.csv,f43f54ec-1cdb-48e4-8bed-2fc6750459f0,skip_orphan_fk,rental_website_id=38d07878-94d1-4af2-a902-316c71658fa8 missing in staging and team,yes
+payment_records.csv,b2ed8a37-c2cf-42e4-8cb1-1ab375ced5b7,skip_orphan_fk,rental_website_id=5e950efa-0b55-4b71-bc88-75d4029f726c missing in staging and team,yes
+payment_records.csv,23a9809a-7e58-474b-8083-273c507886db,skip_orphan_fk,rental_website_id=6b79e6f1-6271-4433-80a1-abc036f5404a missing in staging and team,yes
+payment_records.csv,9c8bfd25-6048-4707-a021-deaf0cd18e48,skip_orphan_fk,rental_website_id=6b79e6f1-6271-4433-80a1-abc036f5404a missing in staging and team,yes
+payment_records.csv,55cab1d0-c56b-43a0-bb63-9c15f5004df7,skip_orphan_fk,rental_website_id=9794d927-d1af-465b-b8ce-a868a7f45623 missing in staging and team,yes
+payment_records.csv,d194b5d4-8266-4d28-b40c-105372cb97e5,skip_orphan_fk,rental_website_id=dc51f4e2-fd80-4d00-95cf-8a4130a4d722 missing in staging and team,yes
+payment_records.csv,7f2aa765-6f8d-4d2c-b20f-ae0e729d6240,skip_orphan_fk,rental_website_id=5e950efa-0b55-4b71-bc88-75d4029f726c missing in staging and team,yes
+lead_logs.csv,b76f023a-5938-4bcc-a17c-6556a4634c9a,skip_orphan_fk,lead_id=6b8c85a7-eda1-4f50-ae23-e633199fdc6a missing — OPTION A skip,yes
+lead_logs.csv,b19c3ec2-a514-4c92-af6a-f2f2f9317d3e,skip_orphan_fk,lead_id=43302ec3-47d0-43a7-86f7-44bc142861ca missing — OPTION A skip,yes

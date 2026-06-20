@@ -32,27 +32,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import {
-  Loader2,
-  Plus,
-  Pencil,
-  Trash2,
-  Eye,
-  EyeOff,
-  Copy,
-  KeyRound,
-  FileText,
-  Search,
-} from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, FileText, Search } from "lucide-react";
 import { buildClientNameEmailMap, customerHrefByClientName } from "@/lib/adminNav";
 import {
   type ProjectNote,
-  type ProjectNotesViewMode,
   PROJECT_STATUSES,
   PROJECT_TYPE_OPTIONS,
+  PROJECT_LIST_SELECT,
+  buildProjectNoteDeliveryPayload,
   emptyProjectNote,
-  MASKED_PASSWORD,
-  hasCredentials,
 } from "./shared";
 import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
 import { linkLeadAfterDelivery } from "@/lib/crmLookup/leadCustomerLifecycle";
@@ -62,40 +50,12 @@ import {
   parseInsertRowId,
 } from "@/lib/crmLookup/entitySaveHelpers";
 import { resolveFormCustomerLink } from "@/lib/crmLookup/resolveFormCustomerLink";
-import { AccessCredentialsEditor } from "@/components/admin/projectNotes/AccessCredentialsEditor";
-import {
-  type AccessCredential,
-  createEmptyCredential,
-  credentialsForSave,
-  resolveProjectCredentials,
-} from "@/lib/projectCredentials";
 
-const VIEW_CONFIG: Record<
-  ProjectNotesViewMode,
-  { title: string; subtitle: string; docTitle: string; addLabel: string }
-> = {
-  projects: {
-    title: "Projekty",
-    subtitle: "WordPress, Shoptet a zákazkové weby — stav, klient, poznámky",
-    docTitle: "Projekty | CRM",
-    addLabel: "Nový projekt",
-  },
-  passwords: {
-    title: "Heslá",
-    subtitle: "Prístupy k projektom — heslá sú skryté, odhalenie je zámerné",
-    docTitle: "Heslá projektov | CRM",
-    addLabel: "Nový prístup",
-  },
-};
-
-export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
-  const cfg = VIEW_CONFIG[mode];
+export function ProjectNotesView() {
   const [items, setItems] = useState<ProjectNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<ProjectNote> | null>(null);
-  const [editCredentials, setEditCredentials] = useState<AccessCredential[]>([]);
-  const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [clientEmailMap, setClientEmailMap] = useState<Map<string, string>>(new Map());
@@ -103,37 +63,29 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   const [confirmedBySource, setConfirmedBySource] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
-    document.title = cfg.docTitle;
+    document.title = "Projekty | CRM";
     void load();
-  }, [cfg.docTitle]);
+  }, []);
 
   const load = async () => {
     setLoading(true);
     const [notesRes, leadsRes, paysRes] = await Promise.all([
-      supabase.from("project_notes").select("*").order("updated_at", { ascending: false }),
+      supabase.from("project_notes").select(PROJECT_LIST_SELECT).order("updated_at", { ascending: false }),
       supabase.from("leads").select("name,email"),
-      mode === "projects"
-        ? supabase
-            .from("payment_records")
-            .select("source_table,source_id,amount,truth_level")
-            .eq("source_table", "project_notes")
-        : Promise.resolve({ data: [], error: null }),
+      supabase
+        .from("payment_records")
+        .select("source_table,source_id,amount,truth_level")
+        .eq("source_table", "project_notes"),
     ]);
     if (notesRes.error) {
       toast({ title: "Chyba", description: notesRes.error.message, variant: "destructive" });
     } else {
-      // TODO post-release: pridať assigned_to stĺpec + filterProjectsForUser
-      // Option B (Batch 4c): administrator vidí všetky projekty/heslá — project_notes nemá ownership stĺpce.
       setItems((notesRes.data || []) as ProjectNote[]);
     }
     if (!leadsRes.error && leadsRes.data) {
       setClientEmailMap(buildClientNameEmailMap(leadsRes.data));
     }
-    if (mode === "projects") {
-      setConfirmedBySource(buildConfirmedPaymentTotalsBySource(paysRes.data || []));
-    } else {
-      setConfirmedBySource(new Map());
-    }
+    setConfirmedBySource(buildConfirmedPaymentTotalsBySource(paysRes.data || []));
     setLoading(false);
   };
 
@@ -172,21 +124,12 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
     }
     setCustomerFieldError(null);
 
-    const credFields = credentialsForSave(editing, editCredentials);
-    const payload = {
-      title: editing.title!.trim(),
-      client_name: linked.client_name || null,
+    const payload = buildProjectNoteDeliveryPayload(editing, {
+      client_name: linked.client_name,
       customer_email: linked.customer_email,
       customer_id: linked.customer_id,
-      lead_id: linked.lead_id || editing.lead_id || null,
-      project_type: editing.project_type || null,
-      url: credFields.url,
-      username: credFields.username,
-      password: credFields.password,
-      access_credentials: credFields.access_credentials,
-      notes: editing.notes || null,
-      status: editing.status || "in_progress",
-    };
+      lead_id: linked.lead_id,
+    });
     const prior = editing.id ? items.find((i) => i.id === editing.id) : null;
     const statusChanged = prior != null && prior.status !== payload.status;
 
@@ -244,7 +187,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Naozaj zmazať tento záznam?")) return;
+    if (!confirm("Naozaj zmazať tento projekt?")) return;
     const { error } = await supabase.from("project_notes").delete().eq("id", id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else {
@@ -253,25 +196,16 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
     }
   };
 
-  const copy = (val: string | null, label: string) => {
-    if (!val) return;
-    navigator.clipboard.writeText(val);
-    toast({ title: `${label} skopírované` });
-  };
-
   const openEdit = (item: Partial<ProjectNote>) => {
-    setEditCredentials(resolveProjectCredentials(item as ProjectNote));
     setCustomerFieldError(null);
     setEditing(item);
     setOpen(true);
   };
 
   const baseFiltered = filter === "all" ? items : items.filter((i) => i.status === filter);
-  const statusFiltered =
-    mode === "passwords" ? baseFiltered.filter((i) => hasCredentials(i)) : baseFiltered;
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return statusFiltered;
-    return statusFiltered.filter((item) => {
+    if (!searchQuery.trim()) return baseFiltered;
+    return baseFiltered.filter((item) => {
       const statusLabel = PROJECT_STATUSES.find((s) => s.value === item.status)?.label;
       const typeLabel = PROJECT_TYPE_OPTIONS.find((t) => t.value === item.project_type)?.label;
       return matchesSearchQuery(
@@ -286,53 +220,40 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
         item.agreed_fee != null ? String(item.agreed_fee) : null,
       );
     });
-  }, [statusFiltered, searchQuery]);
+  }, [baseFiltered, searchQuery]);
 
   return (
     <AdminShell
-      title={cfg.title}
-      subtitle={cfg.subtitle}
+      title="Projekty"
+      subtitle="WordPress, Shoptet a zákazkové weby — stav, klient, poznámky"
       actions={
         <Button
           size="sm"
           onClick={() => {
-            setEditCredentials([createEmptyCredential("Hlavný prístup")]);
             setCustomerFieldError(null);
             setEditing({ ...emptyProjectNote });
             setOpen(true);
           }}
         >
-          <Plus className="w-4 h-4 mr-2" /> {cfg.addLabel}
+          <Plus className="w-4 h-4 mr-2" /> Nový projekt
         </Button>
       }
     >
       <div className="space-y-4">
-        {mode === "projects" && (
-          <p className="text-xs text-muted-foreground">
-            Prístupy a heslá spravuj v sekcii{" "}
-            <Link to="/admin/passwords" className="text-primary hover:underline">
-              Heslá
-            </Link>
-            .
-          </p>
-        )}
-        {mode === "passwords" && (
-          <p className="text-xs text-muted-foreground">
-            Záznamy pochádzajú z rovnakej databázy ako{" "}
-            <Link to="/admin/projects" className="text-primary hover:underline">
-              Projekty
-            </Link>
-            . Riadkový prehľad ako v Projektoch — odhalenie hesla je zámerné.
-          </p>
-        )}
+        <p className="text-xs text-muted-foreground">
+          Prístupy a heslá spravuj v sekcii{" "}
+          <Link to="/admin/passwords" className="text-primary hover:underline">
+            Heslá
+          </Link>
+          .
+        </p>
 
         <div className="flex items-center gap-2 flex-wrap">
           <Button size="sm" variant={filter === "all" ? "default" : "outline"} onClick={() => setFilter("all")}>
-            Všetko ({mode === "passwords" ? items.filter(hasCredentials).length : items.length})
+            Všetko ({items.length})
           </Button>
           {PROJECT_STATUSES.map((s) => {
-            const pool = mode === "passwords" ? items.filter(hasCredentials) : items;
-            const count = pool.filter((i) => i.status === s.value).length;
+            const count = items.filter((i) => i.status === s.value).length;
             return (
               <Button
                 key={s.value}
@@ -350,11 +271,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder={
-              mode === "passwords"
-                ? "Hľadať projekt, klienta, login, URL…"
-                : "Hľadať projekt, klienta, stav, URL…"
-            }
+            placeholder="Hľadať projekt, klienta, stav, URL…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -366,11 +283,9 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground border border-dashed rounded-xl">
-            {mode === "passwords"
-              ? "Žiadne uložené prístupy."
-              : items.length === 0
-                ? "Žiadne projekty. Pridaj prvý."
-                : "Žiadna zhoda pre zadané filtre alebo vyhľadávanie."}
+            {items.length === 0
+              ? "Žiadne projekty. Pridaj prvý."
+              : "Žiadna zhoda pre zadané filtre alebo vyhľadávanie."}
           </div>
         ) : (
           <div className="rounded-xl border overflow-x-auto">
@@ -379,22 +294,11 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                 <TableRow>
                   <TableHead>Projekt</TableHead>
                   <TableHead>Klient</TableHead>
-                  {mode === "passwords" ? (
-                    <>
-                      <TableHead>Login</TableHead>
-                      <TableHead>Heslo</TableHead>
-                    </>
-                  ) : (
-                    <>
-                      <TableHead>Typ</TableHead>
-                      <TableHead>URL</TableHead>
-                    </>
-                  )}
+                  <TableHead>Typ</TableHead>
+                  <TableHead>URL</TableHead>
                   <TableHead>Stav</TableHead>
-                  {mode === "projects" && (
-                    <TableHead className="text-right">Dohodnutá cena</TableHead>
-                  )}
-                  {mode === "projects" && <TableHead>Úhrada</TableHead>}
+                  <TableHead className="text-right">Dohodnutá cena</TableHead>
+                  <TableHead>Úhrada</TableHead>
                   <TableHead>Aktualizované</TableHead>
                   <TableHead className="w-[120px]" />
                 </TableRow>
@@ -404,9 +308,6 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                   const status = PROJECT_STATUSES.find((s) => s.value === item.status);
                   const typeLabel =
                     PROJECT_TYPE_OPTIONS.find((t) => t.value === item.project_type)?.label ?? "—";
-                  const creds = resolveProjectCredentials(item);
-                  const primary = creds[0];
-                  const shown = reveal[item.id];
                   const customerHref = item.client_name
                     ? customerHrefByClientName(item.client_name, clientEmailMap)
                     : null;
@@ -419,14 +320,6 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                         >
                           {item.title}
                         </Link>
-                        {mode === "projects" && hasCredentials(item) && (
-                          <Link
-                            to="/admin/passwords"
-                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary mt-0.5"
-                          >
-                            <KeyRound className="w-2.5 h-2.5" /> Prístupy
-                          </Link>
-                        )}
                       </TableCell>
                       <TableCell className="text-sm">
                         {item.client_name ? (
@@ -445,81 +338,40 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      {mode === "passwords" ? (
-                        <>
-                          <TableCell className="text-xs font-mono max-w-[140px] truncate">
-                            {primary?.login || "—"}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            {primary?.password ? (
-                              <div className="flex items-center gap-1">
-                                <span className="font-mono truncate max-w-[120px]">
-                                  {shown ? primary.password : MASKED_PASSWORD}
-                                </span>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-6 w-6 shrink-0"
-                                  onClick={() => setReveal((r) => ({ ...r, [item.id]: !r[item.id] }))}
-                                >
-                                  {shown ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-6 w-6 shrink-0"
-                                  onClick={() => copy(primary.password ?? null, "Heslo")}
-                                >
-                                  <Copy className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                        </>
-                      ) : (
-                        <>
-                          <TableCell className="text-xs">{typeLabel}</TableCell>
-                          <TableCell className="text-xs max-w-[160px]">
-                            {item.url ? (
-                              <a
-                                href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-primary hover:underline truncate block"
-                              >
-                                {item.url}
-                              </a>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                        </>
-                      )}
+                      <TableCell className="text-xs">{typeLabel}</TableCell>
+                      <TableCell className="text-xs max-w-[160px]">
+                        {item.url ? (
+                          <a
+                            href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline truncate block"
+                          >
+                            {item.url}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className={status?.color}>
                           {status?.label}
                         </Badge>
                       </TableCell>
-                      {mode === "projects" && (
-                        <TableCell className="text-xs text-right tabular-nums whitespace-nowrap">
-                          {formatAgreedPrice(item.agreed_fee)}
-                        </TableCell>
-                      )}
-                      {mode === "projects" && (
-                        <TableCell>
-                          <PaymentCompletenessBadge
-                            compact
-                            agreedPrice={item.agreed_fee}
-                            confirmedPaid={confirmedPaidForEntity(
-                              confirmedBySource,
-                              "project_notes",
-                              item.id,
-                            )}
-                          />
-                        </TableCell>
-                      )}
+                      <TableCell className="text-xs text-right tabular-nums whitespace-nowrap">
+                        {formatAgreedPrice(item.agreed_fee)}
+                      </TableCell>
+                      <TableCell>
+                        <PaymentCompletenessBadge
+                          compact
+                          agreedPrice={item.agreed_fee}
+                          confirmedPaid={confirmedPaidForEntity(
+                            confirmedBySource,
+                            "project_notes",
+                            item.id,
+                          )}
+                        />
+                      </TableCell>
                       <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
                         {new Date(item.updated_at).toLocaleDateString("sk-SK")}
                       </TableCell>
@@ -560,10 +412,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
         onOpenChange={setOpen}
         editing={editing}
         setEditing={setEditing}
-        editCredentials={editCredentials}
-        setEditCredentials={setEditCredentials}
         onSave={save}
-        mode={mode}
         customerFieldError={customerFieldError}
         onClearCustomerFieldError={() => setCustomerFieldError(null)}
       />
@@ -576,10 +425,7 @@ function EditDialog({
   onOpenChange,
   editing,
   setEditing,
-  editCredentials,
-  setEditCredentials,
   onSave,
-  mode,
   customerFieldError,
   onClearCustomerFieldError,
 }: {
@@ -587,10 +433,7 @@ function EditDialog({
   onOpenChange: (o: boolean) => void;
   editing: Partial<ProjectNote> | null;
   setEditing: (v: Partial<ProjectNote> | null) => void;
-  editCredentials: AccessCredential[];
-  setEditCredentials: (v: AccessCredential[]) => void;
   onSave: () => boolean | Promise<boolean>;
-  mode: ProjectNotesViewMode;
   customerFieldError: string | null;
   onClearCustomerFieldError: () => void;
 }) {
@@ -598,12 +441,9 @@ function EditDialog({
 
   const closeGuard = useAdminCloseGuard({
     isOpen: open && !!editing,
-    current: { editing: editing ?? {}, editCredentials },
+    current: { editing: editing ?? {} },
     onSave,
-    onDiscard: () => {
-      setEditing(null);
-      setEditCredentials([]);
-    },
+    onDiscard: () => setEditing(null),
   });
 
   if (!editing) return null;
@@ -616,7 +456,7 @@ function EditDialog({
           if (!o) closeGuard.handleOpenChange(o, closeDialog);
         }}
         size="lg"
-        title={editing.id ? "Upraviť záznam" : mode === "passwords" ? "Nový prístup" : "Nový projekt"}
+        title={editing.id ? "Upraviť projekt" : "Nový projekt"}
         footer={
           <>
             <Button
@@ -680,31 +520,29 @@ function EditDialog({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label>URL / doména (voliteľné)</Label>
+                <Input
+                  placeholder="https://…"
+                  value={editing.url || ""}
+                  onChange={(e) => setEditing({ ...editing, url: e.target.value })}
+                />
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3 rounded-lg border border-amber-500/25 bg-amber-500/5 p-3">
-            <p className="text-xs font-medium text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-              <KeyRound className="w-3.5 h-3.5" />
-              Prístupy {mode === "projects" && "(voliteľné)"}
-            </p>
-            <AccessCredentialsEditor credentials={editCredentials} onChange={setEditCredentials} />
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+              Poznámka projektu
+            </Label>
+            <NoteTextarea
+              rows={5}
+              placeholder="Postup, kontext, interné poznámky…"
+              value={editing.notes || ""}
+              onChange={(v) => setEditing({ ...editing, notes: v })}
+            />
           </div>
-
-          {mode === "projects" && (
-            <div className="space-y-1.5">
-              <Label className="flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                Poznámka projektu
-              </Label>
-              <NoteTextarea
-                rows={5}
-                placeholder="Postup, kontext, interné poznámky…"
-                value={editing.notes || ""}
-                onChange={(v) => setEditing({ ...editing, notes: v })}
-              />
-            </div>
-          )}
         </div>
       </AdminDialog>
     </>

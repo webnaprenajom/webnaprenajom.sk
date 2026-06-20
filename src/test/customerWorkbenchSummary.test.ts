@@ -22,6 +22,7 @@ const emptyData = (overrides: Partial<CustomerWorkbenchData> = {}): CustomerWork
   notes: [],
   marketing: [],
   hosting: [],
+  credentials: [],
   wheels: [],
   designs: [],
   logs: [],
@@ -49,6 +50,38 @@ describe("workbench URL state", () => {
     const params = new URLSearchParams("tab=komunikacia&comm=inbound");
     expect(parseWorkbenchTab(params)).toBe("komunikacia");
     expect(parseWorkbenchCommFilter(params)).toBe("inbound");
+  });
+
+  it("parses hesla tab for customer credentials", () => {
+    expect(parseWorkbenchTab(new URLSearchParams("tab=hesla"))).toBe("hesla");
+  });
+
+  it("counts credentials in hasAnyData", () => {
+    expect(computeWorkbenchSummary(emptyData(), "x@y.sk").hasAnyData).toBe(false);
+    expect(
+      computeWorkbenchSummary(
+        emptyData({
+          credentials: [
+            {
+              id: "c1",
+              category: "web_admin",
+              label: "Admin",
+              url: null,
+              login: "a",
+              password: "p",
+              note: null,
+              linked_entity_type: null,
+              linked_entity_id: null,
+              customer_id: "cust-1",
+              customer_email: "x@y.sk",
+              client_name: "X",
+              updated_at: "2026-06-01",
+            },
+          ],
+        }),
+        "x@y.sk",
+      ).hasAnyData,
+    ).toBe(true);
   });
 
   it("omits default params when updating URL", () => {
@@ -465,5 +498,12 @@ describe("computeUnresolvedIssues", () => {
     const issues = computeUnresolvedIssues(data, summary);
     expect(issues.some((i) => i.includes("Heuristický"))).toBe(true);
     expect(issues.some((i) => i.includes("customer_id"))).toBe(true);
+  });
+
+  it("flags tier-3 client_name hub fallback", () => {
+    const data = emptyData({ usedClientNameFallback: true });
+    const summary = computeWorkbenchSummary(data, "x@test.sk");
+    const issues = computeUnresolvedIssues(data, summary);
+    expect(issues.some((i) => i.includes("len podľa mena klienta"))).toBe(true);
   });
 });

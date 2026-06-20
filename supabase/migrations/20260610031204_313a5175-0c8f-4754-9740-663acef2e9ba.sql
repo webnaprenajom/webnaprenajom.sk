@@ -1,11 +1,8 @@
 
--- Grant admin role to maros@salelogics.sk
+-- Grant admin role to maros@salelogics.sk (only when auth user already exists — safe on remote reset)
 INSERT INTO public.user_roles (user_id, role)
-VALUES ('c4d428dd-a601-4134-9c8c-bb8198c2f2d6', 'admin')
+SELECT 'c4d428dd-a601-4134-9c8c-bb8198c2f2d6', 'admin'
+WHERE EXISTS (SELECT 1 FROM auth.users WHERE id = 'c4d428dd-a601-4134-9c8c-bb8198c2f2d6')
 ON CONFLICT (user_id, role) DO NOTHING;
 
--- Reset password to temporary value (user must change after login)
-UPDATE auth.users
-SET encrypted_password = crypt('TempReset!2026', gen_salt('bf')),
-    updated_at = now()
-WHERE id = 'c4d428dd-a601-4134-9c8c-bb8198c2f2d6';
+-- Password reset removed: breaks fresh remote reset (auth.users empty). Use Dashboard or grant_crm_owner_by_email.

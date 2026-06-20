@@ -1,0 +1,55 @@
+id,title,client_name,url,username,password,notes,status,created_at,updated_at,project_type,customer_email,lead_id,customer_id,access_credentials,operating_cost
+9bec114f-3006-44f8-8990-138182ba8a1e,Jaspravim,Jaspravim,,SLGcrew,Wresling1235*,,done,2026-05-08 17:48:23.3475+00,2026-06-15 00:21:13.705337+00,,,,,"[{""id"": ""4ea404a5-674e-453f-a318-63ba7a79a4bc"", ""url"": """", ""note"": """", ""label"": ""Hlavný prístup"", ""login"": ""SLGcrew"", ""password"": ""Wresling1235*""}]",0.00
+80087dfb-0d8e-4120-92de-e5b1c3e0bb53,Baterix,Baterix,https://baterix.sk/wp-login.php,administrator,3v7_tY4HP-nwQ!.6,,done,2026-05-07 20:13:42.085053+00,2026-06-15 00:21:13.705337+00,,,,,"[{""id"": ""b4460c7b-cd64-4bb3-8e6c-2bf836249eba"", ""url"": ""https://baterix.sk/wp-login.php"", ""note"": """", ""label"": ""Hlavný prístup"", ""login"": ""administrator"", ""password"": ""3v7_tY4HP-nwQ!.6""}]",0.00
+d8dd99a7-f118-4f6f-8224-b1578dfa6017,DC Academy,DC Academy,https://dcacademy.sk/sk,info@dcacademy.sk,DCAcademy!2026#Admin,Prístup do Adminu:,done,2026-05-16 14:05:01.685399+00,2026-06-15 00:21:13.705337+00,,,,,"[{""id"": ""c78288e5-0222-40be-ad9f-b71483bfc2bb"", ""url"": ""https://dcacademy.sk/sk"", ""note"": """", ""label"": ""Hlavný prístup"", ""login"": ""info@dcacademy.sk"", ""password"": ""DCAcademy!2026#Admin""}]",0.00
+4f115202-073c-48e5-82ff-71486ff412f4,BOZZ,BOZZ,https://www.bozz.sk/,maros@salelogics.sk,WebRent-2026!Reset,"email:
+link: https://webmail.hostcreators.sk/
+meno:  bozz@bozz.sk
+heslo: xUj!.Cd3jQ-249E_",done,2026-05-28 05:48:23.362093+00,2026-06-15 06:50:25.245994+00,,,,,"[{""id"": ""8efffc00-1eef-461d-94ce-6a85056de5ba"", ""url"": ""https://www.bozz.sk/"", ""note"": """", ""label"": ""Hlavný prístup"", ""login"": ""maros@salelogics.sk"", ""password"": ""WebRent-2026!Reset""}, {""id"": ""22620ea4-ba41-431a-aaf6-bbfb75c6f921"", ""url"": ""https://webmail.hostcreators.sk/"", ""note"": """", ""label"": ""email"", ""login"": ""bozz@bozz.sk"", ""password"": ""xUj!.Cd3jQ-249E_""}]",0.00
+27c25f11-84e5-45f9-bdb2-63504aa95cc9,Blzk.sk,Blzk.sk,Blzk.sk,balazik.matej@gmail.com,Pk)bzo0bQ85uknwOlrYafpkV,"28.4.2026- zalohova fa je zaplatena, caka sa na podklady od klienta.",in_progress,2026-05-07 21:39:39.746494+00,2026-06-16 06:29:53.129615+00,,,,,"[{""id"": ""bc97879c-e57b-4e3a-b6c0-8d0d94e88eeb"", ""url"": ""Blzk.sk"", ""note"": """", ""label"": ""Hlavný prístup"", ""login"": ""balazik.matej@gmail.com"", ""password"": ""Pk)bzo0bQ85uknwOlrYafpkV""}]",0.00
+fc60afb4-bfaf-49ed-8b17-88f8293ce4ac,www.damskabielizen.sk,www.damskabielizen.sk,https://791622.myshoptet.com/admin/,info@damskabielizen.sk,xice-ow-fahe,"platba v cash
+zakupit domenu: www.damskabielizen.sk
+vytvorit email: info@damskabielizen.sk
+eshop bude mat cca 500 produktov
+Eshop zaregistrovat na:
+ICO: 51234530
+
+7.5.2026 - iban: SK25 7500 0000 0040 2668 ČSOB banka
+
+majitel učtu MNBA sro.
+
+Kategorie: 1. nohavičky
+
+                2. trička
+
+                3. tielka
+
+                4. body
+
+                5. supravy
+
+                6. leginy, spodničky, kombinetky,
+
+                7. panska bielizen
+
+                8. detska bielizen
+
+                9. kozmetika
+              10. ostatne
+
+ Doprava: shoptet balik
+
+Pouzit dizajn a styl podla vlastneho uvazenia, tak aby to ladilo pre zenske zakaznicky a styl produktov
+Texty z AI opat aby bolo predajne a stylove k produktom.
+Spomenut ze ""sme  uz 16 rokv vyhradnym dovozcom produktov Belinay na slovenko"".
+Fotky neorezavat a mozu obsahovat aj logo belinay
+Texty k fotkam jednoduche a predajne, pouzit AI.
+
+-------------------------------
+Email: https://webmail.myshoptet.com/?_user=info%40damskabielizen.sk
+
+login: info@damskabielizen.sk 
+pwd: tQ9#Lm2!Vx8@Pz
+-------------------------------",in_progress,2026-05-07 19:27:23.307156+00,2026-06-15 00:21:13.705337+00,,,,,"[{""id"": ""35caf1fe-6b38-416f-bea2-5967bbc3fbef"", ""url"": ""https://791622.myshoptet.com/admin/"", ""note"": """", ""label"": ""Hlavný prístup"", ""login"": ""info@damskabielizen.sk"", ""password"": ""xice-ow-fahe""}]",0.00
+ca4f2eb3-8168-4b93-a378-e9a66cbc07c8,firmynapredaj.sk + veracons.sk,firmynapredaj.sk + veracons.sk,http://veracons.sk/prihlasenie,veracons.sro@gmail.com,Leo92pardos4,,in_progress,2026-06-17 12:35:51.597728+00,2026-06-17 12:37:41.170719+00,wordpress,"info@firmynapredaj.sk , info@veracons.sk",,bde6d45b-f928-487d-9f1c-fbaa2f49c0a9,"[{""id"": ""0d8a3f62-3695-4f96-b682-a2f5d0175305"", ""url"": ""http://veracons.sk/prihlasenie"", ""note"": """", ""label"": ""Hlavny pristup"", ""login"": ""veracons.sro@gmail.com"", ""password"": ""Leo92pardos4""}, {""id"": ""86a16296-7cca-4014-9213-6bb2f92354ba"", ""url"": ""http://firmynapredaj.sk/prihlasenie"", ""note"": """", ""label"": ""Nový prístup"", ""login"": ""veracons.sro@gmail.com"", ""password"": ""xyx418H%QK72irzelhDSkt8H""}]",0.00
+d712469c-bc6f-4851-ab9d-6d8e726d79c4,Infrastruktura,Salelogics Infra,,salelogics.sk@gmail.com,sMiBzuYCgmBV8GL,,in_progress,2026-06-19 21:37:14.069941+00,2026-06-19 21:37:14.069941+00,other,,,,"[{""id"": ""ab4a78f3-7bc6-4bd8-a600-c66cb9ee7f97"", ""url"": """", ""note"": ""19.6.2026 - prihlasovanie do Subabase cez GIT"", ""label"": ""GIT"", ""login"": ""salelogics.sk@gmail.com"", ""password"": ""sMiBzuYCgmBV8GL""}, {""id"": ""4ea4dddf-8804-4331-86eb-156e64de5709"", ""url"": """", ""note"": ""19.6.2026 - prihlasovanie do Vercel cez Git + Google auth"", ""label"": ""Supabase DB"", ""login"": """", ""password"": ""cm3GuHD2F4.@d4M""}]",0.00

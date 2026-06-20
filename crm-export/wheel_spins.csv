@@ -1,0 +1,13 @@
+id,email,prize_label,prize_value,coupon_code,language,ip_address,created_at,name,phone,notes,reminder_sent_at,redeemed,redeemed_at
+515f38c2-1884-4552-9775-2b5646ecede4,exitqo@gmail.com,5% zľava,5,WIN5-RKCG7,sk,46.34.249.253,2026-05-05 16:59:24.190078+00,Exitqo,,,2026-05-06 17:10:06.903+00,f,
+6265ac0d-aca5-4fab-aa07-4318a59b7f8c,info@clinicservice.sk,10% zľava,10,WIN10-RMFLB,sk,82.119.121.226,2026-05-05 16:08:00.330434+00,Clinic service,,,2026-05-06 17:37:12.028+00,f,
+87bb72d3-b195-4117-8253-af3074d2df7e,dzsgroup@centrum.sk,15% zľava,15,WIN15-N4Q7Z,sk,178.143.39.63,2026-05-06 15:17:03.061732+00,Dzs-Group,,,2026-05-06 17:37:28.249+00,f,
+8021944d-2254-488a-8965-3e3e6ccdca70,obchod@mareti.sk,Skúšaj zajtra znova,0,,sk,159.253.108.164,2026-05-07 14:48:30.326672+00,Mareti,,,,f,
+484c2f1c-2028-47c8-aa2b-2252fef3c9f4,cokicdanka@gmail.com,Skúšaj zajtra znova,0,,sk,178.132.110.11,2026-05-09 16:34:41.542991+00,,,,,f,
+6cd15db7-a414-4263-bd9c-0e27c77c9a7a,faithovam@centrum.sk,Bohužiaľ nič,0,,sk,87.197.111.171,2026-05-31 16:43:58.098038+00,,,,,f,
+f2fa0a4b-9289-473c-9b62-fdf882c62f70,eldamont@eldamont.sk,5% zľava,5,WIN5-0G8FY,sk,46.34.229.110,2026-05-18 12:26:30.840305+00,Eldamont,,,2026-05-31 18:52:40.739+00,f,
+6dcd5bd7-82c7-48a5-b596-9472a579474b,info@expertinazlato.sk,15% zľava,15,WIN15-4FYAX,sk,92.180.232.45,2026-05-30 06:18:53.847325+00,,,,2026-05-31 18:52:40.861+00,f,
+6309972a-a327-4318-84f8-0dc362b3dacd,info@expertinazlato.sk,5% zľava,5,WIN5-5F4I7,sk,92.180.232.45,2026-05-31 12:27:05.510908+00,,,,2026-05-31 18:52:41.14+00,f,
+ab314436-5742-4ab2-8067-03eb0b42734c,pollak@fin-real.sk,5% zľava,5,WIN5-RHLJS,sk,217.145.199.90,2026-06-02 20:45:01.523501+00,,,,2026-06-03 11:11:57.842+00,f,
+f0c7995d-5341-407f-8ca4-1c928429a306,gluck@geveklinika.sk,5% zľava,5,WIN5-ZPUWU,sk,178.143.196.98,2026-06-12 11:10:40.434941+00,,,,,f,
+cfe6705a-fb72-45b0-9b96-2e0810a34e1f,koucka@frimka.sk,5% zľava,5,WIN5-ZSCU7,sk,88.212.57.34,2026-06-12 12:46:07.817708+00,,,,,f,

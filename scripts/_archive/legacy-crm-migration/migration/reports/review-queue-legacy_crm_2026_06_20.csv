@@ -1,0 +1,705 @@
+entity_type,legacy_id,source_file,reason,detail
+lead,0470b6c1-4023-443d-a3f4-d618d279ed48,leads.csv,duplicate_email,Email kamenictvidiamond@gmail.com on 2 leads
+lead,3ea7efd8-960a-4ca4-84e7-db04b38ba2d6,leads.csv,duplicate_email,Email spravca@reality69.sk on 2 leads
+lead,22609120-09b4-4106-9422-5c9e4d982105,leads.csv,duplicate_email,Email greta.danielova@gmail.com on 2 leads
+lead,74a7365e-f266-4cef-a31a-04dac2337dbe,leads.csv,duplicate_email,Email stano.pp@centrum.sk on 2 leads
+lead_log,61265ddd-a331-4a54-a5b2-ab61c9c3d7de,lead_logs.csv,orphan_fk,lead_id=af787e7f-28bc-4881-b9df-486edfac2675 not found in staged leads.csv
+lead_log,881df452-a730-48db-8c04-d12ed9d6fa15,lead_logs.csv,orphan_fk,lead_id=701f6593-6697-409c-bd97-5e5f11b30c24 not found in staged leads.csv
+lead_log,5b152be5-8520-4760-a0e4-994b74b1eeb3,lead_logs.csv,orphan_fk,lead_id=af787e7f-28bc-4881-b9df-486edfac2675 not found in staged leads.csv
+lead_log,cf4b8742-a302-4eb5-a7d8-69c9378412e6,lead_logs.csv,orphan_fk,lead_id=961df627-1a32-43fa-aeb0-9882925a5988 not found in staged leads.csv
+lead_log,616fd427-2c62-4065-ac7d-47e4cb8b7701,lead_logs.csv,orphan_fk,lead_id=96768ecf-8f13-4824-b93c-d43c35537023 not found in staged leads.csv
+lead_log,99dfc9a4-0749-4c29-935a-64fa821c22d4,lead_logs.csv,orphan_fk,lead_id=66b34a54-eefb-49bd-999c-62848f4804b1 not found in staged leads.csv
+lead_log,d4821a77-06fb-4a7c-98bc-c2046c7a0c29,lead_logs.csv,orphan_fk,lead_id=3e32a8e6-eeb0-4b66-8997-8c11eedef92c not found in staged leads.csv
+lead_log,c4c13f70-e2cd-480b-b7c3-96019813a954,lead_logs.csv,orphan_fk,lead_id=c9a55b78-6d14-4984-8a03-05dae7d3a31c not found in staged leads.csv
+lead_log,39126774-389d-4034-b351-91a251891f87,lead_logs.csv,orphan_fk,lead_id=45dda642-7e8d-46f6-a291-003899d90da5 not found in staged leads.csv
+lead_log,f67f9905-e66d-4403-b34f-1e3d368ede6f,lead_logs.csv,orphan_fk,lead_id=2472991f-676b-4e8f-afc7-2fd482a383ee not found in staged leads.csv
+lead_log,360315e8-09a0-4a61-9888-75ab7db156b6,lead_logs.csv,orphan_fk,lead_id=cdd7ed2a-0698-4c55-8558-f79fa85a9d24 not found in staged leads.csv
+lead_log,9f4dd594-5116-41f1-82ea-ec2ba6405554,lead_logs.csv,orphan_fk,lead_id=a013731b-7ab5-4fed-94d1-95b5cb8c04b6 not found in staged leads.csv
+lead_log,b450552f-ba5f-4217-953b-ec7557266dee,lead_logs.csv,orphan_fk,lead_id=88dfcfbc-dce1-40e1-ac30-18892db18541 not found in staged leads.csv
+lead_log,4cb0308f-be50-416c-936b-07b7ffd81103,lead_logs.csv,orphan_fk,lead_id=bcb4013a-90ba-4ec8-ad8a-0dcca7f00671 not found in staged leads.csv
+lead_log,d41434e3-3ada-45e6-b49a-7d38ca1872e6,lead_logs.csv,orphan_fk,lead_id=95de2ffb-a1c6-43af-8147-8d716b77bcf3 not found in staged leads.csv
+lead_log,b63fe524-b82b-4d9e-993c-bb7ec205aab9,lead_logs.csv,orphan_fk,lead_id=daa4af8b-a295-4506-bf77-e3979d3c609f not found in staged leads.csv
+lead_log,4c40a4bf-5f6b-450b-857c-493f52a05f25,lead_logs.csv,orphan_fk,lead_id=ab4479ac-3200-4fcd-9b70-8cba02401f24 not found in staged leads.csv
+lead_log,74ca5468-c928-4634-bcd4-fb3b3a435159,lead_logs.csv,orphan_fk,lead_id=5eda5bad-36b9-4853-beb0-9b894abe7c4f not found in staged leads.csv
+lead_log,6ee4cb2e-f6c7-45bd-8d20-fba6657f1961,lead_logs.csv,orphan_fk,lead_id=0a622979-fbf4-446e-9e1e-b7b932484cd3 not found in staged leads.csv
+lead_log,dca76b0f-7488-4fe5-bf4f-991fc3e77af4,lead_logs.csv,orphan_fk,lead_id=099f605d-5e68-4800-a75d-46f4252b34db not found in staged leads.csv
+lead_log,35a68944-f071-42ea-8dad-89530198b8b1,lead_logs.csv,orphan_fk,lead_id=08113946-0bad-484f-8c4f-6ae8a0b8c558 not found in staged leads.csv
+lead_log,0d0a0176-ae36-48d0-83ea-06c8d18c27b4,lead_logs.csv,orphan_fk,lead_id=af4957b8-b732-48a8-aa33-7190bc56bb38 not found in staged leads.csv
+lead_log,ae75a38b-e5f9-4253-a3b4-221c7db31e6e,lead_logs.csv,orphan_fk,lead_id=48190e03-1615-441b-a2d8-535fd1fed9b8 not found in staged leads.csv
+lead_log,430d7105-df3c-4e95-9002-a568756018cb,lead_logs.csv,orphan_fk,lead_id=c9d765cc-5046-43eb-9a7b-b8ff06ab5d3c not found in staged leads.csv
+lead_log,cad3e046-2794-4041-9e7d-b95f76844c18,lead_logs.csv,orphan_fk,lead_id=6216941f-f47f-4b5c-9281-05834ba91fe0 not found in staged leads.csv
+lead_log,2a35048a-e309-415a-9d04-192a72be79b0,lead_logs.csv,orphan_fk,lead_id=4b331c9b-8f6f-4bae-9c8d-5aef5f263298 not found in staged leads.csv
+lead_log,9af0b887-f759-4f34-a9e1-98b8138824bd,lead_logs.csv,orphan_fk,lead_id=c1994389-ab14-4d0a-883e-66a7ef746a92 not found in staged leads.csv
+lead_log,ed5748bd-eebd-4244-9f3b-629d3497ff74,lead_logs.csv,orphan_fk,lead_id=644ceaea-d2d3-4a72-a77e-21565bef41e4 not found in staged leads.csv
+lead_log,f34301b9-420d-402f-a132-feb848949a3c,lead_logs.csv,orphan_fk,lead_id=445897a0-477d-47ee-81e0-5d8360687617 not found in staged leads.csv
+lead_log,293df44b-3286-459a-bd77-2266f9dff3c2,lead_logs.csv,orphan_fk,lead_id=a58a33a6-051c-4779-9232-9362ccfc8763 not found in staged leads.csv
+lead_log,aa97bc7b-2b9d-4e72-899b-120a06b978ea,lead_logs.csv,orphan_fk,lead_id=3d178741-7b4e-49c5-8fda-225a864214eb not found in staged leads.csv
+lead_log,04b99444-dc07-4c4c-85e4-8fef77dbf3fc,lead_logs.csv,orphan_fk,lead_id=ee9a7737-57db-497e-947b-341680b5f877 not found in staged leads.csv
+lead_log,f192cb39-7440-44a7-a5d0-7e803e6dc128,lead_logs.csv,orphan_fk,lead_id=689d46ef-a819-44e5-a44d-9eed3339279b not found in staged leads.csv
+lead_log,bc64dbdf-e2e3-40e0-8f56-facba8c42d32,lead_logs.csv,orphan_fk,lead_id=b4a08e5f-c435-4bcc-b3da-c64e6f317b49 not found in staged leads.csv
+lead_log,0689dd87-c232-42ad-a898-54db239b9e02,lead_logs.csv,orphan_fk,lead_id=6dcf766f-85f0-4b60-ad46-19daaada75f4 not found in staged leads.csv
+lead_log,b09d1afd-42d3-45b1-ba05-70398eaaf3de,lead_logs.csv,orphan_fk,lead_id=7a84b0e9-9bb9-4d11-9cdd-a7d4e59f223e not found in staged leads.csv
+lead_log,376159b8-3778-4146-b25b-8625c4833ef9,lead_logs.csv,orphan_fk,lead_id=6cef0be4-ea9b-436c-a425-c2e4944d488b not found in staged leads.csv
+lead_log,f4b91278-55f8-4df4-a8b6-0e976cc9df17,lead_logs.csv,orphan_fk,lead_id=49871432-3bf8-43eb-83b8-c6a6f0398fa1 not found in staged leads.csv
+lead_log,f0bd755c-1486-4989-808f-f7d641f0797f,lead_logs.csv,orphan_fk,lead_id=9335e382-9aee-473c-86d4-b60e8cd1bb51 not found in staged leads.csv
+lead_log,d75b1e86-2edd-4bd6-bbc7-49a671523cd2,lead_logs.csv,orphan_fk,lead_id=ee8261a0-7bf1-4550-88cf-603c0fec46b9 not found in staged leads.csv
+lead_log,39afa827-c860-49de-9eec-6fb86be54c6d,lead_logs.csv,orphan_fk,lead_id=03584154-36a1-40e5-91fc-b9880a358a20 not found in staged leads.csv
+lead_log,a54756a5-cb68-43b5-be3b-57889f0fa075,lead_logs.csv,orphan_fk,lead_id=ceca1bfc-ddd0-4029-bdf7-0c1d8f7f0dd1 not found in staged leads.csv
+lead_log,0276468a-199a-4767-a288-170a80558cce,lead_logs.csv,orphan_fk,lead_id=2dfcae1f-5f21-47d9-b16f-65a559330f19 not found in staged leads.csv
+lead_log,4454bd30-d07b-4f5a-8bc8-ad92c47074fb,lead_logs.csv,orphan_fk,lead_id=873c09b7-1b71-40aa-ab9d-d8885c3310ac not found in staged leads.csv
+lead_log,c6774415-8ff3-4325-8145-7ded87d6f623,lead_logs.csv,orphan_fk,lead_id=b744c586-4e50-4664-b6d5-2b2da132329b not found in staged leads.csv
+lead_log,b5169cc7-6f87-41c6-853f-c3e315f4cc87,lead_logs.csv,orphan_fk,lead_id=6edb3d6d-bfec-4194-b5f8-970adef48394 not found in staged leads.csv
+lead_log,41dddf2b-f7ee-4a27-b644-e00878bd3958,lead_logs.csv,orphan_fk,lead_id=4aaff3a2-76b6-4ecd-aca9-c18296955f9b not found in staged leads.csv
+lead_log,4aa2e42e-e642-4729-b249-84fddd66f72b,lead_logs.csv,orphan_fk,lead_id=a668da91-ced2-4f6c-99c1-322533c7e1ad not found in staged leads.csv
+lead_log,64583249-2b9e-4fc6-9989-ea8d4071f6b0,lead_logs.csv,orphan_fk,lead_id=c4ee4f79-0608-4952-8566-b5026f47e803 not found in staged leads.csv
+lead_log,68850fd4-f197-4c5d-8ae4-9fb95f5d7b9b,lead_logs.csv,orphan_fk,lead_id=39bc831d-67d1-4441-996b-8bcdc4c7ac09 not found in staged leads.csv
+lead_log,ffdbf888-e753-4add-8be6-60dd6c434db0,lead_logs.csv,orphan_fk,lead_id=9df13bdd-14f9-4e2d-894f-fced7fdbf5ea not found in staged leads.csv
+lead_log,45f635d0-7515-4718-ba26-f69e189c5f29,lead_logs.csv,orphan_fk,lead_id=ac509162-65ad-4dc0-8188-98a933dd77ab not found in staged leads.csv
+lead_log,407341d1-b88a-412b-a7c1-07ab8ce6ea7b,lead_logs.csv,orphan_fk,lead_id=290ee3d6-85e3-43ae-94e9-3742d788dd9a not found in staged leads.csv
+lead_log,58f92d70-026a-4762-922f-fa5ff006c5a5,lead_logs.csv,orphan_fk,lead_id=f9050acb-8c8b-4bce-9b44-15e228fff39f not found in staged leads.csv
+lead_log,acd72a89-3786-46de-9dbb-786877c42502,lead_logs.csv,orphan_fk,lead_id=19443bc0-f800-46f9-a4ad-09f6f403c9a6 not found in staged leads.csv
+lead_log,e661ba08-8d64-4539-ab05-789f783dc45c,lead_logs.csv,orphan_fk,lead_id=8ad8c923-6c50-4e67-8eaa-4f04e9c103dc not found in staged leads.csv
+lead_log,881b5d9f-9cc1-4fcf-9339-a3f1053ed34c,lead_logs.csv,orphan_fk,lead_id=bf7ed0f8-66c2-4421-91f9-11feebc6f187 not found in staged leads.csv
+lead_log,d047c158-a449-48fe-8778-83b4e54c573c,lead_logs.csv,orphan_fk,lead_id=26350c7e-b2eb-4096-a8ef-70883a4f412c not found in staged leads.csv
+lead_log,ba9d1510-fade-4fe0-857c-7917aa4d5574,lead_logs.csv,orphan_fk,lead_id=c64db877-94c2-4b46-8308-502cd3653c29 not found in staged leads.csv
+lead_log,6fd3eaf2-04a7-4aac-9f23-cf2f853bb5bb,lead_logs.csv,orphan_fk,lead_id=690ff8f4-0fe4-4aac-9c3e-4f522809be4b not found in staged leads.csv
+lead_log,60912a16-c7d4-46a3-8636-821aea101e00,lead_logs.csv,orphan_fk,lead_id=d202530a-d3a0-4879-b11e-655c63b06b8a not found in staged leads.csv
+lead_log,3b1482ab-4561-4505-8d23-3e3629a0a6fb,lead_logs.csv,orphan_fk,lead_id=6c1779af-ee39-46a3-9c37-11b2e7f26255 not found in staged leads.csv
+lead_log,dcc0c835-9e3e-4e9f-a5f3-3c55c38a16ce,lead_logs.csv,orphan_fk,lead_id=39bbfb3f-5428-4c2a-bf08-d9ae766e7236 not found in staged leads.csv
+lead_log,6bcccb1f-75c8-42fb-8e61-77e7508cdceb,lead_logs.csv,orphan_fk,lead_id=1b8d00ee-9681-4e82-add7-5c015fc45832 not found in staged leads.csv
+lead_log,b99b8366-6a41-4363-b28b-5f50efea7a61,lead_logs.csv,orphan_fk,lead_id=f0695ea2-cfc5-4fb5-a685-8141738965b5 not found in staged leads.csv
+lead_log,dfd2310d-7d0e-44e7-b926-3a88e52e12a6,lead_logs.csv,orphan_fk,lead_id=3c23433a-267d-49ac-8f45-d134e85e8dc9 not found in staged leads.csv
+lead_log,5bced935-bafe-4e6a-9804-289d3c40e57f,lead_logs.csv,orphan_fk,lead_id=701f6593-6697-409c-bd97-5e5f11b30c24 not found in staged leads.csv
+lead_log,e0e57679-16f1-4be7-a024-a4bd33b97172,lead_logs.csv,orphan_fk,lead_id=7986e1f2-dafb-4549-9f78-a382d209cbc8 not found in staged leads.csv
+lead_log,854d3424-2a67-4544-996c-d381de62b48c,lead_logs.csv,orphan_fk,lead_id=7986e1f2-dafb-4549-9f78-a382d209cbc8 not found in staged leads.csv
+lead_log,0b238e59-0a4e-43cc-afec-4d8090c19ed0,lead_logs.csv,orphan_fk,lead_id=7986e1f2-dafb-4549-9f78-a382d209cbc8 not found in staged leads.csv
+lead_log,269dfcf8-ecef-4493-879d-5235e0ac98b7,lead_logs.csv,orphan_fk,lead_id=7986e1f2-dafb-4549-9f78-a382d209cbc8 not found in staged leads.csv
+lead_log,5de1d5a3-ef03-46f7-ad7c-5b90c3b34d1d,lead_logs.csv,orphan_fk,lead_id=7986e1f2-dafb-4549-9f78-a382d209cbc8 not found in staged leads.csv
+lead_log,6e134ef3-5751-4b4d-b36f-27d1cbc00759,lead_logs.csv,orphan_fk,lead_id=7986e1f2-dafb-4549-9f78-a382d209cbc8 not found in staged leads.csv
+lead_log,5c242bb2-45b8-4db4-ac3e-76e325818cce,lead_logs.csv,orphan_fk,lead_id=7dac91a0-9258-4cf9-8479-0db76cb3f717 not found in staged leads.csv
+lead_log,4e2830d6-7cfc-4d66-8eaa-a35333901a89,lead_logs.csv,orphan_fk,lead_id=7dac91a0-9258-4cf9-8479-0db76cb3f717 not found in staged leads.csv
+lead_log,7fe787e5-fcac-4e6e-bb7c-ab0f2826011c,lead_logs.csv,orphan_fk,lead_id=7986e1f2-dafb-4549-9f78-a382d209cbc8 not found in staged leads.csv
+lead_log,19f570f0-f805-4a45-8678-c694d21554de,lead_logs.csv,orphan_fk,lead_id=701f6593-6697-409c-bd97-5e5f11b30c24 not found in staged leads.csv
+lead_log,addda519-9ad1-41ae-a0c7-02765503c7f5,lead_logs.csv,orphan_fk,lead_id=701f6593-6697-409c-bd97-5e5f11b30c24 not found in staged leads.csv
+lead_log,2f092c89-f83f-48a1-a755-e07d5226fd6d,lead_logs.csv,orphan_fk,lead_id=7986e1f2-dafb-4549-9f78-a382d209cbc8 not found in staged leads.csv
+lead_log,0105a1d3-13d6-43a5-9de4-abb481fb3c8d,lead_logs.csv,orphan_fk,lead_id=af787e7f-28bc-4881-b9df-486edfac2675 not found in staged leads.csv
+lead_log,2ec1d50c-5331-49f7-965c-10dbd8157298,lead_logs.csv,orphan_fk,lead_id=701f6593-6697-409c-bd97-5e5f11b30c24 not found in staged leads.csv
+lead_log,b76f023a-5938-4bcc-a17c-6556a4634c9a,lead_logs.csv,orphan_fk,lead_id=6b8c85a7-eda1-4f50-ae23-e633199fdc6a not found in staged leads.csv
+lead_log,1abe24ab-4300-4fe7-89ce-de6fe4b6a789,lead_logs.csv,orphan_fk,lead_id=6b8c85a7-eda1-4f50-ae23-e633199fdc6a not found in staged leads.csv
+lead_log,5678f590-8db2-4281-bf15-ba3af44f9f13,lead_logs.csv,orphan_fk,lead_id=a668da91-ced2-4f6c-99c1-322533c7e1ad not found in staged leads.csv
+lead_log,dea61a85-d295-4244-b803-c8972ea025ae,lead_logs.csv,orphan_fk,lead_id=a668da91-ced2-4f6c-99c1-322533c7e1ad not found in staged leads.csv
+lead_log,4ef97446-7590-4d38-96c6-f1afbdd5ee7d,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,a5d2f35e-095d-464d-9d55-7d4a2c41a9f7,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,51031787-1075-445a-8b67-f793984519f9,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,c818026e-5d26-4bf7-9e68-3e09c9e8abae,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,ae2c09e9-cc96-4049-9dce-780b59e20059,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,49f30cf5-9bbc-40b7-92ed-c5bc6fc2cf7a,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,23c5bbac-b36c-4633-9428-d7d3056c305e,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,776aa498-ef3b-41bb-a2b7-3f7004a5bbf8,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,45c4c08e-5490-426a-a1b1-4469f79d3a9b,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,09304d5f-a7a9-4ef3-a8d7-f23c4595cb0d,lead_logs.csv,orphan_fk,lead_id=1e625f74-06bc-49f2-a7e9-5dc633ac5090 not found in staged leads.csv
+lead_log,4e32acde-61e0-4a80-956d-a2fe9bcf9db4,lead_logs.csv,orphan_fk,lead_id=1e625f74-06bc-49f2-a7e9-5dc633ac5090 not found in staged leads.csv
+lead_log,d2e94130-41be-4e1e-81e0-16c5949bf455,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,fbb4c5ea-21c2-44f4-8a23-0d3f45aec312,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,4147215a-78c0-458e-8197-6f7dd51e8b9f,lead_logs.csv,orphan_fk,lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+lead_log,d3091125-c9ac-4e88-9961-91622a38c4af,lead_logs.csv,orphan_fk,lead_id=97c30a92-7da2-4ea3-b51f-f1a872577951 not found in staged leads.csv
+lead_log,73707d08-af2c-4d76-9149-42299bf4b795,lead_logs.csv,orphan_fk,lead_id=f5fc09fb-fc92-4c38-8d49-3172fe766073 not found in staged leads.csv
+lead_log,f5191ebe-c312-4b66-84fc-6fada2aee2d4,lead_logs.csv,orphan_fk,lead_id=56f6aa96-4282-4cf0-87dd-3efe2e0b3021 not found in staged leads.csv
+lead_log,7ecaaaa3-42f5-4059-926e-025a2e2b3cf5,lead_logs.csv,orphan_fk,lead_id=5431c970-d70d-449e-8dd5-41896ddba07b not found in staged leads.csv
+lead_log,6840d294-82b3-4f6b-9b4f-7cc684c01713,lead_logs.csv,orphan_fk,lead_id=96ec6ed1-f6bf-4255-a6db-eb73edb0daf8 not found in staged leads.csv
+lead_log,dbf09480-ed5a-4280-a1b3-583d0a48f864,lead_logs.csv,orphan_fk,lead_id=9b0a7a67-20ff-4d67-879c-1127e2612448 not found in staged leads.csv
+lead_log,e7ca825f-1d66-4dbc-bd2e-fc58bf323cb2,lead_logs.csv,orphan_fk,lead_id=1c89d8e9-9386-4ce4-a355-7ecd10ea45ef not found in staged leads.csv
+lead_log,acd32432-a81e-4fb0-9889-a171f5ca193c,lead_logs.csv,orphan_fk,lead_id=961df627-1a32-43fa-aeb0-9882925a5988 not found in staged leads.csv
+lead_log,c774afa1-7fef-43a2-b545-d460dd5ce1fc,lead_logs.csv,orphan_fk,lead_id=0330da33-784f-4a6c-ad1d-cd0dc41630a5 not found in staged leads.csv
+lead_log,f9a1d11c-c9c8-4506-82a9-27b9c9250815,lead_logs.csv,orphan_fk,lead_id=ab4479ac-3200-4fcd-9b70-8cba02401f24 not found in staged leads.csv
+lead_log,b280f081-c75d-4b92-8e54-fa2e35fbca21,lead_logs.csv,orphan_fk,lead_id=a7ec02fc-1550-4b28-a4b8-0af846e4ad3f not found in staged leads.csv
+lead_log,5d8e04fe-3e92-4150-bcd1-5aeed4efa587,lead_logs.csv,orphan_fk,lead_id=b4dbca3d-f9af-407d-b521-a8639ec79ff6 not found in staged leads.csv
+lead_log,ac78f3f8-beea-4dc4-8850-d16bb3b2f860,lead_logs.csv,orphan_fk,lead_id=779584de-fba8-4f3e-b10c-18696f704cce not found in staged leads.csv
+lead_log,bb618efe-a3ac-47c1-a802-5ddd78f49ee3,lead_logs.csv,orphan_fk,lead_id=689e6b88-70a4-40e8-b569-bd2c7b675cb7 not found in staged leads.csv
+lead_log,44f58433-6f3e-4174-9fa9-7546c7f42a4e,lead_logs.csv,orphan_fk,lead_id=dfb9edef-79e8-49bd-9bdc-7f9921541dd0 not found in staged leads.csv
+lead_log,9e711efb-c6ab-4ac8-aff1-e77265d726f3,lead_logs.csv,orphan_fk,lead_id=4a925e7d-0f37-4bd7-bb9c-fe9ade7ef785 not found in staged leads.csv
+lead_log,18e3d92f-2d1d-4412-a61d-5a69210026c3,lead_logs.csv,orphan_fk,lead_id=f1e84959-eb54-4e27-b3a3-354cd579e20e not found in staged leads.csv
+lead_log,5e0b555b-99b9-4d50-94ff-2de09e11f25b,lead_logs.csv,orphan_fk,lead_id=9204eeb0-8428-4193-b39c-77b501985524 not found in staged leads.csv
+lead_log,8aeb7b96-051c-4ad3-9d62-01bd8de51c17,lead_logs.csv,orphan_fk,lead_id=17c80dc0-bb22-4474-b68f-546d7abecceb not found in staged leads.csv
+lead_log,9e43a77f-448f-4f4e-899e-d6ae98b395c1,lead_logs.csv,orphan_fk,lead_id=aac9537a-6485-40e8-af68-91fa7e93daae not found in staged leads.csv
+lead_log,861f1602-2a39-470e-8456-00e1f07f36b9,lead_logs.csv,orphan_fk,lead_id=5765300f-fe6a-4b4f-b9e9-57dacaaeb804 not found in staged leads.csv
+lead_log,0e504961-0ae0-4b80-a038-a0252ae8be97,lead_logs.csv,orphan_fk,lead_id=edded4b5-dbf0-4c31-b088-9db444a8b6fb not found in staged leads.csv
+lead_log,9e0f819f-ac45-4f6b-85cd-bb530bde3677,lead_logs.csv,orphan_fk,lead_id=e313d567-ee65-4fe9-8d7d-0952f48ebdf2 not found in staged leads.csv
+lead_log,b18e42d4-1cd6-4775-8da0-fe19f19bc52c,lead_logs.csv,orphan_fk,lead_id=434401d6-b8d4-4193-a4dc-370e218ab33f not found in staged leads.csv
+lead_log,daac698d-c988-48c5-85b4-abfb1fb1924f,lead_logs.csv,orphan_fk,lead_id=c33ea158-9dad-4174-9edb-cf4158eecf2d not found in staged leads.csv
+lead_log,502e2728-384f-4042-92b8-f97465bef3f9,lead_logs.csv,orphan_fk,lead_id=cdd7ceb1-35f1-453a-a087-75abfc03c464 not found in staged leads.csv
+lead_log,886cba6b-81b4-47c0-bb46-1077c1bcdfff,lead_logs.csv,orphan_fk,lead_id=7b5ffffe-a913-4e4e-be7e-d82ec6f2175f not found in staged leads.csv
+lead_log,361305bd-4e08-484a-92a6-6414bd4e9fba,lead_logs.csv,orphan_fk,lead_id=322e2fdf-0919-4d8d-82ce-0b57b8b9d88f not found in staged leads.csv
+lead_log,7ef4fe36-1da0-4f13-b259-45541ab24172,lead_logs.csv,orphan_fk,lead_id=200064c8-3817-4b72-b8f0-38079e7ac276 not found in staged leads.csv
+lead_log,2e8e9c11-4063-43f1-aadb-b1830d50c87b,lead_logs.csv,orphan_fk,lead_id=8cf04c3e-e7a6-4018-9ca9-f800443495f3 not found in staged leads.csv
+lead_log,1895df2f-d0df-472d-838c-30f76e9447de,lead_logs.csv,orphan_fk,lead_id=4bfe4a74-0ec5-4fcf-901c-45409073f89a not found in staged leads.csv
+lead_log,4e944b85-2922-4266-948d-3e39691ed6ab,lead_logs.csv,orphan_fk,lead_id=e9d0e61d-2511-4753-b348-74e34af83e8c not found in staged leads.csv
+lead_log,46334cf0-cd78-4ac5-8124-22c250a78b08,lead_logs.csv,orphan_fk,lead_id=642a7b1f-b1f4-428a-92a2-ba34ca3f974c not found in staged leads.csv
+lead_log,55518e18-34d2-49e5-812c-f0e8a04d6846,lead_logs.csv,orphan_fk,lead_id=b378d2f3-31e8-48a3-9fb3-81482e37c79b not found in staged leads.csv
+lead_log,fb40c30d-1091-4a05-b955-d83bc31d2ea0,lead_logs.csv,orphan_fk,lead_id=5718e04d-3298-4946-bd7c-82fb1b2e1d6b not found in staged leads.csv
+lead_log,26d317b1-7cfd-4cce-a3f0-f8e489d3dda7,lead_logs.csv,orphan_fk,lead_id=fd48ce3c-2139-442c-9015-db4a6d122a25 not found in staged leads.csv
+lead_log,2ddf7e0d-008f-42aa-ba6e-ba04c2cceed2,lead_logs.csv,orphan_fk,lead_id=e30818c3-8746-4b36-a49b-a63dd283ef22 not found in staged leads.csv
+lead_log,c1657fc9-4c69-442f-b985-35685e882aa8,lead_logs.csv,orphan_fk,lead_id=c27b9790-b5ed-48bf-b010-9d7adb11a396 not found in staged leads.csv
+lead_log,495898af-1cea-4835-8318-8d9a46f3edb4,lead_logs.csv,orphan_fk,lead_id=cea4ce40-befe-40bd-b147-31baee93eeef not found in staged leads.csv
+lead_log,f11ebcf6-32a9-413e-96e6-861ae5c0a28d,lead_logs.csv,orphan_fk,lead_id=7f7be095-36e9-422a-afb5-0d7dae43721b not found in staged leads.csv
+lead_log,afbcec12-b494-483c-8abf-81a7ce7a24e6,lead_logs.csv,orphan_fk,lead_id=e1a97ffb-6cb9-4a3c-98cd-0fb376b10bab not found in staged leads.csv
+lead_log,84b12e9e-af35-40de-8631-6fbfb449f4e1,lead_logs.csv,orphan_fk,lead_id=fc6c1066-b998-400c-b7b0-b1ed8473290f not found in staged leads.csv
+lead_log,d729c3df-fa22-4c17-8f7f-05892f159405,lead_logs.csv,orphan_fk,lead_id=030ee44f-6412-4634-a30d-8b43d752f64d not found in staged leads.csv
+lead_log,9e719eaa-d7f4-44a4-91a6-ee013e0fb53a,lead_logs.csv,orphan_fk,lead_id=8099d647-3ae4-4a42-a728-babd58e4b21e not found in staged leads.csv
+lead_log,3b6d8ed8-419d-4a23-a4ee-f80cf39af7f8,lead_logs.csv,orphan_fk,lead_id=bfb1046b-ddcc-4a56-98a4-858a9864a0e0 not found in staged leads.csv
+lead_log,8a98b53c-868b-49df-a3fc-9ea978b24399,lead_logs.csv,orphan_fk,lead_id=3c33f86f-8329-423b-bcd6-7dc748ca3074 not found in staged leads.csv
+lead_log,4039c68c-480a-4177-8240-e345a2eda47c,lead_logs.csv,orphan_fk,lead_id=820fd87d-627a-4237-8717-285c825f37c5 not found in staged leads.csv
+lead_log,5d983171-fc69-4318-9587-29e7ee6fce57,lead_logs.csv,orphan_fk,lead_id=10818b39-6247-4b0a-b33c-af3de402c7d4 not found in staged leads.csv
+lead_log,25f269ac-984a-4545-b3ca-ada64b9b7932,lead_logs.csv,orphan_fk,lead_id=aef9fdb3-cd3c-4326-bfc9-884c16961d78 not found in staged leads.csv
+lead_log,e2b2b8a9-c393-48bb-9edb-ca9dd34dc4b7,lead_logs.csv,orphan_fk,lead_id=ebcc17aa-c920-4e75-89ef-f4bf3bcedba9 not found in staged leads.csv
+lead_log,dc466749-ccb4-4981-85f6-bcbb543cfaa3,lead_logs.csv,orphan_fk,lead_id=0d4d2b84-2b9b-427a-9dc0-512be7db0511 not found in staged leads.csv
+lead_log,aa568565-f426-4eac-9c99-98101f4362b3,lead_logs.csv,orphan_fk,lead_id=cbbfee9f-8e71-4490-bd81-2d772b776aa9 not found in staged leads.csv
+lead_log,dbc91c26-c3e8-40bc-8b65-133e7861ddc1,lead_logs.csv,orphan_fk,lead_id=e0153760-abcc-4d97-8509-7f0af66bd717 not found in staged leads.csv
+lead_log,7c893251-a9a2-407e-abb6-70eda9215300,lead_logs.csv,orphan_fk,lead_id=36c5be2e-1703-49ec-91c0-dd5af2753b13 not found in staged leads.csv
+lead_log,cde757f1-56eb-4212-8a57-bf1c39ab316c,lead_logs.csv,orphan_fk,lead_id=3702b1a5-3825-4a42-9836-10864e82cf68 not found in staged leads.csv
+lead_log,298deaf1-6b75-4a86-96cd-41fb95e61bf5,lead_logs.csv,orphan_fk,lead_id=2fdc952c-dc47-4682-8a32-5b5830c39bad not found in staged leads.csv
+lead_log,4235a070-1b01-422f-b0a2-9b848a7a524c,lead_logs.csv,orphan_fk,lead_id=48d06d98-f36e-469f-863f-050b89b888cb not found in staged leads.csv
+lead_log,48a9e1d0-9aeb-4fb9-bf5e-e34e518fb40a,lead_logs.csv,orphan_fk,lead_id=37e79ac1-bd55-4d34-a7e3-48a2d39b5792 not found in staged leads.csv
+lead_log,4b5499b0-e043-40dc-a9b8-4aa9a3099f7a,lead_logs.csv,orphan_fk,lead_id=8389cd73-9296-4d81-b122-fdc14777f30c not found in staged leads.csv
+lead_log,ff71b900-f576-47c8-a44c-7d3fabe180a7,lead_logs.csv,orphan_fk,lead_id=8598aa3f-e41f-4348-9928-2ecfcc0722df not found in staged leads.csv
+lead_log,917982a3-535c-4525-ad40-5c8ca3766bb8,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,11c7d96a-02e7-4dfa-b4e5-e0d39bee2c12,lead_logs.csv,orphan_fk,lead_id=97c30a92-7da2-4ea3-b51f-f1a872577951 not found in staged leads.csv
+lead_log,bf5cfb30-a9a6-49e0-8f14-152fdccbbb54,lead_logs.csv,orphan_fk,lead_id=8598aa3f-e41f-4348-9928-2ecfcc0722df not found in staged leads.csv
+lead_log,48c96643-d50a-4bd7-9f17-28a77e62618b,lead_logs.csv,orphan_fk,lead_id=ab4479ac-3200-4fcd-9b70-8cba02401f24 not found in staged leads.csv
+lead_log,ecf451c2-a4d7-4331-9619-a79fe017cf78,lead_logs.csv,orphan_fk,lead_id=961df627-1a32-43fa-aeb0-9882925a5988 not found in staged leads.csv
+lead_log,9b583a5c-e825-4fe4-bb22-0b82b8d4bc97,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,57b956e5-7c40-4cbc-b5a0-64d8320a6d6d,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,6470199a-70fc-4415-93ad-426f620b2b1d,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,76b4bc0c-6dd9-41fa-9c8b-47d3e2481e22,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,dfaebbb9-5231-484e-a62c-c70cdd00b7aa,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,4bf7839d-dcd2-4805-8cdd-4addd8fc2216,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,1f76b17a-b692-44f6-bfa6-433dc8585381,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,ef1b1f38-251f-48f4-877e-4340a056c909,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,f1b4eb8d-c171-48f3-81ed-b87c895e7f31,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,53e35a54-be5b-4503-a3df-5478dee265bf,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,720da850-dbe7-439a-b122-703113259375,lead_logs.csv,orphan_fk,lead_id=bf641a5c-7f40-4d2e-aec0-a06b5ff0ed90 not found in staged leads.csv
+lead_log,c8146e52-81e4-4817-8695-50c33975da2a,lead_logs.csv,orphan_fk,lead_id=c6b23d5f-fe6b-4262-a5ff-a5102b358baa not found in staged leads.csv
+lead_log,5def8ef5-d64b-4f06-952f-c4052fee8a75,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,396fc5ce-5cc8-43a3-a709-eb2dd7c6517c,lead_logs.csv,orphan_fk,lead_id=bf641a5c-7f40-4d2e-aec0-a06b5ff0ed90 not found in staged leads.csv
+lead_log,aa71074b-290b-4b03-8529-0cc7678bfef9,lead_logs.csv,orphan_fk,lead_id=c6b23d5f-fe6b-4262-a5ff-a5102b358baa not found in staged leads.csv
+lead_log,e44a442b-2d69-46a8-abde-33cadfb3059f,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,4d89b730-1beb-4559-92c5-db91debe6918,lead_logs.csv,orphan_fk,lead_id=da8426b3-9319-433f-b2ef-d1ecf53c9d39 not found in staged leads.csv
+lead_log,7cd9b235-40c4-45c3-8227-b1f7a55bcccd,lead_logs.csv,orphan_fk,lead_id=da8426b3-9319-433f-b2ef-d1ecf53c9d39 not found in staged leads.csv
+lead_log,500cc0a3-2513-46e8-8997-567ddaf7d459,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,3a1c0e73-4bac-42f7-b401-a4af56720a03,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,b2d67684-7d96-46c0-bedf-71ef49da1052,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,424f072a-1b0e-4e4d-9937-f9c9b1b1e3d0,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,94860785-ea0b-418b-b3f6-faeaa0e2b333,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,8de74be8-db89-4533-a997-948ff9b777b1,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,effeed12-cd75-4f96-9a59-b0673e1f56f1,lead_logs.csv,orphan_fk,lead_id=da8426b3-9319-433f-b2ef-d1ecf53c9d39 not found in staged leads.csv
+lead_log,678697e0-6538-42c5-bba3-3192d94e6509,lead_logs.csv,orphan_fk,lead_id=f5fc09fb-fc92-4c38-8d49-3172fe766073 not found in staged leads.csv
+lead_log,66184d3e-6507-45bb-8054-48243130bd2a,lead_logs.csv,orphan_fk,lead_id=f5fc09fb-fc92-4c38-8d49-3172fe766073 not found in staged leads.csv
+lead_log,34fa499f-da2f-4185-99a5-0a7c5714b6b3,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,26f850ea-5d15-473c-98a3-16ec35a51910,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,0963b2ee-513b-4f7c-bbd5-c75db5e168f7,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,9821e09b-408d-4eb0-9835-454261607eff,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,a836e966-5956-43b8-a4c6-61b68d47f95f,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,70b2e889-4bc8-47c2-a945-4a5ffc51d40b,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,a287afcc-4886-4a12-8cff-ecad179b10e4,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,fe17dd20-cf9c-439d-9519-21939d5aea97,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,d91eedeb-bf5f-4115-b142-668ad3fb7e3a,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,3f709326-1deb-440c-aace-024b95278774,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,c47cc913-bb2f-4b16-99eb-8d30ba58f46d,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,e4515d63-d59b-473e-b75d-fdac09ce36d7,lead_logs.csv,orphan_fk,lead_id=137afb29-5955-4c54-9ebb-8501d39098b8 not found in staged leads.csv
+lead_log,48fdafee-989a-4972-85ce-bf8efd1716b7,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,5237dd73-f3b4-44e4-b0f3-44203021043b,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,f70e443b-5deb-45b9-bde1-56f04b58de0d,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,92fa1077-f9ac-4e09-a8ff-0fc9bd6f0090,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,198c7f43-a3ac-4cac-bb7f-920bf58d31a3,lead_logs.csv,orphan_fk,lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+lead_log,cd32fdc6-674f-446b-8115-4208ed7b5034,lead_logs.csv,orphan_fk,lead_id=137afb29-5955-4c54-9ebb-8501d39098b8 not found in staged leads.csv
+lead_log,8f029351-c721-4c70-afb6-db648d4aa358,lead_logs.csv,orphan_fk,lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+lead_log,0ce6282c-60e9-4061-a79c-98c4f5bfc0a7,lead_logs.csv,orphan_fk,lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+lead_log,81b60e82-3d42-4725-a439-96475e56f255,lead_logs.csv,orphan_fk,lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+lead_log,9b3137c0-f7fe-425a-8331-6af6e8e3623d,lead_logs.csv,orphan_fk,lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+lead_log,d538b90b-3a5c-4c69-910d-f8d821da3d44,lead_logs.csv,orphan_fk,lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+lead_log,06d6a214-bc8f-4ecc-a50d-1a81721d8601,lead_logs.csv,orphan_fk,lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+lead_log,d47c4a27-94ec-439b-a528-0aafe4e5089c,lead_logs.csv,orphan_fk,lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+lead_log,2c07405b-9406-4170-abb6-54dd91a8f685,lead_logs.csv,orphan_fk,lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+lead_log,da4faeac-2fb7-4a21-8c1c-2f3dc21a81e2,lead_logs.csv,orphan_fk,lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+lead_log,5f660c97-3efb-4623-8b9e-d0f754caa665,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,735834da-4bab-4b81-a9be-e611cb904663,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,c023770c-961b-49cb-81fd-400e392998fd,lead_logs.csv,orphan_fk,lead_id=170e8002-f9df-4bd5-8ed7-25ad955fd1ac not found in staged leads.csv
+lead_log,819ec1aa-7345-40cd-93a7-9dc95f8eb947,lead_logs.csv,orphan_fk,lead_id=170e8002-f9df-4bd5-8ed7-25ad955fd1ac not found in staged leads.csv
+lead_log,a5b97e36-f331-4389-a9f3-fdd5a94c34c5,lead_logs.csv,orphan_fk,lead_id=170e8002-f9df-4bd5-8ed7-25ad955fd1ac not found in staged leads.csv
+lead_log,54331f2c-d05f-4fad-a2c8-70131eb8da16,lead_logs.csv,orphan_fk,lead_id=44b23b5a-7aec-4b5c-a8b2-fd0dfe5968da not found in staged leads.csv
+lead_log,94b4c480-ea3b-44b7-a6fb-af2eb703d201,lead_logs.csv,orphan_fk,lead_id=44b23b5a-7aec-4b5c-a8b2-fd0dfe5968da not found in staged leads.csv
+lead_log,26894f68-a0d8-43cf-a2ad-a13863c7ca60,lead_logs.csv,orphan_fk,lead_id=44b23b5a-7aec-4b5c-a8b2-fd0dfe5968da not found in staged leads.csv
+lead_log,6ac0d837-8eeb-45ce-91dc-2e0486939a8e,lead_logs.csv,orphan_fk,lead_id=348e017b-470a-46d9-8144-379202275192 not found in staged leads.csv
+lead_log,7d9a890a-8d1b-4f4d-96ce-87c99805f3a9,lead_logs.csv,orphan_fk,lead_id=348e017b-470a-46d9-8144-379202275192 not found in staged leads.csv
+lead_log,05c4d3a3-14ee-4298-9a10-c4b3e10c2d0f,lead_logs.csv,orphan_fk,lead_id=348e017b-470a-46d9-8144-379202275192 not found in staged leads.csv
+lead_log,806586fd-6edd-41fe-bfae-4e9a484e17f2,lead_logs.csv,orphan_fk,lead_id=348e017b-470a-46d9-8144-379202275192 not found in staged leads.csv
+lead_log,094b6be4-f89f-4335-bb11-e9c9bffcf232,lead_logs.csv,orphan_fk,lead_id=348e017b-470a-46d9-8144-379202275192 not found in staged leads.csv
+lead_log,df45e2b9-44bd-403f-8ede-a74cff781567,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,69fbc0be-d77c-4f0e-af90-f77db413e2df,lead_logs.csv,orphan_fk,lead_id=a668da91-ced2-4f6c-99c1-322533c7e1ad not found in staged leads.csv
+lead_log,336a2ba6-0a69-4790-9814-0a492ed565ed,lead_logs.csv,orphan_fk,lead_id=a668da91-ced2-4f6c-99c1-322533c7e1ad not found in staged leads.csv
+lead_log,b8c0bfdc-1bf8-495c-8372-1ec4871ab0db,lead_logs.csv,orphan_fk,lead_id=a668da91-ced2-4f6c-99c1-322533c7e1ad not found in staged leads.csv
+lead_log,1e85d5ef-7e78-4377-bb9f-4005c2415864,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,1c5e227f-4ba2-4f2d-9d80-8d42970edf99,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,5dae80ff-43f1-4a03-894d-2cff6ce2bba8,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,87012756-1065-4dc2-ba47-dec4c4075b0a,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,f3e49782-9c11-4fa5-a79b-00d36c81b793,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,1ec13783-f1de-4f49-af8d-e108d7d89621,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,099b8022-133f-4a12-ab9a-d1a063f2c710,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,1eb9c8fc-e41b-4499-8201-394a4eea537f,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,07321793-f0cd-4dbd-bf18-8dd50c1677e9,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,0eb3aa38-54e5-42f0-9018-ff0f82cdcd9c,lead_logs.csv,orphan_fk,lead_id=acfef73f-4322-49b1-8cfb-7083e28a484f not found in staged leads.csv
+lead_log,b4ef38a0-4170-4c0a-b33d-bcf1c11f4fbc,lead_logs.csv,orphan_fk,lead_id=acfef73f-4322-49b1-8cfb-7083e28a484f not found in staged leads.csv
+lead_log,9589f2f8-ccad-40f7-b027-c63cc63cf185,lead_logs.csv,orphan_fk,lead_id=acfef73f-4322-49b1-8cfb-7083e28a484f not found in staged leads.csv
+lead_log,899501a3-2905-40dc-bbda-1cafc943ea84,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,0fffc150-b617-4830-b7ce-bf83bef4a033,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,ca61f962-d496-4f36-a0f9-fdd208c3229b,lead_logs.csv,orphan_fk,lead_id=bb3c3aab-c6f0-4d82-8ae3-20750c5c713a not found in staged leads.csv
+lead_log,9f27b4eb-59e2-4ee1-a1a1-f40f49accf62,lead_logs.csv,orphan_fk,lead_id=bb3c3aab-c6f0-4d82-8ae3-20750c5c713a not found in staged leads.csv
+lead_log,f0468f6c-43bc-4b31-b9a1-cab40195e353,lead_logs.csv,orphan_fk,lead_id=a013731b-7ab5-4fed-94d1-95b5cb8c04b6 not found in staged leads.csv
+lead_log,b2aa5a7d-19e0-490a-acfd-93adcc0a2122,lead_logs.csv,orphan_fk,lead_id=bb3c3aab-c6f0-4d82-8ae3-20750c5c713a not found in staged leads.csv
+lead_log,3d475f0c-f6ea-4553-b210-32cc8ce500cb,lead_logs.csv,orphan_fk,lead_id=a51f5acb-4167-4e96-9d1c-042284bc28e3 not found in staged leads.csv
+lead_log,94f8debb-e851-423f-bdba-f4ed245ea302,lead_logs.csv,orphan_fk,lead_id=a51f5acb-4167-4e96-9d1c-042284bc28e3 not found in staged leads.csv
+lead_log,f8676e8c-1601-4c05-b254-6f53f9a35815,lead_logs.csv,orphan_fk,lead_id=96768ecf-8f13-4824-b93c-d43c35537023 not found in staged leads.csv
+lead_log,8afcf0cd-ca5d-4c0f-8fb6-2b191f47b411,lead_logs.csv,orphan_fk,lead_id=96768ecf-8f13-4824-b93c-d43c35537023 not found in staged leads.csv
+lead_log,3be98334-3281-4e12-b314-27a74f78a93e,lead_logs.csv,orphan_fk,lead_id=5eda5bad-36b9-4853-beb0-9b894abe7c4f not found in staged leads.csv
+lead_log,875c6230-005f-421b-a728-e52818dbbd49,lead_logs.csv,orphan_fk,lead_id=5eda5bad-36b9-4853-beb0-9b894abe7c4f not found in staged leads.csv
+lead_log,c007db14-be70-47e1-81d0-9b642a17b593,lead_logs.csv,orphan_fk,lead_id=6a44a733-b8e4-4374-80e1-9ddce98e741c not found in staged leads.csv
+lead_log,804f9117-66a0-43d7-a296-d60bb8329421,lead_logs.csv,orphan_fk,lead_id=6a44a733-b8e4-4374-80e1-9ddce98e741c not found in staged leads.csv
+lead_log,3f06c1da-9ff7-4ef0-9e70-312b3e36a266,lead_logs.csv,orphan_fk,lead_id=66b34a54-eefb-49bd-999c-62848f4804b1 not found in staged leads.csv
+lead_log,b8cae583-ba45-445a-ae58-07f358e99c65,lead_logs.csv,orphan_fk,lead_id=66b34a54-eefb-49bd-999c-62848f4804b1 not found in staged leads.csv
+lead_log,a1ecf6d5-485c-470e-a1a1-4b8f5564258b,lead_logs.csv,orphan_fk,lead_id=0a622979-fbf4-446e-9e1e-b7b932484cd3 not found in staged leads.csv
+lead_log,cbd413b3-815b-4ea2-95c2-18f74c84ec85,lead_logs.csv,orphan_fk,lead_id=0a622979-fbf4-446e-9e1e-b7b932484cd3 not found in staged leads.csv
+lead_log,ae5bcda0-42ee-4f07-ada3-3838dcb4a82b,lead_logs.csv,orphan_fk,lead_id=7a5c9565-0a0c-4e45-871c-f1fc59f76cc0 not found in staged leads.csv
+lead_log,38d47f41-3516-41d0-94d8-9606e1564fdc,lead_logs.csv,orphan_fk,lead_id=7a5c9565-0a0c-4e45-871c-f1fc59f76cc0 not found in staged leads.csv
+lead_log,6bd7377d-b0bc-43ee-bf8e-6a065bd46a0c,lead_logs.csv,orphan_fk,lead_id=3e32a8e6-eeb0-4b66-8997-8c11eedef92c not found in staged leads.csv
+lead_log,2fa39af1-874e-4a20-8877-9689104ff3a3,lead_logs.csv,orphan_fk,lead_id=3e32a8e6-eeb0-4b66-8997-8c11eedef92c not found in staged leads.csv
+lead_log,c4717720-b9e9-41b1-ba29-4bf7bb9ae26b,lead_logs.csv,orphan_fk,lead_id=099f605d-5e68-4800-a75d-46f4252b34db not found in staged leads.csv
+lead_log,f928a7c2-aa79-4b36-b357-ceb0cc44f45a,lead_logs.csv,orphan_fk,lead_id=099f605d-5e68-4800-a75d-46f4252b34db not found in staged leads.csv
+lead_log,18599d52-811b-4daf-b432-950c16d4ce71,lead_logs.csv,orphan_fk,lead_id=f8214461-897d-467a-90e0-594f19973076 not found in staged leads.csv
+lead_log,e3853803-6ca9-4f6e-8b50-d0a8bd583d9f,lead_logs.csv,orphan_fk,lead_id=f8214461-897d-467a-90e0-594f19973076 not found in staged leads.csv
+lead_log,0cf0930a-7a0b-4b12-a97f-57afbbf03ce0,lead_logs.csv,orphan_fk,lead_id=c9a55b78-6d14-4984-8a03-05dae7d3a31c not found in staged leads.csv
+lead_log,52e1c006-117e-44c7-8568-f12cf21f3c49,lead_logs.csv,orphan_fk,lead_id=c9a55b78-6d14-4984-8a03-05dae7d3a31c not found in staged leads.csv
+lead_log,b91958bf-2e2d-4fc7-b4ca-f2950e8de78a,lead_logs.csv,orphan_fk,lead_id=45dda642-7e8d-46f6-a291-003899d90da5 not found in staged leads.csv
+lead_log,4b01d49d-f7e5-4fe6-a9eb-7ca7d19bec7d,lead_logs.csv,orphan_fk,lead_id=45dda642-7e8d-46f6-a291-003899d90da5 not found in staged leads.csv
+lead_log,66b91b6c-4a5d-4865-9d05-4fe8ac6ea7e6,lead_logs.csv,orphan_fk,lead_id=08113946-0bad-484f-8c4f-6ae8a0b8c558 not found in staged leads.csv
+lead_log,f43e228a-10e4-4eb0-bc30-f1a807636102,lead_logs.csv,orphan_fk,lead_id=08113946-0bad-484f-8c4f-6ae8a0b8c558 not found in staged leads.csv
+lead_log,4cca5ac8-c54f-49c8-99fa-e90911dd6146,lead_logs.csv,orphan_fk,lead_id=2472991f-676b-4e8f-afc7-2fd482a383ee not found in staged leads.csv
+lead_log,1f09e93e-88e5-4785-bd42-aa477a4fb774,lead_logs.csv,orphan_fk,lead_id=2472991f-676b-4e8f-afc7-2fd482a383ee not found in staged leads.csv
+lead_log,f6b5a50c-5e1a-4689-bc97-05838df41a44,lead_logs.csv,orphan_fk,lead_id=cdd7ed2a-0698-4c55-8558-f79fa85a9d24 not found in staged leads.csv
+lead_log,9a747ef6-bc6a-4796-ab9b-f6a2f46026e7,lead_logs.csv,orphan_fk,lead_id=cdd7ed2a-0698-4c55-8558-f79fa85a9d24 not found in staged leads.csv
+lead_log,ccd6e2b9-5e25-4f92-b344-b420a4ab7f01,lead_logs.csv,orphan_fk,lead_id=af4957b8-b732-48a8-aa33-7190bc56bb38 not found in staged leads.csv
+lead_log,6815899e-1069-4bf1-8dc5-60b15eb54bda,lead_logs.csv,orphan_fk,lead_id=af4957b8-b732-48a8-aa33-7190bc56bb38 not found in staged leads.csv
+lead_log,5a7ebb55-05e0-4d1d-ab7b-043b0c88cf4c,lead_logs.csv,orphan_fk,lead_id=a013731b-7ab5-4fed-94d1-95b5cb8c04b6 not found in staged leads.csv
+lead_log,8a976220-5f1f-439c-9631-e460559b3d9e,lead_logs.csv,orphan_fk,lead_id=88dfcfbc-dce1-40e1-ac30-18892db18541 not found in staged leads.csv
+lead_log,7997e7a4-2eb8-41ff-b396-d27701f5ce48,lead_logs.csv,orphan_fk,lead_id=88dfcfbc-dce1-40e1-ac30-18892db18541 not found in staged leads.csv
+lead_log,2a01f482-5a69-465e-b85f-beef0fabf9e1,lead_logs.csv,orphan_fk,lead_id=48190e03-1615-441b-a2d8-535fd1fed9b8 not found in staged leads.csv
+lead_log,348ecebf-b070-4b4d-a06c-c9d30d4ba6e7,lead_logs.csv,orphan_fk,lead_id=48190e03-1615-441b-a2d8-535fd1fed9b8 not found in staged leads.csv
+lead_log,95d12298-0a69-416b-b69d-5320095b7394,lead_logs.csv,orphan_fk,lead_id=bcb4013a-90ba-4ec8-ad8a-0dcca7f00671 not found in staged leads.csv
+lead_log,d7c755bc-cf17-4832-b265-95a73251c98d,lead_logs.csv,orphan_fk,lead_id=bcb4013a-90ba-4ec8-ad8a-0dcca7f00671 not found in staged leads.csv
+lead_log,e0287f0f-70ad-4e75-82d7-100835d8871a,lead_logs.csv,orphan_fk,lead_id=95de2ffb-a1c6-43af-8147-8d716b77bcf3 not found in staged leads.csv
+lead_log,74c8d557-6f13-47b8-a393-a9d14c85873e,lead_logs.csv,orphan_fk,lead_id=95de2ffb-a1c6-43af-8147-8d716b77bcf3 not found in staged leads.csv
+lead_log,50be3a8f-b164-4195-95e0-76e9696a9132,lead_logs.csv,orphan_fk,lead_id=c9d765cc-5046-43eb-9a7b-b8ff06ab5d3c not found in staged leads.csv
+lead_log,b5cf51bf-4cce-4513-9977-560308ca56f1,lead_logs.csv,orphan_fk,lead_id=c9d765cc-5046-43eb-9a7b-b8ff06ab5d3c not found in staged leads.csv
+lead_log,23c5fa39-f7c0-4e59-bd5c-16389c2ff80c,lead_logs.csv,orphan_fk,lead_id=daa4af8b-a295-4506-bf77-e3979d3c609f not found in staged leads.csv
+lead_log,c60f139a-6174-490c-8169-3716ede3b7eb,lead_logs.csv,orphan_fk,lead_id=daa4af8b-a295-4506-bf77-e3979d3c609f not found in staged leads.csv
+lead_log,b405b1e6-16a2-41bf-ad79-c946af047ef5,lead_logs.csv,orphan_fk,lead_id=6216941f-f47f-4b5c-9281-05834ba91fe0 not found in staged leads.csv
+lead_log,cba597cf-59f6-447b-8f48-dc3c573595ac,lead_logs.csv,orphan_fk,lead_id=6216941f-f47f-4b5c-9281-05834ba91fe0 not found in staged leads.csv
+lead_log,5f95bac7-f8b6-4f31-a89d-6e25cdae2dc0,lead_logs.csv,orphan_fk,lead_id=4b331c9b-8f6f-4bae-9c8d-5aef5f263298 not found in staged leads.csv
+lead_log,d4987071-ada2-4a5e-989f-44e398fe7a90,lead_logs.csv,orphan_fk,lead_id=4b331c9b-8f6f-4bae-9c8d-5aef5f263298 not found in staged leads.csv
+lead_log,3a2e7a85-3161-41e5-99c2-8754e2801c96,lead_logs.csv,orphan_fk,lead_id=6a5ed767-73ce-4464-8087-c225361df44b not found in staged leads.csv
+lead_log,7087bf7b-6378-4ca4-aba3-f1acf4c2fcf8,lead_logs.csv,orphan_fk,lead_id=6a5ed767-73ce-4464-8087-c225361df44b not found in staged leads.csv
+lead_log,4472fde4-1688-4792-82b8-eeae349f80f2,lead_logs.csv,orphan_fk,lead_id=c1994389-ab14-4d0a-883e-66a7ef746a92 not found in staged leads.csv
+lead_log,1bc4c2b5-c015-4656-9d34-666641ce5da7,lead_logs.csv,orphan_fk,lead_id=c1994389-ab14-4d0a-883e-66a7ef746a92 not found in staged leads.csv
+lead_log,896ff288-9cab-4ecf-979c-e9601a365675,lead_logs.csv,orphan_fk,lead_id=644ceaea-d2d3-4a72-a77e-21565bef41e4 not found in staged leads.csv
+lead_log,65d49a95-6ec2-491d-abf3-17f0759c364a,lead_logs.csv,orphan_fk,lead_id=644ceaea-d2d3-4a72-a77e-21565bef41e4 not found in staged leads.csv
+lead_log,b083023b-af49-49f0-bfde-f47bac51bf73,lead_logs.csv,orphan_fk,lead_id=e5bc4352-3889-4f82-9ac2-e07b55118c37 not found in staged leads.csv
+lead_log,e6d50b22-be61-487c-bd6a-c45f7bce225d,lead_logs.csv,orphan_fk,lead_id=e5bc4352-3889-4f82-9ac2-e07b55118c37 not found in staged leads.csv
+lead_log,e652da34-39a5-4b68-b0ff-3fdff5aecaef,lead_logs.csv,orphan_fk,lead_id=445897a0-477d-47ee-81e0-5d8360687617 not found in staged leads.csv
+lead_log,213f09bb-cfa9-43ca-9ced-15dccad8fec0,lead_logs.csv,orphan_fk,lead_id=445897a0-477d-47ee-81e0-5d8360687617 not found in staged leads.csv
+lead_log,5cc9bd0b-89a2-4d3f-b20c-b2a52761d1c0,lead_logs.csv,orphan_fk,lead_id=919ac7d9-9a5b-4f78-ae7e-d5e66b189de1 not found in staged leads.csv
+lead_log,e90c3304-0e53-47d1-8daf-036d55098ee8,lead_logs.csv,orphan_fk,lead_id=919ac7d9-9a5b-4f78-ae7e-d5e66b189de1 not found in staged leads.csv
+lead_log,e28617f5-df59-4f05-bfdd-1d37c4715126,lead_logs.csv,orphan_fk,lead_id=a58a33a6-051c-4779-9232-9362ccfc8763 not found in staged leads.csv
+lead_log,05c11445-2f8f-4d39-ab52-40f9c68ccfe5,lead_logs.csv,orphan_fk,lead_id=a58a33a6-051c-4779-9232-9362ccfc8763 not found in staged leads.csv
+lead_log,629c9f21-64ef-44b3-976f-094449c9a0b8,lead_logs.csv,orphan_fk,lead_id=3d178741-7b4e-49c5-8fda-225a864214eb not found in staged leads.csv
+lead_log,723fbe9b-03d3-48a9-af78-ce337ebbac15,lead_logs.csv,orphan_fk,lead_id=3d178741-7b4e-49c5-8fda-225a864214eb not found in staged leads.csv
+lead_log,7ab06a32-65f3-4efd-aa8a-bf7650cf1dec,lead_logs.csv,orphan_fk,lead_id=c5f3ff5e-720b-423b-8718-1b484f9c261f not found in staged leads.csv
+lead_log,c0e22654-3ee3-4824-9ca7-491090d470ec,lead_logs.csv,orphan_fk,lead_id=c5f3ff5e-720b-423b-8718-1b484f9c261f not found in staged leads.csv
+lead_log,2f555838-7fba-4b1a-be34-41367947968f,lead_logs.csv,orphan_fk,lead_id=ee9a7737-57db-497e-947b-341680b5f877 not found in staged leads.csv
+lead_log,fdcca8f8-008d-4b98-b055-5f3192726a32,lead_logs.csv,orphan_fk,lead_id=ee9a7737-57db-497e-947b-341680b5f877 not found in staged leads.csv
+lead_log,3c176d62-682c-4002-92cc-12caed3ffaee,lead_logs.csv,orphan_fk,lead_id=689d46ef-a819-44e5-a44d-9eed3339279b not found in staged leads.csv
+lead_log,21a7ee3b-a0f9-447b-a0b4-cf290bd53ae3,lead_logs.csv,orphan_fk,lead_id=689d46ef-a819-44e5-a44d-9eed3339279b not found in staged leads.csv
+lead_log,142bfb0a-e22a-4924-9dde-1bbac3ad2797,lead_logs.csv,orphan_fk,lead_id=354a9137-f228-44af-9c7c-c3098e5de810 not found in staged leads.csv
+lead_log,ebeda051-2b02-448d-bd36-b5b5e7e4e984,lead_logs.csv,orphan_fk,lead_id=354a9137-f228-44af-9c7c-c3098e5de810 not found in staged leads.csv
+lead_log,36edc78e-bdbd-40c1-b1c6-e8bb493b2df9,lead_logs.csv,orphan_fk,lead_id=4aaff3a2-76b6-4ecd-aca9-c18296955f9b not found in staged leads.csv
+lead_log,c0ab448a-f119-41c8-8c18-0d059125b77b,lead_logs.csv,orphan_fk,lead_id=4aaff3a2-76b6-4ecd-aca9-c18296955f9b not found in staged leads.csv
+lead_log,1af3f468-3999-41cd-b904-45d667bcf2b8,lead_logs.csv,orphan_fk,lead_id=86c486c3-e03c-457d-bc28-6bcde82c9f71 not found in staged leads.csv
+lead_log,49e30b94-7dd9-4cf9-ac0e-7266b6eb1e24,lead_logs.csv,orphan_fk,lead_id=86c486c3-e03c-457d-bc28-6bcde82c9f71 not found in staged leads.csv
+lead_log,ff41579f-f03d-4a86-a8c4-ebdd9f7101c6,lead_logs.csv,orphan_fk,lead_id=168d75bc-839f-4367-9ee5-e43f99d1337e not found in staged leads.csv
+lead_log,dd929b3b-5385-4713-bf09-0cf04e4276d7,lead_logs.csv,orphan_fk,lead_id=168d75bc-839f-4367-9ee5-e43f99d1337e not found in staged leads.csv
+lead_log,af1f63c4-88f5-458b-80b0-dc7d7a890eca,lead_logs.csv,orphan_fk,lead_id=134178bb-5bb0-4222-8f81-bde764799984 not found in staged leads.csv
+lead_log,22deb85b-517a-49de-801c-a7623a20b7f3,lead_logs.csv,orphan_fk,lead_id=134178bb-5bb0-4222-8f81-bde764799984 not found in staged leads.csv
+lead_log,cef874f3-5999-4116-b6b4-4181400f1a61,lead_logs.csv,orphan_fk,lead_id=1132a033-fc04-4afd-ac22-0f9e041ad0d4 not found in staged leads.csv
+lead_log,6f95f491-0569-433d-8336-efb5edce2c63,lead_logs.csv,orphan_fk,lead_id=1132a033-fc04-4afd-ac22-0f9e041ad0d4 not found in staged leads.csv
+lead_log,438ce36e-32db-4509-ab85-01f9c8d0db98,lead_logs.csv,orphan_fk,lead_id=752746f1-3e77-4f2b-8b6e-614081f7eb04 not found in staged leads.csv
+lead_log,13488983-8d81-4ed5-b964-b9e7ee315e65,lead_logs.csv,orphan_fk,lead_id=752746f1-3e77-4f2b-8b6e-614081f7eb04 not found in staged leads.csv
+lead_log,fe303974-e314-4792-96dc-b9789a83593c,lead_logs.csv,orphan_fk,lead_id=5c915c37-98fd-4ba1-a75c-d1f59f78f12a not found in staged leads.csv
+lead_log,3f6aae65-b0a4-4541-a9cd-491c4e74192c,lead_logs.csv,orphan_fk,lead_id=5c915c37-98fd-4ba1-a75c-d1f59f78f12a not found in staged leads.csv
+lead_log,7b22cccb-af9a-4ef7-b708-2ae8a59199cc,lead_logs.csv,orphan_fk,lead_id=52507c65-a854-46b1-9267-c28fdc941a26 not found in staged leads.csv
+lead_log,f14fd946-9be8-4c37-9288-1701ccf5e7d1,lead_logs.csv,orphan_fk,lead_id=52507c65-a854-46b1-9267-c28fdc941a26 not found in staged leads.csv
+lead_log,199f119d-cfb2-4a5c-9496-1990155f9215,lead_logs.csv,orphan_fk,lead_id=647fda9c-74f1-451c-bda1-2fef3716158d not found in staged leads.csv
+lead_log,46076f00-6156-4821-b326-c6b1c890e1ab,lead_logs.csv,orphan_fk,lead_id=647fda9c-74f1-451c-bda1-2fef3716158d not found in staged leads.csv
+lead_log,d72db187-5bc2-4634-a310-b06e73ff61f6,lead_logs.csv,orphan_fk,lead_id=773a2781-d40e-493d-ac19-7fbdbf90ee2c not found in staged leads.csv
+lead_log,3d85681d-43f7-495e-8878-c46c65e95199,lead_logs.csv,orphan_fk,lead_id=773a2781-d40e-493d-ac19-7fbdbf90ee2c not found in staged leads.csv
+lead_log,655144fe-00c5-4d26-a898-eaae9d496e16,lead_logs.csv,orphan_fk,lead_id=603c11cd-768b-456c-a914-b77dfd1555d4 not found in staged leads.csv
+lead_log,6273184b-ddaa-4c69-a568-8328d69c6927,lead_logs.csv,orphan_fk,lead_id=603c11cd-768b-456c-a914-b77dfd1555d4 not found in staged leads.csv
+lead_log,75f4c4f6-70cd-44af-9808-7c0be93d34c1,lead_logs.csv,orphan_fk,lead_id=5e74b8bf-9c43-49f9-b467-52eaf1f60359 not found in staged leads.csv
+lead_log,2be4bfb5-b989-4d81-98f4-d9885ed7bd99,lead_logs.csv,orphan_fk,lead_id=5e74b8bf-9c43-49f9-b467-52eaf1f60359 not found in staged leads.csv
+lead_log,3aa65fce-8d34-4d14-befc-6584e1649f3f,lead_logs.csv,orphan_fk,lead_id=ef6a9729-fee6-48c0-ae31-84773f08fe4a not found in staged leads.csv
+lead_log,6981111d-ef1e-4b9b-b924-743e048e1c51,lead_logs.csv,orphan_fk,lead_id=ef6a9729-fee6-48c0-ae31-84773f08fe4a not found in staged leads.csv
+lead_log,f9371c08-5513-455a-83a6-f8cdb78934d0,lead_logs.csv,orphan_fk,lead_id=7572f48b-9b13-44da-acd2-a06265e2fead not found in staged leads.csv
+lead_log,e2e3d289-e266-4bab-9b13-7f4a8c4c4b3c,lead_logs.csv,orphan_fk,lead_id=7572f48b-9b13-44da-acd2-a06265e2fead not found in staged leads.csv
+lead_log,d7fa9332-bee5-45bd-a054-c74369aedac4,lead_logs.csv,orphan_fk,lead_id=a51f5acb-4167-4e96-9d1c-042284bc28e3 not found in staged leads.csv
+lead_log,5ba660ea-fc61-4179-8505-bc790576a118,lead_logs.csv,orphan_fk,lead_id=6a44a733-b8e4-4374-80e1-9ddce98e741c not found in staged leads.csv
+lead_log,4943534f-ea06-4ade-a8bd-f848bff79342,lead_logs.csv,orphan_fk,lead_id=7a5c9565-0a0c-4e45-871c-f1fc59f76cc0 not found in staged leads.csv
+lead_log,fe22f498-1b5f-4fbb-b5de-45120adb91b3,lead_logs.csv,orphan_fk,lead_id=f8214461-897d-467a-90e0-594f19973076 not found in staged leads.csv
+lead_log,eac1eea2-008d-4517-810c-ef7c69855c64,lead_logs.csv,orphan_fk,lead_id=6a5ed767-73ce-4464-8087-c225361df44b not found in staged leads.csv
+lead_log,a6ab7379-9286-4d72-8f68-9e9b8e907148,lead_logs.csv,orphan_fk,lead_id=e5bc4352-3889-4f82-9ac2-e07b55118c37 not found in staged leads.csv
+lead_log,df7847e6-a2da-4c76-97b1-4ccd7de7195f,lead_logs.csv,orphan_fk,lead_id=919ac7d9-9a5b-4f78-ae7e-d5e66b189de1 not found in staged leads.csv
+lead_log,8a243360-b057-44a6-8c48-9f57326665d9,lead_logs.csv,orphan_fk,lead_id=c5f3ff5e-720b-423b-8718-1b484f9c261f not found in staged leads.csv
+lead_log,e5497f3c-8c2c-4edc-9d70-7d015161d027,lead_logs.csv,orphan_fk,lead_id=354a9137-f228-44af-9c7c-c3098e5de810 not found in staged leads.csv
+lead_log,f965cba9-0605-4c5b-9b4c-bd2a1ac23b20,lead_logs.csv,orphan_fk,lead_id=86c486c3-e03c-457d-bc28-6bcde82c9f71 not found in staged leads.csv
+lead_log,e97da58a-0fa1-4e00-9d94-76674ea20b55,lead_logs.csv,orphan_fk,lead_id=168d75bc-839f-4367-9ee5-e43f99d1337e not found in staged leads.csv
+lead_log,e139d9b8-da44-4557-909e-fc4544a7e965,lead_logs.csv,orphan_fk,lead_id=134178bb-5bb0-4222-8f81-bde764799984 not found in staged leads.csv
+lead_log,fa5348fa-69bf-4444-9d1c-7b7c8c482099,lead_logs.csv,orphan_fk,lead_id=1132a033-fc04-4afd-ac22-0f9e041ad0d4 not found in staged leads.csv
+lead_log,bdc7b5f5-618a-4ef3-aa82-b154d57d174a,lead_logs.csv,orphan_fk,lead_id=752746f1-3e77-4f2b-8b6e-614081f7eb04 not found in staged leads.csv
+lead_log,212db522-6d8a-4be1-be5e-861e7670f7ed,lead_logs.csv,orphan_fk,lead_id=5c915c37-98fd-4ba1-a75c-d1f59f78f12a not found in staged leads.csv
+lead_log,a873313e-0c32-4115-9ddb-4b305b926445,lead_logs.csv,orphan_fk,lead_id=52507c65-a854-46b1-9267-c28fdc941a26 not found in staged leads.csv
+lead_log,3bb369d3-3189-4358-aecb-779965609b81,lead_logs.csv,orphan_fk,lead_id=647fda9c-74f1-451c-bda1-2fef3716158d not found in staged leads.csv
+lead_log,b78fb9bc-bffe-4f36-b988-ef8acbc1dada,lead_logs.csv,orphan_fk,lead_id=773a2781-d40e-493d-ac19-7fbdbf90ee2c not found in staged leads.csv
+lead_log,96c23fd4-740b-4e45-b183-0f1fe2c27ba8,lead_logs.csv,orphan_fk,lead_id=603c11cd-768b-456c-a914-b77dfd1555d4 not found in staged leads.csv
+lead_log,b1502a8c-7705-4938-a2fc-c73000bb0a44,lead_logs.csv,orphan_fk,lead_id=5e74b8bf-9c43-49f9-b467-52eaf1f60359 not found in staged leads.csv
+lead_log,f07a9b79-fc20-4150-8fa9-0a3c39f48a84,lead_logs.csv,orphan_fk,lead_id=ef6a9729-fee6-48c0-ae31-84773f08fe4a not found in staged leads.csv
+lead_log,573df9bd-7e86-4307-876d-55ee77284b51,lead_logs.csv,orphan_fk,lead_id=7572f48b-9b13-44da-acd2-a06265e2fead not found in staged leads.csv
+lead_log,2ed51669-651e-449f-a734-51768e777fc0,lead_logs.csv,orphan_fk,lead_id=96ec6ed1-f6bf-4255-a6db-eb73edb0daf8 not found in staged leads.csv
+lead_log,848a556b-ebf7-4e80-a59d-0b0f687d0f9f,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,7fd07bb6-fd3a-484c-87fb-0e6c5de63081,lead_logs.csv,orphan_fk,lead_id=3b890890-22fe-410b-b775-dc01ba399d02 not found in staged leads.csv
+lead_log,36e1c5d2-44f7-43c4-b873-77d3f6807c99,lead_logs.csv,orphan_fk,lead_id=3b890890-22fe-410b-b775-dc01ba399d02 not found in staged leads.csv
+lead_log,cbe422b0-0123-4762-b64e-ebf48046f30d,lead_logs.csv,orphan_fk,lead_id=3b890890-22fe-410b-b775-dc01ba399d02 not found in staged leads.csv
+lead_log,0aeb5d2c-077f-4930-9fe1-8f8ef7f07493,lead_logs.csv,orphan_fk,lead_id=3b890890-22fe-410b-b775-dc01ba399d02 not found in staged leads.csv
+lead_log,9fb3cdf9-c7ae-4855-8c0c-e20987ee0f85,lead_logs.csv,orphan_fk,lead_id=3b890890-22fe-410b-b775-dc01ba399d02 not found in staged leads.csv
+lead_log,887b4397-e90f-49d3-9f0b-62957a4e3290,lead_logs.csv,orphan_fk,lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+lead_log,ac7f2012-64f6-46de-b25c-0f6d7898bf3a,lead_logs.csv,orphan_fk,lead_id=773a2781-d40e-493d-ac19-7fbdbf90ee2c not found in staged leads.csv
+lead_log,42b35a7e-8143-4388-ad62-7971cab028e7,lead_logs.csv,orphan_fk,lead_id=603c11cd-768b-456c-a914-b77dfd1555d4 not found in staged leads.csv
+lead_log,bcf73521-022b-49b6-9809-e775f2993ea1,lead_logs.csv,orphan_fk,lead_id=5e74b8bf-9c43-49f9-b467-52eaf1f60359 not found in staged leads.csv
+lead_log,4729e95e-1561-4e22-90ff-b78e1eb8ddc0,lead_logs.csv,orphan_fk,lead_id=ef6a9729-fee6-48c0-ae31-84773f08fe4a not found in staged leads.csv
+lead_log,04ec2a4a-6423-4577-81d7-649af7967b96,lead_logs.csv,orphan_fk,lead_id=7572f48b-9b13-44da-acd2-a06265e2fead not found in staged leads.csv
+lead_log,f23501e3-f480-4c02-84f9-19fb2288655f,lead_logs.csv,orphan_fk,lead_id=97c30a92-7da2-4ea3-b51f-f1a872577951 not found in staged leads.csv
+lead_log,a1213762-7953-4251-a3ff-861494bc08a8,lead_logs.csv,orphan_fk,lead_id=030ee44f-6412-4634-a30d-8b43d752f64d not found in staged leads.csv
+lead_log,aea78be9-2e7b-4f42-8f70-3e723077b0c4,lead_logs.csv,orphan_fk,lead_id=96768ecf-8f13-4824-b93c-d43c35537023 not found in staged leads.csv
+lead_log,41936ca9-2582-4c93-8a52-5b2bf2302dd5,lead_logs.csv,orphan_fk,lead_id=5eda5bad-36b9-4853-beb0-9b894abe7c4f not found in staged leads.csv
+lead_log,7a483398-4c70-481a-9899-0c060638ff02,lead_logs.csv,orphan_fk,lead_id=6a44a733-b8e4-4374-80e1-9ddce98e741c not found in staged leads.csv
+lead_log,babd6541-1f75-4c8f-8592-1db911370fb0,lead_logs.csv,orphan_fk,lead_id=66b34a54-eefb-49bd-999c-62848f4804b1 not found in staged leads.csv
+lead_log,ad72c016-336b-456f-8aec-e6d3c10b0106,lead_logs.csv,orphan_fk,lead_id=0a622979-fbf4-446e-9e1e-b7b932484cd3 not found in staged leads.csv
+lead_log,998cfaee-7d7e-46ae-9a91-c865714cf9ec,lead_logs.csv,orphan_fk,lead_id=7a5c9565-0a0c-4e45-871c-f1fc59f76cc0 not found in staged leads.csv
+lead_log,49b7bb6a-84bc-432e-85ed-b2b1490295fa,lead_logs.csv,orphan_fk,lead_id=3e32a8e6-eeb0-4b66-8997-8c11eedef92c not found in staged leads.csv
+lead_log,f4899a52-1700-4f3b-b962-1650ea2a540f,lead_logs.csv,orphan_fk,lead_id=099f605d-5e68-4800-a75d-46f4252b34db not found in staged leads.csv
+lead_log,a060645f-6c2a-4060-ab0b-7ce3f188fea1,lead_logs.csv,orphan_fk,lead_id=c9a55b78-6d14-4984-8a03-05dae7d3a31c not found in staged leads.csv
+lead_log,05d032fe-7be9-471d-9fa8-0b45e4c2af0a,lead_logs.csv,orphan_fk,lead_id=45dda642-7e8d-46f6-a291-003899d90da5 not found in staged leads.csv
+lead_log,233d8416-adbf-4a96-83b4-9ba95c1e90e7,lead_logs.csv,orphan_fk,lead_id=08113946-0bad-484f-8c4f-6ae8a0b8c558 not found in staged leads.csv
+lead_log,66c3b3de-4500-4a39-a208-3b9a8735271f,lead_logs.csv,orphan_fk,lead_id=2472991f-676b-4e8f-afc7-2fd482a383ee not found in staged leads.csv
+lead_log,103db9cf-2c30-4a0b-b42b-009b00e51600,lead_logs.csv,orphan_fk,lead_id=cdd7ed2a-0698-4c55-8558-f79fa85a9d24 not found in staged leads.csv
+lead_log,b13af0cf-f7e3-4614-9316-f33e84aa1ba9,lead_logs.csv,orphan_fk,lead_id=af4957b8-b732-48a8-aa33-7190bc56bb38 not found in staged leads.csv
+lead_log,304c3b4a-42dd-43f5-8e77-1bc9ae795707,lead_logs.csv,orphan_fk,lead_id=a013731b-7ab5-4fed-94d1-95b5cb8c04b6 not found in staged leads.csv
+lead_log,69f4cb91-9f4f-4694-86cd-bb0902e897bd,lead_logs.csv,orphan_fk,lead_id=88dfcfbc-dce1-40e1-ac30-18892db18541 not found in staged leads.csv
+lead_log,ae3c7aa0-c39b-49b1-84a3-2f3b7bfcf796,lead_logs.csv,orphan_fk,lead_id=48190e03-1615-441b-a2d8-535fd1fed9b8 not found in staged leads.csv
+lead_log,6cb0414d-01a1-4804-b8e9-d1e25c91bf93,lead_logs.csv,orphan_fk,lead_id=daa4af8b-a295-4506-bf77-e3979d3c609f not found in staged leads.csv
+lead_log,1a4c6efa-4a0a-4bf4-9d23-c7d412ef3877,lead_logs.csv,orphan_fk,lead_id=6216941f-f47f-4b5c-9281-05834ba91fe0 not found in staged leads.csv
+lead_log,32ed2d32-ec5b-4a28-a68d-7e23d882a104,lead_logs.csv,orphan_fk,lead_id=4b331c9b-8f6f-4bae-9c8d-5aef5f263298 not found in staged leads.csv
+lead_log,994004d4-933c-412f-8ed2-e6c22a658f3c,lead_logs.csv,orphan_fk,lead_id=6a5ed767-73ce-4464-8087-c225361df44b not found in staged leads.csv
+lead_log,183ca1a5-47da-4183-995d-963511de1333,lead_logs.csv,orphan_fk,lead_id=644ceaea-d2d3-4a72-a77e-21565bef41e4 not found in staged leads.csv
+lead_log,9ec25f6f-8a39-42bf-8abc-e56420536b97,lead_logs.csv,orphan_fk,lead_id=e5bc4352-3889-4f82-9ac2-e07b55118c37 not found in staged leads.csv
+lead_log,e782182b-6a7d-40be-be64-1ce5fcc32624,lead_logs.csv,orphan_fk,lead_id=445897a0-477d-47ee-81e0-5d8360687617 not found in staged leads.csv
+lead_log,3993fd84-0b6c-4615-a7b8-f7ed3f43cdb1,lead_logs.csv,orphan_fk,lead_id=919ac7d9-9a5b-4f78-ae7e-d5e66b189de1 not found in staged leads.csv
+lead_log,cbdc8674-4df6-4a51-a917-5b2b3feefd77,lead_logs.csv,orphan_fk,lead_id=a58a33a6-051c-4779-9232-9362ccfc8763 not found in staged leads.csv
+lead_log,c174e048-4ae5-467a-b0dd-16c46cc7bcfd,lead_logs.csv,orphan_fk,lead_id=689d46ef-a819-44e5-a44d-9eed3339279b not found in staged leads.csv
+lead_log,e023d716-22a2-49aa-b0e9-b7f207e0ce6e,lead_logs.csv,orphan_fk,lead_id=354a9137-f228-44af-9c7c-c3098e5de810 not found in staged leads.csv
+lead_log,7266f2f2-d3b7-4c77-ac37-5f57434cc472,lead_logs.csv,orphan_fk,lead_id=4aaff3a2-76b6-4ecd-aca9-c18296955f9b not found in staged leads.csv
+lead_log,5facb6cf-f489-42c2-9346-642d0ddacb69,lead_logs.csv,orphan_fk,lead_id=134178bb-5bb0-4222-8f81-bde764799984 not found in staged leads.csv
+lead_log,f137cc63-f4aa-47d5-91eb-2b9f71f68013,lead_logs.csv,orphan_fk,lead_id=1132a033-fc04-4afd-ac22-0f9e041ad0d4 not found in staged leads.csv
+lead_log,e9147d79-5749-4c66-8a07-5e7972e613f0,lead_logs.csv,orphan_fk,lead_id=752746f1-3e77-4f2b-8b6e-614081f7eb04 not found in staged leads.csv
+lead_log,0d328bc0-2d53-44fe-9c2f-24ce97eab134,lead_logs.csv,orphan_fk,lead_id=5c915c37-98fd-4ba1-a75c-d1f59f78f12a not found in staged leads.csv
+lead_log,68bda41c-4b21-42c9-b3c3-4f9a87b4844d,lead_logs.csv,orphan_fk,lead_id=52507c65-a854-46b1-9267-c28fdc941a26 not found in staged leads.csv
+lead_log,8584dc9a-8db9-4f8b-88d9-0d211f25a177,lead_logs.csv,orphan_fk,lead_id=a51f5acb-4167-4e96-9d1c-042284bc28e3 not found in staged leads.csv
+lead_log,c8c0b8c8-c8e4-4233-827c-992553b6dfaa,lead_logs.csv,orphan_fk,lead_id=bcb4013a-90ba-4ec8-ad8a-0dcca7f00671 not found in staged leads.csv
+lead_log,6e5decbc-e8c6-4708-a26b-28193fc780af,lead_logs.csv,orphan_fk,lead_id=95de2ffb-a1c6-43af-8147-8d716b77bcf3 not found in staged leads.csv
+lead_log,2b148c69-3b66-4752-9dcc-9c715e31b824,lead_logs.csv,orphan_fk,lead_id=c9d765cc-5046-43eb-9a7b-b8ff06ab5d3c not found in staged leads.csv
+lead_log,97e7cc65-a47e-44b7-a71b-9c94c0afec3c,lead_logs.csv,orphan_fk,lead_id=c1994389-ab14-4d0a-883e-66a7ef746a92 not found in staged leads.csv
+lead_log,95999028-1234-4586-8e16-f9ae89c3eae9,lead_logs.csv,orphan_fk,lead_id=3d178741-7b4e-49c5-8fda-225a864214eb not found in staged leads.csv
+lead_log,a539ef41-7973-47f5-bced-e7643590c7e0,lead_logs.csv,orphan_fk,lead_id=c5f3ff5e-720b-423b-8718-1b484f9c261f not found in staged leads.csv
+lead_log,a4f2ee99-6467-4e36-9d52-38b1bf19e0e3,lead_logs.csv,orphan_fk,lead_id=ee9a7737-57db-497e-947b-341680b5f877 not found in staged leads.csv
+lead_log,7637f61c-fb1f-4c1d-9f3b-eae849ac377e,lead_logs.csv,orphan_fk,lead_id=86c486c3-e03c-457d-bc28-6bcde82c9f71 not found in staged leads.csv
+lead_log,6f580d98-40b2-4d31-ab51-3a37c1ad983d,lead_logs.csv,orphan_fk,lead_id=168d75bc-839f-4367-9ee5-e43f99d1337e not found in staged leads.csv
+lead_log,f469939f-a471-4d92-af6e-c147bb875af3,lead_logs.csv,orphan_fk,lead_id=647fda9c-74f1-451c-bda1-2fef3716158d not found in staged leads.csv
+lead_log,783b986d-f963-4079-b932-f3532aa9ce71,lead_logs.csv,orphan_fk,lead_id=4802d331-c0c1-4ed1-ba7f-f65f58ab339a not found in staged leads.csv
+lead_log,31904652-8bb8-437a-a893-ff509b9b7758,lead_logs.csv,orphan_fk,lead_id=4802d331-c0c1-4ed1-ba7f-f65f58ab339a not found in staged leads.csv
+lead_log,1bfe9cea-af3d-401b-ad69-16769e6988e7,lead_logs.csv,orphan_fk,lead_id=4802d331-c0c1-4ed1-ba7f-f65f58ab339a not found in staged leads.csv
+lead_log,684ea4c5-face-46ae-a414-3f39b79cbf30,lead_logs.csv,orphan_fk,lead_id=4802d331-c0c1-4ed1-ba7f-f65f58ab339a not found in staged leads.csv
+lead_log,49e29ee8-d7ae-4506-a558-6e9493b471d7,lead_logs.csv,orphan_fk,lead_id=4802d331-c0c1-4ed1-ba7f-f65f58ab339a not found in staged leads.csv
+lead_log,40cb65ad-010f-49e5-b9a8-d340e3e5bcfc,lead_logs.csv,orphan_fk,lead_id=bb3c3aab-c6f0-4d82-8ae3-20750c5c713a not found in staged leads.csv
+lead_log,ebc1cdd3-c045-459c-9ed7-9c1060e83abe,lead_logs.csv,orphan_fk,lead_id=bb3c3aab-c6f0-4d82-8ae3-20750c5c713a not found in staged leads.csv
+lead_log,e8e46616-80d7-4798-b61d-e2ce91b72b77,lead_logs.csv,orphan_fk,lead_id=fd434cf8-47af-47d1-9b86-fc177e34286e not found in staged leads.csv
+lead_log,7f23664a-55ab-44dc-a9bd-b1917875bbaa,lead_logs.csv,orphan_fk,lead_id=fd434cf8-47af-47d1-9b86-fc177e34286e not found in staged leads.csv
+lead_log,38019aee-fca5-466e-8e08-bfa86c30813d,lead_logs.csv,orphan_fk,lead_id=8099d647-3ae4-4a42-a728-babd58e4b21e not found in staged leads.csv
+lead_log,5a6f05c2-2efb-49be-9879-f13f1923952d,lead_logs.csv,orphan_fk,lead_id=fd434cf8-47af-47d1-9b86-fc177e34286e not found in staged leads.csv
+lead_log,1c7a1a4c-9ac6-45e6-a425-9f7c7546ab56,lead_logs.csv,orphan_fk,lead_id=fd434cf8-47af-47d1-9b86-fc177e34286e not found in staged leads.csv
+lead_log,39bc31e9-2ca3-40bd-a564-c585bee51336,lead_logs.csv,orphan_fk,lead_id=fd434cf8-47af-47d1-9b86-fc177e34286e not found in staged leads.csv
+lead_log,c16f163c-19f2-493f-87d5-4ee1a6e6b375,lead_logs.csv,orphan_fk,lead_id=bb3c3aab-c6f0-4d82-8ae3-20750c5c713a not found in staged leads.csv
+lead_log,45bdae2a-eb0a-437a-b45b-c7eca8ad8432,lead_logs.csv,orphan_fk,lead_id=bb3c3aab-c6f0-4d82-8ae3-20750c5c713a not found in staged leads.csv
+lead_log,5f9d4a6a-e6b7-486c-a84a-cea9f8565b73,lead_logs.csv,orphan_fk,lead_id=f5fc09fb-fc92-4c38-8d49-3172fe766073 not found in staged leads.csv
+lead_log,7a9031db-c7a7-4b06-8b9b-09b11d5694b3,lead_logs.csv,orphan_fk,lead_id=8598aa3f-e41f-4348-9928-2ecfcc0722df not found in staged leads.csv
+lead_log,509b1dd5-890e-4aa0-bb9b-e39f0915a91a,lead_logs.csv,orphan_fk,lead_id=7b5ffffe-a913-4e4e-be7e-d82ec6f2175f not found in staged leads.csv
+lead_log,9684cc46-76d7-4c80-a9d2-b79c9c4cfe45,lead_logs.csv,orphan_fk,lead_id=322e2fdf-0919-4d8d-82ce-0b57b8b9d88f not found in staged leads.csv
+lead_log,61c513d6-c5ed-4e0c-8dfa-1cfaae78760c,lead_logs.csv,orphan_fk,lead_id=200064c8-3817-4b72-b8f0-38079e7ac276 not found in staged leads.csv
+lead_log,c9512d86-9426-4190-9646-ee5aa056bdc9,lead_logs.csv,orphan_fk,lead_id=8cf04c3e-e7a6-4018-9ca9-f800443495f3 not found in staged leads.csv
+lead_log,2c216a0e-483a-45aa-b5df-25a948814f3c,lead_logs.csv,orphan_fk,lead_id=4bfe4a74-0ec5-4fcf-901c-45409073f89a not found in staged leads.csv
+lead_log,f60ffa0a-5946-4dbf-8e42-2a382fe4a4f2,lead_logs.csv,orphan_fk,lead_id=e9d0e61d-2511-4753-b348-74e34af83e8c not found in staged leads.csv
+lead_log,bc067296-c9fd-40fd-8504-8f39917d441b,lead_logs.csv,orphan_fk,lead_id=642a7b1f-b1f4-428a-92a2-ba34ca3f974c not found in staged leads.csv
+lead_log,8efa092d-dc4f-4471-8815-e5be0b595fd7,lead_logs.csv,orphan_fk,lead_id=b378d2f3-31e8-48a3-9fb3-81482e37c79b not found in staged leads.csv
+lead_log,aa79bc8d-9880-4ca4-9938-6ea19f7a47c0,lead_logs.csv,orphan_fk,lead_id=5718e04d-3298-4946-bd7c-82fb1b2e1d6b not found in staged leads.csv
+lead_log,3c5e1ad6-8aad-4460-84fa-84aae44a1513,lead_logs.csv,orphan_fk,lead_id=fd48ce3c-2139-442c-9015-db4a6d122a25 not found in staged leads.csv
+lead_log,45c66ae7-3014-4462-90f6-f30178b6de73,lead_logs.csv,orphan_fk,lead_id=e30818c3-8746-4b36-a49b-a63dd283ef22 not found in staged leads.csv
+lead_log,d3688e10-ba1f-4c3b-93e1-0f46bb215845,lead_logs.csv,orphan_fk,lead_id=c27b9790-b5ed-48bf-b010-9d7adb11a396 not found in staged leads.csv
+lead_log,b708439b-7dd6-44fc-8936-a12a6e40da23,lead_logs.csv,orphan_fk,lead_id=cea4ce40-befe-40bd-b147-31baee93eeef not found in staged leads.csv
+lead_log,d9195f3d-c508-4637-936b-34c74c32c601,lead_logs.csv,orphan_fk,lead_id=7f7be095-36e9-422a-afb5-0d7dae43721b not found in staged leads.csv
+lead_log,840275b1-cb33-4736-9c50-456b06f42890,lead_logs.csv,orphan_fk,lead_id=e1a97ffb-6cb9-4a3c-98cd-0fb376b10bab not found in staged leads.csv
+lead_log,37ffdede-882c-4162-8e72-06294452f2a2,lead_logs.csv,orphan_fk,lead_id=fc6c1066-b998-400c-b7b0-b1ed8473290f not found in staged leads.csv
+lead_log,47dd40bd-0586-480f-b7eb-9c7d62c33b5e,lead_logs.csv,orphan_fk,lead_id=bfb1046b-ddcc-4a56-98a4-858a9864a0e0 not found in staged leads.csv
+lead_log,2404e8eb-88d2-455b-8466-7440be3219c9,lead_logs.csv,orphan_fk,lead_id=3c33f86f-8329-423b-bcd6-7dc748ca3074 not found in staged leads.csv
+lead_log,3be65078-f1f5-41dc-ac34-88e716c5769a,lead_logs.csv,orphan_fk,lead_id=820fd87d-627a-4237-8717-285c825f37c5 not found in staged leads.csv
+lead_log,c26cc9d1-86ca-4827-b844-00a1de090ae8,lead_logs.csv,orphan_fk,lead_id=56f6aa96-4282-4cf0-87dd-3efe2e0b3021 not found in staged leads.csv
+lead_log,e8607f09-7123-44c3-8417-a173b8e99db9,lead_logs.csv,orphan_fk,lead_id=5431c970-d70d-449e-8dd5-41896ddba07b not found in staged leads.csv
+lead_log,f8ed890f-9c4b-493e-aea1-e72ce959dfbb,lead_logs.csv,orphan_fk,lead_id=9b0a7a67-20ff-4d67-879c-1127e2612448 not found in staged leads.csv
+lead_log,19ac0b90-6779-472c-b5e1-f282b774c60a,lead_logs.csv,orphan_fk,lead_id=1c89d8e9-9386-4ce4-a355-7ecd10ea45ef not found in staged leads.csv
+lead_log,7fc21e40-0995-4dbe-90f7-900b3f20950d,lead_logs.csv,orphan_fk,lead_id=0330da33-784f-4a6c-ad1d-cd0dc41630a5 not found in staged leads.csv
+lead_log,3e8efdcf-2a5b-481d-90e7-b461151a828c,lead_logs.csv,orphan_fk,lead_id=a7ec02fc-1550-4b28-a4b8-0af846e4ad3f not found in staged leads.csv
+lead_log,46d884ec-9944-4055-80c5-99cc88bcc217,lead_logs.csv,orphan_fk,lead_id=b4dbca3d-f9af-407d-b521-a8639ec79ff6 not found in staged leads.csv
+lead_log,ae425e0a-10d6-4ced-bdf1-98dac6100a48,lead_logs.csv,orphan_fk,lead_id=779584de-fba8-4f3e-b10c-18696f704cce not found in staged leads.csv
+lead_log,7f1088a2-2977-4db8-a74f-0327dbd25a94,lead_logs.csv,orphan_fk,lead_id=689e6b88-70a4-40e8-b569-bd2c7b675cb7 not found in staged leads.csv
+lead_log,0b607729-c129-427e-89d6-8dcf4745cf9b,lead_logs.csv,orphan_fk,lead_id=dfb9edef-79e8-49bd-9bdc-7f9921541dd0 not found in staged leads.csv
+lead_log,06497dfc-c681-4c3b-9747-e357aefc92f7,lead_logs.csv,orphan_fk,lead_id=4a925e7d-0f37-4bd7-bb9c-fe9ade7ef785 not found in staged leads.csv
+lead_log,30afcf38-8e50-433d-9c08-eddc3474ddc6,lead_logs.csv,orphan_fk,lead_id=f1e84959-eb54-4e27-b3a3-354cd579e20e not found in staged leads.csv
+lead_log,03629ccb-a8c4-4ff5-9d70-bc2897782e05,lead_logs.csv,orphan_fk,lead_id=9204eeb0-8428-4193-b39c-77b501985524 not found in staged leads.csv
+lead_log,5f6d7928-e8d6-4a8d-bf1b-eada43cb6371,lead_logs.csv,orphan_fk,lead_id=17c80dc0-bb22-4474-b68f-546d7abecceb not found in staged leads.csv
+lead_log,a5d82257-ded2-46ea-b7ae-bcf992a9f416,lead_logs.csv,orphan_fk,lead_id=aac9537a-6485-40e8-af68-91fa7e93daae not found in staged leads.csv
+lead_log,1b366e3b-6da8-4850-bfb5-645d670f490f,lead_logs.csv,orphan_fk,lead_id=5765300f-fe6a-4b4f-b9e9-57dacaaeb804 not found in staged leads.csv
+lead_log,61969ef5-63d1-4e95-a249-3b8d2d34ee29,lead_logs.csv,orphan_fk,lead_id=edded4b5-dbf0-4c31-b088-9db444a8b6fb not found in staged leads.csv
+lead_log,ad61db5c-ded6-43bc-8a2f-e8b41604c4ac,lead_logs.csv,orphan_fk,lead_id=e313d567-ee65-4fe9-8d7d-0952f48ebdf2 not found in staged leads.csv
+lead_log,9ec6683d-7128-44bb-b57e-9d53b36d3ed4,lead_logs.csv,orphan_fk,lead_id=434401d6-b8d4-4193-a4dc-370e218ab33f not found in staged leads.csv
+lead_log,136f56fa-5b3c-49d2-ac9e-44011a11dd79,lead_logs.csv,orphan_fk,lead_id=c33ea158-9dad-4174-9edb-cf4158eecf2d not found in staged leads.csv
+lead_log,cab1b584-8d7f-4f89-a37f-c412b68ed0d0,lead_logs.csv,orphan_fk,lead_id=cdd7ceb1-35f1-453a-a087-75abfc03c464 not found in staged leads.csv
+lead_log,ad02f277-4a61-4c1d-b035-04c32f8845da,lead_logs.csv,orphan_fk,lead_id=aef9fdb3-cd3c-4326-bfc9-884c16961d78 not found in staged leads.csv
+lead_log,546a7a62-e70b-4577-adca-3d8687920773,lead_logs.csv,orphan_fk,lead_id=ebcc17aa-c920-4e75-89ef-f4bf3bcedba9 not found in staged leads.csv
+lead_log,01a36920-41b3-4684-9580-33d7fc0f2485,lead_logs.csv,orphan_fk,lead_id=0d4d2b84-2b9b-427a-9dc0-512be7db0511 not found in staged leads.csv
+lead_log,b05eabf1-5451-494a-bdfc-8acfffe19dd4,lead_logs.csv,orphan_fk,lead_id=cbbfee9f-8e71-4490-bd81-2d772b776aa9 not found in staged leads.csv
+lead_log,ce093df6-10fd-429a-8e67-7007c5c527ae,lead_logs.csv,orphan_fk,lead_id=e0153760-abcc-4d97-8509-7f0af66bd717 not found in staged leads.csv
+lead_log,a7430748-4e4b-484f-a982-6dd15b1c3486,lead_logs.csv,orphan_fk,lead_id=36c5be2e-1703-49ec-91c0-dd5af2753b13 not found in staged leads.csv
+lead_log,49bee895-17a6-43e0-9f53-81ad15928072,lead_logs.csv,orphan_fk,lead_id=3702b1a5-3825-4a42-9836-10864e82cf68 not found in staged leads.csv
+lead_log,b2730b7a-f537-423a-bb41-f175ca3f710b,lead_logs.csv,orphan_fk,lead_id=2fdc952c-dc47-4682-8a32-5b5830c39bad not found in staged leads.csv
+lead_log,fe16f3ea-df3e-4bdd-b932-af95167a80b0,lead_logs.csv,orphan_fk,lead_id=48d06d98-f36e-469f-863f-050b89b888cb not found in staged leads.csv
+lead_log,16892c55-8a88-45cc-aa87-6a1b72fed56e,lead_logs.csv,orphan_fk,lead_id=37e79ac1-bd55-4d34-a7e3-48a2d39b5792 not found in staged leads.csv
+lead_log,1e9390ce-716f-4c4a-b353-4342fd7336f9,lead_logs.csv,orphan_fk,lead_id=bb3c3aab-c6f0-4d82-8ae3-20750c5c713a not found in staged leads.csv
+lead_log,4a8d9598-55b4-4e84-9d1f-c15fa1e8df9e,lead_logs.csv,orphan_fk,lead_id=10818b39-6247-4b0a-b33c-af3de402c7d4 not found in staged leads.csv
+lead_log,b1c6e243-0d31-412e-bb1f-b0d184a63173,lead_logs.csv,orphan_fk,lead_id=8389cd73-9296-4d81-b122-fdc14777f30c not found in staged leads.csv
+notification,ec5c2777-14f8-453a-9ff0-f8f3f6631e5d,notifications.csv,orphan_fk,metadata.lead_id=c1a21730-8144-4b73-8eb0-e4e9940475a3 not found in staged leads.csv
+notification,a1c8a23b-0025-4031-a5da-94b97faa3868,notifications.csv,orphan_fk,metadata.lead_id=3b890890-22fe-410b-b775-dc01ba399d02 not found in staged leads.csv
+notification,308dfe8a-a608-4333-9dd3-f21077f04c25,notifications.csv,orphan_fk,metadata.lead_id=9da927ae-3bab-4fe9-af96-99b78e432393 not found in staged leads.csv
+notification,24b32293-5783-449e-bbf0-4295dc054af8,notifications.csv,orphan_fk,metadata.lead_id=1e625f74-06bc-49f2-a7e9-5dc633ac5090 not found in staged leads.csv
+notification,aa4f462b-4a3d-405e-8672-331b51fd25d0,notifications.csv,orphan_fk,metadata.lead_id=1fe5015c-345a-4391-b09d-2304bf84a112 not found in staged leads.csv
+notification,3ca3d7f2-ee1b-4266-a233-c03d84c997a5,notifications.csv,orphan_fk,metadata.lead_id=bf641a5c-7f40-4d2e-aec0-a06b5ff0ed90 not found in staged leads.csv
+notification,2738e898-345f-49f9-b57e-cbb8dfe17256,notifications.csv,orphan_fk,metadata.lead_id=f66e9680-b1ef-4ff8-bc2e-374664d72785 not found in staged leads.csv
+notification,715e2429-ecd0-4ae7-a33d-b74373f31cd4,notifications.csv,orphan_fk,metadata.lead_id=170e8002-f9df-4bd5-8ed7-25ad955fd1ac not found in staged leads.csv
+notification,d3f8c23e-0d23-4f57-846d-96aae312c575,notifications.csv,orphan_fk,metadata.lead_id=acfef73f-4322-49b1-8cfb-7083e28a484f not found in staged leads.csv
+notification,938c32b1-4789-4f8c-9868-e8195f2e2559,notifications.csv,orphan_fk,metadata.lead_id=ef6a9729-fee6-48c0-ae31-84773f08fe4a not found in staged leads.csv
+notification,2702e8d8-589d-4ac8-8f17-be11f71e92b7,notifications.csv,orphan_fk,metadata.lead_id=7572f48b-9b13-44da-acd2-a06265e2fead not found in staged leads.csv
+notification,8189a24c-3854-4376-bf03-f27ee1732364,notifications.csv,orphan_fk,metadata.lead_id=c6b23d5f-fe6b-4262-a5ff-a5102b358baa not found in staged leads.csv
+notification,6c53794f-3309-4862-8d5a-3ff44659860b,notifications.csv,orphan_fk,metadata.lead_id=44b23b5a-7aec-4b5c-a8b2-fd0dfe5968da not found in staged leads.csv
+notification,cc3616d0-aa03-47c0-a7ee-f34a82fc45bb,notifications.csv,orphan_fk,metadata.lead_id=bb3c3aab-c6f0-4d82-8ae3-20750c5c713a not found in staged leads.csv
+notification,33492e79-74bb-4fb1-867b-309e504ddf64,notifications.csv,orphan_fk,metadata.lead_id=647fda9c-74f1-451c-bda1-2fef3716158d not found in staged leads.csv
+notification,fc246f48-e9a6-4fe9-9192-8d5c909e89a4,notifications.csv,orphan_fk,metadata.lead_id=773a2781-d40e-493d-ac19-7fbdbf90ee2c not found in staged leads.csv
+notification,879cf409-3cee-4fbf-a3c6-c9ec3e5c345f,notifications.csv,orphan_fk,metadata.lead_id=603c11cd-768b-456c-a914-b77dfd1555d4 not found in staged leads.csv
+notification,3daa828f-f6f1-4342-a7ff-9e8cb3348144,notifications.csv,orphan_fk,metadata.lead_id=5e74b8bf-9c43-49f9-b467-52eaf1f60359 not found in staged leads.csv
+notification,b1268b6a-745c-4dd8-87f6-d438347aed6d,notifications.csv,orphan_fk,metadata.lead_id=6a44a733-b8e4-4374-80e1-9ddce98e741c not found in staged leads.csv
+notification,82e66ed2-b759-4054-afbb-68f48a689bf6,notifications.csv,orphan_fk,metadata.lead_id=66b34a54-eefb-49bd-999c-62848f4804b1 not found in staged leads.csv
+notification,2d7648b9-9e5a-417a-94d3-6044ff98ee68,notifications.csv,orphan_fk,metadata.lead_id=0a622979-fbf4-446e-9e1e-b7b932484cd3 not found in staged leads.csv
+notification,844a0c3f-83cf-4673-a639-b5c22feceb09,notifications.csv,orphan_fk,metadata.lead_id=7a5c9565-0a0c-4e45-871c-f1fc59f76cc0 not found in staged leads.csv
+notification,6b8eeede-3763-4145-806d-cf440bbccc7c,notifications.csv,orphan_fk,metadata.lead_id=3e32a8e6-eeb0-4b66-8997-8c11eedef92c not found in staged leads.csv
+notification,1167b6ab-76c7-4d90-9a7e-baf0f2a8eff3,notifications.csv,orphan_fk,metadata.lead_id=099f605d-5e68-4800-a75d-46f4252b34db not found in staged leads.csv
+notification,cd6e7beb-2d4f-4170-bc01-cb45e873ebb4,notifications.csv,orphan_fk,metadata.lead_id=f5fc09fb-fc92-4c38-8d49-3172fe766073 not found in staged leads.csv
+notification,2d665d1b-28d8-4f51-823d-60c748752c15,notifications.csv,orphan_fk,metadata.lead_id=da8426b3-9319-433f-b2ef-d1ecf53c9d39 not found in staged leads.csv
+notification,37aa7c53-091c-4a92-abc3-5879b9938b28,notifications.csv,orphan_fk,metadata.lead_id=f8214461-897d-467a-90e0-594f19973076 not found in staged leads.csv
+notification,0254a5a3-6a62-4ed5-b0b6-daa28261fcba,notifications.csv,orphan_fk,metadata.lead_id=c9a55b78-6d14-4984-8a03-05dae7d3a31c not found in staged leads.csv
+notification,78f82f05-ee0a-4190-9080-6d15def90b19,notifications.csv,orphan_fk,metadata.lead_id=45dda642-7e8d-46f6-a291-003899d90da5 not found in staged leads.csv
+notification,8df0108c-05e6-4939-8a9c-2c407cec49f2,notifications.csv,orphan_fk,metadata.lead_id=08113946-0bad-484f-8c4f-6ae8a0b8c558 not found in staged leads.csv
+notification,c9cc4547-65b7-41a9-b462-3eeb3229430f,notifications.csv,orphan_fk,metadata.lead_id=cdd7ed2a-0698-4c55-8558-f79fa85a9d24 not found in staged leads.csv
+notification,dc8c9a14-74f9-4ca7-8f3b-7257419d3c60,notifications.csv,orphan_fk,metadata.lead_id=af4957b8-b732-48a8-aa33-7190bc56bb38 not found in staged leads.csv
+notification,4e890a65-96fb-4bdf-b742-ed5c69bb03c6,notifications.csv,orphan_fk,metadata.lead_id=a013731b-7ab5-4fed-94d1-95b5cb8c04b6 not found in staged leads.csv
+notification,963270c8-c960-4ff5-a9b4-1d693f02d0eb,notifications.csv,orphan_fk,metadata.lead_id=88dfcfbc-dce1-40e1-ac30-18892db18541 not found in staged leads.csv
+notification,c3041fdb-262f-43fa-a332-ff2a35edc28f,notifications.csv,orphan_fk,metadata.lead_id=48190e03-1615-441b-a2d8-535fd1fed9b8 not found in staged leads.csv
+notification,135c3744-5545-48f7-8359-a35c031f9454,notifications.csv,orphan_fk,metadata.lead_id=bcb4013a-90ba-4ec8-ad8a-0dcca7f00671 not found in staged leads.csv
+notification,45abe9fe-c668-4985-84e0-f5663ebfef89,notifications.csv,orphan_fk,metadata.lead_id=95de2ffb-a1c6-43af-8147-8d716b77bcf3 not found in staged leads.csv
+notification,04e5d8b9-88c1-469b-97b1-706eed1b24d0,notifications.csv,orphan_fk,metadata.lead_id=c9d765cc-5046-43eb-9a7b-b8ff06ab5d3c not found in staged leads.csv
+notification,845d5110-6c8e-4505-a4a0-5408c3ab86a4,notifications.csv,orphan_fk,metadata.lead_id=daa4af8b-a295-4506-bf77-e3979d3c609f not found in staged leads.csv
+notification,d459d4ea-b4ff-4f95-9d34-a17e4993649f,notifications.csv,orphan_fk,metadata.lead_id=6216941f-f47f-4b5c-9281-05834ba91fe0 not found in staged leads.csv
+notification,67c9d66d-7ccf-4b9d-b69f-527e78008b7f,notifications.csv,orphan_fk,metadata.lead_id=4b331c9b-8f6f-4bae-9c8d-5aef5f263298 not found in staged leads.csv
+notification,b51164e7-7ddd-490d-95ec-1ea331a310bf,notifications.csv,orphan_fk,metadata.lead_id=6a5ed767-73ce-4464-8087-c225361df44b not found in staged leads.csv
+notification,7f5095b5-2bd0-4b51-a972-2e70a158ec24,notifications.csv,orphan_fk,metadata.lead_id=c1994389-ab14-4d0a-883e-66a7ef746a92 not found in staged leads.csv
+notification,8df59e41-3ef9-49ee-ae96-59af5365de9c,notifications.csv,orphan_fk,metadata.lead_id=644ceaea-d2d3-4a72-a77e-21565bef41e4 not found in staged leads.csv
+notification,9f2063d9-2a88-439a-a1a3-91317bd51716,notifications.csv,orphan_fk,metadata.lead_id=e5bc4352-3889-4f82-9ac2-e07b55118c37 not found in staged leads.csv
+notification,e6299618-501c-47b0-8eb9-b939546127b3,notifications.csv,orphan_fk,metadata.lead_id=a58a33a6-051c-4779-9232-9362ccfc8763 not found in staged leads.csv
+notification,0f39c417-6fff-40e6-8b00-3ab118f4fc6f,notifications.csv,orphan_fk,metadata.lead_id=3d178741-7b4e-49c5-8fda-225a864214eb not found in staged leads.csv
+notification,92bacfc5-43bb-4411-bf3c-4a2e47bd141d,notifications.csv,orphan_fk,metadata.lead_id=c5f3ff5e-720b-423b-8718-1b484f9c261f not found in staged leads.csv
+notification,69e5d9f0-fbeb-417a-886f-25d725020a06,notifications.csv,orphan_fk,metadata.lead_id=348e017b-470a-46d9-8144-379202275192 not found in staged leads.csv
+notification,b7d3b8f6-2a90-478a-9fe2-5afb1c29f151,notifications.csv,orphan_fk,metadata.lead_id=ee9a7737-57db-497e-947b-341680b5f877 not found in staged leads.csv
+notification,cf28b6d0-e610-432c-a4f6-16f22cbbb635,notifications.csv,orphan_fk,metadata.lead_id=689d46ef-a819-44e5-a44d-9eed3339279b not found in staged leads.csv
+notification,51678ef8-72b5-45df-8774-c62ec184627a,notifications.csv,orphan_fk,metadata.lead_id=354a9137-f228-44af-9c7c-c3098e5de810 not found in staged leads.csv
+notification,488ee451-5023-496f-a06a-1bca68895b4a,notifications.csv,orphan_fk,metadata.lead_id=4aaff3a2-76b6-4ecd-aca9-c18296955f9b not found in staged leads.csv
+notification,428f928c-6786-4336-a0da-88ac828f63db,notifications.csv,orphan_fk,metadata.lead_id=86c486c3-e03c-457d-bc28-6bcde82c9f71 not found in staged leads.csv
+notification,ff3814bf-4964-4571-898f-d4a7e33eb1e4,notifications.csv,orphan_fk,metadata.lead_id=168d75bc-839f-4367-9ee5-e43f99d1337e not found in staged leads.csv
+notification,0e5364ed-762e-463e-b980-466b50d70eb5,notifications.csv,orphan_fk,metadata.lead_id=134178bb-5bb0-4222-8f81-bde764799984 not found in staged leads.csv
+notification,74d11286-111b-4589-92e5-13a874ed66fc,notifications.csv,orphan_fk,metadata.lead_id=1132a033-fc04-4afd-ac22-0f9e041ad0d4 not found in staged leads.csv
+notification,7bb3e97d-c86e-4705-90c5-dad208bb111d,notifications.csv,orphan_fk,metadata.lead_id=752746f1-3e77-4f2b-8b6e-614081f7eb04 not found in staged leads.csv
+notification,dd06be2b-212a-4d39-87c1-dfb4a94a24b4,notifications.csv,orphan_fk,metadata.lead_id=779584de-fba8-4f3e-b10c-18696f704cce not found in staged leads.csv
+notification,e9895bc2-fc09-4b41-a80e-5b6e78ad3f5e,notifications.csv,orphan_fk,metadata.lead_id=689e6b88-70a4-40e8-b569-bd2c7b675cb7 not found in staged leads.csv
+notification,61ecb1e3-f59e-4fc3-918d-e6ec412ac5c4,notifications.csv,orphan_fk,metadata.lead_id=137afb29-5955-4c54-9ebb-8501d39098b8 not found in staged leads.csv
+notification,f6311fae-5b5a-47fe-abce-e844fdee511e,notifications.csv,orphan_fk,metadata.lead_id=a51f5acb-4167-4e96-9d1c-042284bc28e3 not found in staged leads.csv
+notification,dd3d5f42-5383-4c7e-b5cf-d743afac16f9,notifications.csv,orphan_fk,metadata.lead_id=96768ecf-8f13-4824-b93c-d43c35537023 not found in staged leads.csv
+notification,97c0936e-d8c7-4bac-b614-3e0b99f909fd,notifications.csv,orphan_fk,metadata.lead_id=5eda5bad-36b9-4853-beb0-9b894abe7c4f not found in staged leads.csv
+notification,10c434ff-e23d-4ea6-9b80-b39752d3ed99,notifications.csv,orphan_fk,metadata.lead_id=4bfe4a74-0ec5-4fcf-901c-45409073f89a not found in staged leads.csv
+notification,34d2d4b9-743d-49e7-9782-f0700add4aed,notifications.csv,orphan_fk,metadata.lead_id=e9d0e61d-2511-4753-b348-74e34af83e8c not found in staged leads.csv
+notification,1a62ca8f-7845-460c-a74c-40c20e13d37e,notifications.csv,orphan_fk,metadata.lead_id=642a7b1f-b1f4-428a-92a2-ba34ca3f974c not found in staged leads.csv
+notification,522dafed-fac4-478c-b61a-34f9fe8f1f59,notifications.csv,orphan_fk,metadata.lead_id=b378d2f3-31e8-48a3-9fb3-81482e37c79b not found in staged leads.csv
+notification,eb85b038-d995-45c9-9832-4f0809f968b2,notifications.csv,orphan_fk,metadata.lead_id=5718e04d-3298-4946-bd7c-82fb1b2e1d6b not found in staged leads.csv
+notification,5f5a0a6f-ae83-4e93-9d0e-e991d8942a8d,notifications.csv,orphan_fk,metadata.lead_id=fd48ce3c-2139-442c-9015-db4a6d122a25 not found in staged leads.csv
+notification,81f24fb5-f3f3-4612-890a-2dafe9b97e61,notifications.csv,orphan_fk,metadata.lead_id=e30818c3-8746-4b36-a49b-a63dd283ef22 not found in staged leads.csv
+notification,da4da327-ce11-45d8-9736-b45d10714ac4,notifications.csv,orphan_fk,metadata.lead_id=c27b9790-b5ed-48bf-b010-9d7adb11a396 not found in staged leads.csv
+notification,94ed34e8-0ba2-41d0-80f3-9ec9d5d16f1f,notifications.csv,orphan_fk,metadata.lead_id=fd434cf8-47af-47d1-9b86-fc177e34286e not found in staged leads.csv
+notification,51f9beb1-c081-4621-9ad2-6c5025316a28,notifications.csv,orphan_fk,metadata.lead_id=2472991f-676b-4e8f-afc7-2fd482a383ee not found in staged leads.csv
+notification,a4165c3b-31ec-4af2-bbde-c8b099e28f37,notifications.csv,orphan_fk,metadata.lead_id=aef9fdb3-cd3c-4326-bfc9-884c16961d78 not found in staged leads.csv
+notification,7dff1ca4-5943-467c-be89-486ec152ec4d,notifications.csv,orphan_fk,metadata.lead_id=ebcc17aa-c920-4e75-89ef-f4bf3bcedba9 not found in staged leads.csv
+notification,85169419-617a-4344-86f6-1b3bfb397f1e,notifications.csv,orphan_fk,metadata.lead_id=0d4d2b84-2b9b-427a-9dc0-512be7db0511 not found in staged leads.csv
+notification,ca91cc54-5316-4d1b-ad94-5069976de822,notifications.csv,orphan_fk,metadata.lead_id=cbbfee9f-8e71-4490-bd81-2d772b776aa9 not found in staged leads.csv
+notification,8928cee5-f712-4e7b-a73f-fe02eb0fd3c1,notifications.csv,orphan_fk,metadata.lead_id=e0153760-abcc-4d97-8509-7f0af66bd717 not found in staged leads.csv
+notification,235d8ac5-5cdb-4470-be2a-2587ac7822ff,notifications.csv,orphan_fk,metadata.lead_id=36c5be2e-1703-49ec-91c0-dd5af2753b13 not found in staged leads.csv
+notification,3fbf6027-3d8c-4f35-9e5f-de1085690529,notifications.csv,orphan_fk,metadata.lead_id=3702b1a5-3825-4a42-9836-10864e82cf68 not found in staged leads.csv
+notification,da874a4c-4b7e-4937-a2da-a7c023d7dc60,notifications.csv,orphan_fk,metadata.lead_id=2fdc952c-dc47-4682-8a32-5b5830c39bad not found in staged leads.csv
+notification,732e91cc-47f3-4078-aebb-2b6c554773fd,notifications.csv,orphan_fk,metadata.lead_id=48d06d98-f36e-469f-863f-050b89b888cb not found in staged leads.csv
+notification,0a294d2e-f06f-49be-be7d-6c789d62ea63,notifications.csv,orphan_fk,metadata.lead_id=37e79ac1-bd55-4d34-a7e3-48a2d39b5792 not found in staged leads.csv
+notification,3ead1609-4e24-4f58-a13b-7b283c0223e5,notifications.csv,orphan_fk,metadata.lead_id=8389cd73-9296-4d81-b122-fdc14777f30c not found in staged leads.csv
+notification,f6ddb618-45ba-4661-9472-3a5fe81c1c62,notifications.csv,orphan_fk,metadata.lead_id=8598aa3f-e41f-4348-9928-2ecfcc0722df not found in staged leads.csv
+notification,58a70353-c838-4f68-b5b9-f885307375a2,notifications.csv,orphan_fk,metadata.lead_id=97c30a92-7da2-4ea3-b51f-f1a872577951 not found in staged leads.csv
+notification,b458e2c1-0eb9-4060-b3d2-b7efd8b29df1,notifications.csv,orphan_fk,metadata.lead_id=56f6aa96-4282-4cf0-87dd-3efe2e0b3021 not found in staged leads.csv
+notification,6054c16b-73eb-4439-b567-d15b25eb5b4c,notifications.csv,orphan_fk,metadata.lead_id=5431c970-d70d-449e-8dd5-41896ddba07b not found in staged leads.csv
+notification,5aeb9a4a-2471-4787-8f88-48d0f52c9459,notifications.csv,orphan_fk,metadata.lead_id=96ec6ed1-f6bf-4255-a6db-eb73edb0daf8 not found in staged leads.csv
+notification,30f15cc0-9a79-48c4-8ca8-967a1febe1e8,notifications.csv,orphan_fk,metadata.lead_id=9b0a7a67-20ff-4d67-879c-1127e2612448 not found in staged leads.csv
+notification,c9d028d7-6e21-4e30-8bcd-6208bfa2a1e6,notifications.csv,orphan_fk,metadata.lead_id=1c89d8e9-9386-4ce4-a355-7ecd10ea45ef not found in staged leads.csv
+notification,3c4b3989-7bdf-424b-8057-a9c963264f1e,notifications.csv,orphan_fk,metadata.lead_id=961df627-1a32-43fa-aeb0-9882925a5988 not found in staged leads.csv
+notification,012e295f-3bd9-4333-87a5-b95095f97c7c,notifications.csv,orphan_fk,metadata.lead_id=0330da33-784f-4a6c-ad1d-cd0dc41630a5 not found in staged leads.csv
+notification,f106bd68-59c6-4a4a-a42e-89187772340f,notifications.csv,orphan_fk,metadata.lead_id=ab4479ac-3200-4fcd-9b70-8cba02401f24 not found in staged leads.csv
+notification,6d09c362-e169-4560-8967-d2de664a427e,notifications.csv,orphan_fk,metadata.lead_id=a7ec02fc-1550-4b28-a4b8-0af846e4ad3f not found in staged leads.csv
+notification,3441054f-b1ab-45b7-a238-9e164221718b,notifications.csv,orphan_fk,metadata.lead_id=b4dbca3d-f9af-407d-b521-a8639ec79ff6 not found in staged leads.csv
+notification,e62f20f7-90bc-498e-a260-7601b136f876,notifications.csv,orphan_fk,metadata.lead_id=dfb9edef-79e8-49bd-9bdc-7f9921541dd0 not found in staged leads.csv
+notification,b76fa36f-e9c3-41ad-9e7b-e3b8e0d0f459,notifications.csv,orphan_fk,metadata.lead_id=4a925e7d-0f37-4bd7-bb9c-fe9ade7ef785 not found in staged leads.csv
+notification,d0544f3a-b24e-42e5-9722-fced134e9997,notifications.csv,orphan_fk,metadata.lead_id=f1e84959-eb54-4e27-b3a3-354cd579e20e not found in staged leads.csv
+notification,896570dc-73c0-4128-977f-1e3cf4c5c168,notifications.csv,orphan_fk,metadata.lead_id=9204eeb0-8428-4193-b39c-77b501985524 not found in staged leads.csv
+notification,ccd7b16d-bac6-41c4-be82-c8dde957bb4f,notifications.csv,orphan_fk,metadata.lead_id=17c80dc0-bb22-4474-b68f-546d7abecceb not found in staged leads.csv
+notification,7b6296f6-f8ec-45b3-8d3d-1c4048347be2,notifications.csv,orphan_fk,metadata.lead_id=aac9537a-6485-40e8-af68-91fa7e93daae not found in staged leads.csv
+notification,60da0502-0073-46e2-b7c2-84289068acca,notifications.csv,orphan_fk,metadata.lead_id=5765300f-fe6a-4b4f-b9e9-57dacaaeb804 not found in staged leads.csv
+notification,5ce594ac-b1be-4e98-86fd-2761645837dc,notifications.csv,orphan_fk,metadata.lead_id=edded4b5-dbf0-4c31-b088-9db444a8b6fb not found in staged leads.csv
+notification,ff1338c0-603f-44b1-9125-641c23cdec35,notifications.csv,orphan_fk,metadata.lead_id=e313d567-ee65-4fe9-8d7d-0952f48ebdf2 not found in staged leads.csv
+notification,b5590d98-f3e4-4ce9-9f27-9bfd4215a143,notifications.csv,orphan_fk,metadata.lead_id=434401d6-b8d4-4193-a4dc-370e218ab33f not found in staged leads.csv
+notification,aa5d0eec-2969-4a15-b41c-1e94bc8f0468,notifications.csv,orphan_fk,metadata.lead_id=c33ea158-9dad-4174-9edb-cf4158eecf2d not found in staged leads.csv
+notification,56d2f752-11ba-4d22-a6b5-985520969138,notifications.csv,orphan_fk,metadata.lead_id=cdd7ceb1-35f1-453a-a087-75abfc03c464 not found in staged leads.csv
+notification,5e165aa6-b32b-4bfe-b41b-8e4471b17cec,notifications.csv,orphan_fk,metadata.lead_id=7b5ffffe-a913-4e4e-be7e-d82ec6f2175f not found in staged leads.csv
+notification,a89fa762-1f8c-4644-af4c-b4481731aa88,notifications.csv,orphan_fk,metadata.lead_id=322e2fdf-0919-4d8d-82ce-0b57b8b9d88f not found in staged leads.csv
+notification,77ac38d9-4e70-42b3-84ef-223e69f9a244,notifications.csv,orphan_fk,metadata.lead_id=200064c8-3817-4b72-b8f0-38079e7ac276 not found in staged leads.csv
+notification,eafeb51a-c591-4529-ba70-13fab94fd404,notifications.csv,orphan_fk,metadata.lead_id=8cf04c3e-e7a6-4018-9ca9-f800443495f3 not found in staged leads.csv
+notification,e4ac252c-556a-475b-8672-0c5b327c3444,notifications.csv,orphan_fk,metadata.lead_id=5c915c37-98fd-4ba1-a75c-d1f59f78f12a not found in staged leads.csv
+notification,4830664a-c5cb-4a84-9695-a31a3e356d29,notifications.csv,orphan_fk,metadata.lead_id=445897a0-477d-47ee-81e0-5d8360687617 not found in staged leads.csv
+notification,2d5ae60a-1ef2-4ca4-b5cb-42f3d6733921,notifications.csv,orphan_fk,metadata.lead_id=919ac7d9-9a5b-4f78-ae7e-d5e66b189de1 not found in staged leads.csv
+notification,75874a5a-f072-4f4e-b88c-101cd1d7aca6,notifications.csv,orphan_fk,metadata.lead_id=cea4ce40-befe-40bd-b147-31baee93eeef not found in staged leads.csv
+notification,38ca2132-f437-44a2-9f43-7ba19c06ae1b,notifications.csv,orphan_fk,metadata.lead_id=7f7be095-36e9-422a-afb5-0d7dae43721b not found in staged leads.csv
+notification,29166d77-b1b5-4cbd-82a2-e2dcd6576a07,notifications.csv,orphan_fk,metadata.lead_id=e1a97ffb-6cb9-4a3c-98cd-0fb376b10bab not found in staged leads.csv
+notification,c3690291-a73c-49b1-bf13-e6ad4e52025d,notifications.csv,orphan_fk,metadata.lead_id=fc6c1066-b998-400c-b7b0-b1ed8473290f not found in staged leads.csv
+notification,bdf7325b-02b2-436e-a156-097d7f09813b,notifications.csv,orphan_fk,metadata.lead_id=030ee44f-6412-4634-a30d-8b43d752f64d not found in staged leads.csv
+notification,a768ceac-1b0b-4840-b18f-536d6405e0b1,notifications.csv,orphan_fk,metadata.lead_id=8099d647-3ae4-4a42-a728-babd58e4b21e not found in staged leads.csv
+notification,fab24019-1921-4a92-a13b-3a403ebe9e48,notifications.csv,orphan_fk,metadata.lead_id=bfb1046b-ddcc-4a56-98a4-858a9864a0e0 not found in staged leads.csv
+notification,e9ca7325-9ade-42b2-98ed-c84b3ab0484f,notifications.csv,orphan_fk,metadata.lead_id=3c33f86f-8329-423b-bcd6-7dc748ca3074 not found in staged leads.csv
+notification,14fe0c39-1215-4919-9892-934763092d29,notifications.csv,orphan_fk,metadata.lead_id=820fd87d-627a-4237-8717-285c825f37c5 not found in staged leads.csv
+notification,d05674cd-9659-43dd-8db7-09f73fc921fd,notifications.csv,orphan_fk,metadata.lead_id=10818b39-6247-4b0a-b33c-af3de402c7d4 not found in staged leads.csv
+notification,be0524f8-6a63-45f7-803a-16a538e47b05,notifications.csv,orphan_fk,metadata.lead_id=52507c65-a854-46b1-9267-c28fdc941a26 not found in staged leads.csv
+lead,3ce5c737-c618-4aa2-b4d0-a885e449c67a,leads.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+lead,1fb2e945-c7d2-43f4-94f8-b5ebdecb3176,leads.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+lead,99a7ef58-d5ac-4765-bc50-2aaf4391af58,leads.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+lead,792f0a3c-30cb-47c2-a945-8774302b9339,leads.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+lead,b82eb266-4adc-4ae6-b44e-cb00ade8271c,leads.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+lead,3678b24a-2168-42a2-b998-fe2663946a1f,leads.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+lead,3453c6b5-e5ec-4363-be4f-91e823262ee3,leads.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,6e2453b0-c4db-4b83-8b1f-26f4d578377d,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,ba8de981-2435-452f-abfb-c93737ed0e13,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,383c6b9e-4a57-4c9d-891d-3ac0cc863322,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,5e950efa-0b55-4b71-bc88-75d4029f726c,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,6ca36175-483e-4173-b29d-6a07d6de96a6,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,78c9ca4b-6431-4949-80e3-3a73b1e646d5,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,9794d927-d1af-465b-b8ce-a868a7f45623,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,38d07878-94d1-4af2-a902-316c71658fa8,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,6b79e6f1-6271-4433-80a1-abc036f5404a,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,dc51f4e2-fd80-4d00-95cf-8a4130a4d722,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+rental_website,1fe2031b-61e8-4a65-a3d0-a0bd550e5e02,rental_websites.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+hosting_record,ea940195-31a5-489b-a88d-d18254f8f399,hosting_records.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+hosting_record,c972c247-6d7d-483c-8a49-c2c8d3ab1f8f,hosting_records.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+hosting_record,b12d0b44-e20a-4851-a182-018f5c152f98,hosting_records.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,d28f58d2-547b-4555-89b2-ccffc06a0af9,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,a70464ce-1d08-43aa-8337-302dcba84ca4,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,55a78c63-a7c9-48da-af44-acc80b374287,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,6f25cb39-0edf-454e-b207-11c31ae15d1e,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,a5cea190-679d-4071-b176-924206551cb1,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,5a5a8670-5c87-4c9b-a329-f618fd7c0e50,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,0ab92ada-5d46-4343-b89f-f14c28ee80de,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,c4c3c551-09e7-4808-8b66-e6ee3d4c8c7f,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,0b8ab9d3-9245-4ff7-a639-bae54d5ade3d,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,ddadff26-7b24-4239-bd88-93b7f49832ae,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,585f849f-272d-4939-8b2d-245149bc9d82,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,828fa2fc-46eb-4051-bf2c-6e32673b9009,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,cbb73802-27ce-4ca4-a5fa-7d2cd2c50bb0,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+commission,21a05d5c-5f6b-471a-a8f4-78fb07869289,commissions.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+task,529bd7b9-92e4-4b90-b6ca-2cbd0dad64c7,tasks.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+task,80ea1327-5042-4c19-9b11-1fe4a51e9a32,tasks.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+task,9b0f651d-0783-4a32-9d87-62dcdc576935,tasks.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+task,c59bb944-aba5-4f19-8824-22f51d6222bd,tasks.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+project_note,9bec114f-3006-44f8-8990-138182ba8a1e,project_notes.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+project_note,80087dfb-0d8e-4120-92de-e5b1c3e0bb53,project_notes.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+project_note,d8dd99a7-f118-4f6f-8224-b1578dfa6017,project_notes.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+project_note,4f115202-073c-48e5-82ff-71486ff412f4,project_notes.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+project_note,27c25f11-84e5-45f9-bdb2-63504aa95cc9,project_notes.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+project_note,fc60afb4-bfaf-49ed-8b17-88f8293ce4ac,project_notes.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+project_note,d712469c-bc6f-4851-ab9d-6d8e726d79c4,project_notes.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,8ab6435f-baa2-4f3d-adb3-5dd0bff97042,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,e296defc-d553-4592-954d-63bea64c800f,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,43ef1c84-622e-47c1-828c-bd0a4b4cbb4b,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,30d7c234-28cb-4cbe-8c42-dc96a0e02aa1,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,f6c69767-334a-499a-a8bd-707e3c4bfc87,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,ee55b113-a7ad-482f-a18f-3fb61f7ecf3f,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,13d1fc2d-9173-42bf-911c-58182aa5b32f,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,6531c6ef-d41f-47b3-a47e-b4dbc7adc8db,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,016492f0-b136-49c9-b04a-093582d64ccf,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,f60cc684-ffdb-407c-a8e9-a48c9c6efe8a,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,b16b4444-0ff8-48f1-b303-bb0af02f99b2,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,d1ab5459-f907-43fc-8f39-8d9786a28c0f,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+communication_event,747de4cc-ee4e-4b3f-b261-61915e0b23a5,communication_events.csv,ambiguous_customer_match,Missing customer_id — bridge via email/name on promote
+project_note,9bec114f-3006-44f8-8990-138182ba8a1e,project_notes.csv,sensitive_payload,"Contains sensitive fields: [field], [field], access_[field] — promote only to admin [field]"
+project_note,80087dfb-0d8e-4120-92de-e5b1c3e0bb53,project_notes.csv,sensitive_payload,"Contains sensitive fields: [field], [field], access_[field] — promote only to admin [field]"
+project_note,d8dd99a7-f118-4f6f-8224-b1578dfa6017,project_notes.csv,sensitive_payload,"Contains sensitive fields: [field], [field], access_[field] — promote only to admin [field]"
+project_note,4f115202-073c-48e5-82ff-71486ff412f4,project_notes.csv,sensitive_payload,"Contains sensitive fields: [field], [field], access_[field] — promote only to admin [field]"
+project_note,27c25f11-84e5-45f9-bdb2-63504aa95cc9,project_notes.csv,sensitive_payload,"Contains sensitive fields: [field], [field], access_[field] — promote only to admin [field]"
+project_note,fc60afb4-bfaf-49ed-8b17-88f8293ce4ac,project_notes.csv,sensitive_payload,"Contains sensitive fields: [field], [field], access_[field] — promote only to admin [field]"
+project_note,ca4f2eb3-8168-4b93-a378-e9a66cbc07c8,project_notes.csv,sensitive_payload,"Contains sensitive fields: [field], [field], access_[field] — promote only to admin [field]"
+project_note,d712469c-bc6f-4851-ab9d-6d8e726d79c4,project_notes.csv,sensitive_payload,"Contains sensitive fields: [field], [field], access_[field] — promote only to admin [field]"

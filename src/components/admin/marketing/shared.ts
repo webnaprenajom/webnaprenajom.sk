@@ -49,6 +49,9 @@ export const MARKETING_STATUS_COLORS: Record<MarketingStatus, string> = {
   archived: "bg-muted text-muted-foreground border-border",
 };
 
+export const MARKETING_LIST_SELECT =
+  "id,title,client_name,customer_email,customer_id,lead_id,channel,status,url,notes,created_at,updated_at,agreed_fee" as const;
+
 export const emptyMarketingRecord: Omit<
   MarketingRecord,
   "id" | "created_at" | "updated_at"

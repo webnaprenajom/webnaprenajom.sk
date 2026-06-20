@@ -1,0 +1,5 @@
+{
+  "batchKey": "legacy_crm_2026_06_20",
+  "instructions": "Fill team_user_id with the UUID from auth.users on team Supabase (qosxlmrrkyvobjigsynt). Never map to profiles.",
+  "mappings": []
+}

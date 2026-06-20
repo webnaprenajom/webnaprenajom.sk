@@ -1,0 +1,3 @@
+# legacy_crm_2026_06_20 — fill team_user_id before manual user_roles promote
+batch_key: legacy_crm_2026_06_20
+mappings:

@@ -244,6 +244,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
         url: rentalUrl.trim() || null,
         client_name: linked.client_name || null,
         customer_id: linked.customer_id,
+        customer_email: linked.customer_email || null,
         monthly_price: monthlyPrice,
         year: new Date().getFullYear(),
         implementers: [],

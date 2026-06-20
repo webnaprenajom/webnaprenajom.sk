@@ -1,0 +1,17 @@
+id,source_table,source_id,implementer,amount,currency,paid_at,reference,note,truth_level,imported_from,created_at,updated_at
+150da5ec-4c6e-43d4-b17e-935264e9c532,commissions,a5cea190-679d-4071-b176-924206551cb1,Matúš,70,EUR,2026-05-01 12:00:00+00,,Aladin grafika,legacy_import,commissions.payment_status=paid,2026-05-01 23:43:13.154765+00,2026-05-14 23:23:10.780387+00
+213655f8-ec18-4586-a4e9-49d043cd91ae,commissions,828fa2fc-46eb-4051-bf2c-6e32673b9009,Maroš,500,EUR,2026-04-30 12:00:00+00,,Vyrovnane s realizacioz Damskabielizen.sk,legacy_import,commissions.payment_status=paid,2026-04-30 00:12:50.445051+00,2026-05-16 11:45:18.972292+00
+f2f34107-5f8e-4c7b-89e4-a4982c2bb57a,commissions,c4c3c551-09e7-4808-8b66-e6ee3d4c8c7f,Dominik,580,EUR,2026-05-16 12:00:00+00,,Uptosky + video,legacy_import,commissions.payment_status=paid,2026-05-16 11:49:31.315771+00,2026-05-16 11:49:31.315771+00
+f76e5fb0-ccc3-487b-95c7-6ee64407bd55,commissions,21a05d5c-5f6b-471a-a8f4-78fb07869289,Maroš,105,EUR,2026-04-30 12:00:00+00,,"0xb7b41C1F16fFBA3c0624B874eFAC9B595521aE07 - 121 USDT
+
+https://arbiscan.io/tx/0xfb739445c646bd4c9f4fddce75bb936509e80907807f0d5229607c357ff48a05",legacy_import,commissions.payment_status=paid,2026-04-30 00:56:18.406178+00,2026-05-21 18:11:48.361288+00
+472e6e82-026b-4919-875f-16af48bf075a,commissions,585f849f-272d-4939-8b2d-245149bc9d82,Maros,180,EUR,2026-02-21 12:00:00+00,,"0xb7b41C1F16fFBA3c0624B874eFAC9B595521aE07 - 212 USDT
+
+https://arbiscan.io/tx/0x66b6bfc0bcf44287e2296b3190fbb02082976f4d64da8cde4869646b466b6afd",legacy_import,commissions.payment_status=paid,2026-05-21 18:13:03.215074+00,2026-05-21 18:13:49.051992+00
+bca73c85-c7a2-45f5-8fe2-a14accf53919,commissions,d28f58d2-547b-4555-89b2-ccffc06a0af9,Maros,175,EUR,2026-05-19 12:00:00+00,,"250/100*70=175e~205usdt
+0xb7b41C1F16fFBA3c0624B874eFAC9B595521aE07
+
+https://arbiscan.io/tx/0xe9b5089a74806f14487273c7cfebab149306e5f9f0f7d9b431e8706a3d2c4c23",legacy_import,commissions.payment_status=paid,2026-05-19 08:42:32.290309+00,2026-05-21 18:15:30.508096+00
+621efe44-7cff-4290-937e-917bb92e4940,commissions,cbb73802-27ce-4ca4-a5fa-7d2cd2c50bb0,Maroš,125,EUR,2026-04-01 12:00:00+00,,"0xb7b41C1F16fFBA3c0624B874eFAC9B595521aE07 - 145 USDT - Email marketing
+
+https://arbiscan.io/tx/0xc06908d73516c714127bdf2914de9c1c7fe584c0195871061adaffebe8a77dd2",legacy_import,commissions.payment_status=paid,2026-04-30 00:53:42.367842+00,2026-05-21 18:15:42.575116+00
