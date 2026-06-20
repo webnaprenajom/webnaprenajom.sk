@@ -33,7 +33,6 @@ import {
   Eye,
   EyeOff,
   Copy,
-  ExternalLink,
   KeyRound,
   FileText,
   Search,
@@ -302,7 +301,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
             <Link to="/admin/projects" className="text-primary hover:underline">
               Projekty
             </Link>
-            .
+            . Riadkový prehľad ako v Projektoch — odhalenie hesla je zámerné.
           </p>
         )}
 
@@ -326,17 +325,19 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
           })}
         </div>
 
-        {mode === "projects" && (
-          <div className="relative max-w-md">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              className="pl-9"
-              placeholder="Hľadať projekt, klienta, stav, URL…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        )}
+        <div className="relative max-w-md">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder={
+              mode === "passwords"
+                ? "Hľadať projekt, klienta, login, URL…"
+                : "Hľadať projekt, klienta, stav, URL…"
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
         {loading ? (
           <div className="py-16 flex items-center justify-center">
@@ -350,35 +351,6 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                 ? "Žiadne projekty. Pridaj prvý."
                 : "Žiadna zhoda pre zadané filtre alebo vyhľadávanie."}
           </div>
-        ) : mode === "passwords" ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map((item) => {
-              const status = PROJECT_STATUSES.find((s) => s.value === item.status);
-              const shown = reveal[item.id];
-              return (
-                <div key={item.id} className="bg-card border border-border rounded-xl p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h3 className="font-semibold truncate">{item.title}</h3>
-                      {item.client_name && (
-                        <p className="text-xs text-muted-foreground truncate">{item.client_name}</p>
-                      )}
-                    </div>
-                    <Badge variant="outline" className={status?.color}>
-                      {status?.label}
-                    </Badge>
-                  </div>
-                  <CredentialsBlock
-                    item={item}
-                    shown={shown}
-                    onToggle={() => setReveal((r) => ({ ...r, [item.id]: !r[item.id] }))}
-                    onCopy={copy}
-                  />
-                  <CardActions item={item} onEdit={openEdit} onRemove={remove} />
-                </div>
-              );
-            })}
-          </div>
         ) : (
           <div className="rounded-xl border overflow-x-auto">
             <Table>
@@ -386,9 +358,18 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                 <TableRow>
                   <TableHead>Projekt</TableHead>
                   <TableHead>Klient</TableHead>
-                  <TableHead>Typ</TableHead>
+                  {mode === "passwords" ? (
+                    <>
+                      <TableHead>Login</TableHead>
+                      <TableHead>Heslo</TableHead>
+                    </>
+                  ) : (
+                    <>
+                      <TableHead>Typ</TableHead>
+                      <TableHead>URL</TableHead>
+                    </>
+                  )}
                   <TableHead>Stav</TableHead>
-                  <TableHead>URL</TableHead>
                   <TableHead>Aktualizované</TableHead>
                   <TableHead className="w-[120px]" />
                 </TableRow>
@@ -398,7 +379,9 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                   const status = PROJECT_STATUSES.find((s) => s.value === item.status);
                   const typeLabel =
                     PROJECT_TYPE_OPTIONS.find((t) => t.value === item.project_type)?.label ?? "—";
-                  const creds = hasCredentials(item);
+                  const creds = resolveProjectCredentials(item);
+                  const primary = creds[0];
+                  const shown = reveal[item.id];
                   const customerHref = item.client_name
                     ? customerHrefByClientName(item.client_name, clientEmailMap)
                     : null;
@@ -411,7 +394,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                         >
                           {item.title}
                         </Link>
-                        {creds && (
+                        {mode === "projects" && hasCredentials(item) && (
                           <Link
                             to="/admin/passwords"
                             className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary mt-0.5"
@@ -437,25 +420,62 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-xs">{typeLabel}</TableCell>
+                      {mode === "passwords" ? (
+                        <>
+                          <TableCell className="text-xs font-mono max-w-[140px] truncate">
+                            {primary?.login || "—"}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {primary?.password ? (
+                              <div className="flex items-center gap-1">
+                                <span className="font-mono truncate max-w-[120px]">
+                                  {shown ? primary.password : MASKED_PASSWORD}
+                                </span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6 shrink-0"
+                                  onClick={() => setReveal((r) => ({ ...r, [item.id]: !r[item.id] }))}
+                                >
+                                  {shown ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6 shrink-0"
+                                  onClick={() => copy(primary.password ?? null, "Heslo")}
+                                >
+                                  <Copy className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell className="text-xs">{typeLabel}</TableCell>
+                          <TableCell className="text-xs max-w-[160px]">
+                            {item.url ? (
+                              <a
+                                href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline truncate block"
+                              >
+                                {item.url}
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        </>
+                      )}
                       <TableCell>
                         <Badge variant="outline" className={status?.color}>
                           {status?.label}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-xs max-w-[160px]">
-                        {item.url ? (
-                          <a
-                            href={item.url.startsWith("http") ? item.url : `https://${item.url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline truncate block"
-                          >
-                            {item.url}
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
                       </TableCell>
                       <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
                         {new Date(item.updated_at).toLocaleDateString("sk-SK")}
@@ -505,97 +525,6 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
         onClearCustomerFieldError={() => setCustomerFieldError(null)}
       />
     </AdminShell>
-  );
-}
-
-function CardActions({
-  item,
-  onEdit,
-  onRemove,
-  updatedAt,
-}: {
-  item: ProjectNote;
-  onEdit: (item: Partial<ProjectNote>) => void;
-  onRemove: (id: string) => void;
-  updatedAt?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between pt-2 border-t border-border/50">
-      <span className="text-[10px] text-muted-foreground">
-        {updatedAt ? new Date(updatedAt).toLocaleDateString("sk-SK") : null}
-      </span>
-      <div className="flex gap-1">
-        <Button size="sm" variant="ghost" className="h-7 text-xs" asChild>
-          <Link to={`/admin/projects/${item.id}`}>Detail</Link>
-        </Button>
-        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onEdit(item)}>
-          <Pencil className="w-3.5 h-3.5" />
-        </Button>
-        <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => onRemove(item.id)}>
-          <Trash2 className="w-3.5 h-3.5" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function CredentialsBlock({
-  item,
-  shown,
-  onToggle,
-  onCopy,
-}: {
-  item: ProjectNote;
-  shown: boolean;
-  onToggle: () => void;
-  onCopy: (val: string | null, label: string) => void;
-}) {
-  const credentials = resolveProjectCredentials(item);
-  if (credentials.length === 0) return null;
-
-  return (
-    <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-3 space-y-3">
-      {credentials.map((cred) => (
-        <div key={cred.id} className="space-y-2 border-b border-amber-500/10 last:border-0 pb-2 last:pb-0">
-          <p className="text-xs font-medium text-amber-800 dark:text-amber-300">{cred.label}</p>
-          {cred.url && (
-            <div className="flex items-center gap-2 text-sm">
-              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              <a
-                href={cred.url.startsWith("http") ? cred.url : `https://${cred.url}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline truncate"
-              >
-                {cred.url}
-              </a>
-            </div>
-          )}
-          {cred.login && (
-            <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-muted-foreground text-xs w-16 shrink-0">Login</span>
-              <span className="font-mono truncate flex-1">{cred.login}</span>
-              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onCopy(cred.login ?? null, "Login")}>
-                <Copy className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
-          {cred.password && (
-            <div className="flex items-center justify-between gap-2 text-sm">
-              <span className="text-muted-foreground text-xs w-16 shrink-0">Heslo</span>
-              <span className="font-mono truncate flex-1">{shown ? cred.password : MASKED_PASSWORD}</span>
-              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={onToggle}>
-                {shown ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-              </Button>
-              <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => onCopy(cred.password ?? null, "Heslo")}>
-                <Copy className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
-          {cred.note && <p className="text-xs text-muted-foreground">{cred.note}</p>}
-        </div>
-      ))}
-    </div>
   );
 }
 

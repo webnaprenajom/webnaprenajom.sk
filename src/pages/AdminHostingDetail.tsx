@@ -1,19 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { EntityCommissionsPanel } from "@/components/admin/EntityCommissionsPanel";
+import { EntityPaymentRecordsPanel } from "@/components/admin/EntityPaymentRecordsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
 import { ArrowLeft, Loader2, AlertCircle, Trash2 } from "lucide-react";
@@ -32,6 +25,11 @@ import { useAccessContext } from "@/hooks/useAccessContext";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { buildTaskCreateHref } from "@/lib/tasks/taskParentModel";
+import {
+  entityHasLinkedPaymentInRows,
+  type EntityPaymentRow,
+} from "@/lib/finance/entityPaymentBridge";
+import { financeCtxWithPayments, prefillFromHosting } from "@/lib/finance/factDrafts";
 
 export default function AdminHostingDetail() {
   const { id = "" } = useParams();
@@ -39,11 +37,12 @@ export default function AdminHostingDetail() {
   const access = useAccessContext();
   const [loading, setLoading] = useState(true);
   const [record, setRecord] = useState<HostingRecordRow | null>(null);
-  const [payments, setPayments] = useState<any[]>([]);
+  const [payments, setPayments] = useState<EntityPaymentRow[]>([]);
   const [linkedRental, setLinkedRental] = useState<{ id: string; name: string; url: string | null } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [estimatedProjects, setEstimatedProjects] = useState<Array<{ id: string; title: string }>>([]);
   const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction();
+  const paymentCtx = useMemo(() => financeCtxWithPayments(payments), [payments]);
 
   useEffect(() => {
     if (!id) return;
@@ -82,7 +81,7 @@ export default function AdminHostingDetail() {
     const [payRes, rentalRes, projectRes] = await Promise.all([
       supabase
         .from("payment_records")
-        .select("*")
+        .select("id,amount,paid_at,note,truth_level,source_table,source_id")
         .eq("source_table", "hosting_records")
         .eq("source_id", id)
         .order("paid_at", { ascending: false }),
@@ -101,7 +100,7 @@ export default function AdminHostingDetail() {
         : Promise.resolve({ data: [] }),
     ]);
 
-    setPayments(payRes.data || []);
+    setPayments((payRes.data || []) as EntityPaymentRow[]);
     if (rentalRes.data) setLinkedRental(rentalRes.data);
     setEstimatedProjects(projectRes.data || []);
     setLoading(false);
@@ -143,6 +142,12 @@ export default function AdminHostingDetail() {
 
   const label = record.client_name || record.customer_email || record.provider || "Hosting";
   const isStandalone = !record.rental_website_id;
+  const hostingPaymentLinked = entityHasLinkedPaymentInRows("hosting_records", record.id, payments);
+  const hostingPaymentHint = hostingPaymentLinked
+    ? "Pre tento hosting už existuje potvrdená platba."
+    : record.monthly_price == null && record.yearly_price == null
+      ? "Vyplňte mesačnú alebo ročnú cenu hostingu v prehľade."
+      : null;
 
   return (
     <AdminShell
@@ -183,11 +188,12 @@ export default function AdminHostingDetail() {
       }
     >
       <Tabs defaultValue="prehlad" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="prehlad">Prehľad</TabsTrigger>
           <TabsTrigger value="provizie">Provízie</TabsTrigger>
           <TabsTrigger value="platby">Platby</TabsTrigger>
-          <TabsTrigger value="poznamka">Poznámka</TabsTrigger>
+          <TabsTrigger value="poznamky">Poznámky</TabsTrigger>
+          <TabsTrigger value="suvisiace">Súvisiace</TabsTrigger>
         </TabsList>
 
         <TabsContent value="prehlad">
@@ -260,34 +266,6 @@ export default function AdminHostingDetail() {
                 {record.active ? "aktívny" : "neaktívny"}
               </Badge>
             </Field>
-            <Field label="Prepojený prenájom">
-              {linkedRental ? (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Link to="/admin/rentals" className="text-primary hover:underline">
-                    {linkedRental.name || linkedRental.url}
-                  </Link>
-                  <ConfirmedLinkBadge />
-                </div>
-              ) : (
-                <span className="text-muted-foreground text-xs">Samostatný hosting bez rental_website_id</span>
-              )}
-            </Field>
-            {estimatedProjects.length > 0 && (
-              <Field label="Možné projekty">
-                <div className="space-y-1">
-                  <EstimatedLinkBadge />
-                  <ul className="text-xs space-y-0.5 mt-1">
-                    {estimatedProjects.map((p) => (
-                      <li key={p.id}>
-                        <Link to={`/admin/projects/${p.id}`} className="text-primary hover:underline">
-                          {p.title}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </Field>
-            )}
             <Field label="Vytvorené" value={new Date(record.created_at).toLocaleString("sk-SK")} />
             </div>
           </section>
@@ -307,37 +285,23 @@ export default function AdminHostingDetail() {
         </TabsContent>
 
         <TabsContent value="platby">
-          {payments.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center border border-dashed rounded-xl">
-              Žiadne platobné záznamy prepojené s týmto hostingom.
-            </p>
-          ) : (
-            <div className="rounded-xl border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Dátum</TableHead>
-                    <TableHead>Suma</TableHead>
-                    <TableHead>Poznámka</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {payments.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell className="text-xs">
-                        {p.paid_at ? new Date(p.paid_at).toLocaleDateString("sk-SK") : "—"}
-                      </TableCell>
-                      <TableCell className="font-medium">{Number(p.amount || 0).toFixed(2)} €</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{p.note || "—"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <EntityPaymentRecordsPanel
+            payments={payments}
+            onSaved={() => void load()}
+            createActions={[
+              {
+                key: "create",
+                label: "Vytvoriť platbu",
+                linkedExists: hostingPaymentLinked,
+                disabled: !!hostingPaymentHint,
+                hint: hostingPaymentHint,
+                buildDraft: () => prefillFromHosting(record, paymentCtx),
+              },
+            ]}
+          />
         </TabsContent>
 
-        <TabsContent value="poznamka">
+        <TabsContent value="poznamky">
           {record.note ? (
             <div className="rounded-xl border bg-card p-4 text-sm whitespace-pre-wrap">{record.note}</div>
           ) : (
@@ -345,6 +309,45 @@ export default function AdminHostingDetail() {
               Žiadna poznámka.
             </p>
           )}
+        </TabsContent>
+
+        <TabsContent value="suvisiace" className="space-y-4">
+          <section className="rounded-xl border bg-card p-4 space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-semibold">Prenájom</h3>
+              {linkedRental ? <ConfirmedLinkBadge label="Viazaný na prenájom" /> : <StandaloneEntityBadge />}
+            </div>
+            {linkedRental ? (
+              <Link to="/admin/rentals" className="text-sm text-primary hover:underline">
+                {linkedRental.name || linkedRental.url}
+              </Link>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                Samostatný hosting bez rental_website_id.
+              </p>
+            )}
+          </section>
+          <section className="rounded-xl border bg-card p-4 space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-semibold">Projekty</h3>
+              <EstimatedLinkBadge />
+            </div>
+            {estimatedProjects.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">
+                Žiadne projekty s rovnakým e-mailom klienta.
+              </p>
+            ) : (
+              <ul className="text-sm space-y-1 list-disc pl-4">
+                {estimatedProjects.map((p) => (
+                  <li key={p.id}>
+                    <Link to={`/admin/projects/${p.id}`} className="text-primary hover:underline">
+                      {p.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </TabsContent>
       </Tabs>
       <DestructiveModal {...modalProps} />

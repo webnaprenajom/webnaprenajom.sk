@@ -167,8 +167,10 @@ export default function AdminMarketingDetail() {
       <Tabs defaultValue="prehlad" className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="prehlad">Prehľad</TabsTrigger>
+          <TabsTrigger value="poznamky">Poznámky</TabsTrigger>
           <TabsTrigger value="provizie">Provízie</TabsTrigger>
           <TabsTrigger value="platby">Platby</TabsTrigger>
+          <TabsTrigger value="suvisiace">Súvisiace</TabsTrigger>
         </TabsList>
 
         <TabsContent value="prehlad" className="space-y-4">
@@ -247,16 +249,17 @@ export default function AdminMarketingDetail() {
             Základ pre opt-in platbu do financií — nie je auditovaný príjem.
           </p>
         </div>
-        <div className="sm:col-span-2">
-          <Field label="Poznámky">
-            {record.notes ? (
-              <div className="mt-1 rounded-lg bg-muted/40 p-3 whitespace-pre-wrap">{record.notes}</div>
-            ) : (
-              <span className="text-muted-foreground">—</span>
-            )}
-          </Field>
-        </div>
       </section>
+        </TabsContent>
+
+        <TabsContent value="poznamky" className="space-y-4">
+          {record.notes ? (
+            <div className="rounded-xl border bg-card p-4 text-sm whitespace-pre-wrap">{record.notes}</div>
+          ) : (
+            <p className="text-sm text-muted-foreground py-8 text-center border border-dashed rounded-xl">
+              Žiadne poznámky.
+            </p>
+          )}
         </TabsContent>
 
         <TabsContent value="provizie">
@@ -285,6 +288,38 @@ export default function AdminMarketingDetail() {
               },
             ]}
           />
+        </TabsContent>
+
+        <TabsContent value="suvisiace" className="space-y-4">
+          <section className="rounded-xl border bg-card p-4 space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-semibold">Lead</h3>
+              {lead ? <ConfirmedLinkBadge /> : null}
+            </div>
+            {lead ? (
+              <Link to={`/admin?lead=${lead.id}`} className="text-sm text-primary hover:underline">
+                {lead.name}
+                {lead.email ? ` · ${lead.email}` : ""}
+              </Link>
+            ) : record.lead_id ? (
+              <p className="text-xs text-muted-foreground">Lead ID: {record.lead_id}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">Kampaň nie je prepojená na lead.</p>
+            )}
+          </section>
+          <section className="rounded-xl border bg-card p-4 space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm font-semibold">Klient 360°</h3>
+              {record.customer_id ? <CanonicalCustomerBadge /> : <ClientLinkBadge linked={clientLinked} />}
+            </div>
+            {customerHref ? (
+              <Link to={customerHref} className="text-sm text-primary hover:underline">
+                {record.client_name || record.customers?.display_name || record.customer_email || "Profil klienta"}
+              </Link>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">Bez kanonického klienta alebo e-mailu.</p>
+            )}
+          </section>
         </TabsContent>
       </Tabs>
 

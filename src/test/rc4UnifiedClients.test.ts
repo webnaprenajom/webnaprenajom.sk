@@ -44,6 +44,26 @@ describe("mergeUnifiedClientSeeds", () => {
     expect(entries[0].projectCount).toBe(1);
   });
 
+  it("merges task seeds by customer_id without email column", () => {
+    const entries = mergeUnifiedClientSeeds([
+      {
+        customerId: "550e8400-e29b-41d4-a716-446655440000",
+        displayName: "Úloha ACME",
+        email: null,
+        section: "task",
+      },
+      {
+        customerId: "550e8400-e29b-41d4-a716-446655440000",
+        displayName: "ACME s.r.o.",
+        email: "acme@firma.sk",
+        section: "project",
+      },
+    ]);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].taskCount).toBe(1);
+    expect(entries[0].projectCount).toBe(1);
+  });
+
   it("keeps separate clients when identity differs", () => {
     const entries = mergeUnifiedClientSeeds([
       { displayName: "Alpha", email: "a@test.sk", section: "project" },

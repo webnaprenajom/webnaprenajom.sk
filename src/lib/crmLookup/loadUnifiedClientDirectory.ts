@@ -25,7 +25,7 @@ export async function loadUnifiedClientDirectory(
     supabase.from("rental_websites").select("client_name,customer_id,customer_email"),
     supabase.from("leads").select("id,name,email,customer_id"),
     supabase.from("marketing_records").select("customer_id,customer_email,client_name"),
-    supabase.from("tasks").select("customer_id,customer_email,client_name"),
+    supabase.from("tasks").select("customer_id,client_name"),
   ]);
 
   if (customersRes.error) {
@@ -94,8 +94,8 @@ export async function loadUnifiedClientDirectory(
   for (const t of tasksRes.data || []) {
     seeds.push({
       customerId: t.customer_id,
-      displayName: t.client_name || t.customer_email || "Úloha",
-      email: t.customer_email,
+      displayName: t.client_name || "Úloha",
+      email: null,
       section: "task",
     });
   }
