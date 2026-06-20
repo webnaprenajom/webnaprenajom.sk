@@ -228,7 +228,10 @@ export function prefillFromReconciliationIssue(
     return prefillFromLegacyRecord(kind, row);
   }
 
-  if (issue.kind === "entity_missing_payment_fact" && issue.sourceId) {
+  if (
+    (issue.kind === "entity_missing_payment_fact" || issue.kind === "entity_partial_payment") &&
+    issue.sourceId
+  ) {
     if (issue.sourceTable === "project_notes") {
       const p = ctx.projects?.find((r) => r.id === issue.sourceId);
       if (!p) return null;
@@ -462,6 +465,7 @@ export function getIssueActionLabel(issue: ReconciliationIssue): string | null {
     case "workflow_outgoing_expense":
       return "Potvrdiť náklad";
     case "entity_missing_payment_fact":
+    case "entity_partial_payment":
       return "Potvrdiť platbu";
     case "task_missing_payment_deposit":
     case "task_missing_payment_full":

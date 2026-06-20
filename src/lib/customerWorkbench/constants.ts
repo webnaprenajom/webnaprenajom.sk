@@ -26,6 +26,12 @@ export const SIGNATURE_STATUS_LABEL: Record<string, string> = {
   canceled: "Zrušené",
 };
 
+export const MARKETING_STATUS_LABEL: Record<string, string> = {
+  active: "Aktívna",
+  paused: "Pozastavená",
+  archived: "Archivovaná",
+};
+
 export const NOTE_STATUS_LABEL: Record<string, string> = {
   in_progress: "Prebieha",
   waiting: "Čaká",
@@ -37,6 +43,7 @@ export const WORKBENCH_TABS = [
   { id: "prehlad", label: "Prehľad" },
   { id: "komunikacia", label: "Komunikácia" },
   { id: "projekty", label: "Projekty" },
+  { id: "marketing", label: "Marketing" },
   { id: "prenajmy", label: "Prenájmy" },
   { id: "hosting", label: "Hosting" },
   { id: "financie", label: "Financie" },

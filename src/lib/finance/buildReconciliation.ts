@@ -12,6 +12,11 @@ import type {
 import { buildIssueKey } from "./issueKeys";
 import { formatReconciliationSourceHint } from "./financeSourceLabels";
 import { isLegacyTaskFinance } from "@/lib/tasks/taskFinanceModel";
+import { sumConfirmedPaymentsForSource } from "./entityPaymentBridge";
+import {
+  reconciliationAgreedPriceDetail,
+  resolvePaymentCompleteness,
+} from "./paymentCompleteness";
 
 type CommissionRow = {
   id: string;
@@ -111,6 +116,7 @@ function pushIssue(
       ? "info"
       : kind.startsWith("workflow") ||
           kind === "entity_missing_payment_fact" ||
+          kind === "entity_partial_payment" ||
           kind.startsWith("task_missing")
         ? "warn"
         : "info";
@@ -211,6 +217,38 @@ function taskFullAmountNeeded(
   return total > 0 ? total : 0;
 }
 
+function pushAgreedPricePaymentGaps(
+  issues: ReconciliationIssue[],
+  paymentRecords: PaymentRecordRow[],
+  entity: { id: string; title: string; agreed_fee?: number | null },
+  sourceTable: "project_notes" | "marketing_records",
+  entityLabel: string,
+) {
+  const fee = Number(entity.agreed_fee ?? 0);
+  if (!fee || fee <= 0) return;
+  const confirmed = sumConfirmedPaymentsForSource(paymentRecords, sourceTable, entity.id);
+  const pc = resolvePaymentCompleteness(fee, confirmed);
+  if (pc.status === "paid" || pc.status === "no_agreed_price") return;
+
+  const detail = reconciliationAgreedPriceDetail(entityLabel, pc);
+  if (!detail) return;
+
+  if (pc.status === "unpaid") {
+    pushIssue(issues, "entity_missing_payment_fact", entity.title, withSourceHint(detail, sourceTable, entity.id), {
+      amount: fee,
+      sourceTable,
+      sourceId: entity.id,
+    });
+    return;
+  }
+
+  pushIssue(issues, "entity_partial_payment", entity.title, withSourceHint(detail, sourceTable, entity.id), {
+    amount: pc.remaining,
+    sourceTable,
+    sourceId: entity.id,
+  });
+}
+
 function reconcileEntityPaymentGaps(
   issues: ReconciliationIssue[],
   paymentRecords: PaymentRecordRow[],
@@ -221,50 +259,12 @@ function reconcileEntityPaymentGaps(
 ) {
   for (const p of projects) {
     if (p.status === "archived") continue;
-    const fee = Number(p.agreed_fee ?? 0);
-    if (!fee || fee <= 0) continue;
-    const table = "project_notes";
-    if (
-      hasConfirmedEntityPayment(paymentRecords, table, p.id) ||
-      hasLegacyEntityPayment(paymentRecords, table, p.id)
-    ) {
-      continue;
-    }
-    pushIssue(
-      issues,
-      "entity_missing_payment_fact",
-      p.title,
-      withSourceHint(
-        `Projekt má dohodnutú cenu ${fee.toFixed(2)} € bez potvrdené platby (payment_fact)`,
-        table,
-        p.id,
-      ),
-      { amount: fee, sourceTable: table, sourceId: p.id },
-    );
+    pushAgreedPricePaymentGaps(issues, paymentRecords, p, "project_notes", "Projekt");
   }
 
   for (const m of marketing) {
     if (m.status === "archived" || m.status === "paused") continue;
-    const fee = Number(m.agreed_fee ?? 0);
-    if (!fee || fee <= 0) continue;
-    const table = "marketing_records";
-    if (
-      hasConfirmedEntityPayment(paymentRecords, table, m.id) ||
-      hasLegacyEntityPayment(paymentRecords, table, m.id)
-    ) {
-      continue;
-    }
-    pushIssue(
-      issues,
-      "entity_missing_payment_fact",
-      m.title,
-      withSourceHint(
-        `Kampaň má dohodnutú cenu ${fee.toFixed(2)} € bez potvrdené platby (payment_fact)`,
-        table,
-        m.id,
-      ),
-      { amount: fee, sourceTable: table, sourceId: m.id },
-    );
+    pushAgreedPricePaymentGaps(issues, paymentRecords, m, "marketing_records", "Kampaň");
   }
 
   for (const h of hosting) {
@@ -595,6 +595,7 @@ export function buildReconciliation(input: {
       (i) => i.kind === "workflow_outgoing_commission" || i.kind === "workflow_outgoing_expense",
     ).length,
     entityMissingPayment: issues.filter((i) => i.kind === "entity_missing_payment_fact").length,
+    entityPartialPayment: issues.filter((i) => i.kind === "entity_partial_payment").length,
     taskPaymentGaps: issues.filter(
       (i) => i.kind === "task_missing_payment_deposit" || i.kind === "task_missing_payment_full",
     ).length,

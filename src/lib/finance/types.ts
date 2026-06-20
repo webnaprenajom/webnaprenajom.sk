@@ -78,6 +78,7 @@ export interface ReconciliationSummaryCounts {
   workflowIncoming: number;
   workflowOutgoing: number;
   entityMissingPayment: number;
+  entityPartialPayment: number;
   taskPaymentGaps: number;
   entityWorkflowMismatch: number;
   legacyNoReference: number;
@@ -92,6 +93,7 @@ export type ReconciliationIssueKind =
   | "workflow_outgoing_commission"
   | "workflow_outgoing_expense"
   | "entity_missing_payment_fact"
+  | "entity_partial_payment"
   | "task_missing_payment_deposit"
   | "task_missing_payment_full"
   | "entity_payment_ahead_of_workflow"

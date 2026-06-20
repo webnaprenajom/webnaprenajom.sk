@@ -1,3 +1,5 @@
+import { sumConfirmedPaymentsForSource } from "@/lib/finance/entityPaymentBridge";
+
 export type PaymentCompletenessStatus =
   | "no_agreed_price"
   | "unpaid"
@@ -8,9 +10,7 @@ export type PaymentCompleteness = {
   status: PaymentCompletenessStatus;
   agreedPrice: number;
   confirmedPaid: number;
-  /** Amount still expected (0 when fully paid or no agreed price). */
   remaining: number;
-  /** Confirmed sum above agreed price — secondary detail only. */
   overpaid: number;
 };
 
@@ -42,25 +42,11 @@ export function resolvePaymentCompleteness(
   const confirmed = Math.max(0, Number(confirmedPaid) || 0);
 
   if (agreed <= 0) {
-    return {
-      status: "no_agreed_price",
-      agreedPrice: 0,
-      confirmedPaid: confirmed,
-      remaining: 0,
-      overpaid: 0,
-    };
+    return { status: "no_agreed_price", agreedPrice: 0, confirmedPaid: confirmed, remaining: 0, overpaid: 0 };
   }
-
   if (confirmed <= 0) {
-    return {
-      status: "unpaid",
-      agreedPrice: agreed,
-      confirmedPaid: 0,
-      remaining: agreed,
-      overpaid: 0,
-    };
+    return { status: "unpaid", agreedPrice: agreed, confirmedPaid: 0, remaining: agreed, overpaid: 0 };
   }
-
   if (confirmed < agreed) {
     return {
       status: "partial",
@@ -70,7 +56,6 @@ export function resolvePaymentCompleteness(
       overpaid: 0,
     };
   }
-
   return {
     status: "paid",
     agreedPrice: agreed,
@@ -81,17 +66,22 @@ export function resolvePaymentCompleteness(
 }
 
 export function paymentCompletenessDetail(pc: PaymentCompleteness): string | null {
-  if (pc.status === "partial") {
-    return `Zostáva ${pc.remaining.toFixed(2)} €`;
-  }
-  if (pc.status === "paid" && pc.overpaid > 0) {
-    return `Preplatené o ${pc.overpaid.toFixed(2)} €`;
-  }
-  if (pc.status === "paid") {
-    return `${pc.confirmedPaid.toFixed(2)} € potvrdených`;
-  }
+  if (pc.status === "partial") return `Zostáva ${pc.remaining.toFixed(2)} €`;
+  if (pc.status === "paid" && pc.overpaid > 0) return `Preplatené o ${pc.overpaid.toFixed(2)} €`;
+  if (pc.status === "paid") return `${pc.confirmedPaid.toFixed(2)} € potvrdených`;
+  if (pc.status === "unpaid") return `Dohodnutá cena ${pc.agreedPrice.toFixed(2)} €`;
+  return null;
+}
+
+export function reconciliationAgreedPriceDetail(
+  entityLabel: string,
+  pc: PaymentCompleteness,
+): string | null {
   if (pc.status === "unpaid") {
-    return `Dohodnutá cena ${pc.agreedPrice.toFixed(2)} €`;
+    return `${entityLabel} má dohodnutú cenu ${pc.agreedPrice.toFixed(2)} € bez potvrdenej platby (payment_fact)`;
+  }
+  if (pc.status === "partial") {
+    return `${entityLabel}: potvrdené ${pc.confirmedPaid.toFixed(2)} € z ${pc.agreedPrice.toFixed(2)} € — nedoplatok ${pc.remaining.toFixed(2)} €`;
   }
   return null;
 }
@@ -119,4 +109,21 @@ export function confirmedPaidForEntity(
   sourceId: string,
 ): number {
   return totalsBySource.get(`${sourceTable}:${sourceId}`) ?? 0;
+}
+
+export type DealPaymentEnrichment = PaymentCompleteness;
+
+export function enrichDealPayment(
+  agreedFee: number | null | undefined,
+  paymentRecords: Array<{
+    source_table?: string | null;
+    source_id?: string | null;
+    amount: number;
+    truth_level: string;
+  }>,
+  sourceTable: string,
+  sourceId: string,
+): DealPaymentEnrichment {
+  const confirmed = sumConfirmedPaymentsForSource(paymentRecords, sourceTable, sourceId);
+  return resolvePaymentCompleteness(agreedFee, confirmed);
 }

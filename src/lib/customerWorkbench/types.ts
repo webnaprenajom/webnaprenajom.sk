@@ -58,7 +58,18 @@ export type ProjectNote = {
   client_name: string | null;
   url: string | null;
   status: string;
+  agreed_fee?: number | null;
   has_credentials: boolean;
+  updated_at?: string;
+};
+
+export type MarketingBrief = {
+  id: string;
+  title: string;
+  client_name: string | null;
+  url: string | null;
+  status: string;
+  agreed_fee?: number | null;
   updated_at?: string;
 };
 
@@ -185,6 +196,7 @@ export type CustomerWorkbenchData = {
   rentals: Rental[];
   signatures: Signature[];
   notes: ProjectNote[];
+  marketing: MarketingBrief[];
   hosting: HostingBrief[];
   wheels: Wheel[];
   designs: Design[];
@@ -256,6 +268,7 @@ export type WorkbenchTabId =
   | "prehlad"
   | "komunikacia"
   | "projekty"
+  | "marketing"
   | "prenajmy"
   | "hosting"
   | "financie"
@@ -292,6 +305,7 @@ export type CustomerHubSections = {
   rentals: SectionResult<Rental[]>;
   hosting: SectionResult<HostingBrief[]>;
   notes: SectionResult<ProjectNote[]>;
+  marketing: SectionResult<MarketingBrief[]>;
   commissions: SectionResult<CommissionBrief[]>;
   payments: SectionResult<PaymentRecord[]>;
   costs: SectionResult<CostRecord[]>;

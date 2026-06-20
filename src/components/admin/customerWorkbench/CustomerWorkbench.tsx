@@ -22,7 +22,10 @@ import {
   COMMUNICATION_TIMELINE_FILTER_LABELS,
   type CommunicationTimelineFilter,
 } from "@/lib/communication/events";
-import { WORKBENCH_TABS, NOTE_STATUS_LABEL, logSummary } from "@/lib/customerWorkbench/constants";
+import { WORKBENCH_TABS, NOTE_STATUS_LABEL, MARKETING_STATUS_LABEL, logSummary } from "@/lib/customerWorkbench/constants";
+import { formatAgreedPrice } from "@/components/admin/AgreedPriceField";
+import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompletenessBadge";
+import { enrichDealPayment } from "@/lib/finance/paymentCompleteness";
 import {
   applyWorkbenchUrlUpdate,
   parseWorkbenchCommFilter,
@@ -468,7 +471,14 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
                 <EmptyTab text="Žiadne projekty pre tohto klienta." />
               ) : (
                 <ul>
-                  {data.notes.map((n) => (
+                  {data.notes.map((n) => {
+                    const payment = enrichDealPayment(
+                      n.agreed_fee,
+                      data.paymentRecords,
+                      "project_notes",
+                      n.id,
+                    );
+                    return (
                     <EntityRow
                       key={n.id}
                       title={n.title}
@@ -478,6 +488,17 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
                           <Badge variant="outline" className="text-[10px]">
                             {NOTE_STATUS_LABEL[n.status] || n.status}
                           </Badge>
+                          {n.agreed_fee != null && Number(n.agreed_fee) > 0 && (
+                            <span className="text-[10px] text-muted-foreground tabular-nums">
+                              {formatAgreedPrice(n.agreed_fee)}
+                            </span>
+                          )}
+                          <PaymentCompletenessBadge
+                            compact
+                            agreedPrice={n.agreed_fee}
+                            confirmedPaid={payment.confirmedPaid}
+                            completeness={payment}
+                          />
                           {n.has_credentials && (
                             <Badge variant="outline" className="text-[10px] gap-0.5">
                               <Lock className="w-2.5 h-2.5" /> prístupy
@@ -487,7 +508,59 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
                       }
                       href={`/admin/projects/${n.id}`}
                     />
-                  ))}
+                    );
+                  })}
+                </ul>
+              )}
+            </TabPanel>
+          </TabsContent>
+
+          {/* Marketing */}
+          <TabsContent value="marketing" className="mt-4 space-y-3">
+            <SectionErrorBanner error={sectionError("marketing")} onRetry={onReload} />
+            <TabPanel
+              title="Marketing"
+              count={data.marketing.length}
+              moduleHref="/admin/marketing"
+            >
+              {data.marketing.length === 0 ? (
+                <EmptyTab text="Žiadne kampane pre tohto klienta." />
+              ) : (
+                <ul>
+                  {data.marketing.map((m) => {
+                    const payment = enrichDealPayment(
+                      m.agreed_fee,
+                      data.paymentRecords,
+                      "marketing_records",
+                      m.id,
+                    );
+                    return (
+                      <EntityRow
+                        key={m.id}
+                        title={m.title}
+                        subtitle={m.url || undefined}
+                        meta={
+                          <>
+                            <Badge variant="outline" className="text-[10px]">
+                              {MARKETING_STATUS_LABEL[m.status] || m.status}
+                            </Badge>
+                            {m.agreed_fee != null && Number(m.agreed_fee) > 0 && (
+                              <span className="text-[10px] text-muted-foreground tabular-nums">
+                                {formatAgreedPrice(m.agreed_fee)}
+                              </span>
+                            )}
+                            <PaymentCompletenessBadge
+                              compact
+                              agreedPrice={m.agreed_fee}
+                              confirmedPaid={payment.confirmedPaid}
+                              completeness={payment}
+                            />
+                          </>
+                        }
+                        href={`/admin/marketing/${m.id}`}
+                      />
+                    );
+                  })}
                 </ul>
               )}
             </TabPanel>

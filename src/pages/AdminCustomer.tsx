@@ -20,6 +20,7 @@ const emptyData = (): CustomerWorkbenchData => ({
   rentals: [],
   signatures: [],
   notes: [],
+  marketing: [],
   hosting: [],
   wheels: [],
   designs: [],

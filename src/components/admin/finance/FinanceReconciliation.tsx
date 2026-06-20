@@ -50,6 +50,7 @@ const ISSUE_LABELS: Record<ReconciliationIssueKind, string> = {
   workflow_outgoing_commission: "Workflow výplata (provízia)",
   workflow_outgoing_expense: "Workflow náklad",
   entity_missing_payment_fact: "Chýba potvrdená platba",
+  entity_partial_payment: "Nedoplatok (čiastková úhrada)",
   task_missing_payment_deposit: "Úloha — chýba záloha (legacy)",
   task_missing_payment_full: "Úloha — chýba úhrada (legacy)",
   entity_payment_ahead_of_workflow: "Platba pred workflow",
@@ -81,7 +82,7 @@ const PRIMARY_ISSUE_SECTIONS: IssueSection[] = [
   {
     id: "entities",
     title: "Projekty, marketing & hosting",
-    kinds: ["entity_missing_payment_fact"],
+    kinds: ["entity_missing_payment_fact", "entity_partial_payment"],
   },
   {
     id: "quality",

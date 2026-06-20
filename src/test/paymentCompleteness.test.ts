@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   PAYMENT_COMPLETENESS_LABELS,
+  reconciliationAgreedPriceDetail,
   resolvePaymentCompleteness,
   remainingToPay,
+  enrichDealPayment,
 } from "@/lib/finance/paymentCompleteness";
 import { computeCustomerFinanceSummary } from "@/lib/customerWorkbench/summary";
 import type { CustomerWorkbenchData } from "@/lib/customerWorkbench/types";
@@ -38,6 +40,37 @@ describe("resolvePaymentCompleteness", () => {
     const pc = resolvePaymentCompleteness(null, 0);
     expect(pc.status).toBe("no_agreed_price");
   });
+
+  it("reconciliation detail for partial payment", () => {
+    const pc = resolvePaymentCompleteness(1000, 400);
+    expect(reconciliationAgreedPriceDetail("Projekt", pc)).toMatch(/nedoplatok 600/i);
+  });
+});
+
+describe("enrichDealPayment", () => {
+  it("uses only payment_fact rows for confirmed sum", () => {
+    const pc = enrichDealPayment(
+      1000,
+      [
+        {
+          source_table: "project_notes",
+          source_id: "p-1",
+          amount: 400,
+          truth_level: "payment_fact",
+        },
+        {
+          source_table: "project_notes",
+          source_id: "p-1",
+          amount: 600,
+          truth_level: "legacy_import",
+        },
+      ],
+      "project_notes",
+      "p-1",
+    );
+    expect(pc.status).toBe("partial");
+    expect(pc.confirmedPaid).toBe(400);
+  });
 });
 
 describe("computeCustomerFinanceSummary confirmed cash", () => {
@@ -49,6 +82,7 @@ describe("computeCustomerFinanceSummary confirmed cash", () => {
     rentals: [],
     signatures: [],
     notes: [],
+    marketing: [],
     hosting: [],
     wheels: [],
     designs: [],

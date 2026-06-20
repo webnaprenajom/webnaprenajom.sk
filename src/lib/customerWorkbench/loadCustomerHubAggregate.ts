@@ -18,6 +18,7 @@ import type {
   PaymentRecord,
   PayoutRecord,
   ProjectNote,
+  MarketingBrief,
   Rental,
   RentalPaymentBrief,
   Signature,
@@ -144,6 +145,7 @@ function workbenchFromSections(
     rentals: sections.rentals.data,
     signatures: sections.signatures.data,
     notes: sections.notes.data,
+    marketing: sections.marketing.data,
     hosting: sections.hosting.data,
     wheels: sections.wheels.data,
     designs: sections.designs.data,
@@ -295,7 +297,7 @@ export async function loadCustomerHubAggregate(
     noteQueries.push(
       supabase
         .from("project_notes")
-        .select("id,title,client_name,url,status,username,password,access_credentials,updated_at")
+        .select("id,title,client_name,url,status,agreed_fee,username,password,access_credentials,updated_at")
         .eq("customer_id", customerId) as unknown as Promise<{
         data: Array<Record<string, unknown>> | null;
         error: { message: string } | null;
@@ -306,7 +308,7 @@ export async function loadCustomerHubAggregate(
     noteQueries.push(
       supabase
         .from("project_notes")
-        .select("id,title,client_name,url,status,username,password,access_credentials,updated_at")
+        .select("id,title,client_name,url,status,agreed_fee,username,password,access_credentials,updated_at")
         .ilike("customer_email", resolvedEmail) as unknown as Promise<{
         data: Array<Record<string, unknown>> | null;
         error: { message: string } | null;
@@ -317,7 +319,7 @@ export async function loadCustomerHubAggregate(
     noteQueries.push(
       supabase
         .from("project_notes")
-        .select("id,title,client_name,url,status,username,password,access_credentials,updated_at")
+        .select("id,title,client_name,url,status,agreed_fee,username,password,access_credentials,updated_at")
         .in("client_name", leadNames) as unknown as Promise<{
         data: Array<Record<string, unknown>> | null;
         error: { message: string } | null;
@@ -340,6 +342,7 @@ export async function loadCustomerHubAggregate(
             client_name: (n.client_name as string) ?? null,
             url: (n.url as string) ?? null,
             status: n.status as string,
+            agreed_fee: n.agreed_fee != null ? Number(n.agreed_fee) : null,
             has_credentials: hasAnyCredentials({
               url: (n.url as string) ?? null,
               username: (n.username as string) ?? null,
@@ -355,6 +358,70 @@ export async function loadCustomerHubAggregate(
     notesError = noteErrors.length ? noteErrors.join("; ") : null;
   }
   const notesSection = { data: notes, error: notesError, loaded: true };
+
+  const marketingQueries: Promise<{
+    data: Array<Record<string, unknown>> | null;
+    error: { message: string } | null;
+  }>[] = [];
+  if (customerId) {
+    marketingQueries.push(
+      supabase
+        .from("marketing_records")
+        .select("id,title,client_name,url,status,agreed_fee,updated_at")
+        .eq("customer_id", customerId) as unknown as Promise<{
+        data: Array<Record<string, unknown>> | null;
+        error: { message: string } | null;
+      }>,
+    );
+  }
+  if (resolvedEmail) {
+    marketingQueries.push(
+      supabase
+        .from("marketing_records")
+        .select("id,title,client_name,url,status,agreed_fee,updated_at")
+        .ilike("customer_email", resolvedEmail) as unknown as Promise<{
+        data: Array<Record<string, unknown>> | null;
+        error: { message: string } | null;
+      }>,
+    );
+  }
+  if (leadNames.length) {
+    marketingQueries.push(
+      supabase
+        .from("marketing_records")
+        .select("id,title,client_name,url,status,agreed_fee,updated_at")
+        .in("client_name", leadNames) as unknown as Promise<{
+        data: Array<Record<string, unknown>> | null;
+        error: { message: string } | null;
+      }>,
+    );
+  }
+  let marketing: MarketingBrief[] = [];
+  let marketingError: string | null = null;
+  if (marketingQueries.length) {
+    const marketingResults = await Promise.all(marketingQueries);
+    const marketingErrors: string[] = [];
+    const seenMarketing = new Map<string, MarketingBrief>();
+    marketingResults.forEach((res, i) => {
+      if (res.error) marketingErrors.push(`marketing query ${i + 1}: ${res.error.message}`);
+      (res.data || []).forEach((m) => {
+        if (!seenMarketing.has(m.id as string)) {
+          seenMarketing.set(m.id as string, {
+            id: m.id as string,
+            title: m.title as string,
+            client_name: (m.client_name as string) ?? null,
+            url: (m.url as string) ?? null,
+            status: m.status as string,
+            agreed_fee: m.agreed_fee != null ? Number(m.agreed_fee) : null,
+            updated_at: m.updated_at as string | undefined,
+          });
+        }
+      });
+    });
+    marketing = Array.from(seenMarketing.values());
+    marketingError = marketingErrors.length ? marketingErrors.join("; ") : null;
+  }
+  const marketingSection = { data: marketing, error: marketingError, loaded: true };
 
   const hostingQueries: Promise<{ data: HostingBrief[] | null; error: { message: string } | null }>[] = [];
   if (customerId) {
@@ -442,6 +509,7 @@ export async function loadCustomerHubAggregate(
 
   const rentalIds = rentals.map((r) => r.id);
   const noteIds = notes.map((n) => n.id);
+  const marketingIds = marketing.map((m) => m.id);
   const hostingIds = hosting.map((h) => h.id);
 
   const { ids: allCommissionIds, error: commissionIdsError } = await fetchAllCommissionIds(
@@ -467,6 +535,15 @@ export async function loadCustomerHubAggregate(
         .select(paymentSelect)
         .eq("source_table", "project_notes")
         .in("source_id", noteIds),
+    );
+  }
+  if (marketingIds.length) {
+    paymentQueries.push(
+      supabase
+        .from("payment_records")
+        .select(paymentSelect)
+        .eq("source_table", "marketing_records")
+        .in("source_id", marketingIds),
     );
   }
   if (hostingIds.length) {
@@ -724,6 +801,7 @@ export async function loadCustomerHubAggregate(
     rentals: rentalsSection,
     hosting: hostingSection,
     notes: notesSection,
+    marketing: marketingSection,
     commissions: commissionsSection,
     payments: paymentsSection,
     costs: costsSection,

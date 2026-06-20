@@ -68,6 +68,7 @@ export function computeWorkbenchSummary(
       data.rentals.length +
       data.signatures.length +
       data.notes.length +
+      data.marketing.length +
       data.hosting.length +
       data.wheels.length +
       data.designs.length +

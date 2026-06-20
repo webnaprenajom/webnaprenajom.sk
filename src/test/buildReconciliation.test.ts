@@ -35,7 +35,7 @@ describe("buildReconciliation entity gaps", () => {
     );
   });
 
-  it("skips project when legacy_import payment exists (no duplicate entity_missing)", () => {
+  it("legacy_import does not clear agreed-price gap (still missing payment_fact)", () => {
     const { issues } = buildReconciliation({
       ...emptyBase(),
       projects: [
@@ -63,8 +63,81 @@ describe("buildReconciliation entity gaps", () => {
         },
       ],
     });
-    expect(issues.filter((i) => i.kind === "entity_missing_payment_fact")).toHaveLength(0);
+    expect(issues.some((i) => i.kind === "entity_missing_payment_fact" && i.sourceId === "p-1")).toBe(
+      true,
+    );
     expect(issues.some((i) => i.kind === "legacy_no_reference")).toBe(true);
+  });
+
+  it("flags partial payment as entity_partial_payment with remaining amount", () => {
+    const { issues } = buildReconciliation({
+      ...emptyBase(),
+      projects: [
+        {
+          id: "p-1",
+          title: "Web",
+          client_name: "K",
+          customer_email: null,
+          agreed_fee: 1000,
+          status: "in_progress",
+        },
+      ],
+      paymentRecords: [
+        {
+          id: "pay-1",
+          source_table: "project_notes",
+          source_id: "p-1",
+          customer_email: null,
+          client_name: "K",
+          amount: 400,
+          paid_at: "2026-06-01",
+          reference: null,
+          truth_level: "payment_fact",
+          imported_from: null,
+        },
+      ],
+    });
+    const partial = issues.find((i) => i.kind === "entity_partial_payment" && i.sourceId === "p-1");
+    expect(partial).toBeDefined();
+    expect(partial?.amount).toBe(600);
+    expect(issues.filter((i) => i.kind === "entity_missing_payment_fact")).toHaveLength(0);
+  });
+
+  it("no gap when confirmed covers agreed price", () => {
+    const { issues } = buildReconciliation({
+      ...emptyBase(),
+      projects: [
+        {
+          id: "p-1",
+          title: "Web",
+          client_name: "K",
+          customer_email: null,
+          agreed_fee: 1000,
+          status: "in_progress",
+        },
+      ],
+      paymentRecords: [
+        {
+          id: "pay-1",
+          source_table: "project_notes",
+          source_id: "p-1",
+          customer_email: null,
+          client_name: "K",
+          amount: 1000,
+          paid_at: "2026-06-01",
+          reference: null,
+          truth_level: "payment_fact",
+          imported_from: null,
+        },
+      ],
+    });
+    expect(
+      issues.filter(
+        (i) =>
+          i.kind === "entity_missing_payment_fact" ||
+          i.kind === "entity_partial_payment",
+      ),
+    ).toHaveLength(0);
   });
 
   it("flags marketing agreed_fee gap", () => {
