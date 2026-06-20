@@ -23,6 +23,7 @@ import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AdminDialog } from "@/components/admin/AdminDialog";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import {
   Select,
   SelectContent,
@@ -136,10 +137,10 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
     setLoading(false);
   };
 
-  const save = async () => {
+  const save = async (): Promise<boolean> => {
     if (!editing?.title?.trim()) {
       toast({ title: "Zadaj názov projektu", variant: "destructive" });
-      return;
+      return false;
     }
 
     let linked;
@@ -160,14 +161,14 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
             : "Vyberte klienta z vyhľadávania alebo zadajte platný e-mail.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
     const customerGuard = assertDeliveryHasCanonicalCustomer(linked);
     if (!customerGuard.ok) {
       setCustomerFieldError(customerGuard.message);
       toast({ title: customerGuard.message, variant: "destructive" });
-      return;
+      return false;
     }
     setCustomerFieldError(null);
 
@@ -200,7 +201,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
         description: insertResult.error,
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
     const recordId = insertResult.id;
@@ -239,6 +240,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
     setOpen(false);
     setEditing(null);
     void load();
+    return true;
   };
 
   const remove = async (id: string) => {
@@ -587,29 +589,49 @@ function EditDialog({
   setEditing: (v: Partial<ProjectNote> | null) => void;
   editCredentials: AccessCredential[];
   setEditCredentials: (v: AccessCredential[]) => void;
-  onSave: () => void;
+  onSave: () => boolean | Promise<boolean>;
   mode: ProjectNotesViewMode;
   customerFieldError: string | null;
   onClearCustomerFieldError: () => void;
 }) {
+  const closeDialog = () => onOpenChange(false);
+
+  const closeGuard = useAdminCloseGuard({
+    isOpen: open && !!editing,
+    current: { editing: editing ?? {}, editCredentials },
+    onSave,
+    onDiscard: () => {
+      setEditing(null);
+      setEditCredentials([]);
+    },
+  });
+
   if (!editing) return null;
   return (
-    <AdminDialog
-      open={open}
-      onOpenChange={onOpenChange}
-      size="lg"
-      title={editing.id ? "Upraviť záznam" : mode === "passwords" ? "Nový prístup" : "Nový projekt"}
-      footer={
-        <>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
-            Zrušiť
-          </Button>
-          <Button onClick={onSave} className="w-full sm:w-auto">
-            Uložiť
-          </Button>
-        </>
-      }
-    >
+    <>
+      {closeGuard.closeGuardDialog}
+      <AdminDialog
+        open={open}
+        onOpenChange={(o) => {
+          if (!o) closeGuard.handleOpenChange(o, closeDialog);
+        }}
+        size="lg"
+        title={editing.id ? "Upraviť záznam" : mode === "passwords" ? "Nový prístup" : "Nový projekt"}
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => closeGuard.requestClose(closeDialog)}
+              className="w-full sm:w-auto"
+            >
+              Zrušiť
+            </Button>
+            <Button onClick={() => void onSave()} className="w-full sm:w-auto">
+              Uložiť
+            </Button>
+          </>
+        }
+      >
         <div className="space-y-4">
           <div className="space-y-3">
             <div className="space-y-1.5">
@@ -684,6 +706,7 @@ function EditDialog({
             </div>
           )}
         </div>
-    </AdminDialog>
+      </AdminDialog>
+    </>
   );
 }

@@ -2,13 +2,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { AdminDialog } from "@/components/admin/AdminDialog";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import {
@@ -39,6 +34,34 @@ export function FactConfirmDialog({
     if (draft) setForm({ ...draft });
   }, [draft]);
 
+  const closeDialog = () => onOpenChange(false);
+
+  const persist = async (): Promise<boolean> => {
+    if (!form) return false;
+    setSaving(true);
+    try {
+      await saveFactDraft(form);
+      toast({ title: "Potvrdený záznam vytvorený" });
+      closeDialog();
+      onSaved();
+      return true;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Chyba pri ukladaní";
+      toast({ title: "Chyba", description: msg, variant: "destructive" });
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const closeGuard = useAdminCloseGuard({
+    isOpen: open && !!form,
+    current: form ?? {},
+    onSave: persist,
+    onDiscard: () => setForm(null),
+    saving,
+  });
+
   if (!form) return null;
 
   const title =
@@ -52,43 +75,41 @@ export function FactConfirmDialog({
             ? "Nová potvrdená výplata"
             : "Nový potvrdený náklad";
 
-  const save = async () => {
-    setSaving(true);
-    try {
-      await saveFactDraft(form);
-      toast({ title: "Potvrdený záznam vytvorený" });
-      onOpenChange(false);
-      onSaved();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Chyba pri ukladaní";
-      toast({ title: "Chyba", description: msg, variant: "destructive" });
-    }
-    setSaving(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-        </DialogHeader>
+    <>
+      {closeGuard.closeGuardDialog}
+      <AdminDialog
+        open={open}
+        onOpenChange={(o) => {
+          if (!o) closeGuard.handleOpenChange(o, closeDialog);
+        }}
+        size="md"
+        title={title}
+        footer={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => closeGuard.requestClose(closeDialog)}
+              disabled={saving}
+              className="w-full sm:w-auto"
+            >
+              Zrušiť
+            </Button>
+            <Button onClick={() => void persist()} disabled={saving} className="w-full sm:w-auto">
+              {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Potvrdiť a uložiť
+            </Button>
+          </>
+        }
+      >
         <p className="text-xs text-muted-foreground border rounded p-2 bg-muted/30">
           {mode === "promote"
             ? "Vytvorí sa nový *_fact záznam. Legacy import zostáva nezmenený."
             : "Human-in-the-loop: skontrolujte údaje pred uložením. Žiadny auto-sync."}
         </p>
         <FormFields kind={form.kind} form={form} setForm={setForm} />
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Zrušiť
-          </Button>
-          <Button onClick={() => void save()} disabled={saving}>
-            {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Potvrdiť a uložiť
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </AdminDialog>
+    </>
   );
 }
 

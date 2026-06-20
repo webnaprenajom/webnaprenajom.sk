@@ -32,7 +32,8 @@ export function UnsavedChangesAlertDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Neuložené zmeny</AlertDialogTitle>
           <AlertDialogDescription>
-            Máš neuložené zmeny. Chceš ich uložiť, pokračovať bez uloženia, alebo zostať?
+            Zmeny nie sú uložené. Ak odídeš, môžu sa stratiť. Chceš uložiť, pokračovať bez uloženia,
+            alebo zostať?
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col sm:flex-row gap-2">

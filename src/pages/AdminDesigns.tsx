@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -95,8 +96,11 @@ export default function AdminDesigns() {
     setOpen(true);
   };
 
-  const save = async () => {
-    if (!form.client_name.trim()) return toast({ title: "Zadajte meno klienta", variant: "destructive" });
+  const save = async (): Promise<boolean> => {
+    if (!form.client_name.trim()) {
+      toast({ title: "Zadajte meno klienta", variant: "destructive" });
+      return false;
+    }
     const payload = {
       client_name: form.client_name.trim(),
       email: form.email.trim() || null,
@@ -107,15 +111,29 @@ export default function AdminDesigns() {
     };
     if (editing) {
       const { error } = await supabase.from("design_proposals").update(payload).eq("id", editing.id);
-      if (error) return toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      if (error) {
+        toast({ title: "Chyba", description: error.message, variant: "destructive" });
+        return false;
+      }
     } else {
       const { error } = await supabase.from("design_proposals").insert(payload);
-      if (error) return toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      if (error) {
+        toast({ title: "Chyba", description: error.message, variant: "destructive" });
+        return false;
+      }
     }
     setOpen(false);
     void load();
     toast({ title: editing ? "Uložené" : "Pridané" });
+    return true;
   };
+
+  const closeDesignDialog = () => setOpen(false);
+  const designCloseGuard = useAdminCloseGuard({
+    isOpen: open,
+    current: form,
+    onSave: save,
+  });
 
   const remove = async () => {
     if (!deleting) return;
@@ -235,7 +253,13 @@ export default function AdminDesigns() {
       </Card>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      {designCloseGuard.closeGuardDialog}
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          if (!o) designCloseGuard.handleOpenChange(o, closeDesignDialog);
+        }}
+      >
         <DialogContent>
           <DialogHeader><DialogTitle>{editing ? "Upraviť dizajn" : "Nový zaslaný dizajn"}</DialogTitle></DialogHeader>
           <div className="space-y-3">
@@ -272,8 +296,10 @@ export default function AdminDesigns() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Zrušiť</Button>
-            <Button onClick={save}>{editing ? "Uložiť" : "Pridať"}</Button>
+            <Button variant="outline" onClick={() => designCloseGuard.requestClose(closeDesignDialog)}>
+              Zrušiť
+            </Button>
+            <Button onClick={() => void save()}>{editing ? "Uložiť" : "Pridať"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

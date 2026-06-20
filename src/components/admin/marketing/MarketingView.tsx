@@ -91,14 +91,15 @@ export function MarketingView() {
     setOpen(true);
   };
 
-  const save = async () => {
-    if (!editing) return;
+  const save = async (): Promise<boolean> => {
+    if (!editing) return false;
     const result = await saveMarketingRecord(editing, setCustomerFieldError);
-    if (!result.ok) return;
+    if (!result.ok) return false;
     setCustomerFieldError(null);
     setOpen(false);
     setEditing(null);
     void load();
+    return true;
   };
 
   const remove = async (id: string) => {

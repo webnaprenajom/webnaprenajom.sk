@@ -101,14 +101,15 @@ export default function AdminMarketingDetail() {
     setEditOpen(true);
   };
 
-  const save = async () => {
-    if (!editing) return;
+  const save = async (): Promise<boolean> => {
+    if (!editing) return false;
     const result = await saveMarketingRecord(editing, setCustomerFieldError);
-    if (!result.ok) return;
+    if (!result.ok) return false;
     setCustomerFieldError(null);
     setEditOpen(false);
     setEditing(null);
     void load();
+    return true;
   };
 
   const statusCfg = useMemo(

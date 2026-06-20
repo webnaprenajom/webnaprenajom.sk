@@ -31,6 +31,7 @@ import {
 import type { PaymentFormValue } from "@/lib/paymentForm";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import { AdminDialog } from "@/components/admin/AdminDialog";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { filterCommissionsForUser } from "@/lib/rbac/permissions";
 import { canWriteCommissions, canToggleCommissionPaymentStatus, commissionPaymentStatusDeniedMessage, writeDeniedMessage } from "@/lib/rbac/writePermissions";
@@ -162,14 +163,14 @@ export function EntityCommissionsPanel({
     setDialogOpen(true);
   };
 
-  const save = async () => {
+  const save = async (): Promise<boolean> => {
     if (!canWrite) {
       toast({ title: writeDeniedMessage("Úpravu provízií"), variant: "destructive" });
-      return;
+      return false;
     }
     if (!form.title.trim() || !form.implementer.trim()) {
       toast({ title: "Vyplň názov a realizátora", variant: "destructive" });
-      return;
+      return false;
     }
     setSaving(true);
     const linked = await resolveCustomerLinkFields({
@@ -196,7 +197,7 @@ export function EntityCommissionsPanel({
     setSaving(false);
     if (error) {
       toast({ title: "Chyba uloženia", description: error.message, variant: "destructive" });
-      return;
+      return false;
     }
     const recordId = saved?.id ?? form.id;
     if (recordId && access.userId && form.payment_status) {
@@ -225,7 +226,17 @@ export function EntityCommissionsPanel({
     toast({ title: form.id ? "Provízia upravená" : "Provízia pridaná" });
     setDialogOpen(false);
     void load();
+    return true;
   };
+
+  const closeCommissionDialog = () => setDialogOpen(false);
+
+  const commissionCloseGuard = useAdminCloseGuard({
+    isOpen: dialogOpen,
+    current: form,
+    onSave: save,
+    saving,
+  });
 
   const togglePaymentStatus = async (c: CommissionRow) => {
     if (!canToggleCommissionPaymentStatus(access, c.implementer)) {
@@ -462,16 +473,24 @@ export function EntityCommissionsPanel({
         Zdroj: {COMMISSION_SOURCE_LABELS[sourceType]}. Legacy riadky bez source_id sú len vo Financiách.
       </p>
 
+      {commissionCloseGuard.closeGuardDialog}
       <AdminDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(o) => {
+          if (!o) commissionCloseGuard.handleOpenChange(o, closeCommissionDialog);
+        }}
         title={form.id ? "Upraviť províziu" : "Nová provízia"}
         footer={
           <>
-            <Button variant="outline" onClick={() => setDialogOpen(false)} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => commissionCloseGuard.requestClose(closeCommissionDialog)}
+              className="w-full sm:w-auto"
+              disabled={saving}
+            >
               Zrušiť
             </Button>
-            <Button onClick={save} disabled={saving} className="w-full sm:w-auto">
+            <Button onClick={() => void save()} disabled={saving} className="w-full sm:w-auto">
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Uložiť
             </Button>
           </>

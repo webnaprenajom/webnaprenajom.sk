@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { buildCommissionInsertPayload } from "@/lib/commissionCreateHelpers";
 import { useImplementerSelectOptions } from "@/hooks/useImplementerSelectOptions";
 import { parseInsertRowId, assertDeliveryHasCanonicalCustomer } from "@/lib/crmLookup/entitySaveHelpers";
 import type { CustomerWorkbenchContext } from "@/lib/customerWorkbench/types";
+import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 
 export type QuickCreateKind = "task" | "project" | "hosting" | "commission" | "rental";
 
@@ -83,10 +84,10 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     onClose();
   };
 
-  const saveTask = async () => {
+  const saveTask = async (): Promise<boolean> => {
     if (!taskTitle.trim()) {
       toast({ title: "Zadaj názov úlohy", variant: "destructive" });
-      return;
+      return false;
     }
     setSaving(true);
     const linked = await resolveTaskCustomerFields({
@@ -102,7 +103,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
         description: "Najprv prepojte klienta na kanonického zákazníka.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
     const { error } = await supabase.from("tasks").insert({
       title: taskTitle.trim(),
@@ -120,17 +121,18 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     setSaving(false);
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
-      return;
+      return false;
     }
     toast({ title: "Úloha vytvorená", description: "Zobrazí sa v záložke Úlohy." });
     resetAndClose();
     onSaved();
+    return true;
   };
 
-  const saveProject = async () => {
+  const saveProject = async (): Promise<boolean> => {
     if (!projectTitle.trim()) {
       toast({ title: "Zadaj názov projektu", variant: "destructive" });
-      return;
+      return false;
     }
     setSaving(true);
     const linked = await resolveWorkbenchCustomerLink(ctx);
@@ -138,7 +140,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     if (!customerGuard.ok) {
       setSaving(false);
       toast({ title: customerGuard.message, variant: "destructive" });
-      return;
+      return false;
     }
     const { data: saved, error } = await supabase
       .from("project_notes")
@@ -157,7 +159,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     setSaving(false);
     if (!insertResult.ok) {
       toast({ title: "Projekt sa nepodarilo vytvoriť", description: insertResult.error, variant: "destructive" });
-      return;
+      return false;
     }
     logEntityCommunicationEventSafe({
       kind: "project_event",
@@ -173,16 +175,17 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     resetAndClose();
     onSaved();
     navigate(`/admin/projects/${insertResult.id}`);
+    return true;
   };
 
-  const saveHosting = async () => {
+  const saveHosting = async (): Promise<boolean> => {
     setSaving(true);
     const linked = await resolveWorkbenchCustomerLink(ctx);
     const customerGuard = assertDeliveryHasCanonicalCustomer(linked);
     if (!customerGuard.ok) {
       setSaving(false);
       toast({ title: customerGuard.message, variant: "destructive" });
-      return;
+      return false;
     }
     const { data: saved, error } = await supabase
       .from("hosting_records")
@@ -200,7 +203,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     setSaving(false);
     if (!insertResult.ok) {
       toast({ title: "Hosting sa nepodarilo vytvoriť", description: insertResult.error, variant: "destructive" });
-      return;
+      return false;
     }
     logEntityCommunicationEventSafe({
       kind: "hosting_event",
@@ -217,12 +220,13 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     resetAndClose();
     onSaved();
     navigate(`/admin/hosting/${insertResult.id}`);
+    return true;
   };
 
-  const saveRental = async () => {
+  const saveRental = async (): Promise<boolean> => {
     if (!rentalName.trim()) {
       toast({ title: "Zadaj názov webu", variant: "destructive" });
-      return;
+      return false;
     }
     setSaving(true);
     const linked = await resolveWorkbenchCustomerLink(ctx);
@@ -230,7 +234,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     if (!customerGuard.ok) {
       setSaving(false);
       toast({ title: customerGuard.message, variant: "destructive" });
-      return;
+      return false;
     }
     const monthlyPrice = parseFloat(rentalMonthlyPrice.replace(",", ".")) || 0;
     const { data: saved, error } = await supabase
@@ -250,7 +254,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     setSaving(false);
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
-      return;
+      return false;
     }
     if (saved?.id) {
       logEntityCommunicationEventSafe({
@@ -268,17 +272,19 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
       resetAndClose();
       onSaved();
       navigate("/admin/rentals");
+      return true;
     }
+    return false;
   };
 
-  const saveCommission = async () => {
+  const saveCommission = async (): Promise<boolean> => {
     if (!commissionTitle.trim()) {
       toast({ title: "Zadaj názov provízie", variant: "destructive" });
-      return;
+      return false;
     }
     if (!commissionImplementer.trim()) {
       toast({ title: "Vyber realizátora provízie", variant: "destructive" });
-      return;
+      return false;
     }
     setSaving(true);
     const linked = await resolveWorkbenchCustomerLink(ctx);
@@ -296,7 +302,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     if (!built.ok) {
       setSaving(false);
       toast({ title: "Provízia — chyba", description: built.error, variant: "destructive" });
-      return;
+      return false;
     }
     const { data: saved, error } = await supabase
       .from("commissions")
@@ -306,7 +312,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
     setSaving(false);
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
-      return;
+      return false;
     }
     if (saved?.id) {
       if (built.warnings.length) {
@@ -327,12 +333,75 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
       });
       resetAndClose();
       onSaved();
+      return true;
     }
+    return false;
+  };
+
+  const formSnapshot = useMemo(
+    () => ({
+      openKind,
+      taskTitle,
+      taskDueDate,
+      taskPriority,
+      projectTitle,
+      hostingProvider,
+      commissionTitle,
+      commissionAmount,
+      commissionImplementer,
+      rentalName,
+      rentalUrl,
+      rentalMonthlyPrice,
+    }),
+    [
+      openKind,
+      taskTitle,
+      taskDueDate,
+      taskPriority,
+      projectTitle,
+      hostingProvider,
+      commissionTitle,
+      commissionAmount,
+      commissionImplementer,
+      rentalName,
+      rentalUrl,
+      rentalMonthlyPrice,
+    ],
+  );
+
+  const saveActive = async (): Promise<boolean> => {
+    switch (openKind) {
+      case "task":
+        return saveTask();
+      case "project":
+        return saveProject();
+      case "hosting":
+        return saveHosting();
+      case "commission":
+        return saveCommission();
+      case "rental":
+        return saveRental();
+      default:
+        return false;
+    }
+  };
+
+  const closeGuard = useAdminCloseGuard({
+    isOpen: openKind != null,
+    current: formSnapshot,
+    onSave: saveActive,
+    saving,
+  });
+
+  const requestClose = () => closeGuard.requestClose(resetAndClose);
+  const handleOpenChange = (o: boolean) => {
+    if (!o) closeGuard.handleOpenChange(o, resetAndClose);
   };
 
   return (
     <>
-      <Dialog open={openKind === "task"} onOpenChange={(o) => !o && resetAndClose()}>
+      {closeGuard.closeGuardDialog}
+      <Dialog open={openKind === "task"} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nová úloha</DialogTitle>
@@ -373,7 +442,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveTask()} disabled={saving}>
@@ -384,7 +453,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openKind === "project"} onOpenChange={(o) => !o && resetAndClose()}>
+      <Dialog open={openKind === "project"} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nový projekt</DialogTitle>
@@ -398,7 +467,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveProject()} disabled={saving}>
@@ -409,7 +478,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openKind === "rental"} onOpenChange={(o) => !o && resetAndClose()}>
+      <Dialog open={openKind === "rental"} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nový prenájom webu</DialogTitle>
@@ -433,7 +502,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveRental()} disabled={saving}>
@@ -444,7 +513,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openKind === "hosting"} onOpenChange={(o) => !o && resetAndClose()}>
+      <Dialog open={openKind === "hosting"} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nový hosting</DialogTitle>
@@ -458,7 +527,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveHosting()} disabled={saving}>
@@ -469,7 +538,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openKind === "commission"} onOpenChange={(o) => !o && resetAndClose()}>
+      <Dialog open={openKind === "commission"} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nová provízia</DialogTitle>
@@ -508,7 +577,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={resetAndClose}>
+            <Button variant="outline" onClick={requestClose}>
               Zrušiť
             </Button>
             <Button onClick={() => void saveCommission()} disabled={saving}>
