@@ -42,6 +42,7 @@ import { useAdminAccess } from "@/hooks/useAdminAccess";
 import {
   canAccessFinanceAdvanced,
   canAccessOperationalCrm,
+  canSeeAllCommissions,
   filterCommissionsForUser,
   filterPayoutRecordsForUser,
   resolveScopedCommissionEmpty,
@@ -49,10 +50,10 @@ import {
 } from "@/lib/rbac/permissions";
 import {
   implementerPaidDisplayTotal,
-  implementerTotalsFromCommissionPayouts,
   resolveImplementerFinanceTruthLevel,
   type ImplementerFinanceTotals,
 } from "@/lib/finance/commissionPayoutStatus";
+import { buildImplementerFinanceTotalsWithRentals } from "@/lib/finance/rentalImplementerFinanceTotals";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
 import { ScopedEmptyState } from "@/components/admin/rbac/ScopedEmptyState";
@@ -258,14 +259,34 @@ const AdminFinance = () => {
     [raw.payoutRecords, accessCtx],
   );
 
+  const scopedCommissionsForYear = useMemo(
+    () => scopedCommissions.filter((c) => String(c.date || "").startsWith(String(year))),
+    [scopedCommissions, year],
+  );
+
   const implementerTotals = useMemo(() => {
+    const scopeImplementer = canSeeAllCommissions(accessCtx.role) ? null : accessCtx.implementerName;
     return Array.from(
-      implementerTotalsFromCommissionPayouts(scopedCommissions, scopedPayoutRecords).entries(),
+      buildImplementerFinanceTotalsWithRentals(scopedCommissionsForYear, scopedPayoutRecords, {
+        websites: raw.websites,
+        payments: raw.payments,
+        allCommissions: scopedCommissions as CommissionRow[],
+        year,
+        scopeImplementer,
+      }).entries(),
     ).sort(
       (a, b) =>
         implementerPaidDisplayTotal(b[1]) + b[1].unpaid - (implementerPaidDisplayTotal(a[1]) + a[1].unpaid),
     );
-  }, [scopedCommissions, scopedPayoutRecords]);
+  }, [
+    scopedCommissionsForYear,
+    scopedPayoutRecords,
+    raw.websites,
+    raw.payments,
+    scopedCommissions,
+    year,
+    accessCtx,
+  ]);
 
   const settlementDraftsForGov = useMemo(
     () =>
@@ -431,6 +452,7 @@ const AdminFinance = () => {
             scopedEmpty={scopedEmpty}
             showOrgKpis={showOrgFinance}
             implementerLabel={access.implementerName}
+            year={year}
             onOpenAdvanced={() => {
               if (!canAccessFinanceAdvanced(access.role)) return;
               const next = new URLSearchParams(searchParams);
@@ -455,6 +477,7 @@ function DailyFinanceView({
   scopedEmpty,
   showOrgKpis,
   implementerLabel,
+  year,
   onOpenAdvanced,
   showAdvancedLink = true,
 }: {
@@ -481,6 +504,7 @@ function DailyFinanceView({
   scopedEmpty: ReturnType<typeof resolveScopedCommissionEmpty>;
   showOrgKpis: boolean;
   implementerLabel: string | null;
+  year: number;
   onOpenAdvanced: () => void;
   showAdvancedLink?: boolean;
 }) {
@@ -546,7 +570,9 @@ function DailyFinanceView({
             {showOrgKpis ? "Provízie podľa realizátora" : "Vaše provízie"}
           </h2>
           <span className="text-xs text-muted-foreground">
-            {showOrgKpis ? "commissions + payout_records (bez dvojitého počítania)" : "len váš implementer záznam"}
+            {showOrgKpis
+              ? "commissions + payout_records + prenájom JSON (bez dvojitého počítania)"
+              : "len váš implementer záznam"}
           </span>
         </div>
         {implementerTotals.length === 0 ? (
@@ -597,7 +623,8 @@ function DailyFinanceView({
           <p className="text-[10px] text-muted-foreground px-4 py-2 border-t border-border/60">
             Vyplatené: auditované sumy z <code className="text-[10px]">payout_records</code> (ak existujú) +
             workflow provízie bez payoutu. Nezaplatené: <code className="text-[10px]">commissions</code> bez
-            linked payout. Bez dvojitého započítania commission + payout pre ten istý zdroj.
+            linked payout + podiel z prenájmov (JSON, ak ešte nie je materializovaný v commissions). Rok{" "}
+            {year}. Bez dvojitého započítania commission + payout pre ten istý zdroj.
           </p>
         )}
       </section>
