@@ -9,6 +9,7 @@ import { FinanceGovernance } from "@/components/admin/finance/FinanceGovernance"
 import { CommissionsExpensesContent } from "@/pages/AdminCommissions";
 import { loadIssueDismissals, type IssueDismissalRow } from "@/lib/finance/dismissals";
 import { filterActiveIssues } from "@/lib/finance/issueKeys";
+import { summarizeReconciliationIssueCounts, type ReconciliationIssueSummary } from "@/lib/finance/issuePresentation";
 import { buildSettlementDrafts } from "@/lib/finance/buildSettlementDrafts";
 import { buildReviewQueue } from "@/lib/finance/buildReviewQueue";
 import { loadReviewStatuses } from "@/lib/finance/reviewGovernance";
@@ -222,10 +223,10 @@ const AdminFinance = () => {
     [raw, hostingRecords],
   );
 
-  const activeIssueCount = useMemo(() => {
+  const reconciliationSummary = useMemo(() => {
     const keys = new Set(dismissals.map((d) => d.issue_key));
-    return filterActiveIssues(snapshot.reconciliation.issues, keys).length;
-  }, [snapshot, dismissals]);
+    return summarizeReconciliationIssueCounts(snapshot.reconciliation.issues, keys, financeCtx);
+  }, [snapshot, dismissals, financeCtx]);
 
   const dailyKpis = useMemo(() => {
     const yearPayments = raw.payments.filter((p: any) => p.year === year);
@@ -428,14 +429,13 @@ const AdminFinance = () => {
             snapshot={snapshot}
             financeCtx={financeCtx}
             raw={raw}
-            year={year}
             dismissals={dismissals}
             commissionRules={commissionRules}
             commissionOverrides={commissionOverrides}
             hostingRecords={hostingRecords}
             reviewStatuses={reviewStatuses}
             policySettings={policySettings}
-            activeIssueCount={activeIssueCount}
+            reconciliationSummary={reconciliationSummary}
             pendingReviewCount={pendingReviewCount}
             settlementDraftsForGov={settlementDraftsForGov}
             legacyCommissions={legacyCommissions}
@@ -448,7 +448,7 @@ const AdminFinance = () => {
             implementerTotals={implementerTotals}
             commissions={scopedCommissions as CommissionRow[]}
             payoutRecords={scopedPayoutRecords}
-            activeIssueCount={activeIssueCount}
+            reconciliationSummary={reconciliationSummary}
             scopedEmpty={scopedEmpty}
             showOrgKpis={showOrgFinance}
             implementerLabel={access.implementerName}
@@ -473,7 +473,7 @@ function DailyFinanceView({
   implementerTotals,
   commissions,
   payoutRecords,
-  activeIssueCount,
+  reconciliationSummary,
   scopedEmpty,
   showOrgKpis,
   implementerLabel,
@@ -500,7 +500,7 @@ function DailyFinanceView({
     truth_level?: string | null;
     implementer?: string | null;
   }>;
-  activeIssueCount: number;
+  reconciliationSummary: ReconciliationIssueSummary;
   scopedEmpty: ReturnType<typeof resolveScopedCommissionEmpty>;
   showOrgKpis: boolean;
   implementerLabel: string | null;
@@ -640,11 +640,18 @@ function DailyFinanceView({
             </Button>
           </>
         )}
-        {showOrgKpis && activeIssueCount > 0 && (
+        {showOrgKpis && reconciliationSummary.actionableCount > 0 && (
           <Badge variant="destructive" className="text-[10px]">
-            {activeIssueCount} nevyriešených položiek v audite
+            {reconciliationSummary.actionableCount} položiek vyžaduje akciu v Zladení
           </Badge>
         )}
+        {showOrgKpis &&
+          reconciliationSummary.actionableCount === 0 &&
+          reconciliationSummary.advisoryCount > 0 && (
+            <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/40">
+              {reconciliationSummary.advisoryCount} na kontrolu (bez akcie)
+            </Badge>
+          )}
         {showAdvancedLink && (
           <Button size="sm" variant="ghost" className="text-xs" onClick={onOpenAdvanced}>
             Otvoriť pokročilé financie →
@@ -667,14 +674,13 @@ function AdvancedFinanceView({
   snapshot,
   financeCtx,
   raw,
-  year,
   dismissals,
   commissionRules,
   commissionOverrides,
   hostingRecords,
   reviewStatuses,
   policySettings,
-  activeIssueCount,
+  reconciliationSummary,
   pendingReviewCount,
   settlementDraftsForGov,
   legacyCommissions,
@@ -683,64 +689,66 @@ function AdvancedFinanceView({
   snapshot: ReturnType<typeof buildFinanceSnapshot>;
   financeCtx: any;
   raw: any;
-  year: number;
   dismissals: IssueDismissalRow[];
   commissionRules: CommissionRule[];
   commissionOverrides: CommissionRuleOverride[];
   hostingRecords: HostingRecordRow[];
   reviewStatuses: any[];
   policySettings: PayoutPolicySetting[];
-  activeIssueCount: number;
+  reconciliationSummary: ReconciliationIssueSummary;
   pendingReviewCount: number;
   settlementDraftsForGov: ReturnType<typeof buildSettlementDrafts>;
   legacyCommissions: boolean;
   onSaved: () => void;
 }) {
-  const defaultTab = legacyCommissions ? "provizie" : "prehlad";
+  const defaultTab = legacyCommissions ? "provizie" : "settlement";
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
         {FINANCE_TRUTH_DISCLAIMER}
       </p>
+      <p className="text-[11px] text-muted-foreground">
+        Pokročilé nástroje pre záznamy, vyúčtovanie a výnimky. Denný prehľad KPI a provízií realizátorov je v
+        základnom režime — tu nie sú duplicitne.
+      </p>
 
       <Tabs defaultValue={defaultTab}>
         <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="prehlad">Detailný prehľad</TabsTrigger>
-          <TabsTrigger value="provizie">Provízie & náklady</TabsTrigger>
           <TabsTrigger value="records">Záznamy</TabsTrigger>
+          <TabsTrigger value="settlement">Vyúčtovanie</TabsTrigger>
           <TabsTrigger value="reconciliation">
             Zladenie
-            {activeIssueCount > 0 && <span className="ml-1 text-amber-500">({activeIssueCount})</span>}
+            {reconciliationSummary.actionableCount > 0 && (
+              <span className="ml-1 text-red-500 font-medium">({reconciliationSummary.actionableCount})</span>
+            )}
+            {reconciliationSummary.actionableCount === 0 && reconciliationSummary.advisoryCount > 0 && (
+              <span className="ml-1 text-muted-foreground">({reconciliationSummary.advisoryCount})</span>
+            )}
           </TabsTrigger>
-          <TabsTrigger value="settlement">Vyúčtovanie</TabsTrigger>
-          <TabsTrigger value="governance">
-            Kontrola
-            {pendingReviewCount > 0 && <span className="ml-1 text-amber-500">({pendingReviewCount})</span>}
+          <TabsTrigger value="provizie">Provízie & náklady</TabsTrigger>
+          <TabsTrigger value="governance" className="text-muted-foreground">
+            Kontrola (audit)
+            {pendingReviewCount > 0 && (
+              <span className="ml-1 text-amber-500">({pendingReviewCount})</span>
+            )}
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="prehlad" className="space-y-4 mt-4">
-          <EntityPaymentsKpiGrid totals={snapshot.totals.entityPaymentsConfirmed} />
-          <section className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <StatCard label="Potvrdené platby" value={snapshot.totals.paymentsConfirmed} accent="text-green-600" />
-            <StatCard label="Potvrdené výplaty" value={snapshot.totals.payoutsConfirmed} accent="text-red-600" />
-            <StatCard label="Potvrdené náklady" value={snapshot.totals.costsConfirmed} accent="text-red-600" />
-            <StatCard label={`Prenájmy faktúra (${year})`} value={snapshot.totals.rentalMarkedInvoiced} />
-            <StatCard label={`Prenájmy nezaplatené (${year})`} value={snapshot.totals.rentalMarkedUnpaid} />
-            <StatCard label={`Prenájmy potenciál (${year})`} value={snapshot.totals.rentalPotential} accent="text-primary" />
-          </section>
-        </TabsContent>
-
-        <TabsContent value="provizie" className="mt-4">
-          <CommissionsExpensesContent />
-        </TabsContent>
 
         <TabsContent value="records" className="mt-4">
           <FinanceRecordsCrud
             paymentRecords={raw.paymentRecords}
             payoutRecords={raw.payoutRecords}
             costRecords={raw.costRecords}
+            onSaved={onSaved}
+          />
+        </TabsContent>
+
+        <TabsContent value="settlement" className="mt-4">
+          <FinanceSettlementDrafts
+            ctx={financeCtx}
+            rules={commissionRules}
+            overrides={commissionOverrides}
             onSaved={onSaved}
           />
         </TabsContent>
@@ -755,13 +763,8 @@ function AdvancedFinanceView({
           />
         </TabsContent>
 
-        <TabsContent value="settlement" className="mt-4">
-          <FinanceSettlementDrafts
-            ctx={financeCtx}
-            rules={commissionRules}
-            overrides={commissionOverrides}
-            onSaved={onSaved}
-          />
+        <TabsContent value="provizie" className="mt-4">
+          <CommissionsExpensesContent />
         </TabsContent>
 
         <TabsContent value="governance" className="mt-4">
@@ -822,23 +825,6 @@ function KpiCard({
         </div>
       )}
       {hint && <div className="text-[10px] text-muted-foreground mt-1">{hint}</div>}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  accent = "text-foreground",
-}: {
-  label: string;
-  value: number;
-  accent?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className={`text-xl font-bold mt-1 ${accent}`}>{value.toFixed(2)} €</div>
     </div>
   );
 }

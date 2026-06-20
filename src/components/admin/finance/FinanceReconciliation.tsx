@@ -3,6 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
+import {
   Table,
   TableBody,
   TableCell,
@@ -27,6 +33,10 @@ import {
 } from "@/lib/finance/factDrafts";
 import { dismissIssue, revokeDismissal, type IssueDismissalRow } from "@/lib/finance/dismissals";
 import { buildIssueKey, filterActiveIssues, isIssueDismissable } from "@/lib/finance/issueKeys";
+import {
+  filterPrimaryReconciliationIssues,
+  summarizeReconciliationIssueCounts,
+} from "@/lib/finance/issuePresentation";
 import type {
   FinanceSnapshot,
   ReconciliationIssue,
@@ -57,7 +67,7 @@ type IssueSection = {
   kinds: ReconciliationIssueKind[];
 };
 
-const ISSUE_SECTIONS: IssueSection[] = [
+const PRIMARY_ISSUE_SECTIONS: IssueSection[] = [
   {
     id: "rentals",
     title: "Prenájmy",
@@ -74,15 +84,6 @@ const ISSUE_SECTIONS: IssueSection[] = [
     kinds: ["entity_missing_payment_fact"],
   },
   {
-    id: "tasks",
-    title: "Úlohy",
-    kinds: [
-      "task_missing_payment_deposit",
-      "task_missing_payment_full",
-      "entity_payment_ahead_of_workflow",
-    ],
-  },
-  {
     id: "quality",
     title: "Kvalita & duplicity",
     kinds: [
@@ -93,6 +94,16 @@ const ISSUE_SECTIONS: IssueSection[] = [
     ],
   },
 ];
+
+const LEGACY_ISSUE_SECTION: IssueSection = {
+  id: "tasks",
+  title: "Úlohy (legacy, bez akcie)",
+  kinds: [
+    "task_missing_payment_deposit",
+    "task_missing_payment_full",
+    "entity_payment_ahead_of_workflow",
+  ],
+};
 
 interface FinanceReconciliationProps {
   snapshot: FinanceSnapshot;
@@ -110,7 +121,6 @@ export function FinanceReconciliation({
   onSaved,
 }: FinanceReconciliationProps) {
   const allIssues = snapshot.reconciliation.issues;
-  const counts = snapshot.reconciliation.counts;
   const dismissedKeySet = useMemo(
     () => new Set(dismissals.map((d) => d.issue_key)),
     [dismissals],
@@ -129,14 +139,25 @@ export function FinanceReconciliation({
   const [dismissType, setDismissType] = useState<"dismissed" | "false_positive">("false_positive");
 
   const visibleIssues = useMemo(() => {
-    if (filter === "active") return filterActiveIssues(allIssues, dismissedKeySet);
-    if (filter === "dismissed") {
-      return allIssues.filter((i) => dismissedKeySet.has(i.issueKey ?? buildIssueKey(i)));
+    let list = allIssues;
+    if (filter === "active") list = filterActiveIssues(allIssues, dismissedKeySet);
+    else if (filter === "dismissed") {
+      list = allIssues.filter((i) => dismissedKeySet.has(i.issueKey ?? buildIssueKey(i)));
     }
-    return allIssues;
+    return filterPrimaryReconciliationIssues(list);
   }, [allIssues, dismissedKeySet, filter]);
 
-  const activeCount = filterActiveIssues(allIssues, dismissedKeySet).length;
+  const issueSummary = useMemo(
+    () => summarizeReconciliationIssueCounts(allIssues, dismissedKeySet, ctx),
+    [allIssues, dismissedKeySet, ctx],
+  );
+
+  const legacyVisibleIssues = useMemo(() => {
+    if (filter === "dismissed") return [];
+    const base =
+      filter === "active" ? filterActiveIssues(allIssues, dismissedKeySet) : allIssues;
+    return base.filter((i) => LEGACY_ISSUE_SECTION.kinds.includes(i.kind));
+  }, [allIssues, dismissedKeySet, filter]);
 
   const openAction = (issue: ReconciliationIssue) => {
     const prefill = prefillFromReconciliationIssue(issue, ctx);
@@ -183,7 +204,7 @@ export function FinanceReconciliation({
 
   const sectionIssues = useMemo(() => {
     const visibleSet = new Set(visibleIssues.map((i) => i.issueKey ?? buildIssueKey(i)));
-    return ISSUE_SECTIONS.map((section) => ({
+    return PRIMARY_ISSUE_SECTIONS.map((section) => ({
       ...section,
       issues: allIssues.filter(
         (i) =>
@@ -196,8 +217,8 @@ export function FinanceReconciliation({
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
-        Operatívny prehľad ({year} pre prenájmy · entity gaps celoročne). Aktívne: {activeCount},
-        zamietnuté: {dismissals.length}.
+        Výnimky medzi workflow a potvrdenými faktmi ({year} pre prenájmy). Úlohy sú legacy — skryté v
+        primárnom zozname. Zamietnuté: {dismissals.length}.
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -213,18 +234,26 @@ export function FinanceReconciliation({
         ))}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        <CountCard label="Aktívne problémy" count={activeCount} highlight />
-        <CountCard label="Entity gaps" count={counts.entityMissingPayment} />
-        <CountCard label="Úlohy" count={counts.taskPaymentGaps} />
-        <CountCard label="Zamietnuté" count={dismissals.length} />
-        <CountCard label="Možné duplicity" count={counts.potentialDuplicates} />
-        <CountCard label="Celkom raw" count={counts.totalIssues} />
+      <div className="flex flex-wrap gap-2">
+        <CountCard
+          label="Vyžaduje akciu"
+          count={issueSummary.actionableCount}
+          highlight={issueSummary.actionableCount > 0}
+          variant="action"
+        />
+        {issueSummary.advisoryCount > 0 && (
+          <CountCard label="Len kontrola / dismiss" count={issueSummary.advisoryCount} />
+        )}
+        {issueSummary.hiddenLegacyCount > 0 && (
+          <CountCard label="Legacy úlohy (skryté)" count={issueSummary.hiddenLegacyCount} muted />
+        )}
       </div>
 
       {visibleIssues.length === 0 ? (
         <div className="rounded-xl border border-border bg-card py-10 text-center text-sm text-muted-foreground">
-          {filter === "active" ? "Žiadne aktívne problémy." : "Žiadne problémy v tomto filtri."}
+          {filter === "active"
+            ? "Žiadne aktívne problémy v primárnom pohľade."
+            : "Žiadne problémy v tomto filtri."}
         </div>
       ) : (
         <div className="space-y-4">
@@ -241,6 +270,29 @@ export function FinanceReconciliation({
             />
           ))}
         </div>
+      )}
+
+      {legacyVisibleIssues.length > 0 && (
+        <Collapsible className="rounded-xl border border-dashed border-border/80">
+          <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-xs text-muted-foreground hover:bg-muted/30">
+            <span>
+              Legacy úlohy & info ({legacyVisibleIssues.length}) — bez akcie, len historický stav
+            </span>
+            <ChevronDown className="w-4 h-4 shrink-0" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-2 pb-2">
+            <IssueSectionTable
+              title={LEGACY_ISSUE_SECTION.title}
+              issues={legacyVisibleIssues}
+              ctx={ctx}
+              dismissalMap={dismissalMap}
+              onAction={openAction}
+              onDismiss={setDismissTarget}
+              onRevoke={handleRevoke}
+              readOnlyActions
+            />
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       <FactConfirmDialog
@@ -290,6 +342,7 @@ function IssueSectionTable({
   onAction,
   onDismiss,
   onRevoke,
+  readOnlyActions = false,
 }: {
   title: string;
   issues: ReconciliationIssue[];
@@ -298,6 +351,7 @@ function IssueSectionTable({
   onAction: (issue: ReconciliationIssue) => void;
   onDismiss: (issue: ReconciliationIssue) => void;
   onRevoke: (issueKey: string) => void;
+  readOnlyActions?: boolean;
 }) {
   return (
     <section className="rounded-xl border border-border bg-card overflow-hidden">
@@ -320,7 +374,7 @@ function IssueSectionTable({
             {issues.slice(0, 80).map((issue, idx) => {
               const key = issue.issueKey ?? buildIssueKey(issue);
               const dismissed = dismissalMap.get(key);
-              const actionable = isIssueActionable(issue, ctx) && !dismissed;
+              const actionable = !readOnlyActions && isIssueActionable(issue, ctx) && !dismissed;
               const actionLabel = getIssueActionLabel(issue);
               const dismissable = isIssueDismissable(issue) && !dismissed;
               const sourceHint = formatReconciliationSourceHint(issue.sourceTable, issue.sourceId);
@@ -376,12 +430,38 @@ function IssueSectionTable({
   );
 }
 
-function CountCard({ label, count, highlight }: { label: string; count: number; highlight?: boolean }) {
+function CountCard({
+  label,
+  count,
+  highlight,
+  variant = "default",
+  muted,
+}: {
+  label: string;
+  count: number;
+  highlight?: boolean;
+  variant?: "default" | "action";
+  muted?: boolean;
+}) {
   return (
-    <div className="rounded-xl border border-border bg-card p-3">
+    <div
+      className={`rounded-lg border px-3 py-2 min-w-[8rem] ${
+        highlight && variant === "action"
+          ? "border-red-500/40 bg-red-500/5"
+          : muted
+            ? "border-dashed border-border/60 bg-muted/10"
+            : "border-border bg-card"
+      }`}
+    >
       <div className="text-[10px] text-muted-foreground">{label}</div>
-      <div className={`text-2xl font-bold mt-1 ${highlight ? "text-primary" : "text-foreground"}`}>{count}</div>
+      <div
+        className={`text-lg font-bold tabular-nums ${
+          highlight && variant === "action" ? "text-red-600" : "text-foreground"
+        }`}
+      >
+        {count}
+      </div>
     </div>
   );
 }
-
+
