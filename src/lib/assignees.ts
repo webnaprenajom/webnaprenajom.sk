@@ -19,7 +19,23 @@ export function assigneeSelectOptions(
   return [...set].sort((a, b) => a.localeCompare(b, "sk"));
 }
 
-export function isKnownAssignee(name: string | null | undefined): boolean {
+export function isRegistryImplementer(
+  name: string | null | undefined,
+  activeRegistryNames: readonly string[],
+): boolean {
+  if (!name?.trim() || activeRegistryNames.length === 0) return false;
+  const key = name.trim().toLowerCase();
+  return activeRegistryNames.some((n) => n.trim().toLowerCase() === key);
+}
+
+/** Known in active registry when loaded; otherwise falls back to seed list. */
+export function isKnownAssignee(
+  name: string | null | undefined,
+  activeRegistryNames: readonly string[] = [],
+): boolean {
   if (!name?.trim()) return false;
+  if (activeRegistryNames.length > 0) {
+    return isRegistryImplementer(name, activeRegistryNames);
+  }
   return (CRM_ASSIGNEES as readonly string[]).includes(name.trim());
 }

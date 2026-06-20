@@ -37,7 +37,7 @@ import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog"
 import { type FactDraft, prefillFromExpense } from "@/lib/finance/factDrafts";
 import { resolveCommissionPayoutBridgeAfterMarkPaid } from "@/lib/finance/commissionPayoutBridge";
 import { PAYMENT_FORM_OPTIONS, type PaymentFormValue } from "@/lib/paymentForm";
-import { assigneeSelectOptions, isKnownAssignee } from "@/lib/assignees";
+import { useImplementerSelectOptions } from "@/hooks/useImplementerSelectOptions";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { EntitySearchPicker } from "@/components/admin/lookup/EntitySearchPicker";
 import type { LookupKind } from "@/lib/crmLookup/types";
@@ -169,6 +169,8 @@ export function CommissionsExpensesContent() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyCommission());
+  const { options: implementerOptions, isKnown: isImplementerKnown } =
+    useImplementerSelectOptions(form.implementer);
 
   // Expenses
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -829,10 +831,10 @@ export function CommissionsExpensesContent() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">— vyber —</SelectItem>
-                  {assigneeSelectOptions(form.implementer).map((name) => (
+                  {implementerOptions.map((name) => (
                     <SelectItem key={name} value={name}>
                       {name}
-                      {!isKnownAssignee(name) ? " (legacy)" : ""}
+                      {!isImplementerKnown(name) ? " (legacy)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -24,7 +24,7 @@ import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 import { resolveWorkbenchCustomerLink } from "@/lib/customerWorkbench/customerLink";
 import { resolveTaskCustomerFields } from "@/lib/crmLookup/taskCustomerLink";
 import { buildCommissionInsertPayload } from "@/lib/commissionCreateHelpers";
-import { assigneeSelectOptions } from "@/lib/assignees";
+import { useImplementerSelectOptions } from "@/hooks/useImplementerSelectOptions";
 import { parseInsertRowId, assertDeliveryHasCanonicalCustomer } from "@/lib/crmLookup/entitySaveHelpers";
 import type { CustomerWorkbenchContext } from "@/lib/customerWorkbench/types";
 
@@ -60,6 +60,10 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
   const [commissionTitle, setCommissionTitle] = useState("");
   const [commissionAmount, setCommissionAmount] = useState("");
   const [commissionImplementer, setCommissionImplementer] = useState("");
+  const {
+    options: commissionImplementerOptions,
+    isKnown: isCommissionImplementerKnown,
+  } = useImplementerSelectOptions(commissionImplementer);
   const [rentalName, setRentalName] = useState("");
   const [rentalUrl, setRentalUrl] = useState("");
   const [rentalMonthlyPrice, setRentalMonthlyPrice] = useState("");
@@ -493,9 +497,10 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">— vyber —</SelectItem>
-                  {assigneeSelectOptions(commissionImplementer).map((name) => (
+                  {commissionImplementerOptions.map((name) => (
                     <SelectItem key={name} value={name}>
                       {name}
+                      {!isCommissionImplementerKnown(name) ? " (legacy)" : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

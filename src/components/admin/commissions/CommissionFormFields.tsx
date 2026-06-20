@@ -7,7 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
-import { assigneeSelectOptions } from "@/lib/assignees";
+import { useImplementerSelectOptions } from "@/hooks/useImplementerSelectOptions";
 import { PAYMENT_FORM_OPTIONS, type PaymentFormValue } from "@/lib/paymentForm";
 import { COMMISSION_STATUS_LABELS } from "@/lib/finance/labels";
 
@@ -28,6 +28,8 @@ interface Props {
 }
 
 export function CommissionFormFields({ form, onChange, showTitle = true }: Props) {
+  const { options: implementerOptions, isKnown } = useImplementerSelectOptions(form.implementer);
+
   return (
     <div className="grid gap-3">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -63,9 +65,10 @@ export function CommissionFormFields({ form, onChange, showTitle = true }: Props
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__none__">— vyber —</SelectItem>
-              {assigneeSelectOptions(form.implementer).map((name) => (
+              {implementerOptions.map((name) => (
                 <SelectItem key={name} value={name}>
                   {name}
+                  {!isKnown(name) ? " (legacy)" : ""}
                 </SelectItem>
               ))}
             </SelectContent>
