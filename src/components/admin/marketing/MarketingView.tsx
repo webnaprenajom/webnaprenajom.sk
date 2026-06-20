@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { matchesSearchQuery } from "@/lib/searchMatch";
+import { formatAgreedPrice } from "@/components/admin/AgreedPriceField";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Pencil, Trash2, ExternalLink, FileText, Search } from "lucide-react";
 import { buildClientNameEmailMap, customerHrefByClientName } from "@/lib/adminNav";
@@ -119,6 +120,7 @@ export function MarketingView() {
         item.notes,
         statusLabel,
         channel,
+        item.agreed_fee != null ? String(item.agreed_fee) : null,
       );
     });
   }, [items, statusFilter, channelFilter, searchQuery]);
@@ -218,6 +220,7 @@ export function MarketingView() {
                   <TableHead>Klient</TableHead>
                   <TableHead>Kanál</TableHead>
                   <TableHead>Stav</TableHead>
+                  <TableHead className="text-right">Dohodnutá cena</TableHead>
                   <TableHead>URL</TableHead>
                   <TableHead>Aktualizované</TableHead>
                   <TableHead className="w-[120px]" />
@@ -274,6 +277,9 @@ export function MarketingView() {
                         >
                           {status?.label ?? item.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-right tabular-nums whitespace-nowrap">
+                        {formatAgreedPrice(item.agreed_fee)}
                       </TableCell>
                       <TableCell className="text-xs max-w-[160px]">
                         {item.url ? (

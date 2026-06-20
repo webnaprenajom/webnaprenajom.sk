@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
+import { AGREED_PRICE_HELPER } from "@/components/admin/AgreedPriceField";
 import {
   type MarketingChannel,
   type MarketingRecord,
@@ -114,7 +115,7 @@ export function MarketingRecordEditDialog({
         </div>
 
         <div className="space-y-1.5">
-          <Label>Dohodnutý poplatok (€)</Label>
+          <Label>Dohodnutá cena (€)</Label>
           <Input
             type="number"
             step="0.01"
@@ -126,11 +127,9 @@ export function MarketingRecordEditDialog({
                 agreed_fee: e.target.value === "" ? null : Number(e.target.value),
               })
             }
-            placeholder="Základ pre platbu do financií"
+            placeholder="Voliteľné"
           />
-          <p className="text-[10px] text-muted-foreground">
-            Nie je auditovaný príjem — slúži len na draft payment fact.
-          </p>
+          <p className="text-[10px] text-muted-foreground">{AGREED_PRICE_HELPER}</p>
         </div>
 
         <div className="space-y-1.5">

@@ -14,8 +14,8 @@ React + Vite + Supabase CRM with finance foundation, admin modules, and public m
 git clone <YOUR_GIT_URL>
 cd remix-of-webnaprenajom.sk
 npm ci
-cp .env.example .env   # add VITE_SUPABASE_URL + VITE_SUPABASE_PUBLISHABLE_KEY
-npm run dev
+cp .env.example .env.team   # fill team/personal Supabase keys (see docs/supabase-migration.md)
+npm run dev:team            # or: npm run dev / npm run dev:personal
 ```
 
 | Command | Description |

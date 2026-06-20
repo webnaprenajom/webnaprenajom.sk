@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { matchesSearchQuery } from "@/lib/searchMatch";
+import { formatAgreedPrice } from "@/components/admin/AgreedPriceField";
 import { NoteTextarea } from "@/components/admin/NoteTextarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -263,6 +264,7 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
         item.notes,
         statusLabel,
         typeLabel,
+        item.agreed_fee != null ? String(item.agreed_fee) : null,
       );
     });
   }, [statusFiltered, searchQuery]);
@@ -370,6 +372,9 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                     </>
                   )}
                   <TableHead>Stav</TableHead>
+                  {mode === "projects" && (
+                    <TableHead className="text-right">Dohodnutá cena</TableHead>
+                  )}
                   <TableHead>Aktualizované</TableHead>
                   <TableHead className="w-[120px]" />
                 </TableRow>
@@ -477,6 +482,11 @@ export function ProjectNotesView({ mode }: { mode: ProjectNotesViewMode }) {
                           {status?.label}
                         </Badge>
                       </TableCell>
+                      {mode === "projects" && (
+                        <TableCell className="text-xs text-right tabular-nums whitespace-nowrap">
+                          {formatAgreedPrice(item.agreed_fee)}
+                        </TableCell>
+                      )}
                       <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">
                         {new Date(item.updated_at).toLocaleDateString("sk-SK")}
                       </TableCell>

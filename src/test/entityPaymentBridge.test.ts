@@ -118,7 +118,7 @@ describe("entity payment fact drafts", () => {
 describe("entity payment create hints", () => {
   it("project gated without agreed_fee", () => {
     expect(canOfferProjectPaymentCreate({ agreed_fee: null }, false)).toBe(false);
-    expect(projectPaymentCreateHint({ agreed_fee: null }, false)).toMatch(/dohodnutú cenu/i);
+    expect(projectPaymentCreateHint({ agreed_fee: null }, false)).toMatch(/prehľade/i);
   });
 
   it("project blocks duplicate linked payment", () => {

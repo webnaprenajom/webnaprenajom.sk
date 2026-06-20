@@ -1,12 +1,19 @@
 # Supabase deploy runbook — webnaprenajom.sk CRM
 
-Source of truth: `supabase/migrations/` (85 files, timestamps through `20260624200000`).
+Source of truth: `supabase/migrations/` (~90 files, timestamps through `20260625200000`).
+
+**Team migration:** see [docs/supabase-migration.md](../docs/supabase-migration.md).
+
+| Project | Ref | Env file |
+|---------|-----|----------|
+| Personal (legacy) | `kusluytpsgdrbhvaxoho` | `.env.personal` |
+| Team (target) | `qosxlmrrkyvobjigsynt` | `.env.team` |
 
 ## Quick deploy (linked project)
 
 ```powershell
 cd d:\web-rent-wizard-759d8d0e
-npx supabase link --project-ref kusluytpsgdrbhvaxoho   # once per machine
+npx supabase link --project-ref <PROJECT_REF>   # once per machine
 npx supabase migration list
 npx supabase db push
 npm run build
@@ -79,7 +86,8 @@ SELECT public.is_crm_owner();  -- true when logged in as owner
 ## Regenerate types (optional, after schema change)
 
 ```powershell
-npx supabase gen types typescript --project-id kusluytpsgdrbhvaxoho > src/integrations/supabase/types.ts
+npm run gen:types:personal   # legacy project
+npm run gen:types:team       # team project
 ```
 
 Generated types in repo may lag (`agreed_fee` not in types until regen) — app uses casts where needed; not a deploy blocker.

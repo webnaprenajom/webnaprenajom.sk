@@ -63,7 +63,7 @@ export function projectPaymentCreateHint(
 ): string | null {
   if (linked) return "Pre tento projekt už existuje potvrdená platba.";
   const fee = Number(project.agreed_fee ?? 0);
-  if (!fee || fee <= 0) return "Vyplňte dohodnutú cenu projektu v prehľade.";
+  if (!fee || fee <= 0) return "Vyplňte dohodnutú cenu v prehľade.";
   return null;
 }
 
@@ -73,7 +73,7 @@ export function marketingPaymentCreateHint(
 ): string | null {
   if (linked) return "Pre túto kampaň už existuje potvrdená platba.";
   const fee = Number(record.agreed_fee ?? 0);
-  if (!fee || fee <= 0) return "Vyplňte dohodnutý poplatok kampane v prehľade.";
+  if (!fee || fee <= 0) return "Vyplňte dohodnutú cenu v prehľade.";
   return null;
 }
 

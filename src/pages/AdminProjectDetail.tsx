@@ -18,6 +18,7 @@ import {
 } from "@/components/admin/lookup/LinkStatusBadge";
 import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
 import { OperatingCostField } from "@/components/admin/OperatingCostField";
+import { AgreedPriceField, ENTITY_PAYMENTS_TAB_NOTE } from "@/components/admin/AgreedPriceField";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import {
   entityHasLinkedPaymentInRows,
@@ -263,11 +264,10 @@ export default function AdminProjectDetail() {
               />
             </div>
             <div className="sm:col-span-2">
-              <OperatingCostField
-                label="Dohodnutá cena (€)"
+              <AgreedPriceField
+                compact
                 value={Number(project.agreed_fee ?? 0)}
                 onSave={async (next) => {
-                  const prev = Number(project.agreed_fee ?? 0);
                   const { error } = await supabase
                     .from("project_notes")
                     .update({ agreed_fee: next > 0 ? next : null })
@@ -278,12 +278,8 @@ export default function AdminProjectDetail() {
                   }
                   setProject({ ...project, agreed_fee: next > 0 ? next : null });
                   toast({ title: "Dohodnutá cena uložená" });
-                  void load();
                 }}
               />
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Základ pre opt-in platbu do financií — nie je auditovaný príjem.
-              </p>
             </div>
             <div className="sm:col-span-2">
               <EntityProfitBanner
@@ -325,6 +321,7 @@ export default function AdminProjectDetail() {
           <EntityPaymentRecordsPanel
             payments={linkedPayments}
             onSaved={() => void load()}
+            footerNote={ENTITY_PAYMENTS_TAB_NOTE}
             createActions={[
               {
                 key: "create",

@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:personal": "vite --mode personal",
+    "dev:team": "vite --mode team",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
@@ -12,7 +14,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "migrate:legacy:staging": "tsx scripts/migration/import-csv-to-staging.ts",
-    "gen:types": "npx supabase gen types typescript --local > src/integrations/supabase/types.ts"
+    "gen:types": "npx supabase gen types typescript --local > src/integrations/supabase/types.ts",
+    "gen:types:personal": "npx supabase gen types typescript --project-id kusluytpsgdrbhvaxoho > src/integrations/supabase/types.ts",
+    "gen:types:team": "npx supabase gen types typescript --project-id qosxlmrrkyvobjigsynt > src/integrations/supabase/types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

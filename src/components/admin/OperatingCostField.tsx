@@ -59,7 +59,9 @@ export function OperatingCostField({ value, onSave, label = "Prevádzkové nákl
           {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : "Uložiť"}
         </Button>
       </div>
-      <p className="text-[10px] text-muted-foreground">Odpočítava sa od tržieb pred výpočtom zisku pre provízie.</p>
+      <p className="text-[10px] text-muted-foreground">
+        Interné náklady dealu — odpočítavajú sa od tržieb (payment_records) pri výpočte zisku pre provízie.
+      </p>
     </div>
   );
 }

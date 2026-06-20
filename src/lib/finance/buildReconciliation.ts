@@ -259,7 +259,7 @@ function reconcileEntityPaymentGaps(
       "entity_missing_payment_fact",
       m.title,
       withSourceHint(
-        `Kampaň má dohodnutý poplatok ${fee.toFixed(2)} € bez potvrdené platby (payment_fact)`,
+        `Kampaň má dohodnutú cenu ${fee.toFixed(2)} € bez potvrdené platby (payment_fact)`,
         table,
         m.id,
       ),

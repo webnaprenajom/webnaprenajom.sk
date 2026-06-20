@@ -23,7 +23,7 @@ import {
   ClientLinkBadge,
   ConfirmedLinkBadge,
 } from "@/components/admin/lookup/LinkStatusBadge";
-import { OperatingCostField } from "@/components/admin/OperatingCostField";
+import { AgreedPriceField, ENTITY_PAYMENTS_TAB_NOTE } from "@/components/admin/AgreedPriceField";
 import {
   entityHasLinkedPaymentInRows,
   marketingPaymentCreateHint,
@@ -228,8 +228,8 @@ export default function AdminMarketingDetail() {
         <Field label="Vytvorené" value={new Date(record.created_at).toLocaleString("sk-SK")} />
         <Field label="Aktualizované" value={new Date(record.updated_at).toLocaleString("sk-SK")} />
         <div className="sm:col-span-2">
-          <OperatingCostField
-            label="Dohodnutý poplatok (€)"
+          <AgreedPriceField
+            compact
             value={Number(record.agreed_fee ?? 0)}
             onSave={async (next) => {
               const { error } = await supabase
@@ -241,13 +241,9 @@ export default function AdminMarketingDetail() {
                 throw error;
               }
               setRecord({ ...record, agreed_fee: next > 0 ? next : null });
-              toast({ title: "Poplatok uložený" });
-              void load();
+              toast({ title: "Dohodnutá cena uložená" });
             }}
           />
-          <p className="text-[10px] text-muted-foreground mt-1">
-            Základ pre opt-in platbu do financií — nie je auditovaný príjem.
-          </p>
         </div>
       </section>
         </TabsContent>
@@ -277,6 +273,7 @@ export default function AdminMarketingDetail() {
           <EntityPaymentRecordsPanel
             payments={linkedPayments}
             onSaved={() => void load()}
+            footerNote={ENTITY_PAYMENTS_TAB_NOTE}
             createActions={[
               {
                 key: "create",
