@@ -1,6 +1,7 @@
 /** rental_websites.implementers JSON — shared normalize/serialize (no DB migration). */
 
 import type { PaymentFormValue } from "@/lib/paymentForm";
+import { isRegistryImplementer } from "@/lib/assignees";
 
 export type RentalImplementerPaymentStatus = "paid" | "unpaid";
 
@@ -47,4 +48,21 @@ export function serializeRentalImplementerForSave(imp: RentalImplementer): Recor
   if (imp.payment_form) row.payment_form = imp.payment_form;
   if (imp.note?.trim()) row.note = imp.note.trim();
   return row;
+}
+
+/** Case-insensitive key for rental implementer name compare/grouping. */
+export function rentalImplementerNameKey(name: string | null | undefined): string {
+  return (name ?? "").trim().toLowerCase();
+}
+
+export function rentalImplementerNamesMatch(a: string, b: string): boolean {
+  return rentalImplementerNameKey(a) === rentalImplementerNameKey(b);
+}
+
+/** True when name is in active crm_implementers registry (case-insensitive). */
+export function isRentalImplementerInRegistry(
+  name: string | null | undefined,
+  activeRegistryNames: readonly string[],
+): boolean {
+  return isRegistryImplementer(name, activeRegistryNames);
 }

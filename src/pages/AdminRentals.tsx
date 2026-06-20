@@ -64,9 +64,11 @@ import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { buildDraftKey, clearCrmDraft } from "@/lib/crmPersistence/draftStore";
 import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { filterRentalsForUser } from "@/lib/rbac/scopeHelpers";
+import { useImplementerRegistryOptions } from "@/hooks/useImplementerSelectOptions";
 import {
   type RentalImplementer,
   normalizeRentalImplementers,
+  rentalImplementerNameKey,
   serializeRentalImplementerForSave,
 } from "@/lib/rentalImplementers";
 
@@ -135,8 +137,6 @@ const emptyWebsite = (): RentalWebsite => ({
   credits_used: 0,
   implementers: [],
 });
-
-const ASSIGNEES = ["Peter", "Maroš", "Matuš"];
 
 type RentalFinanceCache = {
   websiteId: string;
@@ -208,6 +208,7 @@ export default function AdminRentals() {
     onSuccess: () => void loadAll(),
   });
   const accessCtx = useAccessContext();
+  const { optionsFor: implementerOptionsFor, isKnown: isImplementerKnown } = useImplementerRegistryOptions();
 
   const cloneRental = (w: RentalWebsite): RentalWebsite => JSON.parse(JSON.stringify(w));
 
@@ -717,21 +718,22 @@ export default function AdminRentals() {
 
   // Per-implementer commission breakdown (year)
   const implementerStats = useMemo(() => {
-    const map = new Map<string, { paid: number; potential: number; projects: number }>();
+    const map = new Map<string, { paid: number; potential: number; projects: number; displayName: string }>();
     websites.forEach((w) => {
       const s = yearStats(w);
       (w.implementers || []).forEach((imp) => {
         const pct = Number(imp.percentage) || 0;
         if (!imp.name || pct <= 0) return;
-        const cur = map.get(imp.name) || { paid: 0, potential: 0, projects: 0 };
+        const key = rentalImplementerNameKey(imp.name);
+        const cur = map.get(key) || { paid: 0, potential: 0, projects: 0, displayName: imp.name };
         cur.paid += (s.paid * pct) / 100;
         cur.potential += (s.potential * pct) / 100;
         cur.projects += 1;
-        map.set(imp.name, cur);
+        map.set(key, cur);
       });
     });
-    return Array.from(map.entries())
-      .map(([name, v]) => ({ name, ...v }))
+    return Array.from(map.values())
+      .map((v) => ({ name: v.displayName, paid: v.paid, potential: v.potential, projects: v.projects }))
       .sort((a, b) => b.potential - a.potential);
   }, [websites, payments, year]);
 
@@ -838,7 +840,14 @@ export default function AdminRentals() {
                   className="rounded-md border border-border bg-background/60 p-3 text-left hover:border-primary/50 hover:bg-primary/5 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="font-semibold">{s.name}</div>
+                    <div className="font-semibold">
+                      {s.name}
+                      {!isImplementerKnown(s.name) ? (
+                        <span className="ml-1 text-[10px] font-normal text-orange-600" title="Meno nie je v registri realizátorov">
+                          (mimo registra)
+                        </span>
+                      ) : null}
+                    </div>
                     <Badge variant="outline" className="text-[10px]">{s.projects} projekt(ov)</Badge>
                   </div>
                   <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
@@ -927,8 +936,22 @@ export default function AdminRentals() {
                       {(w.implementers || []).length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
                           {w.implementers.map((imp, i) => (
-                            <Badge key={i} variant="outline" className="text-[10px] bg-primary/5 border-primary/30 text-primary">
+                            <Badge
+                              key={i}
+                              variant="outline"
+                              className={`text-[10px] ${
+                                isImplementerKnown(imp.name)
+                                  ? "bg-primary/5 border-primary/30 text-primary"
+                                  : "bg-orange-500/10 border-orange-500/40 text-orange-600"
+                              }`}
+                              title={
+                                isImplementerKnown(imp.name)
+                                  ? undefined
+                                  : "Meno nie je v registri realizátorov — zváž doplnenie v Nastaveniach"
+                              }
+                            >
                               {imp.name} {imp.percentage}%
+                              {!isImplementerKnown(imp.name) ? " ⚠" : ""}
                             </Badge>
                           ))}
                         </div>
@@ -1148,8 +1171,11 @@ export default function AdminRentals() {
                       }}
                     >
                       <option value="">— vyber meno —</option>
-                      {ASSIGNEES.map((a) => (
-                        <option key={a} value={a}>{a}</option>
+                      {implementerOptionsFor(imp.name).map((name) => (
+                        <option key={name} value={name}>
+                          {name}
+                          {!isImplementerKnown(name) ? " (legacy)" : ""}
+                        </option>
                       ))}
                     </select>
                     <Input

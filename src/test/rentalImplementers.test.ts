@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  isRentalImplementerInRegistry,
   normalizeRentalImplementerPaymentStatus,
   normalizeRentalImplementers,
+  rentalImplementerNamesMatch,
+  rentalImplementerNameKey,
   serializeRentalImplementerForSave,
 } from "@/lib/rentalImplementers";
 
@@ -28,5 +31,15 @@ describe("rentalImplementers", () => {
     });
     expect(payload.payment_status).toBe("paid");
     expect(payload.name).toBe("Peter");
+  });
+
+  it("compares rental implementer names case-insensitively", () => {
+    expect(rentalImplementerNamesMatch("Peter", "peter")).toBe(true);
+    expect(rentalImplementerNameKey("  Maroš ")).toBe("maroš");
+  });
+
+  it("checks registry membership for rental names", () => {
+    expect(isRentalImplementerInRegistry("peter", ["Peter"])).toBe(true);
+    expect(isRentalImplementerInRegistry("Legacy", ["Peter"])).toBe(false);
   });
 });
