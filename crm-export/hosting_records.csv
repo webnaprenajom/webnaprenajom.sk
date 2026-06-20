@@ -1,5 +1,0 @@
-id,customer_email,client_name,rental_website_id,provider,domains_count,monthly_price,yearly_price,acquired_by,commissionable,commission_rule_override_id,note,active,created_at,updated_at,customer_id,operating_cost,period_from,period_to,payment_status,payment_note
-6ba68209-e9eb-41e6-a93c-bc5225868ed7,info@baterix.sk,Baterix,,Hostcreators,1,,80,,f,,,t,2026-06-15 08:11:29.264187+00,2026-06-15 08:38:59.451332+00,d6755a37-7995-42d6-8645-bbaeb8342a4c,0.00,2026-05-15,2027-05-15,paid,Baterix + dpf
-ea940195-31a5-489b-a88d-d18254f8f399,,Interlingua,,Hostcreators,1,,35,,f,,,t,2026-06-15 08:39:59.874666+00,2026-06-15 08:39:59.874666+00,,0.00,2026-05-15,2027-02-15,paid,
-c972c247-6d7d-483c-8a49-c2c8d3ab1f8f,,Makesensespace.sk,,Hostcreators,1,,35,,f,,,t,2026-06-15 08:42:05.03504+00,2026-06-15 08:42:05.03504+00,,0.00,2026-05-10,52027-01-01,paid,
-b12d0b44-e20a-4851-a182-018f5c152f98,,JankaTopanka,,Hostcreators,1,,35,,f,,,t,2026-06-15 08:44:31.682469+00,2026-06-15 17:20:50.072883+00,,0.00,2026-06-01,2027-06-01,paid,
