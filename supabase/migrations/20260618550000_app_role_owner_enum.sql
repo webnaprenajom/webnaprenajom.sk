@@ -1,4 +1,4 @@
-DO list
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1
@@ -9,9 +9,10 @@ BEGIN
   ) THEN
     ALTER TYPE public.app_role ADD VALUE 'owner';
   END IF;
-END list;
+END
+$$;
 
-DO list
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1
@@ -22,4 +23,5 @@ BEGIN
   ) THEN
     ALTER TYPE public.app_role ADD VALUE 'administrator';
   END IF;
-END list;
+END
+$$;

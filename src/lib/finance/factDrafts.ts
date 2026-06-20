@@ -9,6 +9,7 @@ import type {
   TaskReconRow,
 } from "./reconciliationEntityRows";
 import {
+  sumConfirmedPaymentsForSource,
   taskPaymentSourceId,
   type TaskPaymentVariant,
 } from "@/lib/finance/entityPaymentBridge";
@@ -328,7 +329,7 @@ export function prefillFromHosting(
   };
 }
 
-/** Opt-in payment fact from project — revenue basis = agreed_fee. */
+/** Opt-in payment fact from project — draft amount = zostatok dohodnutej ceny po potvrdených platbách. */
 export function prefillFromProject(
   project: {
     id: string;
@@ -339,12 +340,14 @@ export function prefillFromProject(
   },
   ctx: FinanceRawContext,
 ): FactDraft | null {
-  if (hasSourceLinkedRecord(ctx, "project_notes", project.id)) return null;
-  const amount = Number(project.agreed_fee ?? 0);
-  if (!amount || amount <= 0) return null;
+  const agreed = Number(project.agreed_fee ?? 0);
+  if (!agreed || agreed <= 0) return null;
+  // ponytail: viac payment_fact na jeden project_notes (čiastkové úhrady)
+  const confirmed = sumConfirmedPaymentsForSource(ctx.paymentRecords, "project_notes", project.id);
+  const remaining = Math.max(0, agreed - confirmed);
   return {
     kind: "payment",
-    amount: String(amount),
+    amount: remaining > 0 ? String(remaining) : "",
     paid_at: todayLocal(),
     customer_email: project.customer_email ?? "",
     client_name: project.client_name ?? "",
@@ -354,7 +357,7 @@ export function prefillFromProject(
   };
 }
 
-/** Opt-in payment fact from marketing record — revenue basis = agreed_fee. */
+/** Opt-in payment fact from marketing — draft amount = zostatok dohodnutej ceny po potvrdených platbách. */
 export function prefillFromMarketing(
   record: {
     id: string;
@@ -365,12 +368,13 @@ export function prefillFromMarketing(
   },
   ctx: FinanceRawContext,
 ): FactDraft | null {
-  if (hasSourceLinkedRecord(ctx, "marketing_records", record.id)) return null;
-  const amount = Number(record.agreed_fee ?? 0);
-  if (!amount || amount <= 0) return null;
+  const agreed = Number(record.agreed_fee ?? 0);
+  if (!agreed || agreed <= 0) return null;
+  const confirmed = sumConfirmedPaymentsForSource(ctx.paymentRecords, "marketing_records", record.id);
+  const remaining = Math.max(0, agreed - confirmed);
   return {
     kind: "payment",
-    amount: String(amount),
+    amount: remaining > 0 ? String(remaining) : "",
     paid_at: todayLocal(),
     customer_email: record.customer_email ?? "",
     client_name: record.client_name ?? "",

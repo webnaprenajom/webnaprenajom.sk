@@ -21,8 +21,9 @@ import { OperatingCostField } from "@/components/admin/OperatingCostField";
 import { AgreedPriceField, ENTITY_PAYMENTS_TAB_NOTE } from "@/components/admin/AgreedPriceField";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import {
-  entityHasLinkedPaymentInRows,
+  countConfirmedPayments,
   projectPaymentCreateHint,
+  sumConfirmedPayments,
   type EntityPaymentRow,
 } from "@/lib/finance/entityPaymentBridge";
 import { financeCtxWithPayments, prefillFromProject } from "@/lib/finance/factDrafts";
@@ -46,9 +47,13 @@ export default function AdminProjectDetail() {
   const [lead, setLead] = useState<{ id: string; name: string; email: string | null } | null>(null);
   const [relatedHosting, setRelatedHosting] = useState<any[]>([]);
   const [relatedRentals, setRelatedRentals] = useState<any[]>([]);
-  const [projectRevenue, setProjectRevenue] = useState(0);
-  const [projectPaymentCount, setProjectPaymentCount] = useState(0);
   const [linkedPayments, setLinkedPayments] = useState<EntityPaymentRow[]>([]);
+
+  const confirmedRevenue = useMemo(() => sumConfirmedPayments(linkedPayments), [linkedPayments]);
+  const confirmedPaymentCount = useMemo(
+    () => countConfirmedPayments(linkedPayments),
+    [linkedPayments],
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -114,8 +119,6 @@ export default function AdminProjectDetail() {
         .then(({ data: pays }) => {
           const list = (pays || []) as EntityPaymentRow[];
           setLinkedPayments(list);
-          setProjectPaymentCount(list.length);
-          setProjectRevenue(list.reduce((s, p) => s + Number(p.amount || 0), 0));
         }),
     );
 
@@ -142,8 +145,7 @@ export default function AdminProjectDetail() {
   const customerEmail = project.customer_email;
   const projectType = project.project_type;
   const clientLinked = !!project.lead_id;
-  const projectPaymentLinked = entityHasLinkedPaymentInRows("project_notes", project.id, linkedPayments);
-  const projectPaymentHint = projectPaymentCreateHint(project, projectPaymentLinked);
+  const projectPaymentHint = projectPaymentCreateHint(project);
 
   return (
     <AdminShell
@@ -284,10 +286,10 @@ export default function AdminProjectDetail() {
             <div className="sm:col-span-2">
               <EntityProfitBanner
                 entityKind="project"
-                revenue={projectRevenue}
+                revenue={confirmedRevenue}
                 operatingCost={Number(project.operating_cost ?? 0)}
-                revenueKnown
-                paymentRecordCount={projectPaymentCount}
+                revenueKnown={confirmedPaymentCount > 0}
+                paymentRecordCount={confirmedPaymentCount}
               />
             </div>
           </section>
@@ -310,10 +312,10 @@ export default function AdminProjectDetail() {
             customerEmail={customerEmail}
             customerId={project.customer_id}
             defaultTitle={project.title}
-            revenueAmount={projectRevenue}
+            revenueAmount={confirmedRevenue}
             operatingCost={Number(project.operating_cost ?? 0)}
-            revenueKnown
-            paymentRecordCount={projectPaymentCount}
+            revenueKnown={confirmedPaymentCount > 0}
+            paymentRecordCount={confirmedPaymentCount}
           />
         </TabsContent>
 
@@ -326,7 +328,6 @@ export default function AdminProjectDetail() {
               {
                 key: "create",
                 label: "Vytvoriť platbu",
-                linkedExists: projectPaymentLinked,
                 disabled: !!projectPaymentHint,
                 hint: projectPaymentHint,
                 buildDraft: () => prefillFromProject(project, paymentCtx),

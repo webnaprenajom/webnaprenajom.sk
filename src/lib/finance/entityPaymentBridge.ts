@@ -16,6 +16,62 @@ export type EntityPaymentRow = {
   source_id?: string | null;
 };
 
+/** Confirmed cash — source of truth for commissions and finance totals. */
+export function isConfirmedPayment(row: { truth_level: string }): boolean {
+  return row.truth_level === "payment_fact";
+}
+
+export function sumConfirmedPayments(
+  rows: Array<{ amount: number; truth_level: string }>,
+): number {
+  return rows
+    .filter(isConfirmedPayment)
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
+}
+
+export function countConfirmedPayments(
+  rows: Array<{ truth_level: string }>,
+): number {
+  return rows.filter(isConfirmedPayment).length;
+}
+
+export function sumConfirmedPaymentsForSource(
+  rows: Array<{
+    amount: number;
+    truth_level: string;
+    source_table?: string | null;
+    source_id?: string | null;
+  }>,
+  sourceTable: string,
+  sourceId: string,
+): number {
+  return rows
+    .filter(
+      (r) =>
+        r.source_table === sourceTable &&
+        r.source_id === sourceId &&
+        isConfirmedPayment(r),
+    )
+    .reduce((s, p) => s + Number(p.amount || 0), 0);
+}
+
+export function entityHasConfirmedPaymentInRows(
+  sourceTable: string,
+  sourceId: string,
+  rows: Array<{
+    truth_level: string;
+    source_table?: string | null;
+    source_id?: string | null;
+  }>,
+): boolean {
+  return rows.some(
+    (r) =>
+      r.source_table === sourceTable &&
+      r.source_id === sourceId &&
+      isConfirmedPayment(r),
+  );
+}
+
 export function entityHasLinkedPaymentInRows(
   sourceTable: string,
   sourceId: string,
@@ -57,21 +113,13 @@ export function taskPaymentVariantLabel(sourceId: string, taskId: string): strin
   return null;
 }
 
-export function projectPaymentCreateHint(
-  project: { agreed_fee?: number | null },
-  linked: boolean,
-): string | null {
-  if (linked) return "Pre tento projekt už existuje potvrdená platba.";
+export function projectPaymentCreateHint(project: { agreed_fee?: number | null }): string | null {
   const fee = Number(project.agreed_fee ?? 0);
   if (!fee || fee <= 0) return "Vyplňte dohodnutú cenu v prehľade.";
   return null;
 }
 
-export function marketingPaymentCreateHint(
-  record: { agreed_fee?: number | null },
-  linked: boolean,
-): string | null {
-  if (linked) return "Pre túto kampaň už existuje potvrdená platba.";
+export function marketingPaymentCreateHint(record: { agreed_fee?: number | null }): string | null {
   const fee = Number(record.agreed_fee ?? 0);
   if (!fee || fee <= 0) return "Vyplňte dohodnutú cenu v prehľade.";
   return null;
@@ -104,18 +152,12 @@ export function taskPaymentCreateHint(
   return null;
 }
 
-export function canOfferProjectPaymentCreate(
-  project: { agreed_fee?: number | null },
-  linked: boolean,
-): boolean {
-  return projectPaymentCreateHint(project, linked) == null;
+export function canOfferProjectPaymentCreate(project: { agreed_fee?: number | null }): boolean {
+  return projectPaymentCreateHint(project) == null;
 }
 
-export function canOfferMarketingPaymentCreate(
-  record: { agreed_fee?: number | null },
-  linked: boolean,
-): boolean {
-  return marketingPaymentCreateHint(record, linked) == null;
+export function canOfferMarketingPaymentCreate(record: { agreed_fee?: number | null }): boolean {
+  return marketingPaymentCreateHint(record) == null;
 }
 
 export function canOfferTaskPaymentCreate(

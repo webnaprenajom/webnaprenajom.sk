@@ -345,7 +345,7 @@ export function EntityCommissionsPanel({
   );
   };
 
-  const showProfit = sourceType === "hosting" || sourceType === "project";
+  const showProfit = sourceType === "hosting" || sourceType === "project" || sourceType === "marketing";
 
   return (
     <div className="space-y-4">

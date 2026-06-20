@@ -3,9 +3,12 @@ import {
   canOfferMarketingPaymentCreate,
   canOfferProjectPaymentCreate,
   canOfferTaskPaymentCreate,
+  countConfirmedPayments,
   entityHasLinkedPaymentInRows,
   marketingPaymentCreateHint,
   projectPaymentCreateHint,
+  sumConfirmedPayments,
+  sumConfirmedPaymentsForSource,
   taskPaymentCreateHint,
   taskPaymentSourceId,
 } from "@/lib/finance/entityPaymentBridge";
@@ -46,6 +49,29 @@ describe("entity payment fact drafts", () => {
         emptyCtx,
       ),
     ).toBeNull();
+  });
+
+  it("prefillFromProject uses remaining after partial confirmed payment", () => {
+    const ctx = financeCtxWithPayments([
+      {
+        id: "pay-1",
+        amount: 400,
+        truth_level: "payment_fact",
+        source_table: "project_notes",
+        source_id: "p-1",
+      },
+    ]);
+    const draft = prefillFromProject(
+      {
+        id: "p-1",
+        title: "Web",
+        client_name: "A",
+        customer_email: null,
+        agreed_fee: 1000,
+      },
+      ctx,
+    );
+    expect(draft?.amount).toBe("600");
   });
 
   it("prefillFromMarketing uses agreed_fee", () => {
@@ -101,33 +127,21 @@ describe("entity payment fact drafts", () => {
       note: expect.stringContaining("Doplatok"),
     });
   });
-
-  it("prefillFromTask blocks duplicate source", () => {
-    const ctx = financeCtxWithPayments([
-      { id: "pay-1", source_table: "project_notes", source_id: "p-1" },
-    ]);
-    expect(
-      prefillFromProject(
-        { id: "p-1", title: "X", client_name: null, customer_email: null, agreed_fee: 100 },
-        ctx,
-      ),
-    ).toBeNull();
-  });
 });
 
 describe("entity payment create hints", () => {
   it("project gated without agreed_fee", () => {
-    expect(canOfferProjectPaymentCreate({ agreed_fee: null }, false)).toBe(false);
-    expect(projectPaymentCreateHint({ agreed_fee: null }, false)).toMatch(/prehľade/i);
+    expect(canOfferProjectPaymentCreate({ agreed_fee: null })).toBe(false);
+    expect(projectPaymentCreateHint({ agreed_fee: null })).toMatch(/prehľade/i);
   });
 
-  it("project blocks duplicate linked payment", () => {
-    expect(canOfferProjectPaymentCreate({ agreed_fee: 500 }, true)).toBe(false);
-    expect(projectPaymentCreateHint({ agreed_fee: 500 }, true)).toMatch(/už existuje/i);
+  it("project allows another payment after partial confirmed", () => {
+    expect(canOfferProjectPaymentCreate({ agreed_fee: 500 })).toBe(true);
+    expect(projectPaymentCreateHint({ agreed_fee: 500 })).toBeNull();
   });
 
   it("marketing gated without agreed_fee", () => {
-    expect(canOfferMarketingPaymentCreate({ agreed_fee: 0 }, false)).toBe(false);
+    expect(canOfferMarketingPaymentCreate({ agreed_fee: 0 })).toBe(false);
   });
 
   it("task deposit and full hints", () => {
@@ -150,5 +164,42 @@ describe("entity payment create hints", () => {
     expect(entityHasLinkedPaymentInRows("tasks", taskPaymentSourceId("t-1", "full"), rows)).toBe(
       false,
     );
+  });
+});
+
+describe("confirmed payment totals", () => {
+  it("sumConfirmedPayments ignores legacy_import", () => {
+    const total = sumConfirmedPayments([
+      { amount: 200, truth_level: "payment_fact" },
+      { amount: 100, truth_level: "legacy_import" },
+    ]);
+    expect(total).toBe(200);
+    expect(countConfirmedPayments([{ truth_level: "payment_fact" }, { truth_level: "legacy_import" }])).toBe(
+      1,
+    );
+  });
+
+  it("sumConfirmedPaymentsForSource sums only matching source", () => {
+    const rows = [
+      {
+        amount: 300,
+        truth_level: "payment_fact",
+        source_table: "project_notes",
+        source_id: "p-1",
+      },
+      {
+        amount: 200,
+        truth_level: "payment_fact",
+        source_table: "project_notes",
+        source_id: "p-1",
+      },
+      {
+        amount: 999,
+        truth_level: "payment_fact",
+        source_table: "project_notes",
+        source_id: "p-2",
+      },
+    ];
+    expect(sumConfirmedPaymentsForSource(rows, "project_notes", "p-1")).toBe(500);
   });
 });

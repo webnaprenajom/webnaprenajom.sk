@@ -47,8 +47,10 @@ export function EntityProfitBanner({
           <p className="text-[10px] text-muted-foreground">{ctx.detail}</p>
           <p className="text-[10px] text-muted-foreground italic">
             Zdroj tržieb: {ctx.revenueBasisLabel}
-            {paymentRecordCount != null && entityKind === "project" && revenueKnown
-              ? ` · ${paymentRecordCount} platieb`
+            {paymentRecordCount != null &&
+            (entityKind === "project" || entityKind === "marketing") &&
+            revenueKnown
+              ? ` · ${paymentRecordCount} potvrdených platieb`
               : ""}
           </p>
         </div>

@@ -7,7 +7,7 @@ export const AGREED_PRICE_HELPER =
   "Aktuálna dohodnutá cena s klientom za tento deal. Môžete ju meniť počas realizácie. Nie je auditovaný príjem — reálne úhrady evidujte v záložke Platby.";
 
 export const ENTITY_PAYMENTS_TAB_NOTE =
-  "Evidencia skutočne prijatých platieb (aj po častiach). Potvrdená platba do financií je voliteľná a nevytvára sa automaticky z dohodnutej ceny.";
+  "Evidencia prijatých platieb (aj po častiach). Do provízií a financií sa započítava len suma s badge Potvrdená platba (payment_fact).";
 
 interface Props {
   value: number;

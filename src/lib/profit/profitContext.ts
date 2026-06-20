@@ -5,7 +5,7 @@
 
 import { computeProfit } from "@/lib/profit/profitCalculator";
 
-export type ProfitEntityKind = "hosting" | "project" | "customer";
+export type ProfitEntityKind = "hosting" | "project" | "marketing" | "customer";
 
 export type ProfitRevenueBasis = "hosting_monthly" | "project_payments" | "unknown";
 
@@ -37,8 +37,9 @@ export type ResolveProfitInput = {
 
 export function profitRevenueBasisLabel(kind: ProfitEntityKind): string {
   if (kind === "hosting") return "mesačná cena hostingu";
-  if (kind === "customer") return "súčet platieb (payment_records) klienta";
-  return "súčet platieb (payment_records) na projekte";
+  if (kind === "customer") return "súčet potvrdených platieb (payment_fact) klienta";
+  if (kind === "marketing") return "súčet potvrdených platieb (payment_fact) na kampani";
+  return "súčet potvrdených platieb (payment_fact) na projekte";
 }
 
 export function resolveProfitDisplayContext(input: ResolveProfitInput): ProfitDisplayContext {
@@ -56,10 +57,12 @@ export function resolveProfitDisplayContext(input: ResolveProfitInput): ProfitDi
       headline: operatingCost > 0 ? "Náklady zadané, tržby nie sú známe" : "Zatiaľ bez údajov o tržbách",
       detail:
         input.entityKind === "project"
-          ? "Projekt nemá zaznamenané platby — zisk sa nezobrazuje, aby nevznikol falošný dojem."
-          : input.entityKind === "customer"
-            ? "Klient nemá zaznamenané platby — zisk sa nezobrazuje, aby nevznikol falošný dojem."
-            : "Chýba mesačná cena hostingu — doplnite ju v prehľade.",
+          ? "Projekt nemá potvrdené platby (payment_fact) — zisk sa nezobrazuje, aby nevznikol falošný dojem."
+          : input.entityKind === "marketing"
+            ? "Kampaň nemá potvrdené platby (payment_fact) — zisk sa nezobrazuje, aby nevznikol falošný dojem."
+            : input.entityKind === "customer"
+              ? "Klient nemá potvrdené platby — zisk sa nezobrazuje, aby nevznikol falošný dojem."
+              : "Chýba mesačná cena hostingu — doplnite ju v prehľade.",
       revenueBasisLabel: basis,
     };
   }

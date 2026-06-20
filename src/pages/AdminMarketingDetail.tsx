@@ -24,9 +24,11 @@ import {
   ConfirmedLinkBadge,
 } from "@/components/admin/lookup/LinkStatusBadge";
 import { AgreedPriceField, ENTITY_PAYMENTS_TAB_NOTE } from "@/components/admin/AgreedPriceField";
+import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import {
-  entityHasLinkedPaymentInRows,
+  countConfirmedPayments,
   marketingPaymentCreateHint,
+  sumConfirmedPayments,
   type EntityPaymentRow,
 } from "@/lib/finance/entityPaymentBridge";
 import { financeCtxWithPayments, prefillFromMarketing } from "@/lib/finance/factDrafts";
@@ -118,6 +120,11 @@ export default function AdminMarketingDetail() {
     [record?.channel],
   );
   const paymentCtx = useMemo(() => financeCtxWithPayments(linkedPayments), [linkedPayments]);
+  const confirmedRevenue = useMemo(() => sumConfirmedPayments(linkedPayments), [linkedPayments]);
+  const confirmedPaymentCount = useMemo(
+    () => countConfirmedPayments(linkedPayments),
+    [linkedPayments],
+  );
 
   if (loading || !record) {
     return (
@@ -131,12 +138,7 @@ export default function AdminMarketingDetail() {
 
   const customerHref = adminCustomerHrefPreferred(record.customer_id, record.customer_email);
   const clientLinked = !!record.lead_id;
-  const marketingPaymentLinked = entityHasLinkedPaymentInRows(
-    "marketing_records",
-    record.id,
-    linkedPayments,
-  );
-  const marketingPaymentHint = marketingPaymentCreateHint(record, marketingPaymentLinked);
+  const marketingPaymentHint = marketingPaymentCreateHint(record);
 
   return (
     <AdminShell
@@ -245,6 +247,14 @@ export default function AdminMarketingDetail() {
             }}
           />
         </div>
+        <div className="sm:col-span-2">
+          <EntityProfitBanner
+            entityKind="marketing"
+            revenue={confirmedRevenue}
+            revenueKnown={confirmedPaymentCount > 0}
+            paymentRecordCount={confirmedPaymentCount}
+          />
+        </div>
       </section>
         </TabsContent>
 
@@ -265,7 +275,9 @@ export default function AdminMarketingDetail() {
             customerEmail={record.customer_email}
             customerId={record.customer_id}
             defaultTitle={record.title}
-            revenueKnown={false}
+            revenueAmount={confirmedRevenue}
+            revenueKnown={confirmedPaymentCount > 0}
+            paymentRecordCount={confirmedPaymentCount}
           />
         </TabsContent>
 
@@ -278,7 +290,6 @@ export default function AdminMarketingDetail() {
               {
                 key: "create",
                 label: "Vytvoriť platbu",
-                linkedExists: marketingPaymentLinked,
                 disabled: !!marketingPaymentHint,
                 hint: marketingPaymentHint,
                 buildDraft: () => prefillFromMarketing(record, paymentCtx),
