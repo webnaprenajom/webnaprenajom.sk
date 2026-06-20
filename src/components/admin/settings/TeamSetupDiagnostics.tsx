@@ -22,9 +22,10 @@ export function TeamSetupDiagnostics() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [rolesRes, profilesRes, commRes, hostingRes, projectRes] = await Promise.all([
+    const [rolesRes, profilesRes, registryRes, commRes, hostingRes, projectRes] = await Promise.all([
       supabase.from("user_roles").select("user_id,role"),
       supabase.from("team_profiles").select("user_id,implementer_name,active"),
+      supabase.from("crm_implementers").select("name,active"),
       supabase.from("commissions").select("source_type,source_id"),
       supabase.from("hosting_records").select("monthly_price,operating_cost"),
       supabase.from("project_notes").select("operating_cost"),
@@ -49,7 +50,13 @@ export function TeamSetupDiagnostics() {
       (p: { operating_cost: number | null }) => Number(p.operating_cost || 0) > 0,
     ).length;
 
-    const unmappedImplementers = CRM_ASSIGNEES.filter(
+    const registry = ((registryRes.data || []) as Array<{ name: string; active: boolean }>).filter(
+      (r) => r.active,
+    );
+    const registryNames =
+      registry.length > 0 ? registry.map((r) => r.name) : [...CRM_ASSIGNEES];
+
+    const unmappedImplementers = registryNames.filter(
       (name) => !profiles.some((p) => p.implementer_name === name && p.active),
     ).length;
 

@@ -1,0 +1,66 @@
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { CrmImplementerRow } from "@/lib/admin/implementerRegistry";
+
+export function useImplementerRegistry(enabled = true) {
+  const [rows, setRows] = useState<CrmImplementerRow[]>([]);
+  const [loading, setLoading] = useState(enabled);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!enabled) return;
+    setLoading(true);
+    setError(null);
+    const { data, error: err } = await supabase
+      .from("crm_implementers")
+      .select("name,active,created_at")
+      .order("name");
+    if (err) {
+      setError(err.message);
+      setRows([]);
+    } else {
+      setRows((data || []) as CrmImplementerRow[]);
+    }
+    setLoading(false);
+  }, [enabled]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const createName = useCallback(
+    async (name: string) => {
+      const { error: err } = await supabase.from("crm_implementers").insert({ name, active: true });
+      if (err) throw err;
+      await load();
+    },
+    [load],
+  );
+
+  const deactivateName = useCallback(
+    async (name: string) => {
+      const { error: err } = await supabase
+        .from("crm_implementers")
+        .update({ active: false })
+        .eq("name", name);
+      if (err) throw err;
+      await load();
+    },
+    [load],
+  );
+
+  const reactivateName = useCallback(
+    async (name: string) => {
+      const { error: err } = await supabase
+        .from("crm_implementers")
+        .upsert({ name, active: true });
+      if (err) throw err;
+      await load();
+    },
+    [load],
+  );
+
+  const activeNames = rows.filter((r) => r.active).map((r) => r.name);
+
+  return { rows, activeNames, loading, error, reload: load, createName, deactivateName, reactivateName };
+}

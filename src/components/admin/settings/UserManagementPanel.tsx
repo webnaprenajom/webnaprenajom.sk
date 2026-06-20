@@ -13,6 +13,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { assigneeSelectOptions } from "@/lib/assignees";
+import { mergeImplementerCatalog } from "@/lib/admin/implementerRegistry";
+import { useImplementerRegistry } from "@/hooks/useImplementerRegistry";
+import { ImplementerRegistryPanel } from "@/components/admin/settings/ImplementerRegistryPanel";
 import { Loader2, Plus, Trash2, AlertTriangle } from "lucide-react";
 import type { AppRole } from "@/lib/rbac/permissions";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
@@ -39,6 +42,12 @@ import {
   buildTeamProfileDeactivateUpdate,
   normalizeTeamDisplayName,
 } from "@/lib/admin/teamProfileLifecycle";
+
+async function ensureImplementerInRegistry(name: string) {
+  const normalized = name.trim();
+  if (!normalized) return;
+  await supabase.from("crm_implementers").upsert({ name: normalized, active: true });
+}
 
 type PendingAction =
   | {
@@ -79,6 +88,7 @@ const CRM_ROLES: AppRole[] = ["owner", "administrator"];
 export function UserManagementPanel() {
   const { userId: actorId } = useAdminAccess();
   const { loading, error, withRole, withoutRole, reload } = useCrmUserDirectory();
+  const registry = useImplementerRegistry();
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [filters, setFilters] = useState(DEFAULT_USER_DIRECTORY_FILTERS);
   const [newRole, setNewRole] = useState<AppRole>("administrator");
@@ -114,7 +124,11 @@ export function UserManagementPanel() {
   }, [loading, withoutRole.length]);
   const usersMissingProfile = withRole.filter((u) => u.missingProfile);
   const orphanProfiles = withoutRole.filter((u) => u.orphanActiveProfile);
-  const implementerOptions = assigneeSelectOptions();
+  const implementerCatalog = useMemo(
+    () => mergeImplementerCatalog(registry.rows, withRole),
+    [registry.rows, withRole],
+  );
+  const implementerOptions = assigneeSelectOptions(undefined, implementerCatalog);
 
   const deactivateTeamProfile = async (userId: string, implementerName: string | null) => {
     if (!implementerName?.trim()) return;
@@ -136,6 +150,7 @@ export function UserManagementPanel() {
       return;
     }
     if (action.role === "administrator" && action.implementer) {
+      await ensureImplementerInRegistry(action.implementer);
       const { error: profileErr } = await supabase.from("team_profiles").upsert({
         user_id: action.userId,
         display_name: action.displayName.trim() || action.implementer,
@@ -163,6 +178,7 @@ export function UserManagementPanel() {
     setAddSearch("");
     setNewDisplayName("");
     void reload();
+    void registry.reload();
   };
 
   const addUser = () => {
@@ -304,6 +320,7 @@ export function UserManagementPanel() {
   };
 
   const executeAssignProfile = async (action: Extract<PendingAction, { kind: "assign" }>) => {
+    await ensureImplementerInRegistry(action.implementer);
     const { error } = await supabase.from("team_profiles").upsert({
       user_id: action.userId,
       display_name: action.displayName.trim() || action.implementer,
@@ -329,6 +346,7 @@ export function UserManagementPanel() {
     }
     toast({ title: "Team profile uložený" });
     void reload();
+    void registry.reload();
   };
 
   const assignProfile = (user: CrmManagedUser, implementerName: string) => {
@@ -422,7 +440,10 @@ export function UserManagementPanel() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <ImplementerRegistryPanel registry={registry} managedUsers={withRole} />
+
+      <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
         Owner vidí celé CRM a financie. Administrator vidí len vlastné provízie — musí mať team profile
         s menom realizátora (rovnaké ako v províziách). Spravujte účty podľa mena a e-mailu; interné ID
@@ -567,7 +588,7 @@ export function UserManagementPanel() {
                         <SelectValue placeholder="Vyberte…" />
                       </SelectTrigger>
                       <SelectContent>
-                        {assigneeSelectOptions(user.implementerName).map((name) => (
+                        {assigneeSelectOptions(user.implementerName, implementerCatalog).map((name) => (
                           <SelectItem key={name} value={name} className="text-xs">
                             {name}
                           </SelectItem>
@@ -801,6 +822,7 @@ export function UserManagementPanel() {
         destructive={pending?.kind === "remove"}
         onConfirm={confirmPending}
       />
+      </div>
     </div>
   );
 }

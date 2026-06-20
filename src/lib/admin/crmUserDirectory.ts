@@ -83,8 +83,9 @@ export function buildCrmManagedUsers(
   directory: AuthDirectoryRow[],
   roles: RoleRow[],
   profiles: ProfileRow[],
-  standardImplementers: readonly string[],
+  standardImplementers?: readonly string[],
 ): CrmManagedUser[] {
+  const knownImplementers = standardImplementers ?? [];
   const roleByUser = new Map(roles.map((r) => [r.user_id, r]));
   const profileByUser = new Map(profiles.map((p) => [p.user_id, p]));
 
@@ -125,7 +126,7 @@ export function buildCrmManagedUsers(
         teamDisplayName,
       }),
       missingProfile,
-      riskFlags: buildRiskFlags(role, prof, standardImplementers),
+      riskFlags: buildRiskFlags(role, prof, knownImplementers),
     };
   });
 }

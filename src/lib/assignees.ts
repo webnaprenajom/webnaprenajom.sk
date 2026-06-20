@@ -1,17 +1,22 @@
-/** Shared CRM assignees / implementers — single source of truth. */
+/** Shared CRM assignees / implementers — seed list + dynamic registry in Settings. */
 
 export const CRM_ASSIGNEES = ["Peter", "Maroš", "Matuš"] as const;
 
 export type CrmAssignee = (typeof CRM_ASSIGNEES)[number];
 
-/** Include legacy DB value at top when not in canonical list. */
-export function assigneeSelectOptions(current?: string | null): string[] {
-  const options: string[] = [...CRM_ASSIGNEES];
-  const value = current?.trim();
-  if (value && !options.includes(value)) {
-    options.unshift(value);
+/** Merge seed, registry, and optional current value for select options. */
+export function assigneeSelectOptions(
+  current?: string | null,
+  registryNames: readonly string[] = [],
+): string[] {
+  const set = new Set<string>([...CRM_ASSIGNEES]);
+  for (const name of registryNames) {
+    const trimmed = name.trim();
+    if (trimmed) set.add(trimmed);
   }
-  return options;
+  const value = current?.trim();
+  if (value) set.add(value);
+  return [...set].sort((a, b) => a.localeCompare(b, "sk"));
 }
 
 export function isKnownAssignee(name: string | null | undefined): boolean {

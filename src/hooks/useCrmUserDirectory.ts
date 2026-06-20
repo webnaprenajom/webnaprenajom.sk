@@ -29,10 +29,11 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
     setLoading(true);
     setError(null);
 
-    const [dirRes, rolesRes, profilesRes] = await Promise.all([
+    const [dirRes, rolesRes, profilesRes, registryRes] = await Promise.all([
       supabase.rpc("admin_list_auth_users"),
       supabase.from("user_roles").select("id,user_id,role").order("created_at"),
       supabase.from("team_profiles").select("user_id,display_name,implementer_name,active"),
+      supabase.from("crm_implementers").select("name,active"),
     ]);
 
     if (dirRes.error) {
@@ -48,6 +49,8 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
       createdAt: r.created_at,
     }));
 
+    const standardList = registryNames.length > 0 ? registryNames : [...CRM_ASSIGNEES];
+
     const managed = buildCrmManagedUsers(
       directory,
       (rolesRes.data || []) as Array<{ id: string; user_id: string; role: string }>,
@@ -57,7 +60,7 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
         implementer_name: string;
         active: boolean;
       }>,
-      CRM_ASSIGNEES,
+      standardList,
     );
 
     setUsers(managed);

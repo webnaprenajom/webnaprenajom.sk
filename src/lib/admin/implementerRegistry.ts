@@ -1,0 +1,89 @@
+/**
+ * Implementer name registry — catalog for Settings; commission strings stay historical truth.
+ */
+import { CRM_ASSIGNEES } from "@/lib/assignees";
+import type { CrmManagedUser } from "@/lib/admin/crmUserDirectory";
+
+export type CrmImplementerRow = {
+  name: string;
+  active: boolean;
+  created_at?: string;
+};
+
+export type ImplementerRegistryEntry = {
+  name: string;
+  active: boolean;
+  assignedUserId: string | null;
+  assignedDisplayName: string | null;
+};
+
+export function normalizeImplementerName(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (trimmed.length < 2) return null;
+  if (trimmed.includes("__off__")) return null;
+  return trimmed;
+}
+
+export function isArchivedImplementerName(name: string): boolean {
+  return name.includes("__off__");
+}
+
+export function mergeImplementerCatalog(
+  registry: CrmImplementerRow[],
+  managedUsers: CrmManagedUser[],
+  current?: string | null,
+): string[] {
+  const set = new Set<string>(CRM_ASSIGNEES);
+  for (const row of registry) {
+    if (row.active && !isArchivedImplementerName(row.name)) {
+      set.add(row.name.trim());
+    }
+  }
+  for (const user of managedUsers) {
+    if (user.implementerName?.trim() && !isArchivedImplementerName(user.implementerName)) {
+      set.add(user.implementerName.trim());
+    }
+  }
+  const cur = current?.trim();
+  if (cur) set.add(cur);
+  return [...set].sort((a, b) => a.localeCompare(b, "sk"));
+}
+
+export function implementerRegistryNameTaken(
+  registry: CrmImplementerRow[],
+  name: string,
+  exceptName?: string,
+): boolean {
+  const key = name.trim().toLowerCase();
+  const except = exceptName?.trim().toLowerCase();
+  return registry.some(
+    (r) => r.active && r.name.trim().toLowerCase() === key && r.name.trim().toLowerCase() !== except,
+  );
+}
+
+export function buildImplementerRegistryEntries(
+  registry: CrmImplementerRow[],
+  managedUsers: CrmManagedUser[],
+): ImplementerRegistryEntry[] {
+  const assignmentByName = new Map<string, { userId: string; displayName: string }>();
+  for (const user of managedUsers) {
+    if (user.implementerName && user.profileActive) {
+      assignmentByName.set(user.implementerName, {
+        userId: user.userId,
+        displayName: user.displayName,
+      });
+    }
+  }
+
+  const names = mergeImplementerCatalog(registry, managedUsers);
+  return names.map((name) => {
+    const row = registry.find((r) => r.name.trim().toLowerCase() === name.trim().toLowerCase());
+    const assigned = assignmentByName.get(name) ?? null;
+    return {
+      name,
+      active: row?.active ?? true,
+      assignedUserId: assigned?.userId ?? null,
+      assignedDisplayName: assigned?.displayName ?? null,
+    };
+  });
+}
