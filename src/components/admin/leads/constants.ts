@@ -55,6 +55,8 @@ export interface Lead {
 
 export { CRM_ASSIGNEES as ASSIGNEES } from "@/lib/assignees";
 export const UNASSIGNED = "__unassigned__";
+/** Radix Select cannot use empty string — use for optional fields. */
+export const SELECT_UNSET = "__unset__";
 
 export const STALE_DAYS = 14;
 export const STALE_STATUSES: LeadStatus[] = [

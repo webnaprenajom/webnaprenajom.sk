@@ -5,7 +5,7 @@
 import { normalizeEmail, normalizeClientName, clientNameCompareKey } from "./normalizeIdentity";
 import { isCanonicalCustomerId } from "./entityIds";
 
-export type ClientSection = "project" | "hosting" | "rental" | "lead";
+export type ClientSection = "project" | "hosting" | "rental" | "lead" | "marketing" | "task";
 
 export type UnifiedClientEntry = {
   /** Canonical customer UUID when known. */
@@ -19,6 +19,8 @@ export type UnifiedClientEntry = {
   hostingCount: number;
   rentalCount: number;
   leadCount: number;
+  marketingCount: number;
+  taskCount: number;
 };
 
 export type UnifiedClientSeed = {
@@ -59,6 +61,8 @@ export function mergeUnifiedClientSeeds(seeds: UnifiedClientSeed[]): UnifiedClie
         hostingCount: 0,
         rentalCount: 0,
         leadCount: 0,
+        marketingCount: 0,
+        taskCount: 0,
       };
       byKey.set(primaryKey, entry);
     } else {
@@ -95,6 +99,8 @@ export function mergeUnifiedClientSeeds(seeds: UnifiedClientSeed[]): UnifiedClie
         merged.hostingCount += other.hostingCount;
         merged.rentalCount += other.rentalCount;
         merged.leadCount += other.leadCount;
+        merged.marketingCount += other.marketingCount;
+        merged.taskCount += other.taskCount;
         if (!merged.customerId && other.customerId) merged.customerId = other.customerId;
         if (!merged.email && other.email) merged.email = other.email;
         byKey.delete(existing);
@@ -120,6 +126,12 @@ export function mergeUnifiedClientSeeds(seeds: UnifiedClientSeed[]): UnifiedClie
       case "lead":
         entry.leadCount += 1;
         break;
+      case "marketing":
+        entry.marketingCount += 1;
+        break;
+      case "task":
+        entry.taskCount += 1;
+        break;
     }
   }
 
@@ -131,6 +143,8 @@ export function unifiedClientSectionSummary(entry: UnifiedClientEntry): string {
   if (entry.projectCount) parts.push(`${entry.projectCount} proj.`);
   if (entry.hostingCount) parts.push(`${entry.hostingCount} host.`);
   if (entry.rentalCount) parts.push(`${entry.rentalCount} pren.`);
+  if (entry.marketingCount) parts.push(`${entry.marketingCount} mkt.`);
+  if (entry.taskCount) parts.push(`${entry.taskCount} úloh`);
   if (entry.leadCount) parts.push(`${entry.leadCount} lead`);
   return parts.join(" · ") || "—";
 }

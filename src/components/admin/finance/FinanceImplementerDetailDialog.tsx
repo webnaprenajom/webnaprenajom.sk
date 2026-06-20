@@ -32,6 +32,7 @@ import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { paymentFormLabel } from "@/lib/paymentForm";
 import { adminCustomerHref } from "@/lib/adminNav";
 import { CommissionLinkBadge } from "@/components/admin/lookup/LinkStatusBadge";
+import { buildFinanceRentalImplementerDetailRows } from "@/lib/finance/rentalImplementerFinanceTotals";
 
 const STATUS_CLASS: Record<string, string> = {
   paid: "bg-green-500/15 text-green-500 border-green-500/30",
@@ -44,6 +45,17 @@ interface Props {
   implementer: string;
   commissions: CommissionRow[];
   payoutRecords?: PayoutRecordLike[];
+  websites?: Array<{ id: string; name?: string | null; monthly_price?: number | null; implementers?: unknown }>;
+  payments?: Array<{
+    website_id: string;
+    year: number;
+    month: number;
+    status?: string | null;
+    paid?: boolean | null;
+    custom_price?: number | null;
+    amount?: number | null;
+  }>;
+  year?: number;
 }
 
 function CommissionDetailRow({
@@ -131,16 +143,32 @@ export function FinanceImplementerDetailDialog({
   implementer,
   commissions,
   payoutRecords = [],
+  websites = [],
+  payments = [],
+  year = new Date().getFullYear(),
 }: Props) {
   const rows = useMemo(
     () =>
       commissions
-        .filter((c) => (c.implementer || "").trim() === implementer.trim())
+        .filter((c) => (c.implementer || "").trim().toLowerCase() === implementer.trim().toLowerCase())
+        .filter((c) => String(c.date || "").startsWith(String(year)))
         .sort((a, b) => {
           const dt = new Date(b.date).getTime() - new Date(a.date).getTime();
           return dt !== 0 ? dt : b.id.localeCompare(a.id);
         }),
-    [commissions, implementer],
+    [commissions, implementer, year],
+  );
+
+  const rentalRows = useMemo(
+    () =>
+      buildFinanceRentalImplementerDetailRows({
+        implementer,
+        websites,
+        payments,
+        commissions,
+        year,
+      }),
+    [implementer, websites, payments, commissions, year],
   );
 
   const totals = useMemo(() => {
@@ -155,6 +183,16 @@ export function FinanceImplementerDetailDialog({
     return { paid, unpaid, count: rows.length, linked, legacy, audited };
   }, [rows, payoutRecords]);
 
+  const rentalTotals = useMemo(() => {
+    const paid = rentalRows
+      .filter((r) => r.payment_status === "paid")
+      .reduce((s, r) => s + r.amount, 0);
+    const unpaid = rentalRows
+      .filter((r) => r.payment_status === "unpaid")
+      .reduce((s, r) => s + r.amount, 0);
+    return { paid, unpaid, count: rentalRows.length };
+  }, [rentalRows]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
@@ -162,20 +200,27 @@ export function FinanceImplementerDetailDialog({
           <DialogTitle>Provízie — {implementer}</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground -mt-2">
-          Všetky sekcie (prenájmy, hosting, projekty) + legacy riadky bez zdroja.
+          Commission riadky + prenájom JSON podiely ({year}) — bez dvojitého počítania materializovaných riadkov.
         </p>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-3">
           <span className="text-green-600">Vyplatené (workflow): {totals.paid.toFixed(2)} €</span>
           <span className="text-green-600">Auditované výplaty: {totals.audited.toFixed(2)} €</span>
           <span className="text-amber-600">Nezaplatené: {totals.unpaid.toFixed(2)} €</span>
-          <span className="text-muted-foreground">{totals.count} riadkov</span>
+          <span className="text-muted-foreground">{totals.count} commission riadkov</span>
+          {rentalTotals.count > 0 && (
+            <span className="text-primary">
+              {rentalTotals.count} prenájom JSON · {rentalTotals.paid.toFixed(2)} € / {rentalTotals.unpaid.toFixed(2)} € nezap.
+            </span>
+          )}
           <span className="text-muted-foreground">{totals.linked} prepojených</span>
           {totals.legacy > 0 && (
             <span className="text-amber-700 dark:text-amber-400">{totals.legacy} legacy</span>
           )}
         </div>
         {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-6 text-center">Žiadne provízne riadky.</p>
+          rentalRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">Žiadne provízne riadky.</p>
+          ) : null
         ) : (
           <>
             <div className="hidden md:block rounded-xl border overflow-x-auto">
@@ -256,6 +301,49 @@ export function FinanceImplementerDetailDialog({
               })}
             </div>
           </>
+        )}
+        {rentalRows.length > 0 && (
+          <div className="mt-4 space-y-2">
+            <h3 className="text-sm font-semibold">Prenájmy (JSON podiel, workflow)</h3>
+            <p className="text-[11px] text-muted-foreground">
+              Odvodené z uhradených mesiacov × % — nie materializovaná commission ani payout fact.
+            </p>
+            <div className="rounded-xl border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Web</TableHead>
+                    <TableHead className="text-right">Podiel</TableHead>
+                    <TableHead className="text-right">Suma</TableHead>
+                    <TableHead>Stav</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rentalRows.map((r) => (
+                    <TableRow key={r.websiteId}>
+                      <TableCell className="text-sm">
+                        <Link to={`/admin/rentals`} className="text-primary hover:underline">
+                          {r.websiteName}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-right text-xs">{r.percentage}%</TableCell>
+                      <TableCell className="text-right font-medium">{r.amount.toFixed(2)} €</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${STATUS_CLASS[r.payment_status] ?? ""}`}
+                        >
+                          {r.payment_status === "paid"
+                            ? COMMISSION_STATUS_LABELS.paid
+                            : COMMISSION_STATUS_LABELS.unpaid}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
         )}
       </DialogContent>
     </Dialog>

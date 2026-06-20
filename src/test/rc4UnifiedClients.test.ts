@@ -65,6 +65,8 @@ describe("unifiedClientSectionSummary", () => {
       hostingCount: 1,
       rentalCount: 0,
       leadCount: 0,
+      marketingCount: 0,
+      taskCount: 0,
     });
     expect(summary).toContain("2 proj.");
     expect(summary).toContain("1 host.");

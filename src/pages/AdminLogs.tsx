@@ -91,7 +91,14 @@ const AdminLogs = () => {
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
-      toast({ title: "Chyba načítania", description: error.message, variant: "destructive" });
+      const msg = error.message;
+      toast({
+        title: "Chyba načítania histórie",
+        description: msg.toLowerCase().includes("permission") || msg.toLowerCase().includes("row-level")
+          ? `${msg} — História leadov je dostupná len pre owner účet (RLS).`
+          : msg,
+        variant: "destructive",
+      });
     } else {
       setLogs((data || []) as LogRow[]);
     }

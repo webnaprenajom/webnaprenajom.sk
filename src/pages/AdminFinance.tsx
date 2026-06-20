@@ -439,6 +439,7 @@ const AdminFinance = () => {
             pendingReviewCount={pendingReviewCount}
             settlementDraftsForGov={settlementDraftsForGov}
             legacyCommissions={legacyCommissions}
+            year={year}
             onSaved={() => void load()}
           />
         ) : (
@@ -448,6 +449,9 @@ const AdminFinance = () => {
             implementerTotals={implementerTotals}
             commissions={scopedCommissions as CommissionRow[]}
             payoutRecords={scopedPayoutRecords}
+            websites={raw.websites}
+            payments={raw.payments}
+            year={year}
             reconciliationSummary={reconciliationSummary}
             scopedEmpty={scopedEmpty}
             showOrgKpis={showOrgFinance}
@@ -473,11 +477,13 @@ function DailyFinanceView({
   implementerTotals,
   commissions,
   payoutRecords,
+  websites = [],
+  payments = [],
+  year,
   reconciliationSummary,
   scopedEmpty,
   showOrgKpis,
   implementerLabel,
-  year,
   onOpenAdvanced,
   showAdvancedLink = true,
 }: {
@@ -500,6 +506,17 @@ function DailyFinanceView({
     truth_level?: string | null;
     implementer?: string | null;
   }>;
+  websites?: Array<{ id: string; name?: string | null; monthly_price?: number | null; implementers?: unknown }>;
+  payments?: Array<{
+    website_id: string;
+    year: number;
+    month: number;
+    status?: string | null;
+    paid?: boolean | null;
+    custom_price?: number | null;
+    amount?: number | null;
+  }>;
+  year: number;
   reconciliationSummary: ReconciliationIssueSummary;
   scopedEmpty: ReturnType<typeof resolveScopedCommissionEmpty>;
   showOrgKpis: boolean;
@@ -665,6 +682,9 @@ function DailyFinanceView({
         implementer={detailImplementer || ""}
         commissions={commissions}
         payoutRecords={payoutRecords}
+        websites={websites}
+        payments={payments}
+        year={year}
       />
     </div>
   );
@@ -684,6 +704,7 @@ function AdvancedFinanceView({
   pendingReviewCount,
   settlementDraftsForGov,
   legacyCommissions,
+  year,
   onSaved,
 }: {
   snapshot: ReturnType<typeof buildFinanceSnapshot>;
@@ -699,6 +720,7 @@ function AdvancedFinanceView({
   pendingReviewCount: number;
   settlementDraftsForGov: ReturnType<typeof buildSettlementDrafts>;
   legacyCommissions: boolean;
+  year: number;
   onSaved: () => void;
 }) {
   const defaultTab = legacyCommissions ? "provizie" : "settlement";

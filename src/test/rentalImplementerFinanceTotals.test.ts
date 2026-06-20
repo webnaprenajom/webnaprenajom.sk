@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildFinanceRentalImplementerDetailRows,
   buildImplementerFinanceTotalsWithRentals,
   mergeRentalJsonIntoImplementerTotals,
   rentalYearClientPaidTotal,
@@ -84,5 +85,25 @@ describe("rentalImplementerFinanceTotals", () => {
     });
     expect(merged.get("Maroš")?.paidWorkflowUnaudited).toBe(100);
     expect(merged.get("Maroš")?.unpaid).toBe(0);
+  });
+
+  it("builds finance detail rows for JSON rental shares", () => {
+    const rows = buildFinanceRentalImplementerDetailRows({
+      implementer: "Peter",
+      websites: [
+        {
+          id: "w1",
+          name: "web.sk",
+          monthly_price: 100,
+          implementers: [{ name: "Peter", percentage: 50, payment_status: "unpaid" }],
+        },
+      ],
+      payments: [{ website_id: "w1", year: 2026, month: 1, status: "paid" }],
+      commissions: [],
+      year: 2026,
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].websiteName).toBe("web.sk");
+    expect(rows[0].amount).toBe(50);
   });
 });

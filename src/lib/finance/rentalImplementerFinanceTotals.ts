@@ -23,6 +23,7 @@ type RentalPaymentRow = {
 
 type RentalWebsiteRow = {
   id: string;
+  name?: string | null;
   monthly_price?: number | null;
   implementers?: unknown;
 };
@@ -141,4 +142,61 @@ export function buildImplementerFinanceTotalsWithRentals(
     year: opts.year,
     scopeImplementer: opts.scopeImplementer,
   });
+}
+
+export type FinanceRentalImplementerDetailRow = {
+  websiteId: string;
+  websiteName: string;
+  percentage: number;
+  amount: number;
+  payment_status: "paid" | "unpaid";
+  note?: string;
+};
+
+/** Read-side rental JSON rows for Finance implementer detail — skips materialized commissions. */
+export function buildFinanceRentalImplementerDetailRows(opts: {
+  implementer: string;
+  websites: RentalWebsiteRow[];
+  payments: RentalPaymentRow[];
+  commissions: CommissionRow[];
+  year: number;
+}): FinanceRentalImplementerDetailRow[] {
+  const name = opts.implementer.trim().toLowerCase();
+  if (!name) return [];
+
+  const rows: FinanceRentalImplementerDetailRow[] = [];
+  for (const website of opts.websites) {
+    const clientPaid = rentalYearClientPaidTotal(website, opts.payments, opts.year);
+    if (clientPaid <= 0) continue;
+
+    for (const imp of normalizeRentalImplementers(website.implementers)) {
+      if (imp.name.trim().toLowerCase() !== name) continue;
+      const pct = Number(imp.percentage) || 0;
+      if (pct <= 0) continue;
+
+      if (
+        findRentalWorkflowCommission(opts.commissions, {
+          websiteId: website.id,
+          implementer: imp.name,
+          year: opts.year,
+        })
+      ) {
+        continue;
+      }
+
+      const amount = (clientPaid * pct) / 100;
+      if (amount <= 0) continue;
+
+      rows.push({
+        websiteId: website.id,
+        websiteName: String(website.name ?? website.id),
+        percentage: pct,
+        amount,
+        payment_status: imp.payment_status === "paid" ? "paid" : "unpaid",
+        note: imp.note,
+      });
+    }
+  }
+
+  return rows.sort((a, b) => b.amount - a.amount);
 }

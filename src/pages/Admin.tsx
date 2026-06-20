@@ -32,6 +32,7 @@ import {
   STALE_DAYS,
   STATUS_CONFIG,
   UNASSIGNED,
+  SELECT_UNSET,
   ViewMode,
   isStale,
   typeLabel,
@@ -265,8 +266,8 @@ const Admin = () => {
     email: "",
     phone: "",
     source: "",
-    type: "ai",
-    status: "new" as LeadStatus,
+    type: "",
+    status: "" as LeadStatus | "",
     assigned_to: "",
     message: "",
     notes: "",
@@ -946,8 +947,16 @@ const Admin = () => {
       toast({ title: "Chýbajú údaje", description: "Meno a e-mail sú povinné", variant: "destructive" });
       return false;
     }
+    if (!newLead.type.trim()) {
+      toast({ title: "Vyber typ leadu", variant: "destructive" });
+      return false;
+    }
+    if (!newLead.status) {
+      toast({ title: "Vyber status", variant: "destructive" });
+      return false;
+    }
 
-    if (shouldRequireLeadCustomer(newLead.status)) {
+    if (shouldRequireLeadCustomer(newLead.status as LeadStatus)) {
       const validation = validateLeadCustomerBeforeSave({
         status: newLead.status,
         customer_id: null,
@@ -985,12 +994,12 @@ const Admin = () => {
 
     const inserted = data as Lead;
 
-    if (shouldRequireLeadCustomer(newLead.status)) {
+    if (shouldRequireLeadCustomer(newLead.status as LeadStatus)) {
       const linkResult = await ensureLeadCustomerLink({
         leadId: inserted.id,
         email: newLead.email.trim(),
         name: newLead.name.trim(),
-        status: newLead.status,
+        status: newLead.status as LeadStatus,
         existingCustomerId: null,
       });
       if (linkResult.customer_id) {
@@ -1592,9 +1601,13 @@ const Admin = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-type">Typ</Label>
-                <Select value={newLead.type} onValueChange={(v) => setNewLead({ ...newLead, type: v })}>
-                  <SelectTrigger id="new-type"><SelectValue /></SelectTrigger>
+                <Select
+                  value={TYPE_OPTIONS.some((o) => o.value === newLead.type) ? newLead.type : SELECT_UNSET}
+                  onValueChange={(v) => setNewLead({ ...newLead, type: v === SELECT_UNSET ? "" : v })}
+                >
+                  <SelectTrigger id="new-type"><SelectValue placeholder="Vyber typ" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value={SELECT_UNSET}>— vyber typ —</SelectItem>
                     {TYPE_OPTIONS.map((o) => (
                       <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
                     ))}
@@ -1604,11 +1617,16 @@ const Admin = () => {
               <div className="space-y-2">
                 <Label htmlFor="new-status">Status</Label>
                 <Select
-                  value={newLead.status}
-                  onValueChange={(v) => setNewLead({ ...newLead, status: v as LeadStatus })}
+                  value={
+                    newLead.status && newLead.status in STATUS_CONFIG ? newLead.status : SELECT_UNSET
+                  }
+                  onValueChange={(v) =>
+                    setNewLead({ ...newLead, status: v === SELECT_UNSET ? ("" as LeadStatus | "") : (v as LeadStatus) })
+                  }
                 >
-                  <SelectTrigger id="new-status"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="new-status"><SelectValue placeholder="Vyber status" /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value={SELECT_UNSET}>— vyber status —</SelectItem>
                     {Object.entries(STATUS_CONFIG).map(([k, v]) => (
                       <SelectItem key={k} value={k}>{v.label}</SelectItem>
                     ))}

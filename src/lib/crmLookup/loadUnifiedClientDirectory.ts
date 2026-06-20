@@ -14,7 +14,7 @@ export async function loadUnifiedClientDirectory(
   const seeds: UnifiedClientSeed[] = [];
   const errors: string[] = [];
 
-  const [customersRes, projectsRes, hostingRes, rentalsRes, leadsRes] = await Promise.all([
+  const [customersRes, projectsRes, hostingRes, rentalsRes, leadsRes, marketingRes, tasksRes] = await Promise.all([
     supabase
       .from("customers")
       .select("id,email,display_name")
@@ -24,6 +24,8 @@ export async function loadUnifiedClientDirectory(
     supabase.from("hosting_records").select("customer_id,customer_email,client_name"),
     supabase.from("rental_websites").select("client_name,customer_id,customer_email"),
     supabase.from("leads").select("id,name,email,customer_id"),
+    supabase.from("marketing_records").select("customer_id,customer_email,client_name"),
+    supabase.from("tasks").select("customer_id,customer_email,client_name"),
   ]);
 
   if (customersRes.error) {
@@ -35,6 +37,8 @@ export async function loadUnifiedClientDirectory(
     { table: "hosting_records", result: hostingRes },
     { table: "rental_websites", result: rentalsRes },
     { table: "leads", result: leadsRes },
+    { table: "marketing_records", result: marketingRes },
+    { table: "tasks", result: tasksRes },
   ] as const) {
     if (result.error) {
       errors.push(`${table}: ${result.error.message}`);
@@ -78,6 +82,24 @@ export async function loadUnifiedClientDirectory(
     });
   }
 
+  for (const m of marketingRes.data || []) {
+    seeds.push({
+      customerId: m.customer_id,
+      displayName: m.client_name || m.customer_email || "Marketing",
+      email: m.customer_email,
+      section: "marketing",
+    });
+  }
+
+  for (const t of tasksRes.data || []) {
+    seeds.push({
+      customerId: t.customer_id,
+      displayName: t.client_name || t.customer_email || "Úloha",
+      email: t.customer_email,
+      section: "task",
+    });
+  }
+
   let entries = mergeUnifiedClientSeeds(seeds);
 
   const seenCustomerIds = new Set(entries.map((e) => e.customerId).filter(Boolean));
@@ -93,6 +115,8 @@ export async function loadUnifiedClientDirectory(
         hostingCount: 0,
         rentalCount: 0,
         leadCount: 0,
+        marketingCount: 0,
+        taskCount: 0,
       });
     }
   }

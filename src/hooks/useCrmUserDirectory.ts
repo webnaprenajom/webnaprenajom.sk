@@ -42,6 +42,11 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
       return;
     }
 
+    const registryNames = (registryRes.data || [])
+      .filter((r) => r.active !== false)
+      .map((r) => String(r.name ?? "").trim())
+      .filter(Boolean);
+
     const directory: AuthDirectoryRow[] = ((dirRes.data || []) as RpcAuthRow[]).map((r) => ({
       userId: r.user_id,
       email: r.email,

@@ -36,6 +36,8 @@ import {
   FolderKanban,
   Globe,
   Loader2,
+  ListTodo,
+  Megaphone,
   Plus,
   Search,
   Server,
@@ -374,6 +376,8 @@ export default function AdminClients() {
                     <TableHead>Projekty</TableHead>
                     <TableHead>Hosting</TableHead>
                     <TableHead>Prenájmy</TableHead>
+                    <TableHead>Marketing</TableHead>
+                    <TableHead>Úlohy</TableHead>
                     <TableHead>Sekcie</TableHead>
                     <TableHead className="w-10" />
                   </TableRow>
@@ -424,6 +428,24 @@ export default function AdminClients() {
                         {entry.rentalCount > 0 ? (
                           <Badge variant="outline" className="text-[10px] gap-0.5">
                             <Globe className="w-2.5 h-2.5" /> {entry.rentalCount}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {entry.marketingCount > 0 ? (
+                          <Badge variant="outline" className="text-[10px] gap-0.5">
+                            <Megaphone className="w-2.5 h-2.5" /> {entry.marketingCount}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {entry.taskCount > 0 ? (
+                          <Badge variant="outline" className="text-[10px] gap-0.5">
+                            <ListTodo className="w-2.5 h-2.5" /> {entry.taskCount}
                           </Badge>
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
