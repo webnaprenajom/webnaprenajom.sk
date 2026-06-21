@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { CanonicalCustomerBadge, HeuristicDataBadge } from "@/components/admin/lookup/LinkStatusBadge";
 import type { QuickCreateKind } from "@/components/admin/customerWorkbench/CustomerQuickCreateDialogs";
 import {
@@ -24,6 +30,7 @@ import {
   ListTodo,
   Mail,
   MessageSquarePlus,
+  MoreHorizontal,
   Phone,
   Server,
   User,
@@ -193,25 +200,34 @@ export function CustomerHubHeader({
       </section>
 
       <section className="rounded-xl border border-border bg-card/80 px-2 py-2 sm:px-3">
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-thin items-center">
           <Button size="sm" variant="secondary" className="shrink-0 h-8 text-xs" onClick={onOpenCommunication}>
             <MessageSquarePlus className="w-3.5 h-3.5 mr-1" /> Poznámka
           </Button>
           <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("task")}>
             <ListTodo className="w-3.5 h-3.5 mr-1" /> Úloha
           </Button>
-          <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("project")}>
-            <Globe className="w-3.5 h-3.5 mr-1" /> Projekt
-          </Button>
-          <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("rental")}>
-            <Globe className="w-3.5 h-3.5 mr-1" /> Prenájom
-          </Button>
-          <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("hosting")}>
-            <Server className="w-3.5 h-3.5 mr-1" /> Hosting
-          </Button>
-          <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => onQuickCreate("commission")}>
-            <Wallet className="w-3.5 h-3.5 mr-1" /> Provízia
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs">
+                <MoreHorizontal className="w-3.5 h-3.5 mr-1" /> Vytvoriť
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => onQuickCreate("project")}>
+                <Globe className="w-3.5 h-3.5 mr-2" /> Projekt
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onQuickCreate("rental")}>
+                <Globe className="w-3.5 h-3.5 mr-2" /> Prenájom
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onQuickCreate("hosting")}>
+                <Server className="w-3.5 h-3.5 mr-2" /> Hosting
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onQuickCreate("commission")}>
+                <Wallet className="w-3.5 h-3.5 mr-2" /> Provízia
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button size="sm" variant="ghost" className="shrink-0 h-8 text-xs" onClick={() => void copyCustomerInfo()}>
             <Copy className="w-3.5 h-3.5 mr-1" /> Kopírovať
           </Button>

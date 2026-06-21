@@ -18,6 +18,7 @@ export interface MarketingRecord {
   customer_email: string | null;
   customer_id: string | null;
   lead_id: string | null;
+  assigned_to: string | null;
   channel: MarketingChannel;
   status: MarketingStatus;
   url: string | null;
@@ -50,7 +51,7 @@ export const MARKETING_STATUS_COLORS: Record<MarketingStatus, string> = {
 };
 
 export const MARKETING_LIST_SELECT =
-  "id,title,client_name,customer_email,customer_id,lead_id,channel,status,url,notes,created_at,updated_at,agreed_fee" as const;
+  "id,title,client_name,customer_email,customer_id,lead_id,assigned_to,channel,status,url,notes,created_at,updated_at,agreed_fee" as const;
 
 export const emptyMarketingRecord: Omit<
   MarketingRecord,
@@ -61,6 +62,7 @@ export const emptyMarketingRecord: Omit<
   customer_email: null,
   customer_id: null,
   lead_id: null,
+  assigned_to: null,
   channel: "other",
   status: "active",
   url: null,

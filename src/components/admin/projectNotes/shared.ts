@@ -16,6 +16,7 @@ export interface ProjectNote {
   access_credentials?: Json;
   notes: string | null;
   status: string;
+  assigned_to?: string | null;
   updated_at: string;
   operating_cost?: number;
   agreed_fee?: number | null;
@@ -42,6 +43,7 @@ export const emptyProjectNote: Partial<ProjectNote> = {
   customer_email: "",
   customer_id: null,
   lead_id: null,
+  assigned_to: null,
   project_type: "wordpress",
   url: "",
   notes: "",
@@ -50,7 +52,7 @@ export const emptyProjectNote: Partial<ProjectNote> = {
 
 /** List load — excludes legacy credential columns (canonical store: customer_credentials). */
 export const PROJECT_LIST_SELECT =
-  "id,title,client_name,customer_email,customer_id,lead_id,project_type,url,notes,status,updated_at,operating_cost,agreed_fee" as const;
+  "id,title,client_name,customer_email,customer_id,lead_id,assigned_to,project_type,url,notes,status,updated_at,operating_cost,agreed_fee" as const;
 
 const LEGACY_CREDENTIAL_KEYS = new Set([
   "username",
@@ -74,6 +76,7 @@ export function buildProjectNoteDeliveryPayload(
     customer_email: linked.customer_email,
     customer_id: linked.customer_id,
     lead_id: linked.lead_id || editing.lead_id || null,
+    assigned_to: editing.assigned_to?.trim() || null,
     project_type: editing.project_type || null,
     url: editing.url?.trim() || null,
     notes: editing.notes || null,

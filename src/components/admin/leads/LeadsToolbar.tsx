@@ -14,8 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Download, Mail, MoreHorizontal, Plus, Search, Upload } from "lucide-react";
+import { useImplementerSelectOptions } from "@/hooks/useImplementerSelectOptions";
 import {
-  ASSIGNEES,
   STATUS_CONFIG,
   TYPE_OPTIONS,
   UNASSIGNED,
@@ -50,6 +50,7 @@ const LeadsToolbar = ({
   onImportClick,
   onExport,
 }: LeadsToolbarProps) => {
+  const { options: assigneeOptions } = useImplementerSelectOptions();
   return (
     <section className="flex flex-col sm:flex-row flex-wrap gap-3">
       <div className="relative flex-1 min-w-[200px]">
@@ -90,7 +91,7 @@ const LeadsToolbar = ({
         <SelectContent>
           <SelectItem value="all">Všetci riešitelia</SelectItem>
           <SelectItem value={UNASSIGNED}>— Nepriradené —</SelectItem>
-          {ASSIGNEES.map((a) => (
+          {assigneeOptions.map((a) => (
             <SelectItem key={a} value={a}>{a}</SelectItem>
           ))}
         </SelectContent>

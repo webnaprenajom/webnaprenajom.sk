@@ -52,6 +52,7 @@ export async function saveMarketingRecord(
     customer_email: linked.customer_email,
     customer_id: linked.customer_id,
     lead_id: linked.lead_id || editing.lead_id || null,
+    assigned_to: editing.assigned_to?.trim() || null,
     channel: editing.channel || "other",
     status: editing.status || "active",
     url: editing.url?.trim() || null,

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
+import { ImplementerAssigneeSelect } from "@/components/admin/ImplementerAssigneeSelect";
 import { AGREED_PRICE_HELPER } from "@/components/admin/AgreedPriceField";
 import {
   type MarketingChannel,
@@ -139,6 +140,12 @@ export function MarketingRecordEditDialog({
               </Select>
             </div>
           </div>
+
+          <ImplementerAssigneeSelect
+            value={editing.assigned_to}
+            onChange={(assigned_to) => setEditing({ ...editing, assigned_to })}
+            label="Realizátor kampane"
+          />
 
           <div className="space-y-1.5">
             <Label>URL (voliteľné)</Label>

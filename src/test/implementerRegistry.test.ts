@@ -14,7 +14,7 @@ describe("implementerRegistry", () => {
     expect(normalizeImplementerName("bad__off__name")).toBeNull();
   });
 
-  it("merges seed, registry, and assigned profiles", () => {
+  it("merges registry rows and assigned profiles without legacy seed when registry exists", () => {
     const catalog = mergeImplementerCatalog(
       [{ name: "Ján", active: true }],
       [
@@ -35,7 +35,7 @@ describe("implementerRegistry", () => {
         } as CrmManagedUser,
       ],
     );
-    expect(catalog).toContain("Peter");
+    expect(catalog).not.toContain("Peter");
     expect(catalog).toContain("Ján");
     expect(catalog).toContain("Eva");
   });

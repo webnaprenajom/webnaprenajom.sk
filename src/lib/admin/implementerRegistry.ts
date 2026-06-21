@@ -33,11 +33,13 @@ export function mergeImplementerCatalog(
   managedUsers: CrmManagedUser[],
   current?: string | null,
 ): string[] {
-  const set = new Set<string>(CRM_ASSIGNEES);
-  for (const row of registry) {
-    if (row.active && !isArchivedImplementerName(row.name)) {
-      set.add(row.name.trim());
+  const set = new Set<string>();
+  if (registry.length > 0) {
+    for (const row of registry) {
+      if (!isArchivedImplementerName(row.name)) set.add(row.name.trim());
     }
+  } else {
+    for (const seed of CRM_ASSIGNEES) set.add(seed);
   }
   for (const user of managedUsers) {
     if (user.implementerName?.trim() && !isArchivedImplementerName(user.implementerName)) {

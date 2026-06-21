@@ -9,16 +9,20 @@ export const CRM_ASSIGNEES = ["Peter", "Maroš", "Matuš"] as const;
 
 export type CrmAssignee = (typeof CRM_ASSIGNEES)[number];
 
-/** Merge seed, registry, and optional current value for select options. */
+/** Merge active registry, optional current legacy value, and historical filter. */
 export function assigneeSelectOptions(
   current?: string | null,
   registryNames: readonly string[] = [],
   historicalCtx?: HistoricalIdentityContext | null,
 ): string[] {
-  const set = new Set<string>([...CRM_ASSIGNEES]);
-  for (const name of registryNames) {
-    const trimmed = name.trim();
-    if (trimmed) set.add(trimmed);
+  const set = new Set<string>();
+  if (registryNames.length > 0) {
+    for (const name of registryNames) {
+      const trimmed = name.trim();
+      if (trimmed) set.add(trimmed);
+    }
+  } else {
+    for (const seed of CRM_ASSIGNEES) set.add(seed);
   }
   const value = current?.trim();
   if (value) set.add(value);

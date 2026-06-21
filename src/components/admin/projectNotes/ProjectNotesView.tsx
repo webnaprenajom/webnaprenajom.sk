@@ -45,6 +45,7 @@ import {
   emptyProjectNote,
 } from "./shared";
 import { ClientPicker } from "@/components/admin/lookup/ClientPicker";
+import { ImplementerAssigneeSelect } from "@/components/admin/ImplementerAssigneeSelect";
 import { linkLeadAfterDelivery } from "@/lib/crmLookup/leadCustomerLifecycle";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
 import {
@@ -327,6 +328,7 @@ export function ProjectNotesView() {
                 <TableRow>
                   <TableHead>Projekt</TableHead>
                   <TableHead>Klient</TableHead>
+                  <TableHead>Realizátor</TableHead>
                   <TableHead>Typ</TableHead>
                   <TableHead>URL</TableHead>
                   <TableHead>Stav</TableHead>
@@ -370,6 +372,9 @@ export function ProjectNotesView() {
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {item.assigned_to || "—"}
                       </TableCell>
                       <TableCell className="text-xs">{typeLabel}</TableCell>
                       <TableCell className="text-xs max-w-[160px]">
@@ -552,6 +557,13 @@ function EditDialog({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <ImplementerAssigneeSelect
+                  value={editing.assigned_to}
+                  onChange={(assigned_to) => setEditing({ ...editing, assigned_to })}
+                  label="Realizátor projektu"
+                />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>URL / doména (voliteľné)</Label>

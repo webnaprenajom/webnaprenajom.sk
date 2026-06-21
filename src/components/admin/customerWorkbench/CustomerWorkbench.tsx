@@ -13,7 +13,6 @@ import {
 import { CommunicationSummaryPanel } from "@/components/admin/customerWorkbench/CommunicationSummaryPanel";
 import { CustomerCredentialsPanel } from "@/components/admin/customerWorkbench/CustomerCredentialsPanel";
 import { CustomerFinancePanel } from "@/components/admin/customerWorkbench/CustomerFinancePanel";
-import { CustomerCommissionsAuditStrip } from "@/components/admin/customerHub/CustomerCommissionsAuditStrip";
 import { CustomerFlowTimeline } from "@/components/admin/customerHub/CustomerFlowTimeline";
 import { CustomerHubFinanceSnapshot } from "@/components/admin/customerHub/CustomerHubFinanceSnapshot";
 import { CustomerHubHeader } from "@/components/admin/customerHub/CustomerHubHeader";
@@ -56,8 +55,6 @@ import {
   TASK_LINK_STRENGTH_LABELS,
 } from "@/lib/crmLookup/taskCustomerLink";
 import {
-  getWorkbenchUsageRows,
-  getWorkbenchUsageTotal,
   recordWorkbenchUsage,
 } from "@/lib/customerWorkbench/usageTracking";
 import { STATUS_CONFIG, type LeadStatus } from "@/components/admin/leads/constants";
@@ -232,9 +229,6 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
   ).length;
   const activeProjects = data.notes.filter((n) => !["done", "archived"].includes(n.status));
 
-  const usageRows = useMemo(() => getWorkbenchUsageRows().slice(0, 5), [activeTab, quickCreate]);
-  const usageTotal = useMemo(() => getWorkbenchUsageTotal(), [activeTab, quickCreate]);
-
   if (loading) {
     return (
       <div className="py-16 flex items-center justify-center">
@@ -346,8 +340,6 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
             <CustomerHubFinanceSnapshot finance={financeSummary} onOpenTab={setTab} />
 
             <CustomerHubServicesPanel data={data} />
-
-            <CustomerCommissionsAuditStrip data={data} />
 
             <CustomerFlowTimeline
               events={timelineEvents}
@@ -881,50 +873,18 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
             </section>
           )}
 
-          {usageTotal > 0 && isAdmin && (
-            <section className="rounded-xl border border-border bg-card p-4 space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Adopcia workspace (admin)
-              </h3>
-              <p className="text-[10px] text-muted-foreground">
-                Lokálne počítadlo v tomto prehliadači · {usageTotal} akcií
-              </p>
-              <ul className="text-[10px] space-y-1">
-                {usageRows.map((row) => (
-                  <li key={`${row.kind}:${row.value}`} className="flex justify-between gap-2">
-                    <span className="truncate text-muted-foreground">
-                      {row.kind === "tab" && "Záložka"}
-                      {row.kind === "quick_create" && "Vytvoriť"}
-                      {row.kind === "comm_filter" && "Kom. filter"} · {row.value}
-                    </span>
-                    <span className="font-medium tabular-nums">{row.count}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
           <section className="rounded-xl border border-border bg-card p-4 space-y-2 text-xs">
             <h3 className="font-semibold">Súvisiace moduly</h3>
             <div className="flex flex-col gap-1">
-              <Link to="/admin/finance?advanced=1&legacy=payments" className="text-primary hover:underline">
-                Finance — platby a náklady
-              </Link>
-              <Link to="/admin/rentals" className="text-primary hover:underline">
-                Prenájmy ({summary.activeRentalsCount})
-              </Link>
-              <Link to="/admin/commissions" className="text-primary hover:underline">
-                Provízie
-              </Link>
-              {isAdmin && (
-                <>
-                  <Link to="/admin/rollout-health" className="text-primary hover:underline">
-                    Diagnostika identity (admin)
-                  </Link>
-                  <Link to="/admin/communication-ops" className="text-primary hover:underline">
-                    Diagnostika e-mail sync (admin)
-                  </Link>
-                </>
+              {summary.activeRentalsCount > 0 && (
+                <Link to="/admin/rentals" className="text-primary hover:underline">
+                  Prenájmy ({summary.activeRentalsCount})
+                </Link>
+              )}
+              {unpaidCommissions.length > 0 && (
+                <Link to="/admin/commissions" className="text-primary hover:underline">
+                  Provízie ({unpaidCommissions.length} nevyplatených)
+                </Link>
               )}
               {data.signatures.length > 0 && (
                 <Link to="/admin/signatures" className="text-primary hover:underline">

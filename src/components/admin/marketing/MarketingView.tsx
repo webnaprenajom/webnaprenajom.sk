@@ -69,8 +69,7 @@ export function MarketingView() {
     if (recordsRes.error) {
       toast({ title: "Chyba", description: recordsRes.error.message, variant: "destructive" });
     } else {
-      // TODO post-release: pridať assigned_to stĺpec + filterMarketingForUser
-      // Option B (Batch 4c): administrator vidí všetky marketing záznamy — marketing_records nemá ownership stĺpce.
+      // Registry-backed assigned_to on marketing_records (migration 20260627120000).
       setItems((recordsRes.data || []) as MarketingRecord[]);
     }
     if (!leadsRes.error && leadsRes.data) {
@@ -231,6 +230,7 @@ export function MarketingView() {
                 <TableRow>
                   <TableHead>Kampaň</TableHead>
                   <TableHead>Klient</TableHead>
+                  <TableHead>Realizátor</TableHead>
                   <TableHead>Kanál</TableHead>
                   <TableHead>Stav</TableHead>
                   <TableHead className="text-right">Dohodnutá cena</TableHead>
@@ -278,6 +278,9 @@ export function MarketingView() {
                         ) : (
                           <span className="text-muted-foreground">—</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {item.assigned_to || "—"}
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="text-[10px]">

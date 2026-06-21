@@ -26,6 +26,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { useHistoricalIdentity } from "@/hooks/useHistoricalIdentity";
+import { useImplementerSelectOptions } from "@/hooks/useImplementerSelectOptions";
 import { formatImplementerLabel } from "@/lib/identity/historicalIdentity";
 import { CRM_HISTORY_ACTIONS, logCrmEvent } from "@/lib/history/logCrmEvent";
 import { useStableAccessLoad } from "@/hooks/useStableAccessLoad";
@@ -130,8 +131,6 @@ const PRIORITY_CONFIG: Record<TaskPriority, { label: string; className: string }
   urgent: { label: "Urgentné", className: "bg-red-500/20 text-red-400 border-red-500/40" },
 };
 
-const ASSIGNEES = ["Peter", "Maroš", "Matuš"];
-
 const emptyForm = () => ({
   id: "",
   title: "",
@@ -187,6 +186,18 @@ const AdminTasks = () => {
   const [fixedParentType, setFixedParentType] = useState<TaskParentType | undefined>();
   const accessCtx = useAccessContext();
   const { historicalIdentity } = useHistoricalIdentity();
+  const { options: implementerOptions } = useImplementerSelectOptions();
+  const filterAssigneeOptions = useMemo(() => {
+    const set = new Set(implementerOptions);
+    for (const t of items) {
+      const a = t.assignee?.trim();
+      if (a) set.add(a);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, "sk"));
+  }, [implementerOptions, items]);
+  const { options: formAssigneeOptions, isKnown: isKnownAssignee } = useImplementerSelectOptions(
+    form.assignee || null,
+  );
 
   useEffect(() => {
     document.title = "Úlohy | CRM";
@@ -602,7 +613,11 @@ const AdminTasks = () => {
             <SelectTrigger className="w-full sm:w-[200px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Všetci riešitelia</SelectItem>
-              {ASSIGNEES.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+              {filterAssigneeOptions.map((a) => (
+                <SelectItem key={a} value={a}>
+                  {formatImplementerLabel(a, historicalIdentity)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </section>
@@ -847,7 +862,12 @@ const AdminTasks = () => {
                 <SelectTrigger><SelectValue placeholder="Vyber" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">— bez priradenia —</SelectItem>
-                  {ASSIGNEES.map((a) => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                  {formAssigneeOptions.map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {a}
+                      {!isKnownAssignee(a) ? " (legacy)" : ""}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
