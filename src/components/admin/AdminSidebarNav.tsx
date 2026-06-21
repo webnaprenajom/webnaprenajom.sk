@@ -67,8 +67,8 @@ export function AdminSidebarNav() {
                 return (
                   <SidebarMenuItem key={href}>
                     <SidebarMenuButton asChild isActive={active} tooltip={tooltip} size="sm">
-                      <Link to={settingsHref} className="flex items-center gap-2 min-h-8">
-                        <Icon className="size-3.5 shrink-0" />
+                      <Link to={settingsHref} className="flex items-center gap-2.5 min-h-8">
+                        <Icon className="size-4 shrink-0" strokeWidth={1.75} />
                         <span className="flex-1 truncate">{label}</span>
                         {isSettings && pendingAuthReviewCount > 0 && (
                           <Badge

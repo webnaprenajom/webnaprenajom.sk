@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { StatusChip } from "@/components/admin/StatusChip";
 import { TRUTH_LEVEL_LABELS } from "@/lib/finance/labels";
 
 /**
@@ -12,15 +13,21 @@ import { TRUTH_LEVEL_LABELS } from "@/lib/finance/labels";
  * `FinanceRecordsCrud.tsx`, `CustomerFinancePanel.tsx`).
  */
 export function truthToneClass(level: string): string {
-  if (level.endsWith("_fact")) return "border-green-500/40 text-green-700 dark:text-green-400";
-  if (level === "legacy_import") return "border-orange-500/40 text-orange-700 dark:text-orange-400";
-  return "border-muted-foreground/30 text-muted-foreground";
+  if (level.endsWith("_fact")) {
+    return "bg-green-500/12 text-green-600 dark:text-green-400 border-green-500/35";
+  }
+  if (level === "legacy_import") {
+    return "bg-orange-500/12 text-orange-600 dark:text-orange-400 border-orange-500/35";
+  }
+  return "bg-muted/40 text-muted-foreground border-border/60";
 }
 
 export function TruthLevelBadge({ level, className = "" }: { level: string; className?: string }) {
   return (
-    <Badge variant="outline" className={`text-[10px] ${truthToneClass(level)} ${className}`}>
-      {TRUTH_LEVEL_LABELS[level] ?? level}
-    </Badge>
+    <StatusChip
+      dot
+      label={TRUTH_LEVEL_LABELS[level] ?? level}
+      className={`${truthToneClass(level)} ${className}`}
+    />
   );
 }

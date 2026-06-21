@@ -27,6 +27,8 @@ import {
   User,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { StatusChip } from "@/components/admin/StatusChip";
+import { AdminIconButton } from "@/components/admin/AdminIconButton";
 import {
   Lead,
   LeadStatus,
@@ -221,9 +223,10 @@ const LeadsTable = ({
                       {lead.source || <span className="italic text-muted-foreground opacity-60">—</span>}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                        {typeLabel(lead.type)}
-                      </Badge>
+                      <StatusChip
+                        label={typeLabel(lead.type)}
+                        className="bg-muted/30 text-muted-foreground border-border/70"
+                      />
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-0.5">
@@ -232,23 +235,18 @@ const LeadsTable = ({
                             to={`/admin/customer/${encodeURIComponent(lead.email.trim().toLowerCase())}`}
                             title="Otvoriť customer view"
                           >
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="h-7 w-7 text-muted-foreground hover:text-primary"
-                            >
-                              <User className="w-3.5 h-3.5" />
-                            </Button>
+                            <AdminIconButton label="Otvoriť customer view" className="size-7 text-primary">
+                              <User className="size-3.5" />
+                            </AdminIconButton>
                           </Link>
                         )}
-                        <Button
-                          size="icon"
-                          variant="ghost"
+                        <AdminIconButton
+                          label="Vymazať lead"
                           onClick={() => onRequestDelete(lead.id)}
-                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          className="size-7 hover:text-destructive"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                          <Trash2 className="size-3.5" />
+                        </AdminIconButton>
                       </div>
                     </TableCell>
                   </TableRow>
