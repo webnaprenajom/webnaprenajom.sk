@@ -35,7 +35,7 @@ interface Props {
   form: CommissionFormState;
   onChange: (patch: Partial<CommissionFormState>) => void;
   showTitle?: boolean;
-  /** Project commissions only — enables % zo zisku mode. */
+  /** Profit-aware entity commissions (project / hosting / marketing) — enables % zo zisku mode. */
   allowPercentMode?: boolean;
   revenueAmount?: number;
   operatingCost?: number;

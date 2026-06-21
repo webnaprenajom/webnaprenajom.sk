@@ -27,6 +27,11 @@ export const COMMISSION_SOURCE_LABELS: Record<CommissionSourceType, string> = {
   other: "Iné",
 };
 
+/** Project / hosting / marketing — profit banner + percent-from-profit commission mode. */
+export function isProfitAwareCommissionSource(sourceType: CommissionSourceType): boolean {
+  return sourceType === "project" || sourceType === "hosting" || sourceType === "marketing";
+}
+
 export interface CommissionRow {
   id: string;
   title: string;

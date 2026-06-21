@@ -4,6 +4,7 @@ import {
   commissionMatchesSource,
   getCommissionLinkStatus,
   isCommissionLinked,
+  isProfitAwareCommissionSource,
   resolveCommissionSourceLabel,
   sanitizeCommissionSourceFields,
   sourceDetailHref,
@@ -15,6 +16,14 @@ describe("commissionSource — marketing & task", () => {
   it("exposes labels for new entity source types", () => {
     expect(COMMISSION_SOURCE_LABELS.marketing).toBe("Marketing");
     expect(COMMISSION_SOURCE_LABELS.task).toBe("Úloha");
+  });
+
+  it("marks project/hosting/marketing as profit-aware commission sources", () => {
+    expect(isProfitAwareCommissionSource("project")).toBe(true);
+    expect(isProfitAwareCommissionSource("hosting")).toBe(true);
+    expect(isProfitAwareCommissionSource("marketing")).toBe(true);
+    expect(isProfitAwareCommissionSource("rental")).toBe(false);
+    expect(isProfitAwareCommissionSource("task")).toBe(false);
   });
 
   it("builds detail hrefs for marketing and task", () => {

@@ -20,6 +20,7 @@ import {
   type CommissionRow,
   resolveCommissionSourceLabel,
   sourceDetailHref,
+  isProfitAwareCommissionSource,
 } from "@/lib/commissionSource";
 import { COMMISSION_STATUS_LABELS } from "@/lib/finance/labels";
 import { paymentFormLabel } from "@/lib/paymentForm";
@@ -204,7 +205,7 @@ export function EntityCommissionsPanel({
 
     const amountMode: CommissionAmountMode =
       schemaCaps?.percentMode !== false &&
-      sourceType === "project" &&
+      isProfitAwareCommissionSource(sourceType) &&
       form.amount_mode === "percent"
         ? "percent"
         : "fixed";
@@ -541,7 +542,7 @@ export function EntityCommissionsPanel({
   );
   };
 
-  const showProfit = sourceType === "hosting" || sourceType === "project" || sourceType === "marketing";
+  const showProfit = isProfitAwareCommissionSource(sourceType);
 
   return (
     <div className="space-y-4">
@@ -718,7 +719,7 @@ export function EntityCommissionsPanel({
           />
         </div>
       )}
-      {schemaCaps?.percentMode === false && sourceType === "project" && (
+      {schemaCaps?.percentMode === false && isProfitAwareCommissionSource(sourceType) && (
         <p className="text-[10px] text-amber-700 dark:text-amber-400 border border-amber-500/30 rounded-lg p-2 bg-amber-500/5">
           Percentuálny režim provízie je vypnutý — databáza ešte nemá migráciu amount_mode. Použite pevnú sumu
           alebo spustite <code className="text-[10px]">supabase db push</code>.
@@ -728,7 +729,7 @@ export function EntityCommissionsPanel({
       <CommissionFormFields
           form={form}
           onChange={(patch) => setForm({ ...form, ...patch })}
-          allowPercentMode={sourceType === "project" && schemaCaps?.percentMode !== false}
+          allowPercentMode={isProfitAwareCommissionSource(sourceType) && schemaCaps?.percentMode !== false}
           revenueAmount={revenueAmount}
           operatingCost={operatingCost}
           revenueKnown={revenueKnown}
