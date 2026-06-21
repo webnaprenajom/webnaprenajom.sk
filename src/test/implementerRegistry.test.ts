@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildImplementerRegistryEntries,
+  evaluateImplementerRegistryRemove,
   implementerRegistryNameTaken,
   mergeImplementerCatalog,
   normalizeImplementerName,
@@ -70,5 +71,48 @@ describe("implementerRegistry", () => {
     const free = entries.find((e) => e.name === "Voľný");
     expect(peter?.assignedUserId).toBe("u1");
     expect(free?.assignedUserId).toBeNull();
+    expect(free?.canRemove).toBe(false);
+    expect(free?.removeBlockReason).toMatch(/deaktivujte/i);
+  });
+
+  it("allows remove for inactive unassigned registry row", () => {
+    const entries = buildImplementerRegistryEntries(
+      [{ name: "Starý", active: false }],
+      [],
+    );
+    const row = entries.find((e) => e.name === "Starý");
+    expect(row?.canRemove).toBe(true);
+    expect(row?.removeBlockReason).toBeNull();
+  });
+
+  it("blocks remove when team profile still holds the name", () => {
+    const managed = [
+      {
+        userId: "u2",
+        email: "x@y.com",
+        authDisplayName: null,
+        roleRowId: null,
+        role: null,
+        teamDisplayName: "X",
+        implementerName: "Viazaný",
+        profileActive: false,
+        inactiveProfile: true,
+        orphanActiveProfile: false,
+        displayName: "X User",
+        missingProfile: false,
+        riskFlags: [],
+      } as CrmManagedUser,
+    ];
+    const eligibility = evaluateImplementerRegistryRemove(
+      {
+        name: "Viazaný",
+        active: false,
+        inRegistry: true,
+        assignedUserId: null,
+      },
+      managed,
+    );
+    expect(eligibility.canRemove).toBe(false);
+    expect(eligibility.removeBlockReason).toMatch(/profil/i);
   });
 });

@@ -13,9 +13,59 @@ export type CrmImplementerRow = {
 export type ImplementerRegistryEntry = {
   name: string;
   active: boolean;
+  /** Row exists in crm_implementers (vs. catalog-only name from team profile). */
+  inRegistry: boolean;
   assignedUserId: string | null;
   assignedDisplayName: string | null;
+  canRemove: boolean;
+  removeBlockReason: string | null;
 };
+
+function implementerNamesEqual(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+/** Safe catalog delete — historical commission/rental strings are untouched. */
+export function evaluateImplementerRegistryRemove(
+  entry: Pick<
+    ImplementerRegistryEntry,
+    "name" | "active" | "inRegistry" | "assignedUserId"
+  >,
+  managedUsers: CrmManagedUser[],
+): { canRemove: boolean; removeBlockReason: string | null } {
+  if (!entry.inRegistry) {
+    return {
+      canRemove: false,
+      removeBlockReason: "Meno nie je v registri — zobrazuje sa len cez profil tímu.",
+    };
+  }
+  if (entry.assignedUserId) {
+    return {
+      canRemove: false,
+      removeBlockReason:
+        "Realizátor je priradený k aktívnemu účtu. Najprv ho uvoľnite v správe používateľov.",
+    };
+  }
+  const profileHolder = managedUsers.find(
+    (user) =>
+      user.implementerName &&
+      !isArchivedImplementerName(user.implementerName) &&
+      implementerNamesEqual(user.implementerName, entry.name),
+  );
+  if (profileHolder) {
+    return {
+      canRemove: false,
+      removeBlockReason: `Meno je stále viazané na profil používateľa (${profileHolder.displayName}).`,
+    };
+  }
+  if (entry.active) {
+    return {
+      canRemove: false,
+      removeBlockReason: "Najprv deaktivujte realizátora v registri.",
+    };
+  }
+  return { canRemove: true, removeBlockReason: null };
+}
 
 export function normalizeImplementerName(raw: string): string | null {
   const trimmed = raw.trim();
@@ -79,13 +129,17 @@ export function buildImplementerRegistryEntries(
 
   const names = mergeImplementerCatalog(registry, managedUsers);
   return names.map((name) => {
-    const row = registry.find((r) => r.name.trim().toLowerCase() === name.trim().toLowerCase());
+    const row = registry.find((r) => implementerNamesEqual(r.name, name));
     const assigned = assignmentByName.get(name) ?? null;
-    return {
+    const inRegistry = row != null;
+    const base = {
       name,
       active: row?.active ?? true,
+      inRegistry,
       assignedUserId: assigned?.userId ?? null,
       assignedDisplayName: assigned?.displayName ?? null,
     };
+    const remove = evaluateImplementerRegistryRemove(base, managedUsers);
+    return { ...base, ...remove };
   });
 }

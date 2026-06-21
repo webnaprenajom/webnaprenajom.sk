@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { useImplementerRegistry } from "@/hooks/useImplementerRegistry";
 import {
@@ -24,10 +24,18 @@ import { ConfirmSensitiveActionDialog } from "@/components/admin/rbac/ConfirmSen
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { adminCtrl } from "@/lib/admin/readability";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type RegistryApi = Pick<
   ReturnType<typeof useImplementerRegistry>,
-  "rows" | "loading" | "error" | "createName" | "deactivateName" | "reactivateName" | "reload"
+  | "rows"
+  | "loading"
+  | "error"
+  | "createName"
+  | "deactivateName"
+  | "reactivateName"
+  | "deleteName"
+  | "reload"
 >;
 
 type Props = {
@@ -39,6 +47,7 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
   const { userId: actorId } = useAdminAccess();
   const [newName, setNewName] = useState("");
   const [pendingDeactivate, setPendingDeactivate] = useState<string | null>(null);
+  const [pendingRemove, setPendingRemove] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const entries = useMemo(
@@ -109,6 +118,36 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Chyba";
       toast({ title: "Chyba", description: msg, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const confirmRemove = async () => {
+    if (!pendingRemove) return;
+    const name = pendingRemove;
+    setPendingRemove(null);
+    setSaving(true);
+    try {
+      await registry.deleteName(name);
+      if (actorId) {
+        void logAdminAuditEvent({
+          actorUserId: actorId,
+          actionType: AUDIT_ACTION_TYPES.entity_deleted,
+          targetType: "implementer",
+          targetId: name,
+          summary: `Odstránený realizátor z katalógu: ${name}`,
+          before: { name, in_registry: true },
+          after: { removed_from_catalog: true },
+        });
+      }
+      toast({
+        title: "Realizátor odstránený z katalógu",
+        description: `${name} — historické provízie a záznamy ostávajú nedotknuté.`,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Chyba";
+      toast({ title: "Odstránenie zlyhalo", description: msg, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -188,30 +227,67 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
                   {entry.assignedDisplayName ?? "—"}
                 </TableCell>
                 <TableCell className="text-right">
-                  {entry.active && !entry.assignedUserId && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className={`${adminCtrl.sm} text-destructive/80 hover:text-destructive hover:bg-destructive/10`}
-                      disabled={saving}
-                      onClick={() => setPendingDeactivate(entry.name)}
-                    >
-                      Deaktivovať
-                    </Button>
-                  )}
-                  {!entry.active && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="text-xs h-7"
-                      disabled={saving}
-                      onClick={() => void registry.reactivateName(entry.name)}
-                    >
-                      Obnoviť
-                    </Button>
-                  )}
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {entry.active && !entry.assignedUserId && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className={`${adminCtrl.sm} text-destructive/80 hover:text-destructive hover:bg-destructive/10`}
+                        disabled={saving}
+                        onClick={() => setPendingDeactivate(entry.name)}
+                      >
+                        Deaktivovať
+                      </Button>
+                    )}
+                    {!entry.active && (
+                      <>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          className="text-xs h-7"
+                          disabled={saving}
+                          onClick={() => void registry.reactivateName(entry.name)}
+                        >
+                          Obnoviť
+                        </Button>
+                        {entry.canRemove ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className={`${adminCtrl.sm} text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/30`}
+                            disabled={saving}
+                            onClick={() => setPendingRemove(entry.name)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-1" />
+                            Odstrániť
+                          </Button>
+                        ) : entry.inRegistry && entry.removeBlockReason ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className={`${adminCtrl.sm} text-muted-foreground opacity-60`}
+                                  disabled
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                  Odstrániť
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="max-w-xs text-xs">
+                              {entry.removeBlockReason}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -238,6 +314,32 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
         confirmLabel="Deaktivovať"
         destructive
         onConfirm={() => void confirmDeactivate()}
+      />
+
+      <ConfirmSensitiveActionDialog
+        open={!!pendingRemove}
+        onOpenChange={(o) => !o && setPendingRemove(null)}
+        title="Odstrániť realizátora z katalógu?"
+        description={
+          pendingRemove ? (
+            <>
+              <p>
+                Meno <strong>{pendingRemove}</strong> bude natrvalo odstránené zo živého katalógu v
+                Settings.
+              </p>
+              <p className="text-muted-foreground mt-1">
+                Historické provízie, prenájmy a finančné záznamy s týmto menom ostávajú — mení sa
+                len výber pri nových priradeniach.
+              </p>
+              <p className="text-destructive/90 mt-2 text-xs font-medium">
+                Túto akciu nie je možné vrátiť späť bez ručného opätovného pridania mena.
+              </p>
+            </>
+          ) : null
+        }
+        confirmLabel="Odstrániť z katalógu"
+        destructive
+        onConfirm={() => void confirmRemove()}
       />
     </div>
   );

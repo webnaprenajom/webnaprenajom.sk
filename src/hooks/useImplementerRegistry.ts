@@ -60,7 +60,26 @@ export function useImplementerRegistry(enabled = true) {
     [load],
   );
 
+  const deleteName = useCallback(
+    async (name: string) => {
+      const { error: err } = await supabase.from("crm_implementers").delete().eq("name", name);
+      if (err) throw err;
+      await load();
+    },
+    [load],
+  );
+
   const activeNames = rows.filter((r) => r.active).map((r) => r.name);
 
-  return { rows, activeNames, loading, error, reload: load, createName, deactivateName, reactivateName };
+  return {
+    rows,
+    activeNames,
+    loading,
+    error,
+    reload: load,
+    createName,
+    deactivateName,
+    reactivateName,
+    deleteName,
+  };
 }
