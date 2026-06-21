@@ -10,6 +10,10 @@
  * it only classifies existing rows for display.
  */
 import type { FinanceTruthLevel } from "./types";
+import {
+  classifyRentalCommissionLiveState,
+  type RentalWebsiteEntitlementInput,
+} from "@/lib/finance/rentalCommissionEntitlement";
 
 export type CommissionPayoutStatus =
   | "unpaid_workflow"
@@ -182,9 +186,11 @@ export function resolveImplementerFinanceTruthLevel(
 export function implementerTotalsFromCommissionPayouts(
   commissions: Array<CommissionLike & { implementer?: string | null; amount?: number | null }>,
   payoutRecords: Array<PayoutRecordLike & { implementer?: string | null }>,
+  opts?: { websites?: readonly RentalWebsiteEntitlementInput[] },
 ): Map<string, ImplementerFinanceTotals> {
   const map = new Map<string, ImplementerFinanceTotals>();
   const commissionIds = new Set(commissions.map((c) => c.id));
+  const websites = opts?.websites;
 
   const bump = (key: string, patch: Partial<ImplementerFinanceTotals>) => {
     const cur: ImplementerFinanceTotals = map.get(key) ?? {
@@ -208,6 +214,32 @@ export function implementerTotalsFromCommissionPayouts(
   for (const c of commissions) {
     const key = (c.implementer || "").trim();
     if (!key) continue;
+
+    if (websites) {
+      const liveState = classifyRentalCommissionLiveState(
+        c as CommissionLike & {
+          source_type?: string | null;
+          source_id?: string | null;
+          payment_status?: string | null;
+        },
+        websites,
+        payoutRecords,
+      );
+      if (liveState === "stale_orphan") continue;
+      if (liveState === "historical_paid") {
+        const info = resolveCommissionPayoutInfo(c, payoutRecords);
+        if (info.auditedAmount > 0) {
+          bump(key, {
+            paidAudited: info.auditedAmount,
+            paidAuditedFact: info.truthLevel === "payout_fact" ? info.auditedAmount : 0,
+            paidAuditedLegacy: info.truthLevel === "legacy_import" ? info.auditedAmount : 0,
+            lineCount: 1,
+          });
+        }
+        continue;
+      }
+    }
+
     const info = resolveCommissionPayoutInfo(c, payoutRecords);
     const amount = Number(c.amount || 0);
     switch (info.status) {

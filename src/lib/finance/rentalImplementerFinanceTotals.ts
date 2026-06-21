@@ -163,7 +163,9 @@ export function buildImplementerFinanceTotalsWithRentals(
     scopeImplementer?: string | null;
   },
 ): Map<string, ImplementerFinanceTotals> {
-  const base = implementerTotalsFromCommissionPayouts(commissions, payoutRecords);
+  const base = implementerTotalsFromCommissionPayouts(commissions, payoutRecords, {
+    websites: opts.websites,
+  });
   return mergeRentalJsonIntoImplementerTotals(base, {
     websites: opts.websites,
     payments: opts.payments,

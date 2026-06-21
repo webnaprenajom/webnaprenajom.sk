@@ -74,10 +74,15 @@ export function mapCommissionSourceType(
 }
 
 function rentalDealToViewRow(deal: RentalCommissionDeal, sortDate: string): ImplementerCommissionViewRow {
+  const isHistoricalRental = deal.dealType === "historical_rental";
   return {
     id: deal.commissionId ?? deal.dealKey,
     sourceType: deal.dealType === "legacy" ? "legacy" : "rental",
-    sourceLabel: deal.dealType === "legacy" ? "Legacy" : COMMISSION_SOURCE_LABELS.rental,
+    sourceLabel: isHistoricalRental
+      ? `${COMMISSION_SOURCE_LABELS.rental} (historické)`
+      : deal.dealType === "legacy"
+        ? "Legacy"
+        : COMMISSION_SOURCE_LABELS.rental,
     sourceTitle: deal.title,
     customerName: deal.clientName,
     potentialAmount: deal.potentialCommission,

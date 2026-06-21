@@ -7,6 +7,7 @@ import { bucketCommissionsBySection } from "@/lib/commissionFilters";
 import { findRentalWorkflowCommission } from "@/lib/finance/rentalCommissionPayoutBridge";
 import { normalizeRentalImplementers, type RentalImplementerPaymentStatus } from "@/lib/rentalImplementers";
 import type { PayoutRecordLike } from "@/lib/finance/commissionPayoutStatus";
+import { classifyRentalCommissionLiveState } from "@/lib/finance/rentalCommissionEntitlement";
 
 export type DealPayoutStatus = "unpaid" | "partially_paid" | "paid" | "overpaid";
 
@@ -21,7 +22,7 @@ export type PayoutTransaction = {
 
 export type RentalCommissionDeal = {
   dealKey: string;
-  dealType: "rental" | "legacy";
+  dealType: "rental" | "legacy" | "historical_rental";
   websiteId?: string;
   commissionId?: string;
   title: string;
@@ -177,6 +178,33 @@ function buildRentalDealRow(opts: {
   };
 }
 
+function buildHistoricalRentalDealRow(
+  c: CommissionRow,
+  payoutRecords: PayoutRecordLike[],
+): RentalCommissionDeal {
+  const payoutTransactions = payoutTransactionsForCommission(c.id, payoutRecords);
+  const paidAmount = sumPayoutTransactions(payoutTransactions);
+  const recordedPotential = Number(c.amount) || 0;
+
+  return {
+    dealKey: `historical-rental:${c.id}`,
+    dealType: "historical_rental",
+    commissionId: c.id,
+    websiteId: c.source_id ?? undefined,
+    title: c.title,
+    clientName: c.customer_email ?? null,
+    potentialCommission: paidAmount > 0 ? paidAmount : recordedPotential,
+    paidAmount,
+    remainingAmount: 0,
+    payoutStatus: paidAmount > 0 ? "paid" : "unpaid",
+    workflowPaidUnaudited: false,
+    paymentForm: (c.payment_form as string) || "",
+    note: c.note || "",
+    lastPayoutAt: payoutTransactions[0]?.paid_at ?? null,
+    payoutTransactions,
+  };
+}
+
 function buildLegacyDealRow(
   c: CommissionRow,
   payoutRecords: PayoutRecordLike[],
@@ -248,6 +276,13 @@ export function buildRentalCommissionDeals(opts: {
 
   for (const c of rentalCommissions) {
     if (consumedCommissionIds.has(c.id)) continue;
+    const liveState = classifyRentalCommissionLiveState(c, opts.websites, opts.payoutRecords);
+    if (liveState === "stale_orphan") continue;
+    if (liveState === "historical_paid") {
+      rentalDeals.push(buildHistoricalRentalDealRow(c, opts.payoutRecords));
+      continue;
+    }
+
     const potentialCommission = Number(c.amount) || 0;
     const payoutTransactions = payoutTransactionsForCommission(c.id, opts.payoutRecords);
     const paidAmount = sumPayoutTransactions(payoutTransactions);

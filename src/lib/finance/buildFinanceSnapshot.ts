@@ -21,6 +21,7 @@ import {
   resolvePayoutRecordOrigin,
   financeSourceTableLabel,
 } from "./financeSourceLabels";
+import { classifyRentalCommissionLiveState } from "@/lib/finance/rentalCommissionEntitlement";
 
 type CommissionRow = {
   id: string;
@@ -30,6 +31,8 @@ type CommissionRow = {
   amount: number;
   payment_status: string;
   note: string | null;
+  source_type?: string | null;
+  source_id?: string | null;
 };
 
 type ExpenseRow = {
@@ -276,22 +279,39 @@ export function buildFinanceSnapshot(input: {
   }
 
   for (const c of commissions) {
+    const liveState = classifyRentalCommissionLiveState(
+      {
+        id: c.id,
+        source_type: c.source_type,
+        source_id: c.source_id,
+        implementer: c.implementer,
+        payment_status: c.payment_status,
+      },
+      websites,
+      payoutRecords,
+    );
+    if (liveState === "stale_orphan") continue;
+
     const hasPayoutFact = payoutSources.has(sourceKey("commissions", c.id) ?? "");
+    const isHistoricalRental = liveState === "historical_paid";
     rows.push({
       id: `commission-${c.id}`,
       kind: "commission",
       date: c.date,
-      title: c.title,
+      title: isHistoricalRental ? `${c.title} (historické)` : c.title,
       amount: Number(c.amount || 0),
       currency: "EUR",
       direction: "out",
-      statusLabel:
-        c.payment_status === "paid"
+      statusLabel: isHistoricalRental
+        ? hasPayoutFact
+          ? "Historická výplata — bez aktuálneho nároku"
+          : COMMISSION_STATUS_LABELS.paid
+        : c.payment_status === "paid"
           ? hasPayoutFact
             ? `${COMMISSION_STATUS_LABELS.paid} · potvrdené v payout_records`
             : COMMISSION_STATUS_LABELS.paid
           : COMMISSION_STATUS_LABELS.unpaid,
-      truthLevel: "workflow_only",
+      truthLevel: isHistoricalRental ? "legacy_import" : "workflow_only",
       sourceTable: "commissions",
       sourceId: c.id,
       category: "provízia",
@@ -438,11 +458,24 @@ export function buildFinanceSnapshot(input: {
 
   const workflowOnlyOut =
     commissions
-      .filter(
-        (c) =>
+      .filter((c) => {
+        const liveState = classifyRentalCommissionLiveState(
+          {
+            id: c.id,
+            source_type: c.source_type,
+            source_id: c.source_id,
+            implementer: c.implementer,
+            payment_status: c.payment_status,
+          },
+          websites,
+          payoutRecords,
+        );
+        if (liveState === "stale_orphan" || liveState === "historical_paid") return false;
+        return (
           c.payment_status === "paid" &&
-          !payoutSources.has(sourceKey("commissions", c.id) ?? ""),
-      )
+          !payoutSources.has(sourceKey("commissions", c.id) ?? "")
+        );
+      })
       .reduce((s, c) => s + Number(c.amount || 0), 0) +
     expenses
       .filter(
