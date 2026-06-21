@@ -63,6 +63,8 @@ import {
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
 import { ScopedEmptyState } from "@/components/admin/rbac/ScopedEmptyState";
+import { useHistoricalIdentity } from "@/hooks/useHistoricalIdentity";
+import { formatImplementerLabel } from "@/lib/identity/historicalIdentity";
 
 const AdminFinance = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -525,6 +527,7 @@ function DailyFinanceView({
 }) {
   const [detailImplementer, setDetailImplementer] = useState<string | null>(null);
   const [dailyDetailKind, setDailyDetailKind] = useState<"commission" | "cost" | null>(null);
+  const { historicalIdentity } = useHistoricalIdentity(showOrgKpis);
 
   return (
     <div className="space-y-6">
@@ -672,7 +675,9 @@ function DailyFinanceView({
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => setDetailImplementer(name)}
                 >
-                  <TableCell className="font-medium">{name}</TableCell>
+                  <TableCell className="font-medium">
+                    {formatImplementerLabel(name, historicalIdentity)}
+                  </TableCell>
                   <TableCell className="text-right text-green-600">
                     {fmtEur(paid)}
                     {t.paidWorkflowUnaudited > 0 && (

@@ -323,6 +323,17 @@ describe("computeCustomerFinanceSummary", () => {
       rentals: [
         { id: "r1", name: "web1.sk", url: null, monthly_price: 30, implementers: null, client_name: "X" },
       ],
+      commissions: [
+        {
+          id: "comm1",
+          title: "Projekt provízia",
+          amount: 15,
+          payment_status: "paid",
+          date: "2026-05-01",
+          source_type: "project",
+          source_id: "p1",
+        },
+      ],
       paymentRecords: [
         {
           id: "p1",

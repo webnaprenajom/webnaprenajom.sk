@@ -13,6 +13,35 @@ export type RentalWebsiteEntitlementInput = {
 
 export type RentalCommissionLiveState = "live" | "historical_paid" | "stale_orphan" | "not_rental";
 
+/** Main Finance UX — live entitlement or non-rental commissions only; payout-only revoked rental stays in audit tables. */
+export function rentalCommissionSurfacesInProductUx(
+  liveState: RentalCommissionLiveState,
+): boolean {
+  return liveState === "live" || liveState === "not_rental";
+}
+
+type CommissionEntitlementInput = Pick<
+  CommissionRow,
+  "id" | "source_type" | "source_id" | "implementer" | "payment_status"
+>;
+
+/** Whether a commission-linked payout belongs in implementer leaderboard / deal views (not raw payout_records audit). */
+export function commissionLinkedPayoutSurfacesInProductUx(
+  payout: Pick<PayoutRecordLike, "source_table" | "source_id">,
+  commissionsById: ReadonlyMap<string, CommissionEntitlementInput>,
+  websites: readonly RentalWebsiteEntitlementInput[],
+  payoutRecords: readonly PayoutRecordLike[],
+): boolean {
+  if (payout.source_table !== "commissions") return true;
+  const commissionId = payout.source_id?.trim();
+  if (!commissionId) return false;
+  const commission = commissionsById.get(commissionId);
+  if (!commission) return false;
+  return rentalCommissionSurfacesInProductUx(
+    classifyRentalCommissionLiveState(commission, websites, payoutRecords),
+  );
+}
+
 export function rentalImplementerHasLiveEntitlement(
   websiteId: string | null | undefined,
   implementerName: string | null | undefined,

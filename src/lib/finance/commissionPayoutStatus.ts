@@ -12,6 +12,8 @@
 import type { FinanceTruthLevel } from "./types";
 import {
   classifyRentalCommissionLiveState,
+  commissionLinkedPayoutSurfacesInProductUx,
+  rentalCommissionSurfacesInProductUx,
   type RentalWebsiteEntitlementInput,
 } from "@/lib/finance/rentalCommissionEntitlement";
 
@@ -186,11 +188,26 @@ export function resolveImplementerFinanceTruthLevel(
 export function implementerTotalsFromCommissionPayouts(
   commissions: Array<CommissionLike & { implementer?: string | null; amount?: number | null }>,
   payoutRecords: Array<PayoutRecordLike & { implementer?: string | null }>,
-  opts?: { websites?: readonly RentalWebsiteEntitlementInput[] },
+  opts?: {
+    websites?: readonly RentalWebsiteEntitlementInput[];
+    /** Full commission set for orphan payout classification (year filter may omit linked rows). */
+    allCommissions?: Array<
+      CommissionLike & {
+        implementer?: string | null;
+        amount?: number | null;
+        source_type?: string | null;
+        source_id?: string | null;
+        payment_status?: string | null;
+      }
+    >;
+  },
 ): Map<string, ImplementerFinanceTotals> {
   const map = new Map<string, ImplementerFinanceTotals>();
   const commissionIds = new Set(commissions.map((c) => c.id));
   const websites = opts?.websites;
+  const commissionsById = new Map(
+    (opts?.allCommissions ?? commissions).map((c) => [c.id, c]),
+  );
 
   const bump = (key: string, patch: Partial<ImplementerFinanceTotals>) => {
     const cur: ImplementerFinanceTotals = map.get(key) ?? {
@@ -225,19 +242,7 @@ export function implementerTotalsFromCommissionPayouts(
         websites,
         payoutRecords,
       );
-      if (liveState === "stale_orphan") continue;
-      if (liveState === "historical_paid") {
-        const info = resolveCommissionPayoutInfo(c, payoutRecords);
-        if (info.auditedAmount > 0) {
-          bump(key, {
-            paidAudited: info.auditedAmount,
-            paidAuditedFact: info.truthLevel === "payout_fact" ? info.auditedAmount : 0,
-            paidAuditedLegacy: info.truthLevel === "legacy_import" ? info.auditedAmount : 0,
-            lineCount: 1,
-          });
-        }
-        continue;
-      }
+      if (!rentalCommissionSurfacesInProductUx(liveState)) continue;
     }
 
     const info = resolveCommissionPayoutInfo(c, payoutRecords);
@@ -268,9 +273,15 @@ export function implementerTotalsFromCommissionPayouts(
     }
   }
 
-  // ponytail: orphan payouts (bez commission v scope) — napr. payout bez commission riadku
+  // ponytail: commission-linked payouts without a live product row — audit-only (deleted/revoked source)
   for (const p of payoutRecords) {
     if (p.source_table === "commissions" && p.source_id && commissionIds.has(p.source_id)) {
+      continue;
+    }
+    if (
+      p.source_table === "commissions" &&
+      !commissionLinkedPayoutSurfacesInProductUx(p, commissionsById, websites ?? [], payoutRecords)
+    ) {
       continue;
     }
     const key = (p.implementer || "").trim();

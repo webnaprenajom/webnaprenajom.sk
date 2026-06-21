@@ -2,7 +2,7 @@
  * Historical CRM identity labels — removed users / inactive implementers in business context.
  */
 
-export const HISTORICAL_ROLE_SUFFIX = "(historická rola)";
+export const HISTORICAL_ROLE_SUFFIX = "(historická rola — neaktívna)";
 
 export type CrmUserArchiveRow = {
   user_id: string;
@@ -18,6 +18,8 @@ export type HistoricalIdentityContext = {
   archivedImplementerNames: Set<string>;
   archivedUserLabels: Map<string, string>;
   activeImplementerNames: Set<string>;
+  /** Deactivated crm_implementers rows — still valid historical commission strings. */
+  inactiveRegistryImplementerNames: Set<string>;
 };
 
 function normKey(value: string): string {
@@ -27,12 +29,16 @@ function normKey(value: string): string {
 export function buildHistoricalIdentityContext(input: {
   archives: CrmUserArchiveRow[];
   activeImplementerNames: readonly string[];
+  inactiveRegistryImplementerNames?: readonly string[];
 }): HistoricalIdentityContext {
   const archivedUserIds = new Set<string>();
   const archivedImplementerNames = new Set<string>();
   const archivedUserLabels = new Map<string, string>();
   const activeImplementerNames = new Set(
     input.activeImplementerNames.map(normKey).filter(Boolean),
+  );
+  const inactiveRegistryImplementerNames = new Set(
+    (input.inactiveRegistryImplementerNames ?? []).map(normKey).filter(Boolean),
   );
 
   for (const row of input.archives) {
@@ -49,6 +55,7 @@ export function buildHistoricalIdentityContext(input: {
     archivedImplementerNames,
     archivedUserLabels,
     activeImplementerNames,
+    inactiveRegistryImplementerNames,
   };
 }
 
@@ -60,7 +67,8 @@ export function isHistoricalImplementerName(
   if (!key) return false;
   const normalized = normKey(key);
   if (ctx.activeImplementerNames.has(normalized)) return false;
-  return ctx.archivedImplementerNames.has(normalized);
+  if (ctx.archivedImplementerNames.has(normalized)) return true;
+  return ctx.inactiveRegistryImplementerNames.has(normalized);
 }
 
 export function isArchivedCrmUser(userId: string | null | undefined, ctx: HistoricalIdentityContext): boolean {

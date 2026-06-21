@@ -7,7 +7,10 @@ import { bucketCommissionsBySection } from "@/lib/commissionFilters";
 import { findRentalWorkflowCommission } from "@/lib/finance/rentalCommissionPayoutBridge";
 import { normalizeRentalImplementers, type RentalImplementerPaymentStatus } from "@/lib/rentalImplementers";
 import type { PayoutRecordLike } from "@/lib/finance/commissionPayoutStatus";
-import { classifyRentalCommissionLiveState } from "@/lib/finance/rentalCommissionEntitlement";
+import {
+  classifyRentalCommissionLiveState,
+  rentalCommissionSurfacesInProductUx,
+} from "@/lib/finance/rentalCommissionEntitlement";
 
 export type DealPayoutStatus = "unpaid" | "partially_paid" | "paid" | "overpaid";
 
@@ -277,11 +280,7 @@ export function buildRentalCommissionDeals(opts: {
   for (const c of rentalCommissions) {
     if (consumedCommissionIds.has(c.id)) continue;
     const liveState = classifyRentalCommissionLiveState(c, opts.websites, opts.payoutRecords);
-    if (liveState === "stale_orphan") continue;
-    if (liveState === "historical_paid") {
-      rentalDeals.push(buildHistoricalRentalDealRow(c, opts.payoutRecords));
-      continue;
-    }
+    if (!rentalCommissionSurfacesInProductUx(liveState)) continue;
 
     const potentialCommission = Number(c.amount) || 0;
     const payoutTransactions = payoutTransactionsForCommission(c.id, opts.payoutRecords);

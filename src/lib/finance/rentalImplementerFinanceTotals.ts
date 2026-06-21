@@ -165,6 +165,7 @@ export function buildImplementerFinanceTotalsWithRentals(
 ): Map<string, ImplementerFinanceTotals> {
   const base = implementerTotalsFromCommissionPayouts(commissions, payoutRecords, {
     websites: opts.websites,
+    allCommissions: opts.allCommissions,
   });
   return mergeRentalJsonIntoImplementerTotals(base, {
     websites: opts.websites,

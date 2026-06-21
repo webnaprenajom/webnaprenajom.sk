@@ -3,6 +3,7 @@ import { metaStringFromCustomer } from "@/lib/crmLookup/customerProfile";
 import { fmtEur } from "@/lib/money/formatMoney";
 import { resolveProfitDisplayContext } from "@/lib/profit/profitContext";
 import { countConfirmedPayments } from "@/lib/finance/entityPaymentBridge";
+import { commissionLinkedPayoutSurfacesInProductUx } from "@/lib/finance/rentalCommissionEntitlement";
 import type {
   CommissionPayout,
   CustomerFinanceSummary,
@@ -259,10 +260,34 @@ export function computeCustomerFinanceSummary(
 
   const payoutByImplementer = new Map<string, CommissionPayout>();
   let paidCommissionsTotal = 0;
+  const commissionsById = new Map(
+    data.commissions.map((c) => [
+      c.id,
+      {
+        id: c.id,
+        source_type: c.source_type ?? null,
+        source_id: c.source_id ?? null,
+        implementer: null,
+        payment_status: c.payment_status,
+      },
+    ]),
+  );
+  const rentalWebsites = data.rentals.map((r) => ({ id: r.id, implementers: r.implementers }));
+
   data.payoutRecords.forEach((p) => {
     if (p.truth_level !== "payout_fact") return;
     const amount = Number(p.amount) || 0;
     paidCommissionsTotal += amount;
+    if (
+      !commissionLinkedPayoutSurfacesInProductUx(
+        p,
+        commissionsById,
+        rentalWebsites,
+        data.payoutRecords,
+      )
+    ) {
+      return;
+    }
     const key = p.implementer || "Neznámy";
     const existing = payoutByImplementer.get(key);
     if (existing) {

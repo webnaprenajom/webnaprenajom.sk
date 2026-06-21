@@ -38,7 +38,7 @@ describe("implementerTotalsFromCommissionPayouts", () => {
     expect(resolveImplementerFinanceTruthLevel(eva!)).toBe("workflow_only");
   });
 
-  it("includes orphan rental payout by implementer when commission row is missing", () => {
+  it("excludes orphan commission payout from implementer leaderboard when commission row is missing", () => {
     const totals = implementerTotalsFromCommissionPayouts(
       [],
       [
@@ -52,8 +52,7 @@ describe("implementerTotalsFromCommissionPayouts", () => {
         },
       ],
     );
-    expect(totals.get("Peter")?.paidAudited).toBe(80);
-    expect(totals.get("Peter")?.lineCount).toBe(1);
+    expect(totals.get("Peter")).toBeUndefined();
   });
 
   it("counts rental-linked commission with audited payout for implementer", () => {

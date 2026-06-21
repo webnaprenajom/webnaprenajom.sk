@@ -27,6 +27,8 @@ import type { PayoutRecordLike } from "@/lib/finance/commissionPayoutStatus";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { paymentFormLabel } from "@/lib/paymentForm";
 import { adminCustomerHref } from "@/lib/adminNav";
+import { useHistoricalIdentity } from "@/hooks/useHistoricalIdentity";
+import { formatImplementerLabel } from "@/lib/identity/historicalIdentity";
 import {
   buildImplementerCommissionViewRows,
   filterImplementerCommissionRowsByTab,
@@ -270,6 +272,7 @@ export function FinanceImplementerDetailDialog({
 }: Props) {
   const [tab, setTab] = useState<ImplementerCommissionTab>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { historicalIdentity } = useHistoricalIdentity(open);
 
   const allRows = useMemo(
     () =>
@@ -302,7 +305,9 @@ export function FinanceImplementerDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Provízie — {implementer} ({year})</DialogTitle>
+          <DialogTitle>
+            Provízie — {formatImplementerLabel(implementer, historicalIdentity)} ({year})
+          </DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">

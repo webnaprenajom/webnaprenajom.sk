@@ -57,7 +57,7 @@ describe("rentalCommissionEntitlement", () => {
     expect(rows).toHaveLength(0);
   });
 
-  it("keeps audited payout as historical rental deal when JSON entitlement removed", () => {
+  it("hides revoked rental payout from finance totals when JSON entitlement removed", () => {
     const commissions = [rentalCommission()];
     const payoutRecords = [
       {
@@ -67,6 +67,7 @@ describe("rentalCommissionEntitlement", () => {
         amount: 200,
         paid_at: "2026-06-01T12:00:00Z",
         truth_level: "payout_fact",
+        implementer: "Peter",
       },
     ];
     const { rentalDeals } = buildRentalCommissionDeals({
@@ -77,10 +78,7 @@ describe("rentalCommissionEntitlement", () => {
       payoutRecords,
       yearStats: () => ({ paid: 0, potential: 0 }),
     });
-    expect(rentalDeals).toHaveLength(1);
-    expect(rentalDeals[0].dealType).toBe("historical_rental");
-    expect(rentalDeals[0].paidAmount).toBe(200);
-    expect(rentalDeals[0].remainingAmount).toBe(0);
+    expect(rentalDeals).toHaveLength(0);
 
     const totals = buildImplementerFinanceTotalsWithRentals(commissions, payoutRecords, {
       websites,
@@ -88,8 +86,17 @@ describe("rentalCommissionEntitlement", () => {
       allCommissions: commissions,
       year: 2026,
     });
-    expect(totals.get("Peter")?.paidAudited).toBe(200);
-    expect(totals.get("Peter")?.unpaid).toBe(0);
+    expect(totals.get("Peter")).toBeUndefined();
+
+    const rows = buildImplementerCommissionViewRows({
+      implementer: "Peter",
+      year: 2026,
+      commissions,
+      payoutRecords,
+      websites: [{ id: "w1", name: "web.sk", monthly_price: 100, implementers: [] }],
+      payments: [],
+    });
+    expect(rows).toHaveLength(0);
   });
 
   it("live JSON entitlement still produces rental deals after implementer removal elsewhere", () => {

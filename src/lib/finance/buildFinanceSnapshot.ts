@@ -290,28 +290,24 @@ export function buildFinanceSnapshot(input: {
       websites,
       payoutRecords,
     );
-    if (liveState === "stale_orphan") continue;
+    if (liveState === "stale_orphan" || liveState === "historical_paid") continue;
 
     const hasPayoutFact = payoutSources.has(sourceKey("commissions", c.id) ?? "");
-    const isHistoricalRental = liveState === "historical_paid";
     rows.push({
       id: `commission-${c.id}`,
       kind: "commission",
       date: c.date,
-      title: isHistoricalRental ? `${c.title} (historické)` : c.title,
+      title: c.title,
       amount: Number(c.amount || 0),
       currency: "EUR",
       direction: "out",
-      statusLabel: isHistoricalRental
-        ? hasPayoutFact
-          ? "Historická výplata — bez aktuálneho nároku"
-          : COMMISSION_STATUS_LABELS.paid
-        : c.payment_status === "paid"
+      statusLabel:
+        c.payment_status === "paid"
           ? hasPayoutFact
             ? `${COMMISSION_STATUS_LABELS.paid} · potvrdené v payout_records`
             : COMMISSION_STATUS_LABELS.paid
           : COMMISSION_STATUS_LABELS.unpaid,
-      truthLevel: isHistoricalRental ? "legacy_import" : "workflow_only",
+      truthLevel: "workflow_only",
       sourceTable: "commissions",
       sourceId: c.id,
       category: "provízia",

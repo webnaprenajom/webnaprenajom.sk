@@ -19,6 +19,10 @@ import {
   type FinanceOriginKind,
 } from "@/lib/finance/financeSourceLabels";
 import { normalizeRentalImplementers } from "@/lib/rentalImplementers";
+import {
+  classifyRentalCommissionLiveState,
+  rentalCommissionSurfacesInProductUx,
+} from "@/lib/finance/rentalCommissionEntitlement";
 
 export type DailyFinanceDetailKind = "commission" | "cost";
 
@@ -112,6 +116,8 @@ export function collectImplementerNamesForYear(opts: BuildCommissionOpts): strin
     const impl = (c.implementer || "").trim();
     if (!impl) continue;
     if (opts.scopeImplementer && impl !== opts.scopeImplementer) continue;
+    const liveState = classifyRentalCommissionLiveState(c, opts.websites, opts.payoutRecords);
+    if (!rentalCommissionSurfacesInProductUx(liveState)) continue;
     names.add(impl);
   }
 

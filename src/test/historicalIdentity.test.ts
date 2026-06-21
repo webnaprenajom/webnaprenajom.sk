@@ -29,6 +29,15 @@ describe("historical identity", () => {
     expect(formatImplementerLabel("Peter", ctx)).toBe("Peter");
   });
 
+  it("marks inactive registry implementer in business context", () => {
+    const inactiveCtx = buildHistoricalIdentityContext({
+      archives: [],
+      activeImplementerNames: ["Peter"],
+      inactiveRegistryImplementerNames: ["Ján"],
+    });
+    expect(formatImplementerLabel("Ján", inactiveCtx)).toBe(`Ján ${HISTORICAL_ROLE_SUFFIX}`);
+  });
+
   it("marks archived actor in history", () => {
     expect(formatActorLabel("u-removed", "jan@firma.sk", ctx)).toContain(HISTORICAL_ROLE_SUFFIX);
     expect(formatActorLabel("active-user", "owner@test.sk", ctx)).toBe("owner@test.sk");

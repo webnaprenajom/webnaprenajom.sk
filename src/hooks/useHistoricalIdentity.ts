@@ -29,8 +29,13 @@ export function useHistoricalIdentity(enabled = true) {
 
       if (cancelled) return;
 
-      const registryNames = (registryRes.data || [])
+      const registryRows = registryRes.data || [];
+      const registryNames = registryRows
         .filter((r) => r.active !== false)
+        .map((r) => String(r.name ?? "").trim())
+        .filter(Boolean);
+      const inactiveRegistryNames = registryRows
+        .filter((r) => r.active === false)
         .map((r) => String(r.name ?? "").trim())
         .filter(Boolean);
       const profileNames = (profilesRes.data || [])
@@ -41,6 +46,7 @@ export function useHistoricalIdentity(enabled = true) {
         buildHistoricalIdentityContext({
           archives,
           activeImplementerNames: [...registryNames, ...profileNames],
+          inactiveRegistryImplementerNames: inactiveRegistryNames,
         }),
       );
       setLoading(false);
