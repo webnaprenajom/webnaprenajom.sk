@@ -1,5 +1,10 @@
 /** Shared CRM assignees / implementers — seed list + dynamic registry in Settings. */
 
+import {
+  activeAssigneeOptions,
+  type HistoricalIdentityContext,
+} from "@/lib/identity/historicalIdentity";
+
 export const CRM_ASSIGNEES = ["Peter", "Maroš", "Matuš"] as const;
 
 export type CrmAssignee = (typeof CRM_ASSIGNEES)[number];
@@ -8,6 +13,7 @@ export type CrmAssignee = (typeof CRM_ASSIGNEES)[number];
 export function assigneeSelectOptions(
   current?: string | null,
   registryNames: readonly string[] = [],
+  historicalCtx?: HistoricalIdentityContext | null,
 ): string[] {
   const set = new Set<string>([...CRM_ASSIGNEES]);
   for (const name of registryNames) {
@@ -16,7 +22,14 @@ export function assigneeSelectOptions(
   }
   const value = current?.trim();
   if (value) set.add(value);
-  return [...set].sort((a, b) => a.localeCompare(b, "sk"));
+  let list = [...set].sort((a, b) => a.localeCompare(b, "sk"));
+  if (historicalCtx) {
+    list = activeAssigneeOptions(list, historicalCtx);
+    if (value && !list.some((n) => n.toLowerCase() === value.toLowerCase())) {
+      list = [...list, value].sort((a, b) => a.localeCompare(b, "sk"));
+    }
+  }
+  return list;
 }
 
 export function isRegistryImplementer(

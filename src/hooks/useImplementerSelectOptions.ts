@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { assigneeSelectOptions, isKnownAssignee } from "@/lib/assignees";
 import { useImplementerRegistry } from "@/hooks/useImplementerRegistry";
+import { useHistoricalIdentity } from "@/hooks/useHistoricalIdentity";
 
 /** Active registry names + legacy-safe options for implementer Select fields. */
 export function useImplementerSelectOptions(current?: string | null) {
@@ -15,10 +16,12 @@ export function useImplementerSelectOptions(current?: string | null) {
 /** Registry catalog without binding to a single current value — for multi-row forms (e.g. rental splits). */
 export function useImplementerRegistryOptions() {
   const registry = useImplementerRegistry();
+  const { historicalIdentity } = useHistoricalIdentity();
 
   const optionsFor = useMemo(
-    () => (current?: string | null) => assigneeSelectOptions(current, registry.activeNames),
-    [registry.activeNames],
+    () => (current?: string | null) =>
+      assigneeSelectOptions(current, registry.activeNames, historicalIdentity),
+    [registry.activeNames, historicalIdentity],
   );
 
   const isKnown = useMemo(

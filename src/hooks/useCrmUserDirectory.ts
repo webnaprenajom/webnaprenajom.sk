@@ -3,9 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { CRM_ASSIGNEES } from "@/lib/assignees";
 import {
   buildCrmManagedUsers,
+  archivedUserIdsFromRows,
   type AuthDirectoryRow,
   type CrmManagedUser,
 } from "@/lib/admin/crmUserDirectory";
+import { loadCrmUserArchives } from "@/lib/admin/crmUserRemoval";
+import {
+  buildHistoricalIdentityContext,
+  type CrmUserArchiveRow,
+  type HistoricalIdentityContext,
+} from "@/lib/identity/historicalIdentity";
 
 type RpcAuthRow = {
   user_id: string;
@@ -24,16 +31,19 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<CrmManagedUser[]>([]);
+  const [archives, setArchives] = useState<CrmUserArchiveRow[]>([]);
+  const [historicalIdentity, setHistoricalIdentity] = useState<HistoricalIdentityContext | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const [dirRes, rolesRes, profilesRes, registryRes] = await Promise.all([
+    const [dirRes, rolesRes, profilesRes, registryRes, archiveRows] = await Promise.all([
       supabase.rpc("admin_list_auth_users"),
       supabase.from("user_roles").select("id,user_id,role").order("created_at"),
       supabase.from("team_profiles").select("user_id,display_name,implementer_name,active"),
       supabase.from("crm_implementers").select("name,active"),
+      loadCrmUserArchives(),
     ]);
 
     if (dirRes.error) {
@@ -55,6 +65,7 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
     }));
 
     const standardList = registryNames.length > 0 ? registryNames : [...CRM_ASSIGNEES];
+    const archivedIds = archivedUserIdsFromRows(archiveRows);
 
     const managed = buildCrmManagedUsers(
       directory,
@@ -66,8 +77,20 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
         active: boolean;
       }>,
       standardList,
+      archivedIds,
     );
 
+    const activeImplementerNames = managed
+      .filter((u) => u.profileActive && u.implementerName)
+      .map((u) => u.implementerName as string);
+
+    setArchives(archiveRows);
+    setHistoricalIdentity(
+      buildHistoricalIdentityContext({
+        archives: archiveRows,
+        activeImplementerNames: [...activeImplementerNames, ...registryNames],
+      }),
+    );
     setUsers(managed);
     setLoading(false);
   }, []);
@@ -85,5 +108,14 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
   const withRole = users.filter((u) => u.role);
   const withoutRole = users.filter((u) => !u.role);
 
-  return { loading, error, users, withRole, withoutRole, reload: load };
+  return {
+    loading,
+    error,
+    users,
+    withRole,
+    withoutRole,
+    archives,
+    historicalIdentity,
+    reload: load,
+  };
 }

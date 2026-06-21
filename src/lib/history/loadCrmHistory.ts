@@ -8,11 +8,26 @@ import {
 } from "@/lib/history/normalize";
 import type { LoadCrmHistoryResult } from "@/lib/history/types";
 import { isLeadLogsPermissionError } from "@/lib/leads/leadLogsPresentation";
+import { loadCrmUserArchives } from "@/lib/admin/crmUserRemoval";
+import {
+  buildHistoricalIdentityContext,
+  formatActorLabel,
+  type HistoricalIdentityContext,
+} from "@/lib/identity/historicalIdentity";
 
 const HISTORY_LIMIT = 1000;
 
-async function loadActorEmails(userIds: string[]): Promise<Map<string, string>> {
+async function loadActorEmails(
+  userIds: string[],
+  archives: Awaited<ReturnType<typeof loadCrmUserArchives>>,
+): Promise<Map<string, string>> {
   const map = new Map<string, string>();
+  for (const row of archives) {
+    if (row.user_id && row.email) map.set(row.user_id, row.email);
+    if (row.user_id && row.display_name && !map.has(row.user_id)) {
+      map.set(row.user_id, row.display_name);
+    }
+  }
   if (userIds.length === 0) return map;
   try {
     const { data, error } = await supabase.rpc("admin_list_auth_users");
@@ -43,7 +58,13 @@ export async function loadCrmHistory(opts: {
     ? supabase.from("admin_audit_log").select("*").order("created_at", { ascending: false }).limit(limit)
     : Promise.resolve({ data: null, error: null });
 
-  const [leadRes, auditRes] = await Promise.all([leadPromise, auditPromise]);
+  const [leadRes, auditRes, archives, profilesRes, registryRes] = await Promise.all([
+    leadPromise,
+    auditPromise,
+    loadCrmUserArchives(),
+    supabase.from("team_profiles").select("implementer_name,active").eq("active", true),
+    supabase.from("crm_implementers").select("name,active"),
+  ]);
 
   let leadRows: LeadLogRow[] = [];
   if (leadRes.error) {
@@ -68,11 +89,32 @@ export async function loadCrmHistory(opts: {
   }
 
   const actorIds = [...new Set(auditRows.map((r) => r.actor_user_id).filter(Boolean))] as string[];
-  const actorEmails = await loadActorEmails(actorIds);
+  const actorEmails = await loadActorEmails(actorIds, archives);
+
+  const registryNames = (registryRes.data || [])
+    .filter((r) => r.active !== false)
+    .map((r) => String(r.name ?? "").trim())
+    .filter(Boolean);
+  const profileNames = (profilesRes.data || [])
+    .map((p) => String(p.implementer_name ?? "").trim())
+    .filter((n) => n && !n.includes("__off__"));
+  const historicalCtx: HistoricalIdentityContext = buildHistoricalIdentityContext({
+    archives,
+    activeImplementerNames: [...registryNames, ...profileNames],
+  });
 
   const normalized = [
-    ...leadRows.map(normalizeLeadLog),
-    ...auditRows.map((r) => normalizeAuditLog(r, actorEmails)),
+    ...leadRows.map((row) => {
+      const entry = normalizeLeadLog(row);
+      if (entry.actorId && historicalCtx.archivedUserIds.has(entry.actorId)) {
+        return {
+          ...entry,
+          actorName: formatActorLabel(entry.actorId, entry.actorName, historicalCtx),
+        };
+      }
+      return entry;
+    }),
+    ...auditRows.map((r) => normalizeAuditLog(r, actorEmails, historicalCtx)),
   ];
 
   return {

@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { useHistoricalIdentity } from "@/hooks/useHistoricalIdentity";
+import { formatImplementerLabel } from "@/lib/identity/historicalIdentity";
 import { CRM_HISTORY_ACTIONS, logCrmEvent } from "@/lib/history/logCrmEvent";
 import { useStableAccessLoad } from "@/hooks/useStableAccessLoad";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
@@ -184,6 +186,7 @@ const AdminTasks = () => {
   const [parentLabels, setParentLabels] = useState<Map<string, string>>(new Map());
   const [fixedParentType, setFixedParentType] = useState<TaskParentType | undefined>();
   const accessCtx = useAccessContext();
+  const { historicalIdentity } = useHistoricalIdentity();
 
   useEffect(() => {
     document.title = "Úlohy | CRM";
@@ -711,7 +714,13 @@ const AdminTasks = () => {
                             <span className="italic opacity-60">—</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-sm">{t.assignee || <span className="italic opacity-60">—</span>}</TableCell>
+                        <TableCell className="text-sm">
+                          {t.assignee ? (
+                            formatImplementerLabel(t.assignee, historicalIdentity)
+                          ) : (
+                            <span className="italic opacity-60">—</span>
+                          )}
+                        </TableCell>
                         {legacyFinanceCount > 0 && (
                           <>
                             <TableCell className="text-sm text-right font-semibold whitespace-nowrap">

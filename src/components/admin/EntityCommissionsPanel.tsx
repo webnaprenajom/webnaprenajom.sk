@@ -34,6 +34,8 @@ import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { useHistoricalIdentity } from "@/hooks/useHistoricalIdentity";
+import { formatImplementerLabel } from "@/lib/identity/historicalIdentity";
 import { filterCommissionsForUser } from "@/lib/rbac/permissions";
 import { canWriteCommissions, canToggleCommissionPaymentStatus, commissionPaymentStatusDeniedMessage, writeDeniedMessage } from "@/lib/rbac/writePermissions";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
@@ -97,6 +99,7 @@ export function EntityCommissionsPanel({
   createDisabledHint,
 }: Props) {
   const access = useAccessContext();
+  const { historicalIdentity } = useHistoricalIdentity();
   const canWrite = canWriteCommissions(access);
   const [rows, setRows] = useState<CommissionRow[]>([]);
   const [payoutRecords, setPayoutRecords] = useState<PayoutRecordLike[]>([]);
@@ -329,7 +332,7 @@ export function EntityCommissionsPanel({
         {new Date(c.date).toLocaleDateString("sk-SK")}
       </TableCell>
       <TableCell className="text-sm">{resolveCommissionSourceLabel(c)}</TableCell>
-      <TableCell className="text-sm">{c.implementer}</TableCell>
+      <TableCell className="text-sm">{formatImplementerLabel(c.implementer, historicalIdentity)}</TableCell>
       <TableCell className="text-right font-medium">{fmtEur(Number(c.amount || 0))}</TableCell>
       <TableCell className="text-xs hidden md:table-cell">{paymentFormLabel(c.payment_form)}</TableCell>
       <TableCell>
@@ -438,7 +441,7 @@ export function EntityCommissionsPanel({
                   <div>
                     <p className="font-medium text-sm">{resolveCommissionSourceLabel(c)}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(c.date).toLocaleDateString("sk-SK")} · {c.implementer}
+                      {new Date(c.date).toLocaleDateString("sk-SK")} · {formatImplementerLabel(c.implementer, historicalIdentity)}
                     </p>
                   </div>
                   {canWrite && (

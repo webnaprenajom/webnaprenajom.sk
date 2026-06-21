@@ -65,6 +65,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   operating_cost_changed: "Prevádzkové náklady",
   finance_config_changed: "Finančná konfigurácia",
   entity_deleted: "Zmazaná entita",
+  user_archived: "Používateľ odstránený z CRM",
   entity_created: "Vytvorená entita",
   entity_updated: "Upravená entita",
   status_changed: "Zmena stavu",

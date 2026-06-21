@@ -42,6 +42,7 @@ import {
   buildTeamProfileDeactivateUpdate,
   normalizeTeamDisplayName,
 } from "@/lib/admin/teamProfileLifecycle";
+import { clearCrmUserArchive, removeCrmUser } from "@/lib/admin/crmUserRemoval";
 
 async function ensureImplementerInRegistry(name: string) {
   const normalized = name.trim();
@@ -81,13 +82,21 @@ type PendingAction =
       userLabel: string;
       displayName: string;
       implementerName: string;
+    }
+  | {
+      kind: "remove_from_crm";
+      userId: string;
+      userLabel: string;
+      role: AppRole;
+      implementerName: string | null;
     };
 
 const CRM_ROLES: AppRole[] = ["owner", "administrator"];
 
 export function UserManagementPanel() {
   const { userId: actorId } = useAdminAccess();
-  const { loading, error, withRole, withoutRole, reload } = useCrmUserDirectory();
+  const { loading, error, withRole, withoutRole, archives, historicalIdentity, reload } =
+    useCrmUserDirectory();
   const registry = useImplementerRegistry();
   const [pending, setPending] = useState<PendingAction | null>(null);
   const [filters, setFilters] = useState(DEFAULT_USER_DIRECTORY_FILTERS);
@@ -128,7 +137,11 @@ export function UserManagementPanel() {
     () => mergeImplementerCatalog(registry.rows, withRole),
     [registry.rows, withRole],
   );
-  const implementerOptions = assigneeSelectOptions(undefined, implementerCatalog);
+  const implementerOptions = assigneeSelectOptions(
+    undefined,
+    implementerCatalog,
+    historicalIdentity,
+  );
 
   const deactivateTeamProfile = async (userId: string, implementerName: string | null) => {
     if (!implementerName?.trim()) return;
@@ -149,6 +162,7 @@ export function UserManagementPanel() {
       toast({ title: "Rola", description: roleErr.message, variant: "destructive" });
       return;
     }
+    await clearCrmUserArchive(action.userId);
     if (action.role === "administrator" && action.implementer) {
       await ensureImplementerInRegistry(action.implementer);
       const { error: profileErr } = await supabase.from("team_profiles").upsert({
@@ -411,12 +425,67 @@ export function UserManagementPanel() {
     void reload();
   };
 
+  const removeFromCrm = (user: CrmManagedUser) => {
+    if (!user.role) return;
+    if (!canRemoveOwnerRole(withRole, user)) {
+      toast({
+        title: "Posledný owner",
+        description: "Nemôžete odstrániť posledného ownera v systéme.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setPending({
+      kind: "remove_from_crm",
+      userId: user.userId,
+      userLabel: userActionLabel(user),
+      role: user.role,
+      implementerName: user.implementerName,
+    });
+  };
+
+  const executeRemoveFromCrm = async (
+    action: Extract<PendingAction, { kind: "remove_from_crm" }>,
+  ) => {
+    const { data, error: removeError } = await removeCrmUser(action.userId);
+    if (removeError || !data) {
+      toast({
+        title: "Odstránenie zlyhalo",
+        description: removeError ?? "Neznáma chyba",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (actorId) {
+      void logAdminAuditEvent({
+        actorUserId: actorId,
+        actionType: AUDIT_ACTION_TYPES.user_archived,
+        targetType: "user",
+        targetId: action.userId,
+        summary: `Odstránený z CRM: ${action.userLabel} — historické záznamy zostávajú`,
+        before: {
+          role: action.role,
+          implementer: action.implementerName,
+          display_name: data.display_name,
+        },
+        after: { archived: true, historical_implementer: data.historical_implementer_name },
+      });
+    }
+    toast({
+      title: "Používateľ odstránený z CRM",
+      description: "Aktívny prístup bol zrušený. Financie, história a priradenia zostávajú s historickou rolou.",
+    });
+    void reload();
+    void registry.reload();
+  };
+
   const confirmPending = async () => {
     if (!pending) return;
     const p = pending;
     setPending(null);
     if (p.kind === "add") await executeAddUser(p);
     if (p.kind === "remove") await executeRemoveRole(p);
+    if (p.kind === "remove_from_crm") await executeRemoveFromCrm(p);
     if (p.kind === "change_role") await executeChangeRole(p);
     if (p.kind === "assign") await executeAssignProfile(p);
     if (p.kind === "edit_display") await executeEditDisplayName(p);
@@ -482,6 +551,13 @@ export function UserManagementPanel() {
       )}
 
       <CrmUserDirectoryFilters filters={filters} onChange={setFilters} />
+
+      {archives.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Odstránení z CRM ({archives.length}): historická identita sa zobrazuje v províziách, úlohách a
+          histórii ako „Meno (historická rola)“.
+        </p>
+      )}
 
       <ul className="divide-y rounded-xl border text-sm">
         {filteredManaged.length === 0 && (
@@ -588,7 +664,8 @@ export function UserManagementPanel() {
                         <SelectValue placeholder="Vyberte…" />
                       </SelectTrigger>
                       <SelectContent>
-                        {assigneeSelectOptions(user.implementerName, implementerCatalog).map((name) => (
+                        {assigneeSelectOptions(user.implementerName, implementerCatalog, historicalIdentity).map(
+                          (name) => (
                           <SelectItem key={name} value={name} className="text-xs">
                             {name}
                           </SelectItem>
@@ -599,12 +676,22 @@ export function UserManagementPanel() {
                 )}
               </div>
               <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs text-destructive border-destructive/40"
+                onClick={() => removeFromCrm(user)}
+                disabled={!canRemoveOwnerRole(withRole, user)}
+              >
+                Odstrániť z CRM
+              </Button>
+              <Button
                 size="icon"
                 variant="ghost"
                 className="text-destructive"
                 onClick={() => removeRole(user)}
                 disabled={!canRemoveOwnerRole(withRole, user)}
                 aria-label={`Odstrániť rolu ${user.displayName}`}
+                title="Odstrániť len rolu (účet zostane v zozname na opätovné priradenie)"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -734,7 +821,9 @@ export function UserManagementPanel() {
         open={!!pending}
         onOpenChange={(o) => !o && setPending(null)}
         title={
-          pending?.kind === "remove"
+          pending?.kind === "remove_from_crm"
+            ? "Natrvalo odstrániť používateľa z CRM?"
+            : pending?.kind === "remove"
             ? "Odstrániť rolu používateľa?"
             : pending?.kind === "assign"
               ? "Uložiť team profile?"
@@ -759,7 +848,28 @@ export function UserManagementPanel() {
                 <p>Owner má plný prístup k CRM, nastaveniam a všetkým províziám.</p>
               )}
             </>
-          ) :           pending?.kind === "remove" ? (
+          ) :           pending?.kind === "remove_from_crm" ? (
+            <>
+              <p>
+                <strong>{pending.userLabel}</strong> bude odstránený z aktívnej správy CRM a stratí
+                prístup.
+              </p>
+              <p className="mt-2">
+                <strong>Zostáva zachované:</strong> provízie, platby, projekty, úlohy, priradenia leadov,
+                hosting, prenájmy a záznamy v Histórii.
+              </p>
+              <p className="mt-2 text-muted-foreground">
+                V minulých záznamoch sa zobrazí ako historická rola. Táto akcia je nevratná bez manuálneho
+                opätovného priradenia CRM role.
+              </p>
+              {pending.implementerName && (
+                <p className="mt-1">
+                  Meno realizátora <strong>{pending.implementerName}</strong> sa uvoľní pre nové priradenie;
+                  staré provízie ho stále používajú.
+                </p>
+              )}
+            </>
+          ) : pending?.kind === "remove" ? (
             <>
               <p>
                 Odstránite rolu {pending.role} pre <strong>{pending.userLabel}</strong>.
@@ -811,7 +921,9 @@ export function UserManagementPanel() {
           ) : null
         }
         confirmLabel={
-          pending?.kind === "remove"
+          pending?.kind === "remove_from_crm"
+            ? "Odstrániť z CRM"
+            : pending?.kind === "remove"
             ? "Odstrániť rolu"
             : pending?.kind === "assign"
               ? "Uložiť profil"
@@ -819,7 +931,7 @@ export function UserManagementPanel() {
                 ? "Uložiť meno"
                 : "Potvrdiť"
         }
-        destructive={pending?.kind === "remove"}
+        destructive={pending?.kind === "remove" || pending?.kind === "remove_from_crm"}
         onConfirm={confirmPending}
       />
       </div>

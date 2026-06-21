@@ -1,5 +1,6 @@
 import type { AppRole } from "@/lib/rbac/permissions";
 import { isAdministrator, isOwner, normalizeAppRole } from "@/lib/rbac/permissions";
+import type { CrmUserArchiveRow } from "@/lib/identity/historicalIdentity";
 
 export type AuthDirectoryRow = {
   userId: string;
@@ -84,6 +85,7 @@ export function buildCrmManagedUsers(
   roles: RoleRow[],
   profiles: ProfileRow[],
   standardImplementers?: readonly string[],
+  archivedUserIds: ReadonlySet<string> = new Set(),
 ): CrmManagedUser[] {
   const knownImplementers = standardImplementers ?? [];
   const roleByUser = new Map(roles.map((r) => [r.user_id, r]));
@@ -101,7 +103,9 @@ export function buildCrmManagedUsers(
     })),
   ];
 
-  return rows.map((d) => {
+  return rows
+    .filter((d) => !archivedUserIds.has(d.userId))
+    .map((d) => {
     const roleRow = roleByUser.get(d.userId);
     const prof = profileByUser.get(d.userId);
     const role = normalizeAppRole(roleRow?.role ?? null);
@@ -129,6 +133,10 @@ export function buildCrmManagedUsers(
       riskFlags: buildRiskFlags(role, prof, knownImplementers),
     };
   });
+}
+
+export function archivedUserIdsFromRows(archives: CrmUserArchiveRow[]): Set<string> {
+  return new Set(archives.map((a) => a.user_id));
 }
 
 export function userMatchesSearch(user: CrmManagedUser, query: string): boolean {

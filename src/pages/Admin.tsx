@@ -94,6 +94,7 @@ import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { useImplementerSelectOptions } from "@/hooks/useImplementerSelectOptions";
 import { canAccessOperationalCrm, isCrmUser } from "@/lib/rbac/permissions";
 import { filterLeadsForUser } from "@/lib/rbac/scopeHelpers";
 import {
@@ -135,6 +136,7 @@ const Admin = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { authChecking, isAdmin, isCrmUser, role, userEmail, userId } = useAdminAccess();
   const accessCtx = useAccessContext();
+  const { options: activeAssigneeOptions } = useImplementerSelectOptions();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -1476,7 +1478,7 @@ const Admin = () => {
             value: k,
             label: STATUS_CONFIG[k].label,
           }))}
-          assigneeOptions={ASSIGNEES}
+          assigneeOptions={activeAssigneeOptions}
           unassignedSentinel={UNASSIGNED}
           onSetStatus={(v) => bulkSetStatus(v as LeadStatus)}
           onSetAssignee={bulkSetAssignee}
@@ -1649,7 +1651,7 @@ const Admin = () => {
                   <SelectTrigger id="new-assigned"><SelectValue placeholder="Nepriradené" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value={UNASSIGNED}>— Nepriradené —</SelectItem>
-                    {ASSIGNEES.map((a) => (
+                    {activeAssigneeOptions.map((a) => (
                       <SelectItem key={a} value={a}>{a}</SelectItem>
                     ))}
                   </SelectContent>

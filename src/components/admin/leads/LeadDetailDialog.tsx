@@ -20,8 +20,8 @@ import { cn } from "@/lib/utils";
 import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import { LeadCommunicationPanel } from "./LeadCommunicationPanel";
 import { LeadCustomerStatusBadge } from "./LeadCustomerStatusBadge";
+import { useImplementerSelectOptions } from "@/hooks/useImplementerSelectOptions";
 import {
-  ASSIGNEES,
   Lead,
   LeadStatus,
   LeadTemperature,
@@ -100,6 +100,7 @@ const LeadDetailDialog = ({
   editCreatedAt, setEditCreatedAt,
   editNotes, setEditNotes,
 }: LeadDetailDialogProps) => {
+  const { options: assigneeOptions } = useImplementerSelectOptions(editAssigned);
   const resolvedCustomerId = editCustomerId ?? selected?.customer_id ?? null;
 
   return (
@@ -401,7 +402,7 @@ const LeadDetailDialog = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={UNASSIGNED}>— Nepriradené —</SelectItem>
-                {ASSIGNEES.map((a) => (
+                {assigneeOptions.map((a) => (
                   <SelectItem key={a} value={a}>{a}</SelectItem>
                 ))}
               </SelectContent>

@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { adminCustomerHrefPreferred, adminLeadHref } from "@/lib/adminNav";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { useHistoricalIdentity } from "@/hooks/useHistoricalIdentity";
+import { formatImplementerLabel } from "@/lib/identity/historicalIdentity";
 import { isValidEntityId } from "@/lib/crmLookup/resolveFormCustomerLink";
 import {
   loadTaskPaymentRecords,
@@ -86,6 +88,7 @@ import { fmtEur } from "@/lib/money/formatMoney";
 export default function AdminTaskDetail() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const { historicalIdentity } = useHistoricalIdentity();
   const [loading, setLoading] = useState(true);
   const [task, setTask] = useState<TaskRow | null>(null);
   const [customerEmail, setCustomerEmail] = useState<string | null>(null);
@@ -218,7 +221,10 @@ export default function AdminTaskDetail() {
                 {priorityCfg.label}
               </Badge>
             </Field>
-            <Field label="Riešiteľ" value={task.assignee || "—"} />
+            <Field
+              label="Riešiteľ"
+              value={task.assignee ? formatImplementerLabel(task.assignee, historicalIdentity) : "—"}
+            />
             <Field label="Termín">
               {task.due_date
                 ? new Date(task.due_date).toLocaleDateString("sk-SK")

@@ -17,6 +17,7 @@ export const AUDIT_ACTION_TYPES = {
   operating_cost_changed: "operating_cost_changed",
   finance_config_changed: "finance_config_changed",
   entity_deleted: "entity_deleted",
+  user_archived: "user_archived",
   entity_created: "entity_created",
   entity_updated: "entity_updated",
   status_changed: "status_changed",

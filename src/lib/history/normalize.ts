@@ -8,6 +8,10 @@ import {
   leadFieldLabel,
 } from "@/lib/history/labels";
 import type { HistoryEntry } from "@/lib/history/types";
+import {
+  formatActorLabel,
+  type HistoricalIdentityContext,
+} from "@/lib/identity/historicalIdentity";
 
 export type LeadLogRow = {
   id: string;
@@ -75,8 +79,10 @@ function buildAuditSummary(entry: AuditLogEntry, actorName: string | null): stri
 export function normalizeAuditLog(
   entry: AuditLogEntry,
   actorEmails: Map<string, string>,
+  historicalCtx?: HistoricalIdentityContext | null,
 ): HistoryEntry {
-  const actorName = entry.actor_user_id ? actorEmails.get(entry.actor_user_id) ?? null : null;
+  const liveName = entry.actor_user_id ? actorEmails.get(entry.actor_user_id) ?? null : null;
+  const actorName = formatActorLabel(entry.actor_user_id, liveName, historicalCtx ?? null);
   const detail: Record<string, unknown> = {};
   if (entry.before_state) detail.before = entry.before_state;
   if (entry.after_state) detail.after = entry.after_state;
