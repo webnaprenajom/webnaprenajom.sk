@@ -195,6 +195,65 @@
     box-shadow: inset 0 0 20px hsl(var(--primary) / 0.05);
   }
 
+  /* Admin CRM readability (~+15% micro type & compact controls) */
+  .admin-surface :is(.text-\[9px\]) {
+    font-size: 10.5px;
+    line-height: 1.25rem;
+  }
+
+  .admin-surface :is(.text-\[10px\]):not(.table-dense :is(.text-\[10px\])) {
+    font-size: 11.5px;
+    line-height: 1.3rem;
+  }
+
+  .admin-surface :is(.text-\[11px\]):not(.table-dense :is(.text-\[11px\])) {
+    font-size: 12.5px;
+    line-height: 1.35rem;
+  }
+
+  .admin-surface :is(.text-xs):not(.table-dense, .table-dense *) {
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+  }
+
+  .admin-surface :is(button, a, [role="button"]).h-7:not(.table-dense *) {
+    height: 2rem;
+    min-height: 2rem;
+    font-size: 0.8125rem;
+  }
+
+  .admin-surface :is(input, textarea, [role="combobox"]).h-8:not(.table-dense *) {
+    height: 2.25rem;
+    min-height: 2.25rem;
+    font-size: 0.875rem;
+  }
+
+  .admin-surface [role="tablist"]:not(.table-dense *) {
+    min-height: 2.75rem;
+  }
+
+  .admin-surface [role="tab"]:not(.table-dense *) {
+    font-size: 0.9375rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .admin-surface .table-dense,
+  .admin-surface .table-dense .text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .admin-surface .table-dense .text-\[10px\] {
+    font-size: 10px;
+    line-height: 1.25rem;
+  }
+
+  .admin-surface .table-dense .text-\[11px\] {
+    font-size: 11px;
+    line-height: 1.25rem;
+  }
+
   .force-dark {
     --background: 220 20% 7%;
     --foreground: 0 0% 95%;

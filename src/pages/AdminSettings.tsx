@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { TeamSetupDiagnostics } from "@/components/admin/settings/TeamSetupDiagnostics";
 import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
 import { AccessReviewPanel } from "@/components/admin/settings/AccessReviewPanel";
+import { adminType } from "@/lib/admin/readability";
 import type { ReactNode } from "react";
 
 type SettingsSectionProps = {
@@ -28,10 +29,10 @@ function SettingsSection({ title, description, children, tone = "default" }: Set
         : "border-border bg-card";
 
   return (
-    <section className={`rounded-lg border ${toneClass} p-4 space-y-3`}>
-      <div className="space-y-0.5">
-        <h2 className="text-sm font-semibold tracking-tight text-foreground">{title}</h2>
-        {description ? <p className="text-xs text-muted-foreground leading-snug">{description}</p> : null}
+    <section className={`rounded-lg border ${toneClass} p-5 space-y-4`}>
+      <div className="space-y-1">
+        <h2 className={adminType.sectionTitle}>{title}</h2>
+        {description ? <p className={adminType.sectionDesc}>{description}</p> : null}
       </div>
       {children}
     </section>
@@ -54,7 +55,7 @@ export default function AdminSettings() {
           : "Účet a vzhľad — správa tímu len pre ownera"
       }
     >
-      <div className="max-w-4xl space-y-5">
+      <div className="max-w-4xl space-y-6">
         <TeamProfileNotice />
 
         <SettingsSection title="Môj účet" description="Prihlásený profil a heslo.">
@@ -90,11 +91,9 @@ export default function AdminSettings() {
 
         {access.isAdmin && (
           <>
-            <div className="space-y-1 pt-1">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Tím a prístupy
-              </h2>
-              <p className="text-xs text-muted-foreground">
+            <div className="space-y-1.5 pt-1">
+              <h2 className={adminType.groupLabel}>Tím a prístupy</h2>
+              <p className={adminType.sectionDesc}>
                 Role, realizátori a mapovanie na provízie. Zmeny sa zapisujú do Histórie CRM.
               </p>
             </div>

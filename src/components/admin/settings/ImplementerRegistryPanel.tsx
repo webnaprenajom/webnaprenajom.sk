@@ -23,6 +23,7 @@ import type { CrmManagedUser } from "@/lib/admin/crmUserDirectory";
 import { ConfirmSensitiveActionDialog } from "@/components/admin/rbac/ConfirmSensitiveActionDialog";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { adminCtrl } from "@/lib/admin/readability";
 
 type RegistryApi = Pick<
   ReturnType<typeof useImplementerRegistry>,
@@ -147,7 +148,7 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
         </Button>
       </div>
 
-      <div className="rounded-lg border overflow-x-auto">
+      <div className="rounded-lg border overflow-x-auto table-dense">
         <Table>
           <TableHeader>
             <TableRow>
@@ -192,7 +193,7 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="text-[11px] h-7 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
+                      className={`${adminCtrl.sm} text-destructive/80 hover:text-destructive hover:bg-destructive/10`}
                       disabled={saving}
                       onClick={() => setPendingDeactivate(entry.name)}
                     >

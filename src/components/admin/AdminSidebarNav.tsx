@@ -49,7 +49,7 @@ export function AdminSidebarNav() {
       {groups.map((group) => (
         <SidebarGroup key={group.id} className="py-0.5">
           {group.label && (
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-wide px-2 py-1">
+            <SidebarGroupLabel className="text-[11px] uppercase tracking-wide px-2 py-1.5">
               {group.label}
             </SidebarGroupLabel>
           )}
@@ -67,13 +67,13 @@ export function AdminSidebarNav() {
                 return (
                   <SidebarMenuItem key={href}>
                     <SidebarMenuButton asChild isActive={active} tooltip={tooltip} size="sm">
-                      <Link to={settingsHref} className="flex items-center gap-2.5 min-h-8">
+                      <Link to={settingsHref} className="flex items-center gap-2.5 min-h-9 text-sm">
                         <Icon className="size-4 shrink-0" strokeWidth={1.75} />
                         <span className="flex-1 truncate">{label}</span>
                         {isSettings && pendingAuthReviewCount > 0 && (
                           <Badge
                             variant="destructive"
-                            className="ml-auto h-5 min-w-5 shrink-0 px-1.5 text-[10px] tabular-nums"
+                            className="ml-auto h-5 min-w-5 shrink-0 px-1.5 text-[11px] tabular-nums"
                             title={pendingAuthReviewMessage ?? undefined}
                           >
                             {pendingAuthReviewCount}

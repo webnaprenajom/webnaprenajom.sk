@@ -43,6 +43,7 @@ import {
   normalizeTeamDisplayName,
 } from "@/lib/admin/teamProfileLifecycle";
 import { clearCrmUserArchive, removeCrmUser } from "@/lib/admin/crmUserRemoval";
+import { adminCtrl, adminType } from "@/lib/admin/readability";
 
 async function ensureImplementerInRegistry(name: string) {
   const normalized = name.trim();
@@ -604,7 +605,7 @@ export function UserManagementPanel() {
             <div className="flex flex-wrap gap-2 items-end justify-end sm:justify-start">
               {user.role === "administrator" && user.profileActive && user.implementerName && (
                 <div className="space-y-1 flex-1 min-w-[12rem] max-w-xs">
-                  <Label className="text-[10px] text-muted-foreground">Zobrazované meno</Label>
+                  <Label className={adminType.caption}>Zobrazované meno</Label>
                   <div className="flex gap-1">
                     <Input
                       className="h-8 text-xs"
@@ -641,7 +642,7 @@ export function UserManagementPanel() {
                 </div>
               )}
               <div className="space-y-1">
-                <Label className="text-[10px] text-muted-foreground">Rola</Label>
+                <Label className={adminType.caption}>Rola</Label>
                 <Select
                   value={user.role ?? undefined}
                   onValueChange={(v) => changeRole(user, v as AppRole)}
@@ -660,7 +661,7 @@ export function UserManagementPanel() {
               </div>
               {user.role === "administrator" && (
                 <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Implementer</Label>
+                  <Label className={adminType.caption}>Implementer</Label>
                   <Select
                     value={user.implementerName || undefined}
                     onValueChange={(v) => assignProfile(user, v)}
@@ -683,7 +684,7 @@ export function UserManagementPanel() {
             </div>
 
             <div className="rounded-md border border-destructive/20 bg-destructive/[0.04] px-3 py-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[10px] text-muted-foreground">
+              <p className={adminType.caption}>
                 <span className="font-medium text-destructive/90">Rizikové akcie</span>
                 <span className="hidden sm:inline"> — nevratné alebo obmedzujú prístup</span>
               </p>
@@ -691,7 +692,7 @@ export function UserManagementPanel() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 text-[11px] text-destructive border-destructive/35 hover:bg-destructive/10"
+                  className={`${adminCtrl.sm} text-destructive border-destructive/35 hover:bg-destructive/10`}
                   onClick={() => removeFromCrm(user)}
                   disabled={!canRemoveOwnerRole(withRole, user)}
                 >
@@ -700,7 +701,7 @@ export function UserManagementPanel() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 text-[11px] text-muted-foreground hover:text-destructive"
+                  className={`${adminCtrl.sm} text-muted-foreground hover:text-destructive`}
                   onClick={() => removeRole(user)}
                   disabled={!canRemoveOwnerRole(withRole, user)}
                   title="Odstrániť len rolu — účet zostane na opätovné priradenie"
@@ -718,8 +719,8 @@ export function UserManagementPanel() {
         id={PENDING_AUTH_USER_REVIEW_HASH}
         className="rounded-lg border border-dashed border-border/80 p-3 space-y-2.5 scroll-mt-4"
       >
-        <h4 className="text-xs font-semibold">Pridať používateľa do CRM</h4>
-        <p className="text-xs text-muted-foreground">
+        <h4 className={adminType.label}>Pridať používateľa do CRM</h4>
+        <p className={adminType.meta}>
           Vyberte existujúci auth účet (podľa mena alebo e-mailu). Nový účet musí byť najprv vytvorený
           prihlásením alebo pozvánkou — tu len priraďujete CRM rolu.
         </p>
@@ -833,10 +834,10 @@ export function UserManagementPanel() {
       </div>
 
       <div className="space-y-3 pt-2 border-t border-border/60">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        <h3 className={adminType.groupLabel}>
           Katalóg realizátorov
         </h3>
-        <p className="text-[10px] text-muted-foreground leading-snug">
+        <p className={adminType.caption}>
           Mená pre provízie a priradenia. Historické záznamy v financiách sa nemenia.
         </p>
         <ImplementerRegistryPanel registry={registry} managedUsers={withRole} />

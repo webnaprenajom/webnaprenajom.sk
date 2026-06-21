@@ -192,7 +192,7 @@ function CommissionList({
   if (rows.length === 0) return null;
 
   return (
-    <div className="rounded-xl border overflow-x-auto">
+    <div className="rounded-xl border overflow-x-auto table-dense">
       <Table>
         <TableHeader>
           <TableRow>

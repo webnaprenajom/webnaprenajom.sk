@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { ReactNode } from "react";
+import { adminSurface, adminType } from "@/lib/admin/readability";
 
 /** Unified admin dialog shell (Batch RC6) — consistent width and mobile behavior. */
 export function AdminDialog({
@@ -45,16 +46,16 @@ export function AdminDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={contentClass}>
-        <DialogHeader className={stickyFooter ? "px-6 pt-6 shrink-0" : undefined}>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+      <DialogContent className={`${contentClass} ${adminSurface}`}>
+        <DialogHeader className={stickyFooter ? "px-6 pt-6 shrink-0 space-y-1.5" : "space-y-1.5"}>
+          <DialogTitle className="text-xl">{title}</DialogTitle>
+          {description && <p className={adminType.sectionDesc}>{description}</p>}
         </DialogHeader>
         <div
           className={
             stickyFooter
-              ? "space-y-4 px-6 overflow-y-auto flex-1 min-h-0"
-              : "space-y-4"
+              ? "space-y-5 px-6 overflow-y-auto flex-1 min-h-0"
+              : "space-y-5"
           }
         >
           {children}

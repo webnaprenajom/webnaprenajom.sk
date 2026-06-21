@@ -171,7 +171,7 @@ export function FinanceReviewQueuePanel({
       {visible.length === 0 ? (
         <p className="text-sm text-muted-foreground py-8 text-center border rounded-xl">Prázdna fronta kontroly.</p>
       ) : (
-        <div className="rounded-xl border overflow-x-auto max-h-[480px]">
+        <div className="rounded-xl border overflow-x-auto table-dense max-h-[480px]">
           <Table>
             <TableHeader>
               <TableRow>

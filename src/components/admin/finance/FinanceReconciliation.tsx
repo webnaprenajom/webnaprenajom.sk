@@ -412,7 +412,7 @@ function IssueSectionTable({
       <div className="px-4 py-3 border-b border-border">
         <h2 className="text-sm font-semibold">{title}</h2>
       </div>
-      <div className="overflow-x-auto max-h-[360px]">
+      <div className="overflow-x-auto max-h-[360px] table-dense">
         <Table>
           <TableHeader>
             <TableRow>

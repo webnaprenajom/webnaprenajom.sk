@@ -768,7 +768,7 @@ export function FinanceRecordsCrud({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <label className="text-xs text-muted-foreground">{label}</label>
+      <label className="text-sm text-muted-foreground">{label}</label>
       <div className="mt-1">{children}</div>
     </div>
   );
@@ -787,7 +787,7 @@ function RecordsTable({
     return <div className="text-sm text-muted-foreground py-8 text-center">Žiadne záznamy</div>;
   }
   return (
-    <div className="rounded-xl border border-border overflow-x-auto">
+    <div className="rounded-xl border border-border overflow-x-auto table-dense">
       <Table>
         <TableHeader>
           <TableRow>

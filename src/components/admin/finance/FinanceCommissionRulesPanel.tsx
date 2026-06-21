@@ -85,7 +85,7 @@ export function FinanceCommissionRulesPanel({ rules, overrides, onSaved }: Props
 
       <section>
         <h3 className="text-sm font-semibold mb-2">Default rules</h3>
-        <div className="rounded-xl border overflow-x-auto">
+        <div className="rounded-xl border overflow-x-auto table-dense">
           <Table>
             <TableHeader>
               <TableRow>
@@ -123,7 +123,7 @@ export function FinanceCommissionRulesPanel({ rules, overrides, onSaved }: Props
         {overrides.length === 0 ? (
           <p className="text-sm text-muted-foreground">Žiadne overrides.</p>
         ) : (
-          <div className="rounded-xl border overflow-x-auto">
+          <div className="rounded-xl border overflow-x-auto table-dense">
             <Table>
               <TableHeader>
                 <TableRow>

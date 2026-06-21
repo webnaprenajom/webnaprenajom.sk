@@ -333,7 +333,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
           Žiadna zhoda pre vyhľadávanie.
         </p>
       ) : (
-        <div className="rounded-xl border overflow-x-auto">
+        <div className="rounded-xl border overflow-x-auto table-dense">
           <Table>
             <TableHeader>
               <TableRow>

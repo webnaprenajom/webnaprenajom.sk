@@ -15,6 +15,7 @@ import { AdminThemeToggle } from "@/components/admin/AdminThemeToggle";
 import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
+import { adminSurface } from "@/lib/admin/readability";
 import { Loader2, LogOut, ShieldAlert } from "lucide-react";
 
 export interface AdminLayoutProps {
@@ -78,7 +79,7 @@ export function AdminLayout({
 
   return (
     <SidebarProvider defaultOpen>
-      <Sidebar collapsible="icon">
+      <Sidebar collapsible="icon" className={adminSurface}>
         <SidebarHeader className="border-b border-sidebar-border px-2 py-2">
           <button
             type="button"
@@ -88,7 +89,7 @@ export function AdminLayout({
             <span className="text-sm font-bold">
               <span className="text-primary">CRM</span>
             </span>
-            <span className="text-[9px] text-muted-foreground truncate w-full">{userEmail}</span>
+            <span className="text-[10px] text-muted-foreground truncate w-full">{userEmail}</span>
           </button>
         </SidebarHeader>
         <AdminSidebarNav />
@@ -104,7 +105,7 @@ export function AdminLayout({
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
-      <SidebarInset className="min-w-0">
+      <SidebarInset className={`min-w-0 ${adminSurface}`}>
         <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/95 backdrop-blur px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1 min-w-0" />
@@ -112,17 +113,17 @@ export function AdminLayout({
           <AdminThemeToggle />
         </header>
         {!hidePageHeader && title && (
-          <div className="border-b border-border/60 px-4 sm:px-6 py-3 flex items-center justify-between gap-3 flex-wrap">
-            <div className="min-w-0">
-              <h1 className="text-lg sm:text-xl font-bold truncate">{title}</h1>
+          <div className="border-b border-border/60 px-4 sm:px-6 py-4 flex items-center justify-between gap-3 flex-wrap">
+            <div className="min-w-0 space-y-0.5">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">{title}</h1>
               {subtitle && (
-                <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+                <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
               )}
             </div>
             {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
           </div>
         )}
-        <div className="flex-1 min-w-0 p-3 sm:p-5">{children}</div>
+        <div className="flex-1 min-w-0 p-4 sm:p-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );
