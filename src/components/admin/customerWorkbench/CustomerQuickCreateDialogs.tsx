@@ -1,3 +1,4 @@
+import { fmtEur } from "@/lib/money/formatMoney";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -324,7 +325,7 @@ export function CustomerQuickCreateDialogs({ ctx, openKind, onClose, onSaved }: 
       logEntityCommunicationEventSafe({
         kind: "commission",
         title: commissionTitle.trim(),
-        body_preview: `${amount.toFixed(2)} € · ${commissionImplementer.trim()}`,
+        body_preview: `${fmtEur(amount)} · ${commissionImplementer.trim()}`,
         customer_id: linked.customer_id,
         customer_email: linked.customer_email,
         source_table: "commissions",

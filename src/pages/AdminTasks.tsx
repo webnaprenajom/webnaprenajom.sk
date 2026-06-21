@@ -1,3 +1,4 @@
+import { fmtEur } from "@/lib/money/formatMoney";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -467,7 +468,7 @@ const AdminTasks = () => {
     archived: items.filter((t) => t.status === "done").length,
   }), [items]);
 
-  const fmt = (n: number) => `${n.toFixed(2)} €`;
+  const fmt = (n: number) => `${fmtEur(n)}`;
 
   const isOverdue = (date: string | null, status: TaskStatus) =>
     !!date && status !== "done" && status !== "paid" && new Date(date) < new Date(new Date().toDateString());

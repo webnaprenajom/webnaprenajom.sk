@@ -1,4 +1,5 @@
 import { communicationEventsToTimeline } from "@/lib/communication/events";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import type { TimelineEvent } from "@/components/admin/CustomerTimeline";
 import { RENTAL_MONTH_STATUS_LABELS } from "@/lib/finance/labels";
 import {
@@ -65,7 +66,7 @@ export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): Timeli
       id: `comm-${c.id}`,
       at: c.date,
       label: `Provízia · ${c.title}`,
-      detail: `${Number(c.amount).toFixed(2)} € · ${commissionHubStatusLabel(c.payment_status, confirmedPayout)}`,
+      detail: `${fmtEur(Number(c.amount))} · ${commissionHubStatusLabel(c.payment_status, confirmedPayout)}`,
       href: "/admin/finance?advanced=1&legacy=commissions",
       category: "finance",
       truthLevel: "workflow_only",
@@ -135,7 +136,7 @@ export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): Timeli
     items.push({
       id: `payment-${p.id}`,
       at: p.paid_at,
-      label: `Platba · ${Number(p.amount).toFixed(2)} €`,
+      label: `Platba · ${fmtEur(Number(p.amount))}`,
       detail: p.method || p.reference || undefined,
       href: "/admin/finance?advanced=1&legacy=payments",
       category: "finance",
@@ -149,7 +150,7 @@ export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): Timeli
       id: `payout-${p.id}`,
       at: p.paid_at,
       label: `Výplata provízie · ${p.implementer || "Neznámy"}`,
-      detail: `${Number(p.amount).toFixed(2)} €`,
+      detail: `${fmtEur(Number(p.amount))}`,
       href: "/admin/finance?advanced=1&legacy=payouts",
       category: "finance",
       truthLevel: p.truth_level,
@@ -162,7 +163,7 @@ export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): Timeli
     items.push({
       id: `cost-${c.id}`,
       at,
-      label: `Náklad · ${Number(c.amount).toFixed(2)} €`,
+      label: `Náklad · ${fmtEur(Number(c.amount))}`,
       detail: c.category || c.vendor || undefined,
       href: "/admin/finance?advanced=1&legacy=costs",
       category: "finance",
@@ -172,7 +173,7 @@ export function buildCustomerTimelineEvents(data: CustomerWorkbenchData): Timeli
 
   data.rentalPayments.forEach((rp) => {
     const at = rp.paid_at || `${rp.year}-${String(rp.month).padStart(2, "0")}-01`;
-    const amt = Number(rp.custom_price ?? rp.amount).toFixed(2);
+    const amt =formatAmount1Decimal(Number(rp.custom_price ?? rp.amount));
     const hasPaymentFact = paymentFactByRentalPayment.has(rp.id);
     const statusLabel =
       RENTAL_MONTH_STATUS_LABELS[rp.status as keyof typeof RENTAL_MONTH_STATUS_LABELS] ?? rp.status;

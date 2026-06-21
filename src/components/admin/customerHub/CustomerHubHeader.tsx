@@ -31,6 +31,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { CustomerEditButton } from "@/components/admin/customerHub/CustomerEditDialog";
+import { metaStringFromCustomer } from "@/lib/crmLookup/customerProfile";
 
 interface Props {
   data: CustomerWorkbenchData;
@@ -42,14 +44,12 @@ interface Props {
   onOpenCommunication: () => void;
   canDeleteCustomer?: boolean;
   onDeleteCustomer?: () => void;
+  onCustomerSaved?: () => void;
 }
 
 function getCustomerCompany(metadata: unknown): string | null {
-  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
-    const company = (metadata as Record<string, unknown>).company;
-    if (typeof company === "string" && company.trim()) return company.trim();
-  }
-  return null;
+  const company = metaStringFromCustomer(metadata, "company");
+  return company || null;
 }
 
 export function CustomerHubHeader({
@@ -62,6 +62,7 @@ export function CustomerHubHeader({
   onOpenCommunication,
   canDeleteCustomer,
   onDeleteCustomer,
+  onCustomerSaved,
 }: Props) {
   const primaryLead = data.leads[0];
   const company = getCustomerCompany(data.canonicalCustomer?.metadata);
@@ -154,6 +155,13 @@ export function CustomerHubHeader({
             <Button size="sm" variant="default" asChild>
               <Link to={`/admin?lead=${primaryLead.id}`}>Hlavný lead</Link>
             </Button>
+          )}
+          {data.canonicalCustomer && onCustomerSaved && (
+            <CustomerEditButton
+              customer={data.canonicalCustomer}
+              fallbackPhone={summary.phone}
+              onSaved={onCustomerSaved}
+            />
           )}
         </div>
 

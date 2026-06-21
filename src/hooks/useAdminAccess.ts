@@ -96,10 +96,12 @@ export const useAdminAccess = (): AppAccessState => {
   useEffect(() => {
     let active = true;
 
-    const refreshAccess = async () => {
+    const refreshAccess = async (options?: { silent?: boolean }) => {
       if (!active) return;
 
-      setState((prev) => ({ ...prev, authChecking: true }));
+      if (!options?.silent) {
+        setState((prev) => ({ ...prev, authChecking: true }));
+      }
 
       try {
         const {
@@ -157,10 +159,16 @@ export const useAdminAccess = (): AppAccessState => {
         if (active) setState({ ...initialState, authChecking: false });
         return;
       }
-      if (event === "INITIAL_SESSION" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+      if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
         window.setTimeout(() => {
           if (!active) return;
           void refreshAccess();
+        }, 0);
+      }
+      if (event === "TOKEN_REFRESHED") {
+        window.setTimeout(() => {
+          if (!active) return;
+          void refreshAccess({ silent: true });
         }, 0);
       }
     });

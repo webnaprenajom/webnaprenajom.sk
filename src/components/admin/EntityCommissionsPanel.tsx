@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -214,7 +215,7 @@ export function EntityCommissionsPanel({
       logEntityCommunicationEventSafe({
         kind: "commission",
         title: payload.title,
-        body_preview: `${payload.amount.toFixed(2)} € · ${payload.payment_status === "paid" ? "vyplatené" : "nezaplatené"}`,
+        body_preview: `${fmtEur(payload.amount)} · ${payload.payment_status === "paid" ? "vyplatené" : "nezaplatené"}`,
         customer_id: linked.customer_id,
         customer_email: linked.customer_email,
         source_table: "commissions",
@@ -256,7 +257,7 @@ export function EntityCommissionsPanel({
       logEntityCommunicationEventSafe({
         kind: "payment",
         title: c.title,
-        body_preview: `${Number(c.amount).toFixed(2)} € · vyplatené`,
+        body_preview: `${fmtEur(Number(c.amount))} · vyplatené`,
         customer_id: (c as { customer_id?: string | null }).customer_id ?? null,
         customer_email: (c as { customer_email?: string | null }).customer_email ?? null,
         source_table: "commissions",
@@ -302,7 +303,7 @@ export function EntityCommissionsPanel({
         <div className="flex flex-col gap-1 items-start">
           <TruthLevelBadge level={info.truthLevel!} />
           <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-            {info.auditedAmount.toFixed(2)} €
+            {fmtEur(info.auditedAmount)}
             {info.auditedPaidAt
               ? ` · ${new Date(info.auditedPaidAt).toLocaleDateString("sk-SK", { day: "numeric", month: "short", year: "numeric" })}`
               : ""}
@@ -329,7 +330,7 @@ export function EntityCommissionsPanel({
       </TableCell>
       <TableCell className="text-sm">{resolveCommissionSourceLabel(c)}</TableCell>
       <TableCell className="text-sm">{c.implementer}</TableCell>
-      <TableCell className="text-right font-medium">{Number(c.amount || 0).toFixed(2)} €</TableCell>
+      <TableCell className="text-right font-medium">{fmtEur(Number(c.amount || 0))}</TableCell>
       <TableCell className="text-xs hidden md:table-cell">{paymentFormLabel(c.payment_form)}</TableCell>
       <TableCell>
         {canToggle ? (
@@ -371,8 +372,8 @@ export function EntityCommissionsPanel({
       )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-3 text-xs">
-          <span className="text-green-600">Vyplatené: {totals.paid.toFixed(2)} €</span>
-          <span className="text-amber-600">Nezaplatené: {totals.unpaid.toFixed(2)} €</span>
+          <span className="text-green-600">Vyplatené: {fmtEur(totals.paid)}</span>
+          <span className="text-amber-600">Nezaplatené: {fmtEur(totals.unpaid)}</span>
         </div>
         <Button
           size="sm"
@@ -447,7 +448,7 @@ export function EntityCommissionsPanel({
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="font-semibold">{Number(c.amount || 0).toFixed(2)} €</span>
+                  <span className="font-semibold">{fmtEur(Number(c.amount || 0))}</span>
                   {canToggle ? (
                     <button type="button" onClick={() => void togglePaymentStatus(c)}>
                       <Badge variant="outline" className={`text-[10px] cursor-pointer ${STATUS_CLASS[c.payment_status] ?? ""}`}>

@@ -4,6 +4,7 @@
  */
 
 import { computeProfit } from "@/lib/profit/profitCalculator";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 
 export type ProfitEntityKind = "hosting" | "project" | "marketing" | "customer";
 
@@ -88,7 +89,7 @@ export function resolveProfitDisplayContext(input: ResolveProfitInput): ProfitDi
       profit: null,
       canShowProfit: false,
       headline: "Náklady bez tržieb",
-      detail: `Máte ${operatingCost.toFixed(2)} € nákladov, ale ${basis} je 0 € — zisk nepočítame.`,
+      detail: `Máte ${fmtEur(operatingCost)} nákladov, ale ${basis} je 0 € — zisk nepočítame.`,
       revenueBasisLabel: basis,
     };
   }
@@ -102,8 +103,8 @@ export function resolveProfitDisplayContext(input: ResolveProfitInput): ProfitDi
     operatingCost: result.operatingCost,
     profit: result.profit,
     canShowProfit: true,
-    headline: `${result.profit.toFixed(2)} € odhadovaný zisk`,
-    detail: `Tržby ${result.revenue.toFixed(2)} € (${basis}) − náklady ${result.operatingCost.toFixed(2)} €`,
+    headline: `${fmtEur(result.profit)} odhadovaný zisk`,
+    detail: `Tržby ${fmtEur(result.revenue)} (${basis}) − náklady ${fmtEur(result.operatingCost)}`,
     revenueBasisLabel: basis,
   };
 }

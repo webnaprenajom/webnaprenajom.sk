@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -211,7 +211,7 @@ const LeadsTable = ({
                     <TableCell className="text-right whitespace-nowrap">
                       {lead.amount != null ? (
                         <span className="font-bold text-green-600 dark:text-green-500 text-xs">
-                          {Number(lead.amount).toLocaleString("sk-SK", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}&nbsp;€
+                          {formatAmount1Decimal(Number(lead.amount))}&nbsp;€
                         </span>
                       ) : (
                         <span className="italic text-muted-foreground opacity-60">—</span>

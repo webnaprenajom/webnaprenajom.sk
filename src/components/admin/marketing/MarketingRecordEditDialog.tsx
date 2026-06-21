@@ -153,7 +153,7 @@ export function MarketingRecordEditDialog({
             <Label>Dohodnutá cena (€)</Label>
             <Input
               type="number"
-              step="0.01"
+              step="0.1"
               min={0}
               value={editing.agreed_fee ?? ""}
               onChange={(e) =>

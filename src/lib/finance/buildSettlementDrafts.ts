@@ -1,4 +1,5 @@
 import type { SettlementDraft } from "./types";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import {
   type CommissionRule,
   type CommissionRuleOverride,
@@ -106,7 +107,7 @@ export function buildSettlementDrafts(input: {
 
     const dupCandidates = new Map<string, number>();
     for (const p of periodPayouts) {
-      const k = `${p.paid_at.slice(0, 10)}|${Number(p.amount).toFixed(2)}`;
+      const k = `${p.paid_at.slice(0, 10)}|${formatAmount1Decimal(Number(p.amount))}`;
       dupCandidates.set(k, (dupCandidates.get(k) ?? 0) + 1);
     }
     const dupCount = [...dupCandidates.values()].filter((n) => n > 1).length;

@@ -79,20 +79,20 @@ export function AdminLayout({
   return (
     <SidebarProvider defaultOpen>
       <Sidebar collapsible="icon">
-        <SidebarHeader className="border-b border-sidebar-border p-3">
+        <SidebarHeader className="border-b border-sidebar-border px-2 py-2">
           <button
             type="button"
             onClick={() => navigate("/admin")}
             className="flex flex-col items-start w-full text-left px-1 py-0.5 rounded-md hover:bg-sidebar-accent/50 transition-colors"
           >
-            <span className="text-base font-bold">
+            <span className="text-sm font-bold">
               <span className="text-primary">CRM</span>
             </span>
-            <span className="text-[10px] text-muted-foreground truncate w-full">{userEmail}</span>
+            <span className="text-[9px] text-muted-foreground truncate w-full">{userEmail}</span>
           </button>
         </SidebarHeader>
         <AdminSidebarNav />
-        <SidebarFooter className="border-t border-sidebar-border p-2">
+        <SidebarFooter className="border-t border-sidebar-border p-1.5">
           <Button
             variant="ghost"
             size="sm"
@@ -104,7 +104,7 @@ export function AdminLayout({
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background/95 backdrop-blur px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1 min-w-0" />
@@ -122,7 +122,7 @@ export function AdminLayout({
             {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
           </div>
         )}
-        <div className="flex-1 p-4 sm:p-6">{children}</div>
+        <div className="flex-1 min-w-0 p-3 sm:p-5">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

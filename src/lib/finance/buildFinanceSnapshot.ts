@@ -1,5 +1,6 @@
 /** CRITICAL: Plan Mode only — see GOVERNANCE.md. Ledger truth + reconciliation source of truth. */
 import type { FinanceLedgerRow, FinanceSnapshot, FinanceTruthLevel } from "./types";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { buildReconciliation } from "./buildReconciliation";
 import type {
   HostingReconRow,
@@ -526,8 +527,7 @@ export function financeSnapshotToCsv(snapshot: FinanceSnapshot): string {
       r.kind,
       r.date,
       r.title,
-      r.direction,
-      r.amount.toFixed(2),
+      r.direction,formatAmount1Decimal(r.amount),
       r.statusLabel,
       r.truthLevel,
       r.sourceTable,

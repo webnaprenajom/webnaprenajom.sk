@@ -127,7 +127,7 @@ function FormFields({
       <Field label="Suma (€)">
         <Input
           type="number"
-          step="0.01"
+          step="0.1"
           value={form.amount}
           onChange={(e) => setForm({ ...form, amount: e.target.value })}
         />

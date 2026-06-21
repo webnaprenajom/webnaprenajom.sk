@@ -37,7 +37,15 @@ import OfferRedeemDialog from "./components/OfferRedeemDialog";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ProtectedAdminOutlet } from "./components/admin/rbac/ProtectedAdminOutlet";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

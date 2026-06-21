@@ -1,3 +1,4 @@
+import { fmtEur } from "@/lib/money/formatMoney";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -312,6 +313,7 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
                 })
             : undefined
         }
+        onCustomerSaved={onReload}
       />
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_260px] gap-4 items-start">
@@ -709,7 +711,7 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
                           <Badge variant="outline" className={`text-[10px] ${toneClass}`}>
                             {statusLabel}
                           </Badge>
-                          <span className="font-semibold">{Number(c.amount).toFixed(2)} €</span>
+                          <span className="font-semibold">{fmtEur(Number(c.amount))}</span>
                         </>
                       }
                       href="/admin/finance?advanced=1&legacy=commissions"

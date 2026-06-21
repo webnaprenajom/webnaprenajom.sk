@@ -41,7 +41,7 @@ export function CommissionFormFields({ form, onChange, showTitle = true }: Props
           <label className="text-xs text-muted-foreground">Suma (€)</label>
           <Input
             type="number"
-            step="0.01"
+            step="0.1"
             value={form.amount}
             onChange={(e) => onChange({ amount: e.target.value })}
           />

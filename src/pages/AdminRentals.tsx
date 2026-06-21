@@ -1,5 +1,6 @@
 /** governance:inline-queries — do not expand; extract loaders to src/lib/ in Plan Mode (GOVERNANCE.md). */
 import { useEffect, useMemo, useState, useCallback, type ComponentProps } from "react";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
@@ -871,11 +872,11 @@ export default function AdminRentals() {
                   <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
                     <div>
                       <div className="text-muted-foreground">Vyplatené (uhradené)</div>
-                      <div className="font-bold text-green-500">{s.paid.toFixed(2)}€</div>
+                      <div className="font-bold text-green-500">{fmtEur(s.paid)}</div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Potenciál ročne</div>
-                      <div className="font-bold text-primary">{s.potential.toFixed(2)}€</div>
+                      <div className="font-bold text-primary">{fmtEur(s.potential)}</div>
                     </div>
                   </div>
                   <div className="text-[10px] text-primary mt-2">Klikni pre detail webov a zákaziek →</div>
@@ -998,7 +999,7 @@ export default function AdminRentals() {
                     <TableCell className="font-mono text-sm">{Number(w.monthly_price).toFixed(0)}€</TableCell>
                     <TableCell className="text-right whitespace-nowrap">
                       <div className="font-mono text-sm">{credits}</div>
-                      <div className="text-[10px] text-purple-500">−{creditCost.toFixed(2)}€</div>
+                      <div className="text-[10px] text-purple-500">−{fmtEur(creditCost)}</div>
                     </TableCell>
                     {MONTHS.map((_, i) => {
                       const month = i + 1;
@@ -1152,7 +1153,7 @@ export default function AdminRentals() {
                     onChange={(e) => setEditing({ ...editing, credits_used: Number(e.target.value) })}
                   />
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    100 kreditov = 30€ · náklad: <strong>{((Number(editing.credits_used) || 0) * CREDIT_COST).toFixed(2)}€</strong> (zapíše sa do Nákladov)
+                    100 kreditov = 30€ · náklad: <strong>{fmtEur(((Number(editing.credits_used) || 0) * CREDIT_COST))}</strong> (zapíše sa do Nákladov)
                   </p>
                 </div>
               </div>
@@ -1270,7 +1271,7 @@ export default function AdminRentals() {
                 <label className="text-xs font-medium text-muted-foreground">{m}</label>
                 <Input
                   type="number"
-                  step="0.01"
+                  step="0.1"
                   placeholder={String(pricesOpen?.monthly_price ?? "")}
                   value={pricesDraft[i + 1] ?? ""}
                   onChange={(e) =>

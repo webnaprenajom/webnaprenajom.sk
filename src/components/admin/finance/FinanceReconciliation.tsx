@@ -1,3 +1,4 @@
+import { fmtEur } from "@/lib/money/formatMoney";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -426,7 +427,7 @@ function IssueSectionTable({
                     {dismissed?.reason ? `${issue.detail} · ${dismissed.reason}` : issue.detail}
                   </TableCell>
                   <TableCell className="text-right text-sm">
-                    {issue.amount != null ? `${issue.amount.toFixed(2)} €` : "—"}
+                    {issue.amount != null ? fmtEur(issue.amount) : "—"}
                   </TableCell>
                   <TableCell className="space-x-1">
                     {actionable && actionLabel && (

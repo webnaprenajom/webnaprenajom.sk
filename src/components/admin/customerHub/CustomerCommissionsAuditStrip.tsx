@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { Badge } from "@/components/ui/badge";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { ArrowRight } from "lucide-react";
@@ -91,7 +92,7 @@ export function CustomerCommissionsAuditStrip({ data }: Props) {
               >
                 <span className="font-medium truncate max-w-[160px]">{link.label}</span>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="tabular-nums font-semibold">{link.amount.toFixed(2)} €</span>
+                  <span className="tabular-nums font-semibold">{fmtEur(link.amount)}</span>
                   {link.kind === "payment" && link.paymentTruthLevel && (
                     <TruthLevelBadge level={link.paymentTruthLevel} className="text-[9px] h-4 px-1" />
                   )}

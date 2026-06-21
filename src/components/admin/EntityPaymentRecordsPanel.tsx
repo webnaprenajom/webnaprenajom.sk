@@ -1,3 +1,4 @@
+import { fmtEur } from "@/lib/money/formatMoney";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -126,7 +127,7 @@ export function EntityPaymentRecordsPanel({
                   <TableCell className="text-xs">
                     {p.paid_at ? new Date(p.paid_at).toLocaleDateString("sk-SK") : "—"}
                   </TableCell>
-                  <TableCell className="font-medium">{Number(p.amount || 0).toFixed(2)} €</TableCell>
+                  <TableCell className="font-medium">{fmtEur(Number(p.amount || 0))}</TableCell>
                   {variantLabel && (
                     <TableCell className="text-xs">{variantLabel(p) || "—"}</TableCell>
                   )}

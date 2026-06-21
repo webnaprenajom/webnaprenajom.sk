@@ -19,8 +19,8 @@ describe("rc6 profit calculator", () => {
 
   it("formats profit summary for UI", () => {
     const s = formatProfitSummary(computeProfit({ revenue: 120, operatingCost: 20 }));
-    expect(s).toContain("100.00");
-    expect(s).toContain("120.00");
+    expect(s).toContain("100.0");
+    expect(s).toContain("120.0");
   });
 
   it("applies rental workflow profit before percentage", () => {

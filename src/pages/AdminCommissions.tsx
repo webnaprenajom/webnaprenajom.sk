@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -300,7 +301,7 @@ export function CommissionsExpensesContent() {
       logEntityCommunicationEventSafe({
         kind: "commission",
         title: payload.title,
-        body_preview: `${payload.amount.toFixed(2)} € · ${payload.payment_status === "paid" ? "vyplatené" : "nezaplatené"}`,
+        body_preview: `${fmtEur(payload.amount)} · ${payload.payment_status === "paid" ? "vyplatené" : "nezaplatené"}`,
         customer_id: linked.customer_id,
         customer_email: linked.customer_email,
         source_table: "commissions",
@@ -336,7 +337,7 @@ export function CommissionsExpensesContent() {
       logEntityCommunicationEventSafe({
         kind: "payment",
         title: c.title,
-        body_preview: `${Number(c.amount).toFixed(2)} € · vyplatené`,
+        body_preview: `${fmtEur(Number(c.amount))} · vyplatené`,
         customer_id: (c as { customer_id?: string | null }).customer_id ?? null,
         customer_email: (c as { customer_email?: string | null }).customer_email ?? null,
         source_table: "commissions",
@@ -482,15 +483,15 @@ export function CommissionsExpensesContent() {
             <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground">Označ. vyplatené</div>
-                <div className="text-2xl font-bold text-green-500">{totals.paid.toFixed(2)} €</div>
+                <div className="text-2xl font-bold text-green-500">{fmtEur(totals.paid)}</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground">Nevyplatené (interný)</div>
-                <div className="text-2xl font-bold text-yellow-500">{totals.unpaid.toFixed(2)} €</div>
+                <div className="text-2xl font-bold text-yellow-500">{fmtEur(totals.unpaid)}</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground">Spolu</div>
-                <div className="text-2xl font-bold">{totals.total.toFixed(2)} €</div>
+                <div className="text-2xl font-bold">{fmtEur(totals.total)}</div>
               </div>
             </section>
 
@@ -500,7 +501,7 @@ export function CommissionsExpensesContent() {
                   <div className="text-xs text-muted-foreground">Vyplatené (workflow) — neauditované</div>
                   <TruthLevelBadge level="workflow_only" />
                 </div>
-                <div className="text-2xl font-bold text-muted-foreground">{payoutTotals.paidWorkflowUnaudited.toFixed(2)} €</div>
+                <div className="text-2xl font-bold text-muted-foreground">{fmtEur(payoutTotals.paidWorkflowUnaudited)}</div>
                 <p className="text-[11px] text-muted-foreground mt-1">
                   Označené ako vyplatené, ale bez záznamu v payout_records — interný stav, nie audit.
                 </p>
@@ -510,11 +511,11 @@ export function CommissionsExpensesContent() {
                   <div className="text-xs text-muted-foreground">Auditované výplaty (payout_records)</div>
                   <TruthLevelBadge level="payout_fact" />
                 </div>
-                <div className="text-2xl font-bold text-green-500">{payoutTotals.auditedTotal.toFixed(2)} €</div>
+                <div className="text-2xl font-bold text-green-500">{fmtEur(payoutTotals.auditedTotal)}</div>
                 <p className="text-[11px] text-muted-foreground mt-1 flex flex-wrap items-center gap-2">
                   <span>z toho:</span>
-                  <span className="inline-flex items-center gap-1"><TruthLevelBadge level="payout_fact" />{payoutTotals.auditedFact.toFixed(2)} €</span>
-                  <span className="inline-flex items-center gap-1"><TruthLevelBadge level="legacy_import" />{payoutTotals.auditedLegacyImport.toFixed(2)} €</span>
+                  <span className="inline-flex items-center gap-1"><TruthLevelBadge level="payout_fact" />{fmtEur(payoutTotals.auditedFact)}</span>
+                  <span className="inline-flex items-center gap-1"><TruthLevelBadge level="legacy_import" />{fmtEur(payoutTotals.auditedLegacyImport)}</span>
                 </p>
               </div>
             </section>
@@ -592,7 +593,7 @@ export function CommissionsExpensesContent() {
                                 )}
                               </TableCell>
                             )}
-                            <TableCell className="text-sm text-right font-semibold whitespace-nowrap">{Number(c.amount || 0).toFixed(2)} €</TableCell>
+                            <TableCell className="text-sm text-right font-semibold whitespace-nowrap">{fmtEur(Number(c.amount || 0))}</TableCell>
                             <TableCell>
                               <button
                                 onClick={() => togglePaid(c)}
@@ -611,7 +612,7 @@ export function CommissionsExpensesContent() {
                                     <div className="flex flex-col gap-1 items-start">
                                       <TruthLevelBadge level={info.truthLevel!} />
                                       <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                                        {info.auditedAmount.toFixed(2)} €
+                                        {fmtEur(info.auditedAmount)}
                                         {info.auditedPaidAt
                                           ? ` · ${new Date(info.auditedPaidAt).toLocaleDateString("sk-SK", { day: "numeric", month: "short", year: "numeric" })}`
                                           : ""}
@@ -651,15 +652,15 @@ export function CommissionsExpensesContent() {
             <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground">Označ. uhradené</div>
-                <div className="text-2xl font-bold text-red-500">−{expTotals.paid.toFixed(2)} €</div>
+                <div className="text-2xl font-bold text-red-500">−{fmtEur(expTotals.paid)}</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground">Neuhradené (interný)</div>
-                <div className="text-2xl font-bold text-red-400">−{expTotals.unpaid.toFixed(2)} €</div>
+                <div className="text-2xl font-bold text-red-400">−{fmtEur(expTotals.unpaid)}</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <div className="text-xs text-muted-foreground">Spolu náklady</div>
-                <div className="text-2xl font-bold text-red-500">−{expTotals.total.toFixed(2)} €</div>
+                <div className="text-2xl font-bold text-red-500">−{fmtEur(expTotals.total)}</div>
               </div>
             </section>
 
@@ -704,7 +705,7 @@ export function CommissionsExpensesContent() {
                             </TableCell>
                             <TableCell className="text-sm font-medium">{e.title}</TableCell>
                             <TableCell className="text-sm text-muted-foreground">{e.category || <span className="italic opacity-60">—</span>}</TableCell>
-                            <TableCell className="text-sm text-right font-semibold whitespace-nowrap text-red-500">−{Number(e.amount || 0).toFixed(2)} €</TableCell>
+                            <TableCell className="text-sm text-right font-semibold whitespace-nowrap text-red-500">−{fmtEur(Number(e.amount || 0))}</TableCell>
                             <TableCell>
                               <button onClick={() => togglePaidExp(e)} title="Prepnúť stav">
                                 <Badge variant="outline" className={`text-xs cursor-pointer ${cfg.className}`}>
@@ -753,7 +754,7 @@ export function CommissionsExpensesContent() {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Suma (€)</label>
-                <Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
+                <Input type="number" step="0.1" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
               </div>
             </div>
             <div>
@@ -891,7 +892,7 @@ export function CommissionsExpensesContent() {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground">Suma (€)</label>
-                <Input type="number" step="0.01" value={expForm.amount} onChange={(e) => setExpForm({ ...expForm, amount: e.target.value })} placeholder="0.00" />
+                <Input type="number" step="0.1" value={expForm.amount} onChange={(e) => setExpForm({ ...expForm, amount: e.target.value })} placeholder="0.00" />
               </div>
             </div>
             <div>

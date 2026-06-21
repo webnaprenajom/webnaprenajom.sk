@@ -451,7 +451,7 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
             </Field>
             <Field label="Poskytovateľ"><Input value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })} /></Field>
             <Field label="Počet domén"><Input type="number" value={form.domains_count} onChange={(e) => setForm({ ...form, domains_count: e.target.value })} /></Field>
-            <Field label="Mesačná cena €"><Input type="number" step="0.01" value={form.monthly_price} onChange={(e) => setForm({ ...form, monthly_price: e.target.value })} /></Field>
+            <Field label="Mesačná cena €"><Input type="number" step="0.1" value={form.monthly_price} onChange={(e) => setForm({ ...form, monthly_price: e.target.value })} /></Field>
             <Field label="Získal"><Input value={form.acquired_by} onChange={(e) => setForm({ ...form, acquired_by: e.target.value })} /></Field>
             <AdminLongTextField
               label="Poznámka"

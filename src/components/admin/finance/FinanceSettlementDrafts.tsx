@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -157,15 +158,15 @@ export function FinanceSettlementDrafts({ ctx, rules, overrides, onSaved }: Fina
                       {d.rateSourceLabel ?? "—"}
                     </TableCell>
                     <TableCell className="text-right text-xs">{d.pendingCommissions.length}</TableCell>
-                    <TableCell className="text-right text-sm">{d.legacyImportAmount.toFixed(2)} €</TableCell>
+                    <TableCell className="text-right text-sm">{fmtEur(d.legacyImportAmount)}</TableCell>
                     <TableCell className="text-right text-sm text-green-600">
-                      {d.confirmedPayoutAmount.toFixed(2)} €
+                      {fmtEur(d.confirmedPayoutAmount)}
                     </TableCell>
                     <TableCell className="text-right text-sm text-muted-foreground">
-                      {d.workflowOnlyAmount.toFixed(2)} €
+                      {fmtEur(d.workflowOnlyAmount)}
                     </TableCell>
                     <TableCell className="text-right text-sm font-medium text-amber-600">
-                      {d.suggestedGap.toFixed(2)} €
+                      {fmtEur(d.suggestedGap)}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">

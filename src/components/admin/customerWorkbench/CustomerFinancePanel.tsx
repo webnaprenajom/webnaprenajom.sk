@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { isConfirmedPayment } from "@/lib/finance/entityPaymentBridge";
 import { Link } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
@@ -53,7 +54,7 @@ function FinanceMetric({
               <span key={b.level} className="inline-flex items-center gap-1">
                 <TruthLevelBadge level={b.level} />
                 <span className="text-[10px] text-muted-foreground tabular-nums">
-                  {b.amount.toFixed(2)} €
+                  {fmtEur(b.amount)}
                 </span>
               </span>
             ))}
@@ -154,7 +155,7 @@ export function CustomerFinancePanel({ data, finance }: Props) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <FinanceMetric
           label="Potvrdené platby"
-          value={`${finance.paymentsReceivedTotal.toFixed(2)} €`}
+          value={`${fmtEur(finance.paymentsReceivedTotal)}`}
           tone="success"
           breakdown={[
             { level: "payment_fact", amount: finance.paymentsReceivedFactTotal },
@@ -163,13 +164,13 @@ export function CustomerFinancePanel({ data, finance }: Props) {
         />
         <FinanceMetric
           label="Očakávané platby"
-          value={`${finance.paymentsExpectedTotal.toFixed(2)} €`}
+          value={`${fmtEur(finance.paymentsExpectedTotal)}`}
           tone={finance.paymentsExpectedTotal > 0 ? "warning" : "default"}
           breakdown={[{ level: "workflow_only", amount: finance.paymentsExpectedTotal }]}
         />
         <FinanceMetric
           label="Potvrdené náklady"
-          value={`${finance.costsTotal.toFixed(2)} €`}
+          value={`${fmtEur(finance.costsTotal)}`}
           tone={finance.costsTotal > 0 ? "warning" : "default"}
           breakdown={[
             { level: "cost_fact", amount: finance.costsFactTotal },
@@ -178,13 +179,13 @@ export function CustomerFinancePanel({ data, finance }: Props) {
         />
         <FinanceMetric
           label="Vyplatené provízie"
-          value={`${finance.paidCommissionsTotal.toFixed(2)} €`}
+          value={`${fmtEur(finance.paidCommissionsTotal)}`}
           tone={finance.paidCommissionsTotal > 0 ? "warning" : "default"}
           breakdown={[{ level: "payout_fact", amount: finance.paidCommissionsTotal }]}
         />
         <FinanceMetric
           label="Hrubý zisk"
-          value={finance.grossProfit.canShowProfit ? `${finance.grossProfit.profit!.toFixed(2)} €` : "—"}
+          value={finance.grossProfit.canShowProfit ? `${fmtEur(finance.grossProfit.profit!)}` : "—"}
           tone={
             !finance.grossProfit.canShowProfit
               ? "default"
@@ -195,7 +196,7 @@ export function CustomerFinancePanel({ data, finance }: Props) {
         />
         <FinanceMetric
           label="Čistý zisk (po províziách)"
-          value={finance.netProfitCanShow ? `${finance.netProfit!.toFixed(2)} €` : "—"}
+          value={finance.netProfitCanShow ? `${fmtEur(finance.netProfit!)}` : "—"}
           tone={
             !finance.netProfitCanShow
               ? "default"
@@ -217,7 +218,7 @@ export function CustomerFinancePanel({ data, finance }: Props) {
       )}
       {finance.paymentsReceivedLegacyTotal > 0 && (
         <p className="text-[10px] text-muted-foreground">
-          Legacy import {finance.paymentsReceivedLegacyTotal.toFixed(2)} € nie je potvrdený príjem — zobrazuje sa
+          Legacy import {fmtEur(finance.paymentsReceivedLegacyTotal)} nie je potvrdený príjem — zobrazuje sa
           len v rozpise vyššie.
         </p>
       )}
@@ -264,7 +265,7 @@ export function CustomerFinancePanel({ data, finance }: Props) {
                       }`}
                     >
                       {row.direction === "out" ? "−" : "+"}
-                      {row.amount.toFixed(2)} €
+                      {fmtEur(row.amount)}
                     </td>
                     <td className="p-3">
                       <TruthLevelBadge level={row.truthLevel} />
@@ -310,8 +311,8 @@ export function CustomerFinancePanel({ data, finance }: Props) {
                 {serviceRows.map((row) => (
                   <tr key={row.id} className="border-b border-border/40 last:border-0">
                     <td className="p-3 font-medium">{row.name}</td>
-                    <td className="p-3 text-right tabular-nums">{row.income.toFixed(2)} €</td>
-                    <td className="p-3 text-right tabular-nums">{row.cost.toFixed(2)} €</td>
+                    <td className="p-3 text-right tabular-nums">{fmtEur(row.income)}</td>
+                    <td className="p-3 text-right tabular-nums">{fmtEur(row.cost)}</td>
                     <td className="p-3 text-right">
                       <Link to="/admin/rentals" className="text-primary hover:underline text-xs">
                         Prenájmy
@@ -324,8 +325,8 @@ export function CustomerFinancePanel({ data, finance }: Props) {
                     <td className="p-3 text-muted-foreground italic">
                       Nepriradené k prenájmu (e-mail/meno)
                     </td>
-                    <td className="p-3 text-right tabular-nums">{unlinkedIncome.toFixed(2)} €</td>
-                    <td className="p-3 text-right tabular-nums">{unlinkedCost.toFixed(2)} €</td>
+                    <td className="p-3 text-right tabular-nums">{fmtEur(unlinkedIncome)}</td>
+                    <td className="p-3 text-right tabular-nums">{fmtEur(unlinkedCost)}</td>
                     <td className="p-3" />
                   </tr>
                 )}
@@ -366,7 +367,7 @@ export function CustomerFinancePanel({ data, finance }: Props) {
                 {finance.paidCommissionsByImplementer.map((row) => (
                   <tr key={row.implementer} className="border-b border-border/40 last:border-0">
                     <td className="p-3 font-medium">{row.implementer}</td>
-                    <td className="p-3 text-right tabular-nums">{row.total.toFixed(2)} €</td>
+                    <td className="p-3 text-right tabular-nums">{fmtEur(row.total)}</td>
                     <td className="p-3 text-right tabular-nums">{row.count}</td>
                   </tr>
                 ))}
@@ -419,7 +420,7 @@ export function CustomerFinancePanel({ data, finance }: Props) {
                     </td>
                     <td className="p-3 text-muted-foreground">{p.method || "—"}</td>
                     <td className="p-3 text-right tabular-nums font-medium">
-                      {Number(p.amount).toFixed(2)} {p.currency || "€"}
+                      {formatAmount1Decimal(Number(p.amount))} {p.currency || "€"}
                     </td>
                     <td className="p-3">
                       <TruthLevelBadge level={p.truth_level} />

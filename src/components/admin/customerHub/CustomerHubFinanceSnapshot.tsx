@@ -1,3 +1,4 @@
+import { fmtEur } from "@/lib/money/formatMoney";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import type { CustomerFinanceSummary, WorkbenchTabId } from "@/lib/customerWorkbench/types";
 import { ArrowRight } from "lucide-react";
@@ -51,10 +52,8 @@ function KpiCell({
 }
 
 export function CustomerHubFinanceSnapshot({ finance, onOpenTab }: Props) {
-  const grossDisplay = finance.grossProfit.canShowProfit
-    ? `${finance.grossProfit.profit!.toFixed(2)} €`
-    : "—";
-  const netDisplay = finance.netProfitCanShow ? `${finance.netProfit!.toFixed(2)} €` : "—";
+  const grossDisplay = finance.grossProfit.canShowProfit ? fmtEur(finance.grossProfit.profit!) : "—";
+  const netDisplay = finance.netProfitCanShow ? fmtEur(finance.netProfit!) : "—";
 
   return (
     <section className="rounded-xl border border-border bg-card p-4 space-y-3">
@@ -71,7 +70,7 @@ export function CustomerHubFinanceSnapshot({ finance, onOpenTab }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         <KpiCell
           label="Potvrdené platby"
-          value={`${finance.paymentsReceivedTotal.toFixed(2)} €`}
+          value={fmtEur(finance.paymentsReceivedTotal)}
           tone="success"
           breakdown={[
             { level: "payment_fact", amount: finance.paymentsReceivedFactTotal },
@@ -80,7 +79,7 @@ export function CustomerHubFinanceSnapshot({ finance, onOpenTab }: Props) {
         />
         <KpiCell
           label="Potvrdené náklady"
-          value={`${finance.costsTotal.toFixed(2)} €`}
+          value={fmtEur(finance.costsTotal)}
           tone={finance.costsTotal > 0 ? "warning" : "default"}
           breakdown={[
             { level: "cost_fact", amount: finance.costsFactTotal },
@@ -115,13 +114,13 @@ export function CustomerHubFinanceSnapshot({ finance, onOpenTab }: Props) {
         />
         <KpiCell
           label="Nezaplatené"
-          value={`${finance.paymentsExpectedTotal.toFixed(2)} €`}
+          value={fmtEur(finance.paymentsExpectedTotal)}
           tone={finance.paymentsExpectedTotal > 0 ? "danger" : "default"}
           breakdown={[{ level: "workflow_only", amount: finance.paymentsExpectedTotal }]}
         />
         <KpiCell
           label="Provízie vypl."
-          value={`${finance.paidCommissionsTotal.toFixed(2)} €`}
+          value={fmtEur(finance.paidCommissionsTotal)}
           breakdown={[{ level: "payout_fact", amount: finance.paidCommissionsTotal }]}
         />
       </div>

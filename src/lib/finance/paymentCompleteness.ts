@@ -1,4 +1,5 @@
 import { sumConfirmedPaymentsForSource } from "@/lib/finance/entityPaymentBridge";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 
 export type PaymentCompletenessStatus =
   | "no_agreed_price"
@@ -66,10 +67,10 @@ export function resolvePaymentCompleteness(
 }
 
 export function paymentCompletenessDetail(pc: PaymentCompleteness): string | null {
-  if (pc.status === "partial") return `Zostáva ${pc.remaining.toFixed(2)} €`;
-  if (pc.status === "paid" && pc.overpaid > 0) return `Preplatené o ${pc.overpaid.toFixed(2)} €`;
-  if (pc.status === "paid") return `${pc.confirmedPaid.toFixed(2)} € potvrdených`;
-  if (pc.status === "unpaid") return `Dohodnutá cena ${pc.agreedPrice.toFixed(2)} €`;
+  if (pc.status === "partial") return `Zostáva ${fmtEur(pc.remaining)}`;
+  if (pc.status === "paid" && pc.overpaid > 0) return `Preplatené o ${fmtEur(pc.overpaid)}`;
+  if (pc.status === "paid") return `${fmtEur(pc.confirmedPaid)} potvrdených`;
+  if (pc.status === "unpaid") return `Dohodnutá cena ${fmtEur(pc.agreedPrice)}`;
   return null;
 }
 
@@ -78,10 +79,10 @@ export function reconciliationAgreedPriceDetail(
   pc: PaymentCompleteness,
 ): string | null {
   if (pc.status === "unpaid") {
-    return `${entityLabel} má dohodnutú cenu ${pc.agreedPrice.toFixed(2)} € bez potvrdenej platby (payment_fact)`;
+    return `${entityLabel} má dohodnutú cenu ${fmtEur(pc.agreedPrice)} bez potvrdenej platby (payment_fact)`;
   }
   if (pc.status === "partial") {
-    return `${entityLabel}: potvrdené ${pc.confirmedPaid.toFixed(2)} € z ${pc.agreedPrice.toFixed(2)} € — nedoplatok ${pc.remaining.toFixed(2)} €`;
+    return `${entityLabel}: potvrdené ${fmtEur(pc.confirmedPaid)} z ${fmtEur(pc.agreedPrice)} — nedoplatok ${fmtEur(pc.remaining)}`;
   }
   return null;
 }

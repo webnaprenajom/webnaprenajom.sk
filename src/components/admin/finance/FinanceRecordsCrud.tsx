@@ -1,3 +1,4 @@
+import { fmtEur } from "@/lib/money/formatMoney";
 import { useState, useCallback, useEffect, useMemo, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -505,7 +506,7 @@ export function FinanceRecordsCrud({
                     }),
                   )}
                 </TableCell>
-                <TableCell className="text-right">{Number(r.amount).toFixed(2)} €</TableCell>
+                <TableCell className="text-right">{fmtEur(Number(r.amount))}</TableCell>
                 <TableCell className="text-xs">{r.reference ?? "—"}</TableCell>
                 <TableCell>{truthBadge(r.truth_level)}</TableCell>
                 <TableCell className="text-right space-x-1">
@@ -542,7 +543,7 @@ export function FinanceRecordsCrud({
               <TableRow key={r.id}>
                 <TableCell className="text-xs">{r.paid_at?.slice(0, 10)}</TableCell>
                 <TableCell className="text-sm">{r.implementer ?? "—"}</TableCell>
-                <TableCell className="text-right">{Number(r.amount).toFixed(2)} €</TableCell>
+                <TableCell className="text-right">{fmtEur(Number(r.amount))}</TableCell>
                 <TableCell className="text-xs">{r.reference ?? "—"}</TableCell>
                 <TableCell>{truthBadge(r.truth_level)}</TableCell>
                 <TableCell className="text-right space-x-1">
@@ -578,7 +579,7 @@ export function FinanceRecordsCrud({
               <TableRow key={r.id}>
                 <TableCell className="text-xs">{(r.paid_at ?? r.incurred_at)?.slice(0, 10) ?? "—"}</TableCell>
                 <TableCell className="text-sm">{r.category ?? r.vendor ?? "—"}</TableCell>
-                <TableCell className="text-right">{Number(r.amount).toFixed(2)} €</TableCell>
+                <TableCell className="text-right">{fmtEur(Number(r.amount))}</TableCell>
                 <TableCell className="text-xs">{r.reference ?? "—"}</TableCell>
                 <TableCell>{truthBadge(r.truth_level)}</TableCell>
                 <TableCell className="text-right space-x-1">
@@ -646,7 +647,7 @@ export function FinanceRecordsCrud({
           )}
           <div className="space-y-3">
             <Field label="Suma (€)">
-              <Input type="number" step="0.01" value={form.amount} disabled={readOnly} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+              <Input type="number" step="0.1" value={form.amount} disabled={readOnly} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
             </Field>
             {kind === "payment" && (
               <>

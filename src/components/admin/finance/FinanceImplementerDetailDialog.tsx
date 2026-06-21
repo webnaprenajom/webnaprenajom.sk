@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { Link } from "react-router-dom";
 import {
   Dialog,
@@ -106,7 +107,7 @@ function CommissionDetailRow({
         )}
       </TableCell>
       <TableCell className="text-right font-medium whitespace-nowrap">
-        {Number(c.amount || 0).toFixed(2)} €
+        {fmtEur(Number(c.amount || 0))}
       </TableCell>
       <TableCell className="text-xs hidden lg:table-cell">{paymentFormLabel(c.payment_form)}</TableCell>
       <TableCell>
@@ -119,7 +120,7 @@ function CommissionDetailRow({
           <div className="flex flex-col gap-1 items-start">
             <TruthLevelBadge level={payoutInfo.truthLevel!} />
             <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-              {payoutInfo.auditedAmount.toFixed(2)} €
+              {fmtEur(payoutInfo.auditedAmount)}
             </span>
           </div>
         ) : payoutInfo.status === "paid_workflow_unaudited" ? (
@@ -203,13 +204,13 @@ export function FinanceImplementerDetailDialog({
           Commission riadky + prenájom JSON podiely ({year}) — bez dvojitého počítania materializovaných riadkov.
         </p>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mb-3">
-          <span className="text-green-600">Vyplatené (workflow): {totals.paid.toFixed(2)} €</span>
-          <span className="text-green-600">Auditované výplaty: {totals.audited.toFixed(2)} €</span>
-          <span className="text-amber-600">Nezaplatené: {totals.unpaid.toFixed(2)} €</span>
+          <span className="text-green-600">Vyplatené (workflow): {fmtEur(totals.paid)}</span>
+          <span className="text-green-600">Auditované výplaty: {fmtEur(totals.audited)}</span>
+          <span className="text-amber-600">Nezaplatené: {fmtEur(totals.unpaid)}</span>
           <span className="text-muted-foreground">{totals.count} commission riadkov</span>
           {rentalTotals.count > 0 && (
             <span className="text-primary">
-              {rentalTotals.count} prenájom JSON · {rentalTotals.paid.toFixed(2)} € / {rentalTotals.unpaid.toFixed(2)} € nezap.
+              {rentalTotals.count} prenájom JSON · {fmtEur(rentalTotals.paid)} / {fmtEur(rentalTotals.unpaid)} nezap.
             </span>
           )}
           <span className="text-muted-foreground">{totals.linked} prepojených</span>
@@ -285,7 +286,7 @@ export function FinanceImplementerDetailDialog({
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold">{Number(c.amount || 0).toFixed(2)} €</span>
+                      <span className="font-semibold">{fmtEur(Number(c.amount || 0))}</span>
                       <Badge variant="outline" className={`text-[10px] ${STATUS_CLASS[c.payment_status] ?? ""}`}>
                         {c.payment_status === "paid" ? COMMISSION_STATUS_LABELS.paid : COMMISSION_STATUS_LABELS.unpaid}
                       </Badge>
@@ -327,7 +328,7 @@ export function FinanceImplementerDetailDialog({
                         </Link>
                       </TableCell>
                       <TableCell className="text-right text-xs">{r.percentage}%</TableCell>
-                      <TableCell className="text-right font-medium">{r.amount.toFixed(2)} €</TableCell>
+                      <TableCell className="text-right font-medium">{fmtEur(r.amount)}</TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"

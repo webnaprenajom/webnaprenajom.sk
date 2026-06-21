@@ -81,8 +81,7 @@ const PRIORITY_CONFIG: Record<TaskPriority, { label: string; className: string }
   urgent: { label: "Urgentné", className: "bg-red-500/20 text-red-400 border-red-500/40" },
 };
 
-const fmt = (n: number) =>
-  n.toLocaleString("sk-SK", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+import { fmtEur } from "@/lib/money/formatMoney";
 
 export default function AdminTaskDetail() {
   const { id = "" } = useParams();
@@ -253,9 +252,9 @@ export default function AdminTaskDetail() {
                 "—"
               )}
             </Field>
-            <Field label="Suma" value={legacyFinance ? fmt(Number(task.amount || 0)) : "— (na nadradenej entite)"} />
-            <Field label="Záloha" value={legacyFinance ? fmt(Number(task.deposit || 0)) : "—"} />
-            <Field label="Zostáva" value={legacyFinance ? fmt(remaining) : "—"} />
+            <Field label="Suma" value={legacyFinance ? fmtEur(Number(task.amount || 0)) : "— (na nadradenej entite)"} />
+            <Field label="Záloha" value={legacyFinance ? fmtEur(Number(task.deposit || 0)) : "—"} />
+            <Field label="Zostáva" value={legacyFinance ? fmtEur(remaining) : "—"} />
             <Field label="Lead">
               {task.lead_id ? (
                 <Link to={adminLeadHref(task.lead_id)} className="text-primary hover:underline">

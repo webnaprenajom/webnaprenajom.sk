@@ -1,4 +1,6 @@
 import { summarizeOpenTasks } from "@/lib/crmLookup/taskCustomerLink";
+import { metaStringFromCustomer } from "@/lib/crmLookup/customerProfile";
+import { fmtEur } from "@/lib/money/formatMoney";
 import { resolveProfitDisplayContext } from "@/lib/profit/profitContext";
 import { countConfirmedPayments } from "@/lib/finance/entityPaymentBridge";
 import type {
@@ -29,7 +31,10 @@ export function computeWorkbenchSummary(
     data.signatures[0]?.client_name ||
     emailKey ||
     routeValue;
-  const phone = primaryLead?.phone || null;
+  const phone =
+    metaStringFromCustomer(data.canonicalCustomer?.metadata, "phone") ||
+    primaryLead?.phone ||
+    null;
 
   let lifecycle: WorkbenchSummary["lifecycle"] = {
     label: "Bez histórie",
@@ -161,7 +166,7 @@ export function computeRecommendedActions(
     actions.push({
       id: "finance",
       label: "Skontrolovať nevyplatené provízie",
-      detail: `${summary.unpaidCommissionsCount} · ${summary.unpaidCommissionsTotal.toFixed(2)} €`,
+      detail: `${summary.unpaidCommissionsCount} · ${fmtEur(summary.unpaidCommissionsTotal)}`,
       tab: "financie",
       tone: "warning",
     });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadCustomerHubAggregate } from "@/lib/customerWorkbench/loadCustomerHubAggregate";
 import type { LoadCustomerWorkbenchInput } from "@/lib/customerWorkbench/loadCustomerWorkbench";
 import type { CustomerHubAggregate } from "@/lib/customerWorkbench/types";
@@ -8,6 +8,7 @@ export function useCustomerHub(input: LoadCustomerWorkbenchInput | null, enabled
   const [aggregate, setAggregate] = useState<CustomerHubAggregate | null>(null);
   const [loading, setLoading] = useState(true);
   const [reloadToken, setReloadToken] = useState(0);
+  const hasLoadedOnceRef = useRef(false);
 
   const reload = useCallback(() => setReloadToken((n) => n + 1), []);
 
@@ -17,14 +18,18 @@ export function useCustomerHub(input: LoadCustomerWorkbenchInput | null, enabled
       return;
     }
     let cancelled = false;
+    const background = hasLoadedOnceRef.current;
 
     const load = async () => {
-      setLoading(true);
+      if (!background) setLoading(true);
       try {
         const result = await loadCustomerHubAggregate(input);
-        if (!cancelled) setAggregate(result);
+        if (!cancelled) {
+          setAggregate(result);
+          hasLoadedOnceRef.current = true;
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && !background) setLoading(false);
       }
     };
 

@@ -1,5 +1,6 @@
 /** governance:inline-queries — do not expand; extract loaders to src/lib/ in Plan Mode (GOVERNANCE.md). */
 import { useEffect, useMemo, useState } from "react";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FinanceRecordsCrud } from "@/components/admin/finance/FinanceRecordsCrud";
@@ -622,8 +623,8 @@ function DailyFinanceView({
                   onClick={() => setDetailImplementer(name)}
                 >
                   <TableCell className="font-medium">{name}</TableCell>
-                  <TableCell className="text-right text-green-600">{paid.toFixed(2)} €</TableCell>
-                  <TableCell className="text-right text-amber-600">{t.unpaid.toFixed(2)} €</TableCell>
+                  <TableCell className="text-right text-green-600">{fmtEur(paid)}</TableCell>
+                  <TableCell className="text-right text-amber-600">{fmtEur(t.unpaid)}</TableCell>
                   <TableCell className="text-right text-muted-foreground">{t.lineCount}</TableCell>
                   <TableCell>
                     <TruthLevelBadge level={truthLevel} />
@@ -876,7 +877,7 @@ function EntityPaymentsKpiGrid({ totals }: { totals: EntityPaymentTotals }) {
         </div>
         {hasAny && (
           <div className="text-right">
-            <div className="text-lg font-bold text-green-600 tabular-nums">{totalAmount.toFixed(2)} €</div>
+            <div className="text-lg font-bold text-green-600 tabular-nums">{fmtEur(totalAmount)}</div>
             <div className="text-[10px] text-muted-foreground">{totalCount} záznamov</div>
           </div>
         )}

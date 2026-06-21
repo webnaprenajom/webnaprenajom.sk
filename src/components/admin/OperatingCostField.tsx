@@ -1,3 +1,4 @@
+import { fmtEur } from "@/lib/money/formatMoney";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ export function OperatingCostField({ value, onSave, label = "Prevádzkové nákl
         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
         <p className="text-sm flex items-center gap-1.5 text-muted-foreground">
           <Lock className="w-3.5 h-3.5" />
-          {Number(value ?? 0).toFixed(2)} € · úpravu môže len admin
+          {fmtEur(Number(value ?? 0))} · úpravu môže len admin
         </p>
       </div>
     );
@@ -46,7 +47,7 @@ export function OperatingCostField({ value, onSave, label = "Prevádzkové nákl
       <div className="flex gap-2 items-center">
         <Input
           type="number"
-          step="0.01"
+          step="0.1"
           min={0}
           className="h-8 max-w-[140px] text-sm"
           value={draft}

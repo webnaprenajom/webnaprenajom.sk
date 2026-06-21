@@ -3,7 +3,7 @@ import { formatAgreedPrice } from "@/components/admin/AgreedPriceField";
 
 describe("formatAgreedPrice", () => {
   it("formats positive amounts", () => {
-    expect(formatAgreedPrice(1500)).toBe("1500.00 €");
+    expect(formatAgreedPrice(1500)).toBe("1500.0 €");
   });
 
   it("shows dash for empty or zero", () => {

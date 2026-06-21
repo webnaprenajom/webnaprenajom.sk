@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { parseMoneyInput, fmtEur } from "@/lib/money/formatMoney";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -31,7 +32,7 @@ export function AgreedPriceField({
   }, [value]);
 
   const save = async () => {
-    const next = Math.max(0, parseFloat(draft.replace(",", ".")) || 0);
+    const next = parseMoneyInput(draft);
     setSaving(true);
     try {
       await onSave(next);
@@ -51,7 +52,7 @@ export function AgreedPriceField({
       <div className="flex gap-2 items-center">
         <Input
           type="number"
-          step="0.01"
+          step="0.1"
           min={0}
           className="h-8 max-w-[140px] text-sm"
           value={draft}
@@ -70,5 +71,5 @@ export function AgreedPriceField({
 export function formatAgreedPrice(value: number | null | undefined): string {
   const n = Number(value ?? 0);
   if (!n || n <= 0) return "—";
-  return `${n.toFixed(2)} €`;
+  return fmtEur(n);
 }

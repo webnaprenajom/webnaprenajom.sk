@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -340,11 +341,11 @@ export function ImplementerCommissionDetailDialog({
           </div>
           <div className="rounded border p-2">
             <div className="text-[10px] text-muted-foreground">Vyplatené</div>
-            <div className="font-semibold text-green-600">{totals.paid.toFixed(2)} €</div>
+            <div className="font-semibold text-green-600">{fmtEur(totals.paid)}</div>
           </div>
           <div className="rounded border p-2">
             <div className="text-[10px] text-muted-foreground">Potenciál</div>
-            <div className="font-semibold text-primary">{totals.potential.toFixed(2)} €</div>
+            <div className="font-semibold text-primary">{fmtEur(totals.potential)}</div>
           </div>
         </div>
 
@@ -392,8 +393,8 @@ export function ImplementerCommissionDetailDialog({
                       )}
                     </TableCell>
                     <TableCell className="text-right text-xs">{r.percentage}%</TableCell>
-                    <TableCell className="text-right text-xs text-green-600">{r.paid.toFixed(2)} €</TableCell>
-                    <TableCell className="text-right text-xs">{r.potential.toFixed(2)} €</TableCell>
+                    <TableCell className="text-right text-xs text-green-600">{fmtEur(r.paid)}</TableCell>
+                    <TableCell className="text-right text-xs">{fmtEur(r.potential)}</TableCell>
                     <TableCell>
                       <Button
                         size="sm"
@@ -448,8 +449,8 @@ export function ImplementerCommissionDetailDialog({
                     </TableCell>
                     <TableCell className="text-xs">—</TableCell>
                     <TableCell className="text-right text-xs">—</TableCell>
-                    <TableCell className="text-right text-xs text-green-600">{c.paid.toFixed(2)} €</TableCell>
-                    <TableCell className="text-right text-xs">{c.potential.toFixed(2)} €</TableCell>
+                    <TableCell className="text-right text-xs text-green-600">{fmtEur(c.paid)}</TableCell>
+                    <TableCell className="text-right text-xs">{fmtEur(c.potential)}</TableCell>
                     <TableCell>
                       <Button
                         size="sm"
@@ -513,8 +514,8 @@ export function ImplementerCommissionDetailDialog({
                     </TableCell>
                     <TableCell className="text-xs">—</TableCell>
                     <TableCell className="text-right text-xs">—</TableCell>
-                    <TableCell className="text-right text-xs text-green-600">{c.paid.toFixed(2)} €</TableCell>
-                    <TableCell className="text-right text-xs">{c.potential.toFixed(2)} €</TableCell>
+                    <TableCell className="text-right text-xs text-green-600">{fmtEur(c.paid)}</TableCell>
+                    <TableCell className="text-right text-xs">{fmtEur(c.potential)}</TableCell>
                     <TableCell>
                       <Button
                         size="sm"

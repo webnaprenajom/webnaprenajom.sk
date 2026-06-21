@@ -45,12 +45,16 @@ export function AdminSidebarNav() {
       ];
 
   return (
-    <SidebarContent>
+    <SidebarContent className="gap-0.5 py-1">
       {groups.map((group) => (
-        <SidebarGroup key={group.id}>
-          {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+        <SidebarGroup key={group.id} className="py-0.5">
+          {group.label && (
+            <SidebarGroupLabel className="text-[10px] uppercase tracking-wide px-2 py-1">
+              {group.label}
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {group.items.map(({ href, label, icon: Icon, exact }) => {
                 const active = isAdminNavActive(pathname, href, exact);
                 const isSettings = href === "/admin/settings";
@@ -62,9 +66,9 @@ export function AdminSidebarNav() {
                   isSettings && pendingAuthReviewMessage ? pendingAuthReviewMessage : label;
                 return (
                   <SidebarMenuItem key={href}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={tooltip}>
-                      <Link to={settingsHref} className="flex items-center gap-2">
-                        <Icon />
+                    <SidebarMenuButton asChild isActive={active} tooltip={tooltip} size="sm">
+                      <Link to={settingsHref} className="flex items-center gap-2 min-h-8">
+                        <Icon className="size-3.5 shrink-0" />
                         <span className="flex-1 truncate">{label}</span>
                         {isSettings && pendingAuthReviewCount > 0 && (
                           <Badge

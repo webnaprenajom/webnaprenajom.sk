@@ -1,3 +1,4 @@
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 /**
  * Profit calculation for commission base (Batch RC6).
  * Formula: profit = max(0, revenue - operatingCost)
@@ -42,5 +43,5 @@ export function rentalImplementerPaidFromWorkflow(
 }
 
 export function formatProfitSummary(result: ProfitResult): string {
-  return `${result.profit.toFixed(2)} € zisk (tržby ${result.revenue.toFixed(2)} € − náklady ${result.operatingCost.toFixed(2)} €)`;
+  return `${fmtEur(result.profit)} zisk (tržby ${fmtEur(result.revenue)} − náklady ${fmtEur(result.operatingCost)})`;
 }

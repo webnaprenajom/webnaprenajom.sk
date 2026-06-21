@@ -10,6 +10,7 @@ import type {
   TaskReconRow,
 } from "./reconciliationEntityRows";
 import { buildIssueKey } from "./issueKeys";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { formatReconciliationSourceHint } from "./financeSourceLabels";
 import { isLegacyTaskFinance } from "@/lib/tasks/taskFinanceModel";
 import { sumConfirmedPaymentsForSource } from "./entityPaymentBridge";
@@ -287,7 +288,7 @@ function reconcileEntityPaymentGaps(
       "entity_missing_payment_fact",
       label,
       withSourceHint(
-        `Hosting má mesačnú cenu ${price.toFixed(2)} € bez potvrdené platby (payment_fact)`,
+        `Hosting má mesačnú cenu ${fmtEur(price)} bez potvrdené platby (payment_fact)`,
         table,
         h.id,
       ),
@@ -311,7 +312,7 @@ function reconcileEntityPaymentGaps(
         "task_missing_payment_deposit",
         t.title,
         withSourceHint(
-          `Workflow (${t.status}) signalizuje zálohu ${dep.toFixed(2)} € bez payment_fact`,
+          `Workflow (${t.status}) signalizuje zálohu ${fmtEur(dep)} bez payment_fact`,
           "tasks",
           `${t.id}:deposit`,
         ),
@@ -333,8 +334,8 @@ function reconcileEntityPaymentGaps(
           t.title,
           withSourceHint(
             depositFact
-              ? `Workflow uhradené — chýba doplatok ${needed.toFixed(2)} € (payment_fact)`
-              : `Workflow uhradené — chýba úhrada ${needed.toFixed(2)} € (payment_fact)`,
+              ? `Workflow uhradené — chýba doplatok ${fmtEur(needed)} (payment_fact)`
+              : `Workflow uhradené — chýba úhrada ${fmtEur(needed)} (payment_fact)`,
             "tasks",
             `${t.id}:full`,
           ),
@@ -460,7 +461,7 @@ export function buildReconciliation(input: {
       pushIssue(
         issues,
         "legacy_no_reference",
-        `Platba ${Number(r.amount).toFixed(2)} €`,
+        `Platba ${fmtEur(Number(r.amount))}`,
         withSourceHint(
           r.client_name ?? r.customer_email ?? "Bez klienta",
           r.source_table,
@@ -484,7 +485,7 @@ export function buildReconciliation(input: {
         "missing_counterparty",
         "Platba bez klienta",
         withSourceHint(
-          `Suma ${Number(r.amount).toFixed(2)} € · ${dateKey(r.paid_at)}`,
+          `Suma ${fmtEur(Number(r.amount))} · ${dateKey(r.paid_at)}`,
           r.source_table,
           r.source_id,
         ),
@@ -498,7 +499,7 @@ export function buildReconciliation(input: {
       pushIssue(
         issues,
         "legacy_no_reference",
-        `Výplata ${Number(r.amount).toFixed(2)} €`,
+        `Výplata ${fmtEur(Number(r.amount))}`,
         r.implementer ?? "Bez implementéra",
         { amount: Number(r.amount), recordId: r.id, sourceTable: "payout_records" },
       );
@@ -517,7 +518,7 @@ export function buildReconciliation(input: {
         issues,
         "missing_counterparty",
         "Výplata bez implementéra",
-        `Suma ${Number(r.amount).toFixed(2)} € · ${dateKey(r.paid_at)}`,
+        `Suma ${fmtEur(Number(r.amount))} · ${dateKey(r.paid_at)}`,
         { amount: Number(r.amount), recordId: r.id, sourceTable: "payout_records" },
       );
     }
@@ -528,7 +529,7 @@ export function buildReconciliation(input: {
       pushIssue(
         issues,
         "legacy_no_reference",
-        `Náklad ${Number(r.amount).toFixed(2)} €`,
+        `Náklad ${fmtEur(Number(r.amount))}`,
         r.category ?? r.vendor ?? "Bez kategórie",
         { amount: Number(r.amount), recordId: r.id, sourceTable: "cost_records" },
       );
@@ -547,43 +548,43 @@ export function buildReconciliation(input: {
         issues,
         "missing_counterparty",
         "Náklad bez kategórie/dodávateľa",
-        `Suma ${Number(r.amount).toFixed(2)} €`,
+        `Suma ${fmtEur(Number(r.amount))}`,
         { amount: Number(r.amount), recordId: r.id, sourceTable: "cost_records" },
       );
     }
   }
 
   for (const group of findDuplicateGroups(paymentRecords, (r) =>
-    `${dateKey(r.paid_at)}|${Number(r.amount).toFixed(2)}|${r.client_name ?? r.customer_email ?? ""}`,
+    `${dateKey(r.paid_at)}|${formatAmount1Decimal(Number(r.amount))}|${r.client_name ?? r.customer_email ?? ""}`,
   )) {
     pushIssue(
       issues,
       "potential_duplicate",
-      `${group.length}× platba ${Number(group[0].amount).toFixed(2)} €`,
+      `${group.length}× platba ${fmtEur(Number(group[0].amount))}`,
       `Rovnaký dátum/klient/suma (${dateKey(group[0].paid_at)})`,
       { amount: Number(group[0].amount), sourceTable: "payment_records" },
     );
   }
 
   for (const group of findDuplicateGroups(payoutRecords, (r) =>
-    `${dateKey(r.paid_at)}|${Number(r.amount).toFixed(2)}|${r.implementer ?? ""}`,
+    `${dateKey(r.paid_at)}|${formatAmount1Decimal(Number(r.amount))}|${r.implementer ?? ""}`,
   )) {
     pushIssue(
       issues,
       "potential_duplicate",
-      `${group.length}× výplata ${Number(group[0].amount).toFixed(2)} €`,
+      `${group.length}× výplata ${fmtEur(Number(group[0].amount))}`,
       `Rovnaký dátum/implementér/suma (${dateKey(group[0].paid_at)})`,
       { amount: Number(group[0].amount), sourceTable: "payout_records" },
     );
   }
 
   for (const group of findDuplicateGroups(costRecords, (r) =>
-    `${dateKey(r.paid_at ?? r.incurred_at)}|${Number(r.amount).toFixed(2)}|${r.vendor ?? r.category ?? ""}`,
+    `${dateKey(r.paid_at ?? r.incurred_at)}|${formatAmount1Decimal(Number(r.amount))}|${r.vendor ?? r.category ?? ""}`,
   )) {
     pushIssue(
       issues,
       "potential_duplicate",
-      `${group.length}× náklad ${Number(group[0].amount).toFixed(2)} €`,
+      `${group.length}× náklad ${fmtEur(Number(group[0].amount))}`,
       `Rovnaký dátum/kategória/suma`,
       { amount: Number(group[0].amount), sourceTable: "cost_records" },
     );

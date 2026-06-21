@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -85,7 +86,7 @@ export function BatchPayoutReviewDialog({
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Suma</div>
-            <div className="font-medium">{totalAmount.toFixed(2)} €</div>
+            <div className="font-medium">{fmtEur(totalAmount)}</div>
           </div>
         </div>
         {plan.length === 0 ? (
@@ -114,7 +115,7 @@ export function BatchPayoutReviewDialog({
                     <TableCell className="text-[10px] text-muted-foreground max-w-[100px] truncate">
                       {p.rateSourceLabel ?? "—"}
                     </TableCell>
-                    <TableCell className="text-right text-sm">{p.amount.toFixed(2)} €</TableCell>
+                    <TableCell className="text-right text-sm">{fmtEur(p.amount)}</TableCell>
                     <TableCell className="text-[10px] text-muted-foreground">
                       {p.skipped ? p.skipReason : "Vytvorí sa"}
                     </TableCell>
