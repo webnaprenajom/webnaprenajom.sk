@@ -444,6 +444,7 @@ export function ProjectNotesView() {
         customerFieldError={customerFieldError}
         onClearCustomerFieldError={() => setCustomerFieldError(null)}
       />
+      <DestructiveModal {...modalProps} />
     </AdminShell>
   );
 }
@@ -580,7 +581,6 @@ function EditDialog({
           </div>
         </div>
       </AdminDialog>
-      <DestructiveModal {...modalProps} />
     </>
   );
 }
