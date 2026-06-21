@@ -218,10 +218,19 @@ const AdminFinance = () => {
     [raw, hostingRecords],
   );
 
+  const accessCtx: AccessContext = useMemo(
+    () => ({
+      role: access.role,
+      userId: access.userId,
+      implementerName: access.implementerName,
+    }),
+    [access.role, access.userId, access.implementerName],
+  );
+
   const reconciliationSummary = useMemo(() => {
     const keys = new Set(dismissals.map((d) => d.issue_key));
     return summarizeReconciliationIssueCounts(snapshot.reconciliation.issues, keys, financeCtx, accessCtx);
-  }, [snapshot, dismissals, financeCtx]);
+  }, [snapshot, dismissals, financeCtx, accessCtx]);
 
   const dailyKpis = useMemo(() => {
     const yearPayments = raw.payments.filter((p: any) => p.year === year);
@@ -235,15 +244,6 @@ const AdminFinance = () => {
     const pendingSum = snapshot.totals.rentalMarkedUnpaid + snapshot.totals.rentalMarkedInvoiced;
     return { paidInvoices, unpaidInvoices, receivedSum, pendingSum, paymentsConfirmed, paymentsLegacyImport };
   }, [raw.payments, snapshot, year]);
-
-  const accessCtx: AccessContext = useMemo(
-    () => ({
-      role: access.role,
-      userId: access.userId,
-      implementerName: access.implementerName,
-    }),
-    [access.role, access.userId, access.implementerName],
-  );
 
   const scopedCommissions = useMemo(
     () => filterCommissionsForUser(raw.commissions, accessCtx),
