@@ -82,9 +82,11 @@ export function mergeImplementerCatalog(
   registry: CrmImplementerRow[],
   managedUsers: CrmManagedUser[],
   current?: string | null,
+  /** True after crm_implementers loaded — empty registry must not resurrect CRM_ASSIGNEES. */
+  registryReady = false,
 ): string[] {
   const set = new Set<string>();
-  if (registry.length > 0) {
+  if (registryReady || registry.length > 0) {
     for (const row of registry) {
       if (!isArchivedImplementerName(row.name)) set.add(row.name.trim());
     }
@@ -116,6 +118,7 @@ export function implementerRegistryNameTaken(
 export function buildImplementerRegistryEntries(
   registry: CrmImplementerRow[],
   managedUsers: CrmManagedUser[],
+  registryReady = false,
 ): ImplementerRegistryEntry[] {
   const assignmentByName = new Map<string, { userId: string; displayName: string }>();
   for (const user of managedUsers) {
@@ -127,7 +130,7 @@ export function buildImplementerRegistryEntries(
     }
   }
 
-  const names = mergeImplementerCatalog(registry, managedUsers);
+  const names = mergeImplementerCatalog(registry, managedUsers, undefined, registryReady);
   return names.map((name) => {
     const row = registry.find((r) => implementerNamesEqual(r.name, name));
     const assigned = assignmentByName.get(name) ?? null;

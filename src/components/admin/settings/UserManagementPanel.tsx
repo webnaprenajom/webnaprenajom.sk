@@ -135,13 +135,14 @@ export function UserManagementPanel() {
   const usersMissingProfile = withRole.filter((u) => u.missingProfile);
   const orphanProfiles = withoutRole.filter((u) => u.orphanActiveProfile);
   const implementerCatalog = useMemo(
-    () => mergeImplementerCatalog(registry.rows, withRole),
-    [registry.rows, withRole],
+    () => mergeImplementerCatalog(registry.rows, withRole, undefined, registry.registryReady),
+    [registry.rows, withRole, registry.registryReady],
   );
   const implementerOptions = assigneeSelectOptions(
     undefined,
     implementerCatalog,
     historicalIdentity,
+    registry.registryReady,
   );
 
   const deactivateTeamProfile = async (userId: string, implementerName: string | null) => {
@@ -670,7 +671,12 @@ export function UserManagementPanel() {
                       <SelectValue placeholder="Vyberte…" />
                     </SelectTrigger>
                     <SelectContent>
-                      {assigneeSelectOptions(user.implementerName, implementerCatalog, historicalIdentity).map(
+                      {assigneeSelectOptions(
+                        user.implementerName,
+                        implementerCatalog,
+                        historicalIdentity,
+                        registry.registryReady,
+                      ).map(
                         (name) => (
                           <SelectItem key={name} value={name} className="text-xs">
                             {name}

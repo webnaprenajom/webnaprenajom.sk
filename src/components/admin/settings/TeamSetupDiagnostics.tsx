@@ -53,8 +53,8 @@ export function TeamSetupDiagnostics() {
     const registry = ((registryRes.data || []) as Array<{ name: string; active: boolean }>).filter(
       (r) => r.active,
     );
-    const registryNames =
-      registry.length > 0 ? registry.map((r) => r.name) : [...CRM_ASSIGNEES];
+    const registryLoaded = !registryRes.error;
+    const registryNames = registryLoaded ? registry.map((r) => r.name) : [...CRM_ASSIGNEES];
 
     const unmappedImplementers = registryNames.filter(
       (name) => !profiles.some((p) => p.implementer_name === name && p.active),

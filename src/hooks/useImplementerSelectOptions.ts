@@ -20,13 +20,13 @@ export function useImplementerRegistryOptions() {
 
   const optionsFor = useMemo(
     () => (current?: string | null) =>
-      assigneeSelectOptions(current, registry.activeNames, historicalIdentity),
-    [registry.activeNames, historicalIdentity],
+      assigneeSelectOptions(current, registry.activeNames, historicalIdentity, registry.registryReady),
+    [registry.activeNames, registry.registryReady, historicalIdentity],
   );
 
   const isKnown = useMemo(
-    () => (name: string) => isKnownAssignee(name, registry.activeNames),
-    [registry.activeNames],
+    () => (name: string) => isKnownAssignee(name, registry.activeNames, registry.registryReady),
+    [registry.activeNames, registry.registryReady],
   );
 
   return {
@@ -34,6 +34,7 @@ export function useImplementerRegistryOptions() {
     isKnown,
     loading: registry.loading,
     error: registry.error,
+    registryReady: registry.registryReady,
     activeNames: registry.activeNames,
   };
 }

@@ -31,6 +31,7 @@ type RegistryApi = Pick<
   | "rows"
   | "loading"
   | "error"
+  | "registryReady"
   | "createName"
   | "deactivateName"
   | "reactivateName"
@@ -51,8 +52,8 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
   const [saving, setSaving] = useState(false);
 
   const entries = useMemo(
-    () => buildImplementerRegistryEntries(registry.rows, managedUsers),
-    [registry.rows, managedUsers],
+    () => buildImplementerRegistryEntries(registry.rows, managedUsers, registry.registryReady),
+    [registry.rows, managedUsers, registry.registryReady],
   );
 
   const addImplementer = async () => {

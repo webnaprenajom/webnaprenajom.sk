@@ -6,6 +6,7 @@ export function useImplementerRegistry(enabled = true) {
   const [rows, setRows] = useState<CrmImplementerRow[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
+  const [registryReady, setRegistryReady] = useState(false);
 
   const load = useCallback(async () => {
     if (!enabled) return;
@@ -18,8 +19,10 @@ export function useImplementerRegistry(enabled = true) {
     if (err) {
       setError(err.message);
       setRows([]);
+      setRegistryReady(false);
     } else {
       setRows((data || []) as CrmImplementerRow[]);
+      setRegistryReady(true);
     }
     setLoading(false);
   }, [enabled]);
@@ -76,6 +79,7 @@ export function useImplementerRegistry(enabled = true) {
     activeNames,
     loading,
     error,
+    registryReady,
     reload: load,
     createName,
     deactivateName,

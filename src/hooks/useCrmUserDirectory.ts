@@ -52,6 +52,7 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
       return;
     }
 
+    const registryLoaded = !registryRes.error;
     const registryNames = (registryRes.data || [])
       .filter((r) => r.active !== false)
       .map((r) => String(r.name ?? "").trim())
@@ -64,7 +65,7 @@ export function useCrmUserDirectory(options: UseCrmUserDirectoryOptions = {}) {
       createdAt: r.created_at,
     }));
 
-    const standardList = registryNames.length > 0 ? registryNames : [...CRM_ASSIGNEES];
+    const standardList = registryLoaded ? registryNames : [...CRM_ASSIGNEES];
     const archivedIds = archivedUserIdsFromRows(archiveRows);
 
     const managed = buildCrmManagedUsers(

@@ -14,9 +14,11 @@ export function assigneeSelectOptions(
   current?: string | null,
   registryNames: readonly string[] = [],
   historicalCtx?: HistoricalIdentityContext | null,
+  /** True after crm_implementers loaded successfully — empty list is intentional truth. */
+  registryReady = false,
 ): string[] {
   const set = new Set<string>();
-  if (registryNames.length > 0) {
+  if (registryReady || registryNames.length > 0) {
     for (const name of registryNames) {
       const trimmed = name.trim();
       if (trimmed) set.add(trimmed);
@@ -49,9 +51,10 @@ export function isRegistryImplementer(
 export function isKnownAssignee(
   name: string | null | undefined,
   activeRegistryNames: readonly string[] = [],
+  registryReady = false,
 ): boolean {
   if (!name?.trim()) return false;
-  if (activeRegistryNames.length > 0) {
+  if (registryReady || activeRegistryNames.length > 0) {
     return isRegistryImplementer(name, activeRegistryNames);
   }
   return (CRM_ASSIGNEES as readonly string[]).includes(name.trim());

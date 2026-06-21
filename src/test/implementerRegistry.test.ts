@@ -35,10 +35,27 @@ describe("implementerRegistry", () => {
           riskFlags: [],
         } as CrmManagedUser,
       ],
+      undefined,
+      true,
     );
     expect(catalog).not.toContain("Peter");
     expect(catalog).toContain("Ján");
     expect(catalog).toContain("Eva");
+  });
+
+  it("does not resurrect CRM_ASSIGNEES when registry loaded but empty", () => {
+    const catalog = mergeImplementerCatalog([], [], undefined, true);
+    expect(catalog).toEqual([]);
+    expect(catalog).not.toContain("Peter");
+  });
+
+  it("simulates add/remove cycle without resurrecting deleted legacy names", () => {
+    const afterAdd = mergeImplementerCatalog([{ name: "Nový", active: true }], [], undefined, true);
+    expect(afterAdd).toEqual(["Nový"]);
+
+    const afterRemove = mergeImplementerCatalog([], [], undefined, true);
+    expect(afterRemove).toEqual([]);
+    expect(afterRemove).not.toContain("Peter");
   });
 
   it("detects active registry name collision", () => {
