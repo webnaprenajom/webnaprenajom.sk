@@ -48,6 +48,15 @@ import {
   COMMISSION_PAYOUT_STATUS_LABELS,
   type PayoutRecordLike,
 } from "@/lib/finance/commissionPayoutStatus";
+import {
+  validateCommissionPaidPayoutDetails,
+  commissionPaidPayoutDbErrorMessage,
+} from "@/lib/commissionPayoutValidation";
+import {
+  formatCommissionAmountHint,
+  resolveCommissionPersistedAmount,
+  type CommissionAmountMode,
+} from "@/lib/commissionAmount";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -78,7 +87,9 @@ function emptyForm(defaultTitle?: string): CommissionFormState & { id: string } 
     date: todayISO(),
     title: defaultTitle || "",
     implementer: "",
+    amount_mode: "fixed",
     amount: "",
+    rate_percent: "",
     payment_status: "unpaid",
     payment_form: "",
     note: "",
@@ -153,16 +164,19 @@ export function EntityCommissionsPanel({
     setDialogOpen(true);
   };
 
-  const openEdit = (c: CommissionRow) => {
+  const openEdit = (c: CommissionRow, patch?: Partial<CommissionFormState>) => {
     setForm({
       id: c.id,
       date: c.date,
       title: c.title,
       implementer: c.implementer,
+      amount_mode: (c.amount_mode as CommissionAmountMode) || "fixed",
       amount: String(c.amount ?? ""),
+      rate_percent: c.rate_percent != null ? String(c.rate_percent) : "",
       payment_status: c.payment_status as "paid" | "unpaid",
       payment_form: (c.payment_form as PaymentFormValue) || "",
       note: c.note ?? "",
+      ...patch,
     });
     setDialogOpen(true);
   };
@@ -176,6 +190,32 @@ export function EntityCommissionsPanel({
       toast({ title: "Vyplň názov a realizátora", variant: "destructive" });
       return false;
     }
+
+    const amountMode: CommissionAmountMode =
+      sourceType === "project" && form.amount_mode === "percent" ? "percent" : "fixed";
+    const resolvedAmount = resolveCommissionPersistedAmount({
+      amount_mode: amountMode,
+      amount: form.amount,
+      rate_percent: form.rate_percent,
+      revenue: revenueAmount ?? 0,
+      operatingCost,
+    });
+    if (!resolvedAmount.ok) {
+      toast({ title: "Neplatná provízia", description: resolvedAmount.error, variant: "destructive" });
+      return false;
+    }
+
+    const paidValidation = validateCommissionPaidPayoutDetails({
+      payment_status: form.payment_status,
+      payment_form: form.payment_form,
+      note: form.note,
+      source_type: sourceType,
+    });
+    if (!paidValidation.valid) {
+      toast({ title: "Chýbajú údaje výplaty", description: paidValidation.message, variant: "destructive" });
+      return false;
+    }
+
     setSaving(true);
     const linked = await resolveCustomerLinkFields({
       customer_id: customerId,
@@ -186,7 +226,9 @@ export function EntityCommissionsPanel({
       date: form.date || todayISO(),
       title: form.title.trim(),
       implementer: form.implementer.trim(),
-      amount: parseFloat(form.amount.replace(",", ".")) || 0,
+      amount_mode: amountMode,
+      rate_percent: resolvedAmount.rate_percent,
+      amount: resolvedAmount.amount,
       payment_status: form.payment_status,
       payment_form: form.payment_form || null,
       note: form.note.trim() || null,
@@ -200,7 +242,12 @@ export function EntityCommissionsPanel({
       : await supabase.from("commissions").insert(payload).select("id").maybeSingle();
     setSaving(false);
     if (error) {
-      toast({ title: "Chyba uloženia", description: error.message, variant: "destructive" });
+      const dbMsg = commissionPaidPayoutDbErrorMessage(error.message);
+      toast({
+        title: "Chyba uloženia",
+        description: dbMsg ?? error.message,
+        variant: "destructive",
+      });
       return false;
     }
     const recordId = saved?.id ?? form.id;
@@ -248,12 +295,34 @@ export function EntityCommissionsPanel({
       return;
     }
     const next = c.payment_status === "paid" ? "unpaid" : "paid";
+    if (next === "paid") {
+      const paidValidation = validateCommissionPaidPayoutDetails({
+        payment_status: "paid",
+        payment_form: c.payment_form,
+        note: c.note,
+        source_type: sourceType,
+      });
+      if (!paidValidation.valid) {
+        toast({
+          title: "Pred označením ako vyplatené",
+          description: paidValidation.message,
+          variant: "destructive",
+        });
+        openEdit(c, { payment_status: "paid" });
+        return;
+      }
+    }
     const { error } = await supabase
       .from("commissions")
       .update({ payment_status: next })
       .eq("id", c.id);
     if (error) {
-      toast({ title: "Chyba uloženia", description: error.message, variant: "destructive" });
+      const dbMsg = commissionPaidPayoutDbErrorMessage(error.message);
+      toast({
+        title: "Chyba uloženia",
+        description: dbMsg ?? error.message,
+        variant: "destructive",
+      });
       return;
     }
     if (next === "paid") {
@@ -333,7 +402,20 @@ export function EntityCommissionsPanel({
       </TableCell>
       <TableCell className="text-sm">{resolveCommissionSourceLabel(c)}</TableCell>
       <TableCell className="text-sm">{formatImplementerLabel(c.implementer, historicalIdentity)}</TableCell>
-      <TableCell className="text-right font-medium">{fmtEur(Number(c.amount || 0))}</TableCell>
+      <TableCell className="text-right font-medium">
+        <div className="flex flex-col items-end gap-0.5">
+          <span>{fmtEur(Number(c.amount || 0))}</span>
+          {c.amount_mode === "percent" && c.rate_percent != null && (
+            <span className="text-[10px] text-muted-foreground font-normal">
+              {formatCommissionAmountHint({
+                amount_mode: "percent",
+                rate_percent: Number(c.rate_percent),
+                amount: Number(c.amount || 0),
+              })}
+            </span>
+          )}
+        </div>
+      </TableCell>
       <TableCell className="text-xs hidden md:table-cell">{paymentFormLabel(c.payment_form)}</TableCell>
       <TableCell>
         {canToggle ? (
@@ -452,6 +534,9 @@ export function EntityCommissionsPanel({
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="font-semibold">{fmtEur(Number(c.amount || 0))}</span>
+                  {c.amount_mode === "percent" && c.rate_percent != null && (
+                    <span className="text-xs text-muted-foreground">{Number(c.rate_percent)}%</span>
+                  )}
                   {canToggle ? (
                     <button type="button" onClick={() => void togglePaymentStatus(c)}>
                       <Badge variant="outline" className={`text-[10px] cursor-pointer ${STATUS_CLASS[c.payment_status] ?? ""}`}>
@@ -500,7 +585,15 @@ export function EntityCommissionsPanel({
           </>
         }
       >
-        <CommissionFormFields form={form} onChange={(patch) => setForm({ ...form, ...patch })} />
+        <CommissionFormFields
+          form={form}
+          onChange={(patch) => setForm({ ...form, ...patch })}
+          allowPercentMode={sourceType === "project"}
+          revenueAmount={revenueAmount}
+          operatingCost={operatingCost}
+          revenueKnown={revenueKnown}
+          sourceType={sourceType}
+        />
       </AdminDialog>
 
       <FactConfirmDialog

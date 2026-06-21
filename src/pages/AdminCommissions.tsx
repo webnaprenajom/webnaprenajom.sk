@@ -71,6 +71,10 @@ import {
   type PayoutRecordLike,
 } from "@/lib/finance/commissionPayoutStatus";
 import {
+  validateCommissionPaidPayoutDetails,
+  commissionPaidPayoutDbErrorMessage,
+} from "@/lib/commissionPayoutValidation";
+import {
   Loader2,
   Wallet,
   Plus,
@@ -277,6 +281,17 @@ export function CommissionsExpensesContent() {
       client_name: form.title,
     });
 
+    const paidValidation = validateCommissionPaidPayoutDetails({
+      payment_status: form.payment_status,
+      payment_form: form.payment_form,
+      note: form.note,
+      source_type,
+    });
+    if (!paidValidation.valid) {
+      toast({ title: "Chýbajú údaje výplaty", description: paidValidation.message, variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
     const payload = {
       date: form.date || todayISO(),
@@ -295,7 +310,11 @@ export function CommissionsExpensesContent() {
       ? await supabase.from("commissions").update(payload).eq("id", form.id).select("id").maybeSingle()
       : await supabase.from("commissions").insert(payload).select("id").maybeSingle();
     setSaving(false);
-    if (error) { toast({ title: "Chyba uloženia", description: error.message, variant: "destructive" }); return; }
+    if (error) {
+      const dbMsg = commissionPaidPayoutDbErrorMessage(error.message);
+      toast({ title: "Chyba uloženia", description: dbMsg ?? error.message, variant: "destructive" });
+      return;
+    }
     const recordId = saved?.id ?? form.id;
     if (recordId && !form.id) {
       logEntityCommunicationEventSafe({
@@ -328,9 +347,28 @@ export function CommissionsExpensesContent() {
       return;
     }
     const next: PaymentStatus = c.payment_status === "paid" ? "unpaid" : "paid";
+    if (next === "paid") {
+      const paidValidation = validateCommissionPaidPayoutDetails({
+        payment_status: "paid",
+        payment_form: c.payment_form,
+        note: c.note,
+        source_type: c.source_type,
+      });
+      if (!paidValidation.valid) {
+        toast({
+          title: "Pred označením ako vyplatené",
+          description: `${paidValidation.message} Upravte províziu v dialógu.`,
+          variant: "destructive",
+        });
+        openEdit(c);
+        setForm((prev) => ({ ...prev, payment_status: "paid" as PaymentStatus }));
+        return;
+      }
+    }
     const { error } = await supabase.from("commissions").update({ payment_status: next }).eq("id", c.id);
     if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+      const dbMsg = commissionPaidPayoutDbErrorMessage(error.message);
+      toast({ title: "Chyba", description: dbMsg ?? error.message, variant: "destructive" });
       return;
     }
     if (next === "paid") {

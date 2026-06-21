@@ -32,6 +32,8 @@ export interface CommissionRow {
   title: string;
   implementer: string;
   amount: number;
+  amount_mode?: "fixed" | "percent" | string | null;
+  rate_percent?: number | null;
   payment_status: string;
   note: string | null;
   date: string;

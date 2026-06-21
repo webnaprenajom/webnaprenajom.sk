@@ -8,12 +8,16 @@ import {
   type CommissionSourceType,
 } from "@/lib/commissionSource";
 import type { Database } from "@/integrations/supabase/types";
+import type { CommissionAmountMode } from "@/lib/commissionAmount";
+import { validateCommissionPaidPayoutDetails } from "@/lib/commissionPayoutValidation";
 
 type CommissionInsertPayload = Database["public"]["Tables"]["commissions"]["Insert"];
 
 export type CommissionInsertInput = {
   title: string;
   amount: number;
+  amount_mode?: CommissionAmountMode;
+  rate_percent?: number | null;
   date: string;
   implementer: string;
   payment_status?: "paid" | "unpaid";
@@ -60,12 +64,26 @@ export function buildCommissionInsertPayload(input: CommissionInsertInput): Comm
     warnings.push("Provízia nemá prepojenie na klienta — customer 360 ju neuvidí.");
   }
 
+  const paidValidation = validateCommissionPaidPayoutDetails({
+    payment_status: input.payment_status ?? "unpaid",
+    payment_form: input.payment_form,
+    note: input.note,
+    source_type: source.source_type,
+  });
+  if (!paidValidation.valid) {
+    return { ok: false, error: paidValidation.message, warnings };
+  }
+
+  const amountMode: CommissionAmountMode = input.amount_mode ?? "fixed";
+
   return {
     ok: true,
     warnings,
     payload: {
       title: input.title.trim(),
       amount: input.amount,
+      amount_mode: amountMode,
+      rate_percent: amountMode === "percent" ? (input.rate_percent ?? null) : null,
       date: input.date,
       implementer,
       payment_status: input.payment_status ?? "unpaid",
