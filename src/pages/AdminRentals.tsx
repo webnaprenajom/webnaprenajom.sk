@@ -180,6 +180,186 @@ function rentalProfitBannerProps(
   };
 }
 
+const statusStyle = (st: PaymentStatus) => {
+  switch (st) {
+    case "invoice":
+      return "bg-orange-500/20 border-orange-500/50 text-orange-500 hover:bg-orange-500/30";
+    case "paid":
+      return "bg-green-500/20 border-green-500/50 text-green-500 hover:bg-green-500/30";
+    case "unpaid":
+      return "bg-red-500/20 border-red-500/50 text-red-500 hover:bg-red-500/30";
+    default:
+      return "bg-muted/30 border-border text-muted-foreground hover:bg-muted/60";
+  }
+};
+
+const statusIcon = (st: PaymentStatus, month: number) => {
+  if (st === "invoice") return <FileText className="w-3.5 h-3.5" />;
+  if (st === "paid") return <Check className="w-3.5 h-3.5" />;
+  if (st === "unpaid") return <X className="w-3.5 h-3.5" />;
+  return <span className="text-[10px] tabular-nums">{month}</span>;
+};
+
+function RentalMonthGrid({
+  website,
+  year,
+  paymentMap,
+  monthPrice,
+  onCycle,
+  compact = false,
+}: {
+  website: RentalWebsite;
+  year: number;
+  paymentMap: Map<string, RentalPayment>;
+  monthPrice: (w: RentalWebsite, month: number) => number;
+  onCycle: (w: RentalWebsite, month: number) => void;
+  compact?: boolean;
+}) {
+  const btnClass = compact ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9";
+  return (
+    <div className="grid grid-cols-6 gap-1 max-w-full" role="group" aria-label={`Platby ${year}`}>
+      {MONTHS.map((label, i) => {
+        const month = i + 1;
+        const p = paymentMap.get(`${website.id}-${year}-${month}`);
+        const st: PaymentStatus = (p?.status as PaymentStatus) || "none";
+        const hasCustom = p?.custom_price != null;
+        const price = monthPrice(website, month);
+        return (
+          <button
+            key={month}
+            type="button"
+            onClick={() => onCycle(website, month)}
+            className={`${btnClass} rounded-md border flex items-center justify-center transition-colors relative shrink-0 ${statusStyle(st)}`}
+            title={`${label} · ${price}€${hasCustom ? " (vlastná cena)" : ""}`}
+          >
+            {statusIcon(st, month)}
+            {hasCustom && (
+              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-primary border border-background" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function RentalIdentityBlock({
+  website,
+  clientEmailMap,
+  isImplementerKnown,
+}: {
+  website: RentalWebsite;
+  clientEmailMap: Map<string, string>;
+  isImplementerKnown: (name: string) => boolean;
+}) {
+  return (
+    <div className="min-w-0 space-y-0.5">
+      <div className="font-medium truncate">{website.name}</div>
+      {website.url && (
+        <a
+          href={website.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-primary hover:underline break-all"
+        >
+          {website.url}
+        </a>
+      )}
+      {website.client_name && (
+        <div className="text-xs text-muted-foreground space-y-0.5">
+          <div>{website.client_name}</div>
+          {customerHrefByClientName(website.client_name, clientEmailMap) ? (
+            <Link
+              to={customerHrefByClientName(website.client_name, clientEmailMap)!}
+              className="text-primary hover:underline"
+              title="Zhoda podľa mena klienta v pipeline"
+            >
+              Zákazník 360°
+            </Link>
+          ) : null}
+        </div>
+      )}
+      {website.rental_start_date && (
+        <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+          <CalendarDays className="w-3 h-3 shrink-0" />
+          od {new Date(website.rental_start_date).toLocaleDateString("sk-SK")}
+        </div>
+      )}
+      {(website.implementers || []).length > 0 && (
+        <div className="flex flex-wrap gap-1 pt-0.5">
+          {website.implementers.map((imp, i) => (
+            <Badge
+              key={i}
+              variant="outline"
+              className={`text-[10px] ${
+                isImplementerKnown(imp.name)
+                  ? "bg-primary/5 border-primary/30 text-primary"
+                  : "bg-orange-500/10 border-orange-500/40 text-orange-600"
+              }`}
+              title={
+                isImplementerKnown(imp.name)
+                  ? undefined
+                  : "Meno nie je v registri realizátorov — zváž doplnenie v Nastaveniach"
+              }
+            >
+              {imp.name} {imp.percentage}%
+              {!isImplementerKnown(imp.name) ? " ⚠" : ""}
+            </Badge>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RentalYearStatsBadges({ stats }: { stats: { paid: number; invoiced: number; unpaid: number } }) {
+  return (
+    <div className="flex flex-wrap gap-1 justify-end">
+      <Badge className="bg-green-500/15 text-green-500 border-green-500/30 text-[10px]">
+        {stats.paid.toFixed(0)}€
+      </Badge>
+      <Badge className="bg-orange-500/15 text-orange-500 border-orange-500/30 text-[10px]">
+        {stats.invoiced.toFixed(0)}€
+      </Badge>
+      <Badge className="bg-red-500/15 text-red-500 border-red-500/30 text-[10px]">
+        {stats.unpaid.toFixed(0)}€
+      </Badge>
+    </div>
+  );
+}
+
+function RentalRowActions({
+  website,
+  onPrices,
+  onEdit,
+  onDelete,
+}: {
+  website: RentalWebsite;
+  onPrices: (w: RentalWebsite) => void;
+  onEdit: (w: RentalWebsite) => void;
+  onDelete: (w: RentalWebsite) => void;
+}) {
+  return (
+    <div className="flex flex-wrap justify-end gap-1">
+      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onPrices(website)} title="Vlastné ceny po mesiacoch">
+        <Euro className="w-4 h-4 text-primary" />
+      </Button>
+      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onEdit(website)}>
+        <Pencil className="w-4 h-4" />
+      </Button>
+      <Button
+        size="icon"
+        variant="ghost"
+        className="h-8 w-8"
+        title="Zmazať prenájom"
+        onClick={() => onDelete(website)}
+      >
+        <Trash2 className="w-4 h-4 text-destructive" />
+      </Button>
+    </div>
+  );
+}
+
 export default function AdminRentals() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -758,26 +938,6 @@ export default function AdminRentals() {
     );
   }, [websites, searchQuery]);
 
-  const statusStyle = (st: PaymentStatus) => {
-    switch (st) {
-      case "invoice":
-        return "bg-orange-500/20 border-orange-500/50 text-orange-500 hover:bg-orange-500/30";
-      case "paid":
-        return "bg-green-500/20 border-green-500/50 text-green-500 hover:bg-green-500/30";
-      case "unpaid":
-        return "bg-red-500/20 border-red-500/50 text-red-500 hover:bg-red-500/30";
-      default:
-        return "bg-muted/30 border-border text-muted-foreground hover:bg-muted/60";
-    }
-  };
-
-  const statusIcon = (st: PaymentStatus, month: number) => {
-    if (st === "invoice") return <FileText className="w-4 h-4" />;
-    if (st === "paid") return <Check className="w-4 h-4" />;
-    if (st === "unpaid") return <X className="w-4 h-4" />;
-    return <span className="text-xs">{month}</span>;
-  };
-
   return (
     <AdminShell
       title="Weby na prenájom"
@@ -807,7 +967,7 @@ export default function AdminRentals() {
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
       ) : (
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0">
         <p className="text-xs text-muted-foreground">{FINANCE_TRUTH_DISCLAIMER}</p>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
@@ -900,167 +1060,148 @@ export default function AdminRentals() {
           placeholder="Hľadať web, klienta, URL, realizátora…"
         />
 
-        <div className="rounded-lg border border-border bg-card overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[200px]">Web / Klient</TableHead>
-                <TableHead className="min-w-[120px]">Zdroj</TableHead>
-                <TableHead>Cena/mes</TableHead>
-                <TableHead className="text-right whitespace-nowrap">Kredity</TableHead>
-                {MONTHS.map((m, i) => (
-                  <TableHead key={i} className="text-center px-2">{m}</TableHead>
-                ))}
-                <TableHead className="text-right">Uhradené</TableHead>
-                <TableHead className="text-right">Faktúry</TableHead>
-                <TableHead className="text-right">Dlh</TableHead>
-                <TableHead className="text-right">Akcie</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {websites.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={20} className="text-center text-muted-foreground py-10">
-                    Žiadne weby. Pridaj prvý.
-                  </TableCell>
-                </TableRow>
-              )}
-              {websites.length > 0 && filteredWebsites.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={20} className="text-center text-muted-foreground py-10">
-                    Žiadna zhoda pre vyhľadávanie.
-                  </TableCell>
-                </TableRow>
-              )}
+        {websites.length === 0 && (
+          <p className="text-center text-muted-foreground py-10 text-sm rounded-lg border border-dashed border-border">
+            Žiadne weby. Pridaj prvý.
+          </p>
+        )}
+        {websites.length > 0 && filteredWebsites.length === 0 && (
+          <p className="text-center text-muted-foreground py-10 text-sm rounded-lg border border-dashed border-border">
+            Žiadna zhoda pre vyhľadávanie.
+          </p>
+        )}
+
+        {filteredWebsites.length > 0 && (
+          <>
+            <div className="space-y-3 md:hidden min-w-0">
               {filteredWebsites.map((w) => {
                 const stats = yearStats(w);
                 const credits = Number(w.credits_used) || 0;
                 const creditCost = credits * CREDIT_COST;
                 return (
-                  <TableRow key={w.id}>
-                    <TableCell>
-                      <div className="font-medium">{w.name}</div>
-                      {w.url && (
-                        <a href={w.url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">
-                          {w.url}
-                        </a>
-                      )}
-                      {w.client_name && (
-                        <div className="text-xs text-muted-foreground space-y-0.5">
-                          <div>{w.client_name}</div>
-                          {customerHrefByClientName(w.client_name, clientEmailMap) ? (
-                            <Link
-                              to={customerHrefByClientName(w.client_name, clientEmailMap)!}
-                              className="text-primary hover:underline"
-                              title="Zhoda podľa mena klienta v pipeline"
-                            >
-                              Zákazník 360°
-                            </Link>
-                          ) : null}
-                        </div>
-                      )}
-                      {w.rental_start_date && (
-                        <div className="text-[11px] text-muted-foreground inline-flex items-center gap-1 mt-0.5">
-                          <CalendarDays className="w-3 h-3" />
-                          od {new Date(w.rental_start_date).toLocaleDateString("sk-SK")}
-                        </div>
-                      )}
-                      {(w.implementers || []).length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {w.implementers.map((imp, i) => (
-                            <Badge
-                              key={i}
-                              variant="outline"
-                              className={`text-[10px] ${
-                                isImplementerKnown(imp.name)
-                                  ? "bg-primary/5 border-primary/30 text-primary"
-                                  : "bg-orange-500/10 border-orange-500/40 text-orange-600"
-                              }`}
-                              title={
-                                isImplementerKnown(imp.name)
-                                  ? undefined
-                                  : "Meno nie je v registri realizátorov — zváž doplnenie v Nastaveniach"
-                              }
-                            >
-                              {imp.name} {imp.percentage}%
-                              {!isImplementerKnown(imp.name) ? " ⚠" : ""}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {w.source ? (
-                        <Badge variant="outline" className="font-normal">{w.source}</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-mono text-sm">{Number(w.monthly_price).toFixed(0)}€</TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
-                      <div className="font-mono text-sm">{credits}</div>
-                      <div className="text-[10px] text-purple-500">−{fmtEur(creditCost)}</div>
-                    </TableCell>
-                    {MONTHS.map((_, i) => {
-                      const month = i + 1;
-                      const p = paymentMap.get(`${w.id}-${year}-${month}`);
-                      const st: PaymentStatus = (p?.status as PaymentStatus) || "none";
-                      const hasCustom = p?.custom_price != null;
-                      const price = monthPrice(w, month);
-                      return (
-                        <TableCell key={i} className="text-center px-1">
-                          <button
-                            onClick={() => cyclePayment(w, month)}
-                            className={`w-9 h-9 rounded-md border flex items-center justify-center transition-colors mx-auto relative ${statusStyle(st)}`}
-                            title={`${MONTHS[i]} · ${price}€${hasCustom ? " (vlastná cena)" : ""}`}
-                          >
-                            {statusIcon(st, month)}
-                            {hasCustom && (
-                              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary border border-background" />
-                            )}
-                          </button>
-                        </TableCell>
-                      );
-                    })}
-                    <TableCell className="text-right">
-                      <Badge className="bg-green-500/15 text-green-500 border-green-500/30">{stats.paid.toFixed(0)}€</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge className="bg-orange-500/15 text-orange-500 border-orange-500/30">{stats.invoiced.toFixed(0)}€</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge className="bg-red-500/15 text-red-500 border-red-500/30">{stats.unpaid.toFixed(0)}€</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => openPrices(w)} title="Vlastné ceny po mesiacoch">
-                          <Euro className="w-4 h-4 text-primary" />
-                        </Button>
-                        <Button size="icon" variant="ghost" onClick={() => openRentalEdit(w)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          title="Zmazať prenájom"
-                          onClick={() =>
-                            void requestDelete({
-                              entityType: "rental_website",
-                              entityId: w.id,
-                              entityLabel: w.name,
-                            })
-                          }
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                  <article key={w.id} className="rounded-xl border border-border bg-card p-3 space-y-3 min-w-0">
+                    <RentalIdentityBlock
+                      website={w}
+                      clientEmailMap={clientEmailMap}
+                      isImplementerKnown={isImplementerKnown}
+                    />
+                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      {w.source ? <Badge variant="outline">{w.source}</Badge> : null}
+                      <span className="font-mono">{Number(w.monthly_price).toFixed(0)}€/mes</span>
+                      <span>
+                        Kredity {credits} (−{fmtEur(creditCost)})
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">
+                        Platby {year}
+                      </p>
+                      <RentalMonthGrid
+                        website={w}
+                        year={year}
+                        paymentMap={paymentMap}
+                        monthPrice={monthPrice}
+                        onCycle={cyclePayment}
+                        compact
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <RentalYearStatsBadges stats={stats} />
+                      <RentalRowActions
+                        website={w}
+                        onPrices={openPrices}
+                        onEdit={openRentalEdit}
+                        onDelete={(site) =>
+                          void requestDelete({
+                            entityType: "rental_website",
+                            entityId: site.id,
+                            entityLabel: site.name,
+                          })
+                        }
+                      />
+                    </div>
+                  </article>
                 );
               })}
-            </TableBody>
-          </Table>
-        </div>
+            </div>
+
+            <div className="hidden md:block rounded-lg border border-border bg-card min-w-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-0 w-[28%]">Web / Klient</TableHead>
+                    <TableHead className="hidden lg:table-cell w-[10%]">Zdroj</TableHead>
+                    <TableHead className="whitespace-nowrap w-[7%]">Cena</TableHead>
+                    <TableHead className="text-right whitespace-nowrap w-[8%]">Kredity</TableHead>
+                    <TableHead className="w-[11rem] max-w-[11rem]">Platby {year}</TableHead>
+                    <TableHead className="text-right w-[9%]">Súhrn</TableHead>
+                    <TableHead className="text-right w-[7rem]">Akcie</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredWebsites.map((w) => {
+                    const stats = yearStats(w);
+                    const credits = Number(w.credits_used) || 0;
+                    const creditCost = credits * CREDIT_COST;
+                    return (
+                      <TableRow key={w.id}>
+                        <TableCell className="min-w-0 align-top">
+                          <RentalIdentityBlock
+                            website={w}
+                            clientEmailMap={clientEmailMap}
+                            isImplementerKnown={isImplementerKnown}
+                          />
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell align-top">
+                          {w.source ? (
+                            <Badge variant="outline" className="font-normal">
+                              {w.source}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm align-top whitespace-nowrap">
+                          {Number(w.monthly_price).toFixed(0)}€
+                        </TableCell>
+                        <TableCell className="text-right align-top whitespace-nowrap">
+                          <div className="font-mono text-sm">{credits}</div>
+                          <div className="text-[10px] text-purple-500">−{fmtEur(creditCost)}</div>
+                        </TableCell>
+                        <TableCell className="align-top p-2">
+                          <RentalMonthGrid
+                            website={w}
+                            year={year}
+                            paymentMap={paymentMap}
+                            monthPrice={monthPrice}
+                            onCycle={cyclePayment}
+                          />
+                        </TableCell>
+                        <TableCell className="text-right align-top">
+                          <RentalYearStatsBadges stats={stats} />
+                        </TableCell>
+                        <TableCell className="text-right align-top">
+                          <RentalRowActions
+                            website={w}
+                            onPrices={openPrices}
+                            onEdit={openRentalEdit}
+                            onDelete={(site) =>
+                              void requestDelete({
+                                entityType: "rental_website",
+                                entityId: site.id,
+                                entityLabel: site.name,
+                              })
+                            }
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </>
+        )}
       </div>
       )}
 

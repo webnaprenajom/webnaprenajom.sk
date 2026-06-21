@@ -19,7 +19,8 @@ export interface UseCrmViewRestoreOptions {
 }
 
 /**
- * Persist open modal while active; restore once per saved snapshot (no focus loops).
+ * Persist open modal while active; restore once per saved snapshot on mount only.
+ * Tab focus/visibility must NOT re-trigger restore — in-memory modal state stays put.
  * Pilots must call clearCrmViewState() when modal closes (save / discard / clean close).
  */
 export function useCrmViewRestore({
@@ -69,12 +70,6 @@ export function useCrmViewRestore({
     };
 
     tryRestore();
-
-    const onVisible = () => {
-      if (document.visibilityState === "visible") tryRestore();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
   }, [enabled, location.pathname, route]);
 
   useEffect(() => {

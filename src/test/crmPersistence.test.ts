@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it, beforeEach } from "vitest";
 import {
   buildDraftKey,
@@ -89,6 +91,11 @@ describe("crmPersistence viewRestoreStore", () => {
       updatedAt: 12345,
     };
     expect(buildPilotRestoreKey(state)).toBe("/admin:lead-detail:abc:12345");
+  });
+
+  it("view restore is mount-only — no visibilitychange handler in hook source", () => {
+    const src = readFileSync(join(process.cwd(), "src/hooks/useCrmViewRestore.ts"), "utf8");
+    expect(src).not.toContain("visibilitychange");
   });
 });
 

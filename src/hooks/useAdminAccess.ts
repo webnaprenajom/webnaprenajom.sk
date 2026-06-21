@@ -122,16 +122,33 @@ export const useAdminAccess = (): AppAccessState => {
 
         const access = await resolveAccess(user);
         if (!active) return;
-        setState({
-          authChecking: false,
-          isAdmin: access.isAdmin,
-          isUser: access.isUser,
-          isCrmUser: isCrmUser(access.role),
-          role: access.role,
-          userEmail: user.email ?? "",
-          userId: user.id,
-          implementerName: access.implementerName,
-          displayName: access.displayName,
+        const nextEmail = user.email ?? "";
+        setState((prev) => {
+          const next: AppAccessState = {
+            authChecking: false,
+            isAdmin: access.isAdmin,
+            isUser: access.isUser,
+            isCrmUser: isCrmUser(access.role),
+            role: access.role,
+            userEmail: nextEmail,
+            userId: user.id,
+            implementerName: access.implementerName,
+            displayName: access.displayName,
+          };
+          if (
+            prev.authChecking === next.authChecking &&
+            prev.isAdmin === next.isAdmin &&
+            prev.isUser === next.isUser &&
+            prev.isCrmUser === next.isCrmUser &&
+            prev.role === next.role &&
+            prev.userEmail === next.userEmail &&
+            prev.userId === next.userId &&
+            prev.implementerName === next.implementerName &&
+            prev.displayName === next.displayName
+          ) {
+            return prev;
+          }
+          return next;
         });
       } catch (error) {
         console.error("[useAdminAccess] resolution failed", error);
