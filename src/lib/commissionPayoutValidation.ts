@@ -60,5 +60,11 @@ export function commissionPaidPayoutDbErrorMessage(errorMessage: string): string
   if (errorMessage.includes("paid_commission_requires_note")) {
     return "Pred uložením stavu „vyplatené“ vyplňte poznámku k výplate.";
   }
+  if (
+    errorMessage.toLowerCase().includes("amount_mode") &&
+    errorMessage.toLowerCase().includes("schema cache")
+  ) {
+    return "Databáza nemá stĺpce amount_mode/rate_percent. Spustite migráciu 20260621130000 (supabase db push) alebo uložte bez percentuálneho režimu.";
+  }
   return null;
 }

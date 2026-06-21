@@ -74,6 +74,7 @@ import {
   validateCommissionPaidPayoutDetails,
   commissionPaidPayoutDbErrorMessage,
 } from "@/lib/commissionPayoutValidation";
+import { evaluateCommissionDelete } from "@/lib/commissionDelete";
 import {
   Loader2,
   Wallet,
@@ -335,7 +336,14 @@ export function CommissionsExpensesContent() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Naozaj zmazať túto províziu?")) return;
+    const row = items.find((c) => c.id === id);
+    if (!row) return;
+    const gate = evaluateCommissionDelete(id, payoutRecords);
+    if (!gate.canDelete) {
+      toast({ title: "Zmazanie zablokované", description: gate.blockReason ?? undefined, variant: "destructive" });
+      return;
+    }
+    if (!confirm(`Naozaj zmazať províziu „${row.title}"? Táto akcia je nevratná.`)) return;
     const { error } = await supabase.from("commissions").delete().eq("id", id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else { toast({ title: "Zmazané" }); load(); }

@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Plus, Pencil } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2 } from "lucide-react";
 import {
   COMMISSION_SOURCE_LABELS,
   type CommissionSourceType,
@@ -57,6 +57,12 @@ import {
   resolveCommissionPersistedAmount,
   type CommissionAmountMode,
 } from "@/lib/commissionAmount";
+import { evaluateCommissionDelete } from "@/lib/commissionDelete";
+import {
+  loadCommissionSchemaCapabilities,
+  omitCommissionPercentFields,
+  type CommissionSchemaCapabilities,
+} from "@/lib/commissionSchemaCapabilities";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -120,6 +126,7 @@ export function EntityCommissionsPanel({
   const [form, setForm] = useState(emptyForm(defaultTitle));
   const [payoutFactDraft, setPayoutFactDraft] = useState<FactDraft | null>(null);
   const [payoutFactOpen, setPayoutFactOpen] = useState(false);
+  const [schemaCaps, setSchemaCaps] = useState<CommissionSchemaCapabilities | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -159,6 +166,10 @@ export function EntityCommissionsPanel({
     void load();
   }, [load]);
 
+  useEffect(() => {
+    void loadCommissionSchemaCapabilities().then(setSchemaCaps);
+  }, []);
+
   const openNew = () => {
     setForm(emptyForm(defaultTitle));
     setDialogOpen(true);
@@ -192,7 +203,11 @@ export function EntityCommissionsPanel({
     }
 
     const amountMode: CommissionAmountMode =
-      sourceType === "project" && form.amount_mode === "percent" ? "percent" : "fixed";
+      schemaCaps?.percentMode !== false &&
+      sourceType === "project" &&
+      form.amount_mode === "percent"
+        ? "percent"
+        : "fixed";
     const resolvedAmount = resolveCommissionPersistedAmount({
       amount_mode: amountMode,
       amount: form.amount,
@@ -222,21 +237,24 @@ export function EntityCommissionsPanel({
       customer_email: customerEmail,
       client_name: form.title,
     });
-    const payload = {
-      date: form.date || todayISO(),
-      title: form.title.trim(),
-      implementer: form.implementer.trim(),
-      amount_mode: amountMode,
-      rate_percent: resolvedAmount.rate_percent,
-      amount: resolvedAmount.amount,
-      payment_status: form.payment_status,
-      payment_form: form.payment_form || null,
-      note: form.note.trim() || null,
-      source_type: sourceType,
-      source_id: sourceId,
-      customer_email: linked.customer_email,
-      customer_id: linked.customer_id,
-    };
+    const payload = omitCommissionPercentFields(
+      {
+        date: form.date || todayISO(),
+        title: form.title.trim(),
+        implementer: form.implementer.trim(),
+        amount_mode: amountMode,
+        rate_percent: resolvedAmount.rate_percent,
+        amount: resolvedAmount.amount,
+        payment_status: form.payment_status,
+        payment_form: form.payment_form || null,
+        note: form.note.trim() || null,
+        source_type: sourceType,
+        source_id: sourceId,
+        customer_email: linked.customer_email,
+        customer_id: linked.customer_id,
+      },
+      schemaCaps ?? { percentMode: true },
+    );
     const { data: saved, error } = form.id
       ? await supabase.from("commissions").update(payload).eq("id", form.id).select("id").maybeSingle()
       : await supabase.from("commissions").insert(payload).select("id").maybeSingle();
@@ -278,6 +296,37 @@ export function EntityCommissionsPanel({
     setDialogOpen(false);
     void load();
     return true;
+  };
+
+  const remove = async (c: CommissionRow) => {
+    if (!canWrite) {
+      toast({ title: writeDeniedMessage("Zmazanie provízie"), variant: "destructive" });
+      return;
+    }
+    const gate = evaluateCommissionDelete(c.id, payoutRecords);
+    if (!gate.canDelete) {
+      toast({ title: "Zmazanie zablokované", description: gate.blockReason ?? undefined, variant: "destructive" });
+      return;
+    }
+    if (!confirm(`Naozaj zmazať províziu „${c.title}"? Táto akcia je nevratná.`)) return;
+
+    const { error } = await supabase.from("commissions").delete().eq("id", c.id);
+    if (error) {
+      toast({ title: "Chyba zmazania", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (access.userId) {
+      void logAdminAuditEvent({
+        actorUserId: access.userId,
+        actionType: AUDIT_ACTION_TYPES.commission_status_changed,
+        targetType: "commission",
+        targetId: c.id,
+        summary: `Provízia zmazaná: ${c.title}`,
+        before: { amount: c.amount, implementer: c.implementer },
+      });
+    }
+    toast({ title: "Provízia zmazaná" });
+    void load();
   };
 
   const closeCommissionDialog = () => setDialogOpen(false);
@@ -395,6 +444,7 @@ export function EntityCommissionsPanel({
 
   const renderRow = (c: CommissionRow) => {
     const canToggle = canToggleCommissionPaymentStatus(access, c.implementer);
+    const deleteGate = evaluateCommissionDelete(c.id, payoutRecords);
     return (
     <>
       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
@@ -433,9 +483,20 @@ export function EntityCommissionsPanel({
       <TableCell className="text-xs">{renderPayoutBadge(c)}</TableCell>
       <TableCell className="text-right">
         {canWrite ? (
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
-            <Pencil className="w-3.5 h-3.5" />
-          </Button>
+          <div className="flex justify-end gap-0.5">
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
+              <Pencil className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-destructive hover:text-destructive"
+              title={deleteGate.canDelete ? "Zmazať províziu" : deleteGate.blockReason ?? undefined}
+              onClick={() => void remove(c)}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         ) : null}
       </TableCell>
     </>
@@ -527,9 +588,19 @@ export function EntityCommissionsPanel({
                     </p>
                   </div>
                   {canWrite && (
-                    <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => openEdit(c)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
+                    <div className="flex shrink-0">
+                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-destructive"
+                        onClick={() => void remove(c)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -585,10 +656,17 @@ export function EntityCommissionsPanel({
           </>
         }
       >
-        <CommissionFormFields
+      {schemaCaps?.percentMode === false && sourceType === "project" && (
+        <p className="text-[10px] text-amber-700 dark:text-amber-400 border border-amber-500/30 rounded-lg p-2 bg-amber-500/5">
+          Percentuálny režim provízie je vypnutý — databáza ešte nemá migráciu amount_mode. Použite pevnú sumu
+          alebo spustite <code className="text-[10px]">supabase db push</code>.
+        </p>
+      )}
+
+      <CommissionFormFields
           form={form}
           onChange={(patch) => setForm({ ...form, ...patch })}
-          allowPercentMode={sourceType === "project"}
+          allowPercentMode={sourceType === "project" && schemaCaps?.percentMode !== false}
           revenueAmount={revenueAmount}
           operatingCost={operatingCost}
           revenueKnown={revenueKnown}

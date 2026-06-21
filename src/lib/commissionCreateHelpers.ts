@@ -10,6 +10,7 @@ import {
 import type { Database } from "@/integrations/supabase/types";
 import type { CommissionAmountMode } from "@/lib/commissionAmount";
 import { validateCommissionPaidPayoutDetails } from "@/lib/commissionPayoutValidation";
+import type { CommissionSchemaCapabilities } from "@/lib/commissionSchemaCapabilities";
 
 type CommissionInsertPayload = Database["public"]["Tables"]["commissions"]["Insert"];
 
@@ -33,7 +34,10 @@ export type CommissionInsertBuildResult =
   | { ok: true; payload: CommissionInsertPayload; warnings: string[]; error?: never }
   | { ok: false; payload?: never; error: string; warnings: string[] };
 
-export function buildCommissionInsertPayload(input: CommissionInsertInput): CommissionInsertBuildResult {
+export function buildCommissionInsertPayload(
+  input: CommissionInsertInput,
+  schemaCaps?: CommissionSchemaCapabilities,
+): CommissionInsertBuildResult {
   const warnings: string[] = [];
   const implementer = input.implementer?.trim() || "";
   if (!input.title?.trim()) {
@@ -74,26 +78,32 @@ export function buildCommissionInsertPayload(input: CommissionInsertInput): Comm
     return { ok: false, error: paidValidation.message, warnings };
   }
 
-  const amountMode: CommissionAmountMode = input.amount_mode ?? "fixed";
+  const amountMode: CommissionAmountMode =
+    schemaCaps?.percentMode === false ? "fixed" : (input.amount_mode ?? "fixed");
+
+  const payload: CommissionInsertPayload = {
+    title: input.title.trim(),
+    amount: input.amount,
+    date: input.date,
+    implementer,
+    payment_status: input.payment_status ?? "unpaid",
+    payment_form: input.payment_form ?? null,
+    note: input.note?.trim() || null,
+    source_type: source.source_type,
+    source_id: source.source_id,
+    customer_id: input.customer_id ?? null,
+    customer_email: input.customer_email ?? null,
+  };
+
+  if (schemaCaps?.percentMode !== false) {
+    payload.amount_mode = amountMode;
+    payload.rate_percent = amountMode === "percent" ? (input.rate_percent ?? null) : null;
+  }
 
   return {
     ok: true,
     warnings,
-    payload: {
-      title: input.title.trim(),
-      amount: input.amount,
-      amount_mode: amountMode,
-      rate_percent: amountMode === "percent" ? (input.rate_percent ?? null) : null,
-      date: input.date,
-      implementer,
-      payment_status: input.payment_status ?? "unpaid",
-      payment_form: input.payment_form ?? null,
-      note: input.note?.trim() || null,
-      source_type: source.source_type,
-      source_id: source.source_id,
-      customer_id: input.customer_id ?? null,
-      customer_email: input.customer_email ?? null,
-    },
+    payload,
   };
 }
 
