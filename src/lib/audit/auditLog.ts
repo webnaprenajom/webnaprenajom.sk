@@ -17,6 +17,12 @@ export const AUDIT_ACTION_TYPES = {
   operating_cost_changed: "operating_cost_changed",
   finance_config_changed: "finance_config_changed",
   entity_deleted: "entity_deleted",
+  entity_created: "entity_created",
+  entity_updated: "entity_updated",
+  status_changed: "status_changed",
+  payment_recorded: "payment_recorded",
+  payout_recorded: "payout_recorded",
+  cost_recorded: "cost_recorded",
 } as const;
 
 export type AuditActionType = (typeof AUDIT_ACTION_TYPES)[keyof typeof AUDIT_ACTION_TYPES];

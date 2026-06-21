@@ -24,6 +24,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { CRM_HISTORY_ACTIONS, logCrmEvent } from "@/lib/history/logCrmEvent";
 import {
   Select,
   SelectContent,
@@ -52,6 +54,7 @@ import {
 import { resolveFormCustomerLink } from "@/lib/crmLookup/resolveFormCustomerLink";
 
 export function ProjectNotesView() {
+  const access = useAdminAccess();
   const [items, setItems] = useState<ProjectNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -148,6 +151,25 @@ export function ProjectNotesView() {
     }
 
     const recordId = insertResult.id;
+    if (access.userId) {
+      const actionType = statusChanged
+        ? CRM_HISTORY_ACTIONS.status_changed
+        : editing.id
+          ? CRM_HISTORY_ACTIONS.entity_updated
+          : CRM_HISTORY_ACTIONS.entity_created;
+      logCrmEvent({
+        actorUserId: access.userId,
+        actionType,
+        entityType: "project_notes",
+        entityId: recordId,
+        entityLabel: payload.title,
+        summary: statusChanged
+          ? `Projekt ${payload.title}: zmena stavu na ${payload.status}`
+          : editing.id
+            ? `Upravený projekt: ${payload.title}`
+            : `Vytvorený projekt: ${payload.title}`,
+      });
+    }
     if (linked.lead_id && linked.customer_id) {
       await linkLeadAfterDelivery(linked.lead_id, linked.customer_id);
     }
@@ -188,9 +210,20 @@ export function ProjectNotesView() {
 
   const remove = async (id: string) => {
     if (!confirm("Naozaj zmazať tento projekt?")) return;
+    const row = items.find((i) => i.id === id);
     const { error } = await supabase.from("project_notes").delete().eq("id", id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
     else {
+      if (access.userId) {
+        logCrmEvent({
+          actorUserId: access.userId,
+          actionType: CRM_HISTORY_ACTIONS.entity_deleted,
+          entityType: "project_notes",
+          entityId: id,
+          entityLabel: row?.title ?? id,
+          summary: `Zmazaný projekt: ${row?.title ?? id}`,
+        });
+      }
       toast({ title: "Zmazané" });
       void load();
     }

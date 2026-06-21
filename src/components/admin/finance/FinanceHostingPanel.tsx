@@ -18,6 +18,8 @@ import { AdminLongTextField } from "@/components/admin/AdminLongTextField";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
 import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { CRM_HISTORY_ACTIONS, logCrmEvent } from "@/lib/history/logCrmEvent";
 import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -64,6 +66,7 @@ const emptyForm = () => ({
 });
 
 export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
+  const access = useAdminAccess();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({ onSuccess: onSaved });
@@ -252,6 +255,17 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
         idempotency_key: `hosting_records:${insertResult.id}:created`,
         metadata: { action: "created" },
       });
+
+      if (access.userId) {
+        logCrmEvent({
+          actorUserId: access.userId,
+          actionType: CRM_HISTORY_ACTIONS.entity_created,
+          entityType: "hosting_records",
+          entityId: insertResult.id,
+          entityLabel: linked.client_name || form.provider || "Hosting",
+          summary: `Vytvorený hosting: ${linked.client_name || form.provider || insertResult.id}`,
+        });
+      }
 
       toast({
         title: "Hosting vytvorený",

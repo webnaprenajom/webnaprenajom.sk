@@ -59,6 +59,7 @@ import {
 import { ImplementerCommissionDetailDialog } from "@/components/admin/rentals/ImplementerCommissionDetailDialog";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { CRM_HISTORY_ACTIONS, logCrmEvent } from "@/lib/history/logCrmEvent";
 import { useStableAccessLoad } from "@/hooks/useStableAccessLoad";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
 import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
@@ -659,6 +660,18 @@ export default function AdminRentals() {
       return false;
     }
     const recordId = res.data?.id ?? editing.id;
+    if (accessCtx.userId && recordId) {
+      logCrmEvent({
+        actorUserId: accessCtx.userId,
+        actionType: isCreate ? CRM_HISTORY_ACTIONS.entity_created : CRM_HISTORY_ACTIONS.entity_updated,
+        entityType: "rental_websites",
+        entityId: recordId,
+        entityLabel: editing.name,
+        summary: isCreate
+          ? `Vytvorený prenájom: ${editing.name}`
+          : `Upravený prenájom: ${editing.name}`,
+      });
+    }
     if (isCreate && recordId) {
       logEntityCommunicationEventSafe({
         kind: "rental_event",

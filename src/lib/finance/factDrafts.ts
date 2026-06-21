@@ -13,6 +13,7 @@ import {
   taskPaymentSourceId,
   type TaskPaymentVariant,
 } from "@/lib/finance/entityPaymentBridge";
+import { CRM_HISTORY_ACTIONS, logCrmEvent } from "@/lib/history/logCrmEvent";
 import { upsertPaymentFactForSource } from "@/lib/finance/syncFinanceFact";
 
 type PaymentRecordInsert = Database["public"]["Tables"]["payment_records"]["Insert"];
@@ -494,7 +495,39 @@ export function isIssueActionable(issue: ReconciliationIssue, ctx: FinanceRawCon
   return prefillFromReconciliationIssue(issue, ctx) != null;
 }
 
-export async function saveFactDraft(draft: FactDraft): Promise<void> {
+function logFactDraftHistory(draft: FactDraft, opts?: { actorUserId?: string }) {
+  if (!opts?.actorUserId) return;
+  const amount = Number(draft.amount);
+  const entityType =
+    draft.kind === "payment"
+      ? "payment_records"
+      : draft.kind === "payout"
+        ? "payout_records"
+        : "cost_records";
+  const actionType =
+    draft.kind === "payment"
+      ? CRM_HISTORY_ACTIONS.payment_recorded
+      : draft.kind === "payout"
+        ? CRM_HISTORY_ACTIONS.payout_recorded
+        : CRM_HISTORY_ACTIONS.cost_recorded;
+  logCrmEvent({
+    actorUserId: opts.actorUserId,
+    actionType,
+    entityType,
+    entityId: draft.source_id ?? null,
+    summary: `Potvrdený ${draft.kind === "payment" ? "platobný" : draft.kind === "payout" ? "výplatný" : "nákladový"} záznam: ${amount} €`,
+    after: {
+      amount,
+      source_table: draft.source_table ?? null,
+      source_id: draft.source_id ?? null,
+    },
+  });
+}
+
+export async function saveFactDraft(
+  draft: FactDraft,
+  opts?: { actorUserId?: string },
+): Promise<void> {
   const amount = Number(draft.amount);
   if (!amount || amount <= 0) throw new Error("Neplatná suma");
 
@@ -517,10 +550,12 @@ export async function saveFactDraft(draft: FactDraft): Promise<void> {
         source_id: draft.source_id,
       });
       if (!result.ok) throw new Error(result.error);
+      logFactDraftHistory(draft, opts);
       return;
     }
     const { error } = await supabase.from("payment_records").insert(payload as PaymentRecordInsert);
     if (error) throw error;
+    logFactDraftHistory(draft, opts);
     return;
   }
 
@@ -540,6 +575,7 @@ export async function saveFactDraft(draft: FactDraft): Promise<void> {
     }
     const { error } = await supabase.from("payout_records").insert(payload as PayoutRecordInsert);
     if (error) throw error;
+    logFactDraftHistory(draft, opts);
     return;
   }
 
@@ -564,4 +600,5 @@ export async function saveFactDraft(draft: FactDraft): Promise<void> {
   }
   const { error } = await supabase.from("cost_records").insert(payload as CostRecordInsert);
   if (error) throw error;
+  logFactDraftHistory(draft, opts);
 }

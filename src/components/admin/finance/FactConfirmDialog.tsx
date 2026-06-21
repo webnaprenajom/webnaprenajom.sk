@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminDialog } from "@/components/admin/AdminDialog";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { PAYMENT_FORM_OPTIONS } from "@/lib/paymentForm";
@@ -29,6 +30,7 @@ export function FactConfirmDialog({
   mode = "create",
   onSaved,
 }: FactConfirmDialogProps) {
+  const access = useAdminAccess();
   const [form, setForm] = useState<FactDraft | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -57,7 +59,7 @@ export function FactConfirmDialog({
         await updatePayoutRecord(active.recordId, active);
         toast({ title: "Výplata upravená" });
       } else {
-        await saveFactDraft(active);
+        await saveFactDraft(active, { actorUserId: access.userId ?? undefined });
         toast({ title: "Potvrdený záznam vytvorený" });
       }
       closeDialog();

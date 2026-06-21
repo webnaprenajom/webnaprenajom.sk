@@ -19,6 +19,8 @@ import { toast } from "@/hooks/use-toast";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
 import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
+import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { CRM_HISTORY_ACTIONS, logCrmEvent } from "@/lib/history/logCrmEvent";
 import { buildDraftKey, clearCrmDraft } from "@/lib/crmPersistence/draftStore";
 import { clearCrmViewState } from "@/lib/crmPersistence/viewRestoreStore";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
@@ -125,6 +127,7 @@ export function FinanceRecordsCrud({
   costRecords,
   onSaved,
 }: FinanceRecordsCrudProps) {
+  const access = useAdminAccess();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState<RecordKind>("payment");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -391,6 +394,25 @@ export function FinanceRecordsCrud({
           if (error) throw error;
         }
       }
+      if (access.userId) {
+        const entityType =
+          kind === "payment" ? "payment_records" : kind === "payout" ? "payout_records" : "cost_records";
+        const actionType = editId
+          ? CRM_HISTORY_ACTIONS.entity_updated
+          : kind === "payment"
+            ? CRM_HISTORY_ACTIONS.payment_recorded
+            : kind === "payout"
+              ? CRM_HISTORY_ACTIONS.payout_recorded
+              : CRM_HISTORY_ACTIONS.cost_recorded;
+        logCrmEvent({
+          actorUserId: access.userId,
+          actionType,
+          entityType,
+          entityId: editId,
+          summary: `${editId ? "Upravený" : "Zaznamenaný"} ${kind === "payment" ? "platobný" : kind === "payout" ? "výplatný" : "nákladový"} záznam: ${fmtEur(amount)}`,
+          after: { amount, note: form.note || null },
+        });
+      }
       toast({ title: editId ? "Uložené" : "Vytvorené" });
       discardFinanceDraft();
       clearCrmViewState();
@@ -437,6 +459,15 @@ export function FinanceRecordsCrud({
     if (error) {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
       return;
+    }
+    if (access.userId) {
+      logCrmEvent({
+        actorUserId: access.userId,
+        actionType: CRM_HISTORY_ACTIONS.entity_deleted,
+        entityType: table,
+        entityId: id,
+        summary: `Zmazaný finančný záznam (${k}): ${id}`,
+      });
     }
     toast({ title: "Zmazané" });
     onSaved();

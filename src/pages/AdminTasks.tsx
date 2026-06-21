@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { CRM_HISTORY_ACTIONS, logCrmEvent } from "@/lib/history/logCrmEvent";
 import { useStableAccessLoad } from "@/hooks/useStableAccessLoad";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
 import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
@@ -382,6 +383,18 @@ const AdminTasks = () => {
       toast({ title: "Chyba", description: error.message, variant: "destructive" });
       return false;
     }
+    if (accessCtx.userId) {
+      logCrmEvent({
+        actorUserId: accessCtx.userId,
+        actionType: form.id ? CRM_HISTORY_ACTIONS.entity_updated : CRM_HISTORY_ACTIONS.entity_created,
+        entityType: "tasks",
+        entityId: form.id ?? null,
+        entityLabel: form.title.trim(),
+        summary: form.id
+          ? `Upravená úloha: ${form.title.trim()}`
+          : `Vytvorená úloha: ${form.title.trim()}`,
+      });
+    }
     toast({ title: form.id ? "Úloha upravená" : "Úloha pridaná" });
     discardTaskDraft();
     clearCrmViewState();
@@ -400,9 +413,22 @@ const AdminTasks = () => {
 
   const remove = async (id: string) => {
     if (!confirm("Naozaj zmazať túto úlohu?")) return;
+    const row = items.find((t) => t.id === id);
     const { error } = await supabase.from("tasks").delete().eq("id", id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else { toast({ title: "Zmazané" }); load(); }
+    else {
+      if (accessCtx.userId) {
+        logCrmEvent({
+          actorUserId: accessCtx.userId,
+          actionType: CRM_HISTORY_ACTIONS.entity_deleted,
+          entityType: "tasks",
+          entityId: id,
+          entityLabel: row?.title ?? id,
+          summary: `Zmazaná úloha: ${row?.title ?? id}`,
+        });
+      }
+      toast({ title: "Zmazané" }); load();
+    }
   };
 
   const changeStatus = async (id: string, status: TaskStatus) => {
@@ -417,7 +443,21 @@ const AdminTasks = () => {
     }
     const { error } = await supabase.from("tasks").update({ status }).eq("id", id);
     if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else load();
+    else {
+      if (accessCtx.userId && row) {
+        logCrmEvent({
+          actorUserId: accessCtx.userId,
+          actionType: CRM_HISTORY_ACTIONS.status_changed,
+          entityType: "tasks",
+          entityId: id,
+          entityLabel: row.title,
+          summary: `Úloha ${row.title}: stav ${row.status} → ${status}`,
+          before: { status: row.status },
+          after: { status },
+        });
+      }
+      load();
+    }
   };
 
   const filtered = useMemo(() => {

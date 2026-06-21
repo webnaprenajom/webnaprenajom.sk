@@ -7,10 +7,11 @@ import { OwnerPasswordChangePanel } from "@/components/admin/settings/OwnerPassw
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { canAccessSettings } from "@/lib/rbac/permissions";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { TeamSetupDiagnostics } from "@/components/admin/settings/TeamSetupDiagnostics";
 import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
 import { AccessReviewPanel } from "@/components/admin/settings/AccessReviewPanel";
-import { AuditLogPanel } from "@/components/admin/settings/AuditLogPanel";
+import { Link } from "react-router-dom";
 
 const settingsSectionClass = "rounded-xl border border-border bg-card p-3 space-y-2.5";
 
@@ -76,11 +77,13 @@ export default function AdminSettings() {
             </section>
 
             <section className={settingsSectionClass}>
-              <h2 className="text-sm font-semibold">Auditný denník</h2>
+              <h2 className="text-sm font-semibold">Audit a história</h2>
               <p className="text-xs text-muted-foreground">
-                Posledné citlivé admin akcie (role, profily, provízie).
+                Admin akcie (role, profily, provízie, mazania) sú v jednotnej sekcii História.
               </p>
-              <AuditLogPanel />
+              <Button asChild size="sm" variant="outline" className="h-8 text-xs">
+                <Link to="/admin/logs">Otvoriť Históriu CRM</Link>
+              </Button>
             </section>
           </div>
         )}
