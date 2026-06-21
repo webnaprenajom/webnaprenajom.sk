@@ -131,13 +131,7 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Katalóg mien realizátorov pre provízie a team profile. Historické{" "}
-        <code className="text-[10px]">commissions.implementer</code> sa nemenia — meno je len
-        identita pre nové záznamy a RLS.
-      </p>
-
+    <div className="space-y-2.5">
       <div className="flex flex-wrap gap-2 items-end">
         <div className="space-y-1 flex-1 min-w-[12rem]">
           <Label className="text-xs">Nové meno realizátora</Label>
@@ -153,7 +147,7 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
         </Button>
       </div>
 
-      <div className="rounded-xl border overflow-x-auto">
+      <div className="rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -198,7 +192,7 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="text-xs text-muted-foreground h-7"
+                      className="text-[11px] h-7 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
                       disabled={saving}
                       onClick={() => setPendingDeactivate(entry.name)}
                     >

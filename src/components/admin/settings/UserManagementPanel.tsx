@@ -509,43 +509,47 @@ export function UserManagementPanel() {
   }
 
   return (
-    <div className="space-y-6">
-      <ImplementerRegistryPanel registry={registry} managedUsers={withRole} />
+    <div className="space-y-5">
+      <div className="space-y-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            CRM používatelia a role
+          </h3>
+          <span className="text-[10px] text-muted-foreground tabular-nums">
+            {withRole.length} aktívnych
+          </span>
+        </div>
 
-      <div className="space-y-4">
-      <p className="text-xs text-muted-foreground">
-        Owner vidí celé CRM a financie. Administrator vidí len vlastné provízie — musí mať team profile
-        s menom realizátora (rovnaké ako v províziách). Spravujte účty podľa mena a e-mailu; interné ID
-        zostáva len v technických detailoch.
+      <p className="text-xs text-muted-foreground leading-snug">
+        Owner = plný prístup. Administrator = scoped provízie cez team profile a meno realizátora.
       </p>
 
       {pendingReviewMessage && (
         <div
-          className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs flex gap-2"
+          className="rounded-md border border-amber-500/35 bg-amber-500/8 px-3 py-2 text-xs flex gap-2"
           role="status"
         >
-          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
           <p>{pendingReviewMessage}</p>
         </div>
       )}
 
       {usersMissingProfile.length > 0 && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-xs flex gap-2">
-          <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+        <div className="rounded-md border border-amber-500/35 bg-amber-500/8 px-3 py-2 text-xs flex gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
           <p>
-            <strong>{usersMissingProfile.length}</strong> používateľ(ov) s rolou administrator nemá team
-            profile — neuvidia provízie, kým im nepriradíte implementera.
+            <strong>{usersMissingProfile.length}</strong> administrator(ov) bez team profile — neuvidia
+            provízie.
           </p>
         </div>
       )}
 
       {orphanProfiles.length > 0 && (
-        <div className="rounded-lg border border-orange-500/40 bg-orange-500/10 p-3 text-xs flex gap-2">
-          <AlertTriangle className="w-4 h-4 text-orange-600 shrink-0" />
+        <div className="rounded-md border border-orange-500/35 bg-orange-500/8 px-3 py-2 text-xs flex gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 text-orange-600 shrink-0 mt-0.5" />
           <p>
-            <strong>{orphanProfiles.length}</strong> auth účet(ov) má aktívny team profile bez CRM role
-            (historický stav). Pri opätovnom onboardingu môže blokovať meno realizátora — deaktivujte v
-            zozname nižšie.
+            <strong>{orphanProfiles.length}</strong> účet(ov) s orphan profilom — deaktivujte pred novým
+            priradením.
           </p>
         </div>
       )}
@@ -553,26 +557,27 @@ export function UserManagementPanel() {
       <CrmUserDirectoryFilters filters={filters} onChange={setFilters} />
 
       {archives.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          Odstránení z CRM ({archives.length}): historická identita sa zobrazuje v províziách, úlohách a
-          histórii ako „Meno (historická rola)“.
+        <p className="text-[10px] text-muted-foreground">
+          Archivovaní ({archives.length}) — v histórii a financiách ako „(historická rola)“.
         </p>
       )}
 
-      <ul className="divide-y rounded-xl border text-sm">
+      <ul className="divide-y rounded-lg border text-sm">
         {filteredManaged.length === 0 && (
-          <li className="p-4 text-muted-foreground italic text-center">
+          <li className="p-4 text-muted-foreground italic text-center text-xs">
             {withRole.length === 0
               ? "Žiadni používatelia s rolou."
-              : "Žiadni používatelia nezodpovedajú filtru. Skúste iné meno alebo e-mail."}
+              : "Žiadna zhoda pre filter."}
           </li>
         )}
         {filteredManaged.map((user) => (
-          <li key={user.roleRowId ?? user.userId} className="p-3 flex flex-wrap items-start gap-2 justify-between">
-            <CrmUserIdentity user={user} duplicateNames={duplicateNames} />
-            <div className="flex flex-col items-end gap-2 shrink-0 min-w-[10rem]">
-              <div className="flex gap-2 flex-wrap items-center justify-end">
-                <Badge variant="outline">{user.role}</Badge>
+          <li key={user.roleRowId ?? user.userId} className="p-3 space-y-3">
+            <div className="flex flex-wrap items-start gap-3 justify-between">
+              <CrmUserIdentity user={user} duplicateNames={duplicateNames} />
+              <div className="flex flex-wrap gap-1.5 items-center justify-end">
+                <Badge variant="outline" className="text-[10px]">
+                  {user.role}
+                </Badge>
                 {user.implementerName && (
                   <Badge variant="secondary" className="text-[10px]">
                     {user.implementerName}
@@ -580,12 +585,12 @@ export function UserManagementPanel() {
                 )}
                 {user.missingProfile && (
                   <Badge variant="destructive" className="text-[10px]">
-                    Chýba team profile
+                    Chýba profil
                   </Badge>
                 )}
                 {user.profileActive && user.role === "administrator" && (
-                  <Badge variant="outline" className="text-[10px] text-green-600 border-green-500/40">
-                    Aktívny realizátor
+                  <Badge variant="outline" className="text-[10px] text-green-700 border-green-500/40">
+                    Aktívny
                   </Badge>
                 )}
                 {user.inactiveProfile && (
@@ -594,107 +599,116 @@ export function UserManagementPanel() {
                   </Badge>
                 )}
               </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 items-end justify-end sm:justify-start">
               {user.role === "administrator" && user.profileActive && user.implementerName && (
-                <div className="flex flex-wrap gap-2 items-end justify-end w-full">
-                  <div className="space-y-1 min-w-[10rem]">
-                    <Label className="text-[10px] text-muted-foreground">Zobrazované meno</Label>
-                    <div className="flex gap-1">
-                      <Input
-                        className="h-8 text-xs"
-                        value={
+                <div className="space-y-1 flex-1 min-w-[12rem] max-w-xs">
+                  <Label className="text-[10px] text-muted-foreground">Zobrazované meno</Label>
+                  <div className="flex gap-1">
+                    <Input
+                      className="h-8 text-xs"
+                      value={
+                        displayNameDrafts[user.userId] ??
+                        user.teamDisplayName ??
+                        user.implementerName
+                      }
+                      onChange={(e) =>
+                        setDisplayNameDrafts((prev) => ({
+                          ...prev,
+                          [user.userId]: e.target.value,
+                        }))
+                      }
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-xs shrink-0"
+                      onClick={() =>
+                        editDisplayName(
+                          user,
                           displayNameDrafts[user.userId] ??
-                          user.teamDisplayName ??
-                          user.implementerName
-                        }
-                        onChange={(e) =>
-                          setDisplayNameDrafts((prev) => ({
-                            ...prev,
-                            [user.userId]: e.target.value,
-                          }))
-                        }
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs shrink-0"
-                        onClick={() =>
-                          editDisplayName(
-                            user,
-                            displayNameDrafts[user.userId] ??
-                              user.teamDisplayName ??
-                              user.implementerName ??
-                              "",
-                          )
-                        }
-                      >
-                        Uložiť
-                      </Button>
-                    </div>
+                            user.teamDisplayName ??
+                            user.implementerName ??
+                            "",
+                        )
+                      }
+                    >
+                      Uložiť
+                    </Button>
                   </div>
                 </div>
               )}
-              <div className="flex flex-wrap gap-2 items-end justify-end">
+              <div className="space-y-1">
+                <Label className="text-[10px] text-muted-foreground">Rola</Label>
+                <Select
+                  value={user.role ?? undefined}
+                  onValueChange={(v) => changeRole(user, v as AppRole)}
+                >
+                  <SelectTrigger className="h-8 w-[9rem] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CRM_ROLES.map((r) => (
+                      <SelectItem key={r} value={r} className="text-xs">
+                        {r === "owner" ? "Owner" : "Administrator"}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {user.role === "administrator" && (
                 <div className="space-y-1">
-                  <Label className="text-[10px] text-muted-foreground">Rola</Label>
+                  <Label className="text-[10px] text-muted-foreground">Implementer</Label>
                   <Select
-                    value={user.role ?? undefined}
-                    onValueChange={(v) => changeRole(user, v as AppRole)}
+                    value={user.implementerName || undefined}
+                    onValueChange={(v) => assignProfile(user, v)}
                   >
-                    <SelectTrigger className="h-8 w-[9.5rem] text-xs">
-                      <SelectValue />
+                    <SelectTrigger className="h-8 w-[9rem] text-xs">
+                      <SelectValue placeholder="Vyberte…" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CRM_ROLES.map((r) => (
-                        <SelectItem key={r} value={r} className="text-xs">
-                          {r === "owner" ? "Owner" : "Administrator"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {user.role === "administrator" && (
-                  <div className="space-y-1">
-                    <Label className="text-[10px] text-muted-foreground">Implementer</Label>
-                    <Select
-                      value={user.implementerName || undefined}
-                      onValueChange={(v) => assignProfile(user, v)}
-                    >
-                      <SelectTrigger className="h-8 w-[9.5rem] text-xs">
-                        <SelectValue placeholder="Vyberte…" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {assigneeSelectOptions(user.implementerName, implementerCatalog, historicalIdentity).map(
-                          (name) => (
+                      {assigneeSelectOptions(user.implementerName, implementerCatalog, historicalIdentity).map(
+                        (name) => (
                           <SelectItem key={name} value={name} className="text-xs">
                             {name}
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-md border border-destructive/20 bg-destructive/[0.04] px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[10px] text-muted-foreground">
+                <span className="font-medium text-destructive/90">Rizikové akcie</span>
+                <span className="hidden sm:inline"> — nevratné alebo obmedzujú prístup</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-[11px] text-destructive border-destructive/35 hover:bg-destructive/10"
+                  onClick={() => removeFromCrm(user)}
+                  disabled={!canRemoveOwnerRole(withRole, user)}
+                >
+                  Odstrániť z CRM
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 text-[11px] text-muted-foreground hover:text-destructive"
+                  onClick={() => removeRole(user)}
+                  disabled={!canRemoveOwnerRole(withRole, user)}
+                  title="Odstrániť len rolu — účet zostane na opätovné priradenie"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" />
+                  Odstrániť rolu
+                </Button>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 text-xs text-destructive border-destructive/40"
-                onClick={() => removeFromCrm(user)}
-                disabled={!canRemoveOwnerRole(withRole, user)}
-              >
-                Odstrániť z CRM
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="text-destructive"
-                onClick={() => removeRole(user)}
-                disabled={!canRemoveOwnerRole(withRole, user)}
-                aria-label={`Odstrániť rolu ${user.displayName}`}
-                title="Odstrániť len rolu (účet zostane v zozname na opätovné priradenie)"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
             </div>
           </li>
         ))}
@@ -702,9 +716,9 @@ export function UserManagementPanel() {
 
       <div
         id={PENDING_AUTH_USER_REVIEW_HASH}
-        className="rounded-xl border p-4 space-y-3 bg-muted/20 scroll-mt-4"
+        className="rounded-lg border border-dashed border-border/80 p-3 space-y-2.5 scroll-mt-4"
       >
-        <h3 className="text-sm font-semibold">Pridať používateľa do CRM</h3>
+        <h4 className="text-xs font-semibold">Pridať používateľa do CRM</h4>
         <p className="text-xs text-muted-foreground">
           Vyberte existujúci auth účet (podľa mena alebo e-mailu). Nový účet musí byť najprv vytvorený
           prihlásením alebo pozvánkou — tu len priraďujete CRM rolu.
@@ -815,6 +829,17 @@ export function UserManagementPanel() {
         <Button size="sm" onClick={addUser} disabled={!selectedAddUser}>
           <Plus className="w-4 h-4 mr-1" /> Pridať do CRM
         </Button>
+      </div>
+      </div>
+
+      <div className="space-y-3 pt-2 border-t border-border/60">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Katalóg realizátorov
+        </h3>
+        <p className="text-[10px] text-muted-foreground leading-snug">
+          Mená pre provízie a priradenia. Historické záznamy v financiách sa nemenia.
+        </p>
+        <ImplementerRegistryPanel registry={registry} managedUsers={withRole} />
       </div>
 
       <ConfirmSensitiveActionDialog
@@ -934,7 +959,6 @@ export function UserManagementPanel() {
         destructive={pending?.kind === "remove" || pending?.kind === "remove_from_crm"}
         onConfirm={confirmPending}
       />
-      </div>
     </div>
   );
 }

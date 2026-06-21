@@ -7,13 +7,36 @@ import { OwnerPasswordChangePanel } from "@/components/admin/settings/OwnerPassw
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { canAccessSettings } from "@/lib/rbac/permissions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { TeamSetupDiagnostics } from "@/components/admin/settings/TeamSetupDiagnostics";
 import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
 import { AccessReviewPanel } from "@/components/admin/settings/AccessReviewPanel";
-import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
 
-const settingsSectionClass = "rounded-xl border border-border bg-card p-3 space-y-2.5";
+type SettingsSectionProps = {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  tone?: "default" | "muted" | "admin";
+};
+
+function SettingsSection({ title, description, children, tone = "default" }: SettingsSectionProps) {
+  const toneClass =
+    tone === "muted"
+      ? "border-border/60 bg-muted/15"
+      : tone === "admin"
+        ? "border-primary/15 bg-card"
+        : "border-border bg-card";
+
+  return (
+    <section className={`rounded-lg border ${toneClass} p-4 space-y-3`}>
+      <div className="space-y-0.5">
+        <h2 className="text-sm font-semibold tracking-tight text-foreground">{title}</h2>
+        {description ? <p className="text-xs text-muted-foreground leading-snug">{description}</p> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 export default function AdminSettings() {
   const access = useAdminAccess();
@@ -27,80 +50,79 @@ export default function AdminSettings() {
       title="Nastavenia"
       subtitle={
         access.isAdmin
-          ? "Účet, tím, e-mail a vzhľad"
-          : "Účet a vzhľad — správa tímu len pre admina"
+          ? "Účet, tím a prístupy"
+          : "Účet a vzhľad — správa tímu len pre ownera"
       }
     >
-      <div className="max-w-5xl space-y-4">
+      <div className="max-w-4xl space-y-5">
         <TeamProfileNotice />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <section className={settingsSectionClass}>
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold">Účet</h2>
-              {access.role && (
-                <Badge variant="outline" className="text-[10px]">
-                  {access.role}
-                  {access.implementerName ? ` · ${access.implementerName}` : ""}
-                </Badge>
+        <SettingsSection title="Môj účet" description="Prihlásený profil a heslo.">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Identita</p>
+                {access.role && (
+                  <Badge variant="outline" className="text-[10px]">
+                    {access.role}
+                    {access.implementerName ? ` · ${access.implementerName}` : ""}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm">{access.userEmail}</p>
+              {access.displayName && (
+                <p className="text-xs text-muted-foreground">{access.displayName}</p>
               )}
+              {access.userEmail && <OwnerPasswordChangePanel email={access.userEmail} />}
             </div>
-            <p className="text-sm text-muted-foreground">{access.userEmail}</p>
-            {access.displayName && (
-              <p className="text-xs text-muted-foreground">Profil: {access.displayName}</p>
-            )}
-            {access.userEmail && <OwnerPasswordChangePanel email={access.userEmail} />}
-          </section>
-
-          <section className={settingsSectionClass}>
-            <h2 className="text-sm font-semibold">Vzhľad</h2>
-            <p className="text-xs text-muted-foreground">Prepínač svetlého / tmavého režimu</p>
-            <AdminThemeToggle />
-          </section>
-        </div>
+            <div className="space-y-2 sm:border-l sm:border-border/60 sm:pl-4">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Vzhľad</p>
+              <AdminThemeToggle />
+            </div>
+          </div>
+        </SettingsSection>
 
         {access.userId && (
-          <section className={settingsSectionClass}>
-            <h2 className="text-sm font-semibold">E-mail a synchronizácia</h2>
+          <SettingsSection title="E-mail a synchronizácia" tone="muted">
             <EmailAccountSettings userId={access.userId} />
-          </section>
+          </SettingsSection>
         )}
 
         {access.isAdmin && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <section className={settingsSectionClass}>
-              <h2 className="text-sm font-semibold">Kontrola prístupov</h2>
+          <>
+            <div className="space-y-1 pt-1">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Tím a prístupy
+              </h2>
               <p className="text-xs text-muted-foreground">
-                Prehľad účtov, rolí a team profile mapovania — vhodné pred auditom alebo onboardingom.
+                Role, realizátori a mapovanie na provízie. Zmeny sa zapisujú do Histórie CRM.
               </p>
+            </div>
+
+            <SettingsSection
+              title="Kontrola prístupov"
+              description="Rýchly prehľad pred onboardingom alebo auditom."
+              tone="admin"
+            >
               <AccessReviewPanel />
-            </section>
+            </SettingsSection>
 
-            <section className={settingsSectionClass}>
-              <h2 className="text-sm font-semibold">Audit a história</h2>
-              <p className="text-xs text-muted-foreground">
-                Admin akcie (role, profily, provízie, mazania) sú v jednotnej sekcii História.
-              </p>
-              <Button asChild size="sm" variant="outline" className="h-8 text-xs">
-                <Link to="/admin/logs">Otvoriť Históriu CRM</Link>
-              </Button>
-            </section>
-          </div>
-        )}
+            <SettingsSection
+              title="Používatelia, role a realizátori"
+              description="Správa CRM účtov, team profilov a katalógu mien realizátorov."
+              tone="admin"
+            >
+              <UserManagementPanel />
+            </SettingsSection>
 
-        {access.isAdmin && (
-          <section className={settingsSectionClass}>
-            <h2 className="text-sm font-semibold">Diagnostika tímu a provízií</h2>
-            <p className="text-xs text-muted-foreground">Len pre admina — soft kontroly kvality nastavenia.</p>
-            <TeamSetupDiagnostics />
-          </section>
-        )}
-
-        {access.isAdmin && (
-          <section className={settingsSectionClass}>
-            <h2 className="text-sm font-semibold">Správa používateľov</h2>
-            <UserManagementPanel />
-          </section>
+            <SettingsSection
+              title="Diagnostika nastavenia"
+              description="Soft kontroly — neblokujú prevádzku."
+              tone="muted"
+            >
+              <TeamSetupDiagnostics />
+            </SettingsSection>
+          </>
         )}
       </div>
     </AdminShell>
