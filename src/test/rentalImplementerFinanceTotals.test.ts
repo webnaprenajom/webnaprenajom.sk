@@ -35,7 +35,7 @@ describe("rentalImplementerFinanceTotals", () => {
       commissions: [],
       year: 2026,
     });
-    expect(merged.get("Peter")?.unpaid).toBe(100);
+    expect(merged.get("Peter")?.unpaid).toBe(1200);
     expect(merged.get("Peter")?.lineCount).toBe(1);
   });
 
@@ -83,11 +83,11 @@ describe("rentalImplementerFinanceTotals", () => {
       allCommissions: [],
       year: 2026,
     });
-    expect(merged.get("Maroš")?.paidWorkflowUnaudited).toBe(100);
+    expect(merged.get("Maroš")?.paidWorkflowUnaudited).toBe(1200);
     expect(merged.get("Maroš")?.unpaid).toBe(0);
   });
 
-  it("builds finance detail rows for JSON rental shares", () => {
+  it("builds finance detail rows for canonical rental deals", () => {
     const rows = buildFinanceRentalImplementerDetailRows({
       implementer: "Peter",
       websites: [
@@ -100,10 +100,12 @@ describe("rentalImplementerFinanceTotals", () => {
       ],
       payments: [{ website_id: "w1", year: 2026, month: 1, status: "paid" }],
       commissions: [],
+      payoutRecords: [],
       year: 2026,
     });
     expect(rows).toHaveLength(1);
     expect(rows[0].websiteName).toBe("web.sk");
-    expect(rows[0].amount).toBe(50);
+    expect(rows[0].amount).toBe(600);
+    expect(rows[0].remainingAmount).toBe(600);
   });
 });

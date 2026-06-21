@@ -8,8 +8,10 @@ import type { CommissionRow } from "@/lib/commissionSource";
 import {
   type CommissionForPayoutBridge,
   type CommissionPayoutBridgeResult,
+  buildCommissionPayoutDraft,
   resolveCommissionPayoutBridgeAfterMarkPaid,
 } from "@/lib/finance/commissionPayoutBridge";
+import { toLocalInput } from "@/lib/finance/factDrafts";
 
 export type RentalCommissionMaterializeInput = {
   websiteId: string;
@@ -101,4 +103,50 @@ export async function resolveRentalJsonPayoutBridgeAfterMarkPaid(
 
   const bridge = await resolveCommissionPayoutBridgeAfterMarkPaid(bridgeTarget);
   return { ...bridge, commissionId: bridgeTarget.id };
+}
+
+/** Ensure materialized commission row exists before recording a payout (partial or full). */
+export async function ensureRentalCommissionMaterialized(
+  input: RentalCommissionMaterializeInput,
+  commissions: CommissionRow[],
+): Promise<{ commissionId: string; commission: CommissionForPayoutBridge } | null> {
+  const amount = Number(input.amount) || 0;
+  if (amount <= 0) return null;
+
+  const existing = findRentalWorkflowCommission(commissions, input);
+  if (existing) {
+    const { data, error } = await supabase
+      .from("commissions")
+      .update({
+        amount,
+        ...(input.note !== undefined ? { note: input.note?.trim() || null } : {}),
+      })
+      .eq("id", existing.id)
+      .select("id,title,amount,date,implementer,note")
+      .single();
+    if (error || !data) return null;
+    const row = data as CommissionRow;
+    return { commissionId: row.id, commission: toPayoutBridgeCommission(row) };
+  }
+
+  const built = buildCommissionInsertPayload({
+    title: `${input.websiteName} · prenájom ${input.year}`,
+    amount,
+    date: `${input.year}-12-31`,
+    implementer: input.implementer,
+    payment_status: "unpaid",
+    source_type: "rental",
+    source_id: input.websiteId,
+    customer_email: input.customerEmail ?? null,
+    note: input.note ?? null,
+  });
+  if (!built.ok) return null;
+  const { data, error } = await supabase
+    .from("commissions")
+    .insert(built.payload)
+    .select("id,title,amount,date,implementer,note")
+    .single();
+  if (error || !data) return null;
+  const row = data as CommissionRow;
+  return { commissionId: row.id, commission: toPayoutBridgeCommission(row) };
 }

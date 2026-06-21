@@ -23,11 +23,14 @@ export interface CommissionLike {
 }
 
 export interface PayoutRecordLike {
+  id?: string;
   source_table: string | null;
   source_id: string | null;
   amount: number | null;
   paid_at: string;
   truth_level: string | null;
+  note?: string | null;
+  reference?: string | null;
 }
 
 export interface CommissionPayoutInfo {
@@ -218,6 +221,7 @@ export function implementerTotalsFromCommissionPayouts(
         bump(key, {
           paidAudited: info.auditedAmount,
           paidAuditedFact: info.auditedAmount,
+          unpaid: Math.max(amount - info.auditedAmount, 0),
           lineCount: 1,
         });
         break;
@@ -225,6 +229,7 @@ export function implementerTotalsFromCommissionPayouts(
         bump(key, {
           paidAudited: info.auditedAmount,
           paidAuditedLegacy: info.auditedAmount,
+          unpaid: Math.max(amount - info.auditedAmount, 0),
           lineCount: 1,
         });
         break;

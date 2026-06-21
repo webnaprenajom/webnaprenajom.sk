@@ -386,6 +386,17 @@ export default function AdminRentals() {
     source_id?: string | null;
     customer_email?: string | null;
   }>>([]);
+  const [payoutRecords, setPayoutRecords] = useState<Array<{
+    id: string;
+    source_table: string | null;
+    source_id: string | null;
+    amount: number | null;
+    paid_at: string;
+    truth_level: string | null;
+    note: string | null;
+    reference: string | null;
+    implementer: string | null;
+  }>>([]);
   const [detailImplementer, setDetailImplementer] = useState<string | null>(null);
   const [rentalFinance, setRentalFinance] = useState<RentalFinanceCache | null>(null);
   const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({
@@ -518,11 +529,12 @@ export default function AdminRentals() {
   }, [financeTargetId]);
 
   const loadAll = async () => {
-    const [w, p, leadsRes, commRes] = await Promise.all([
+    const [w, p, leadsRes, commRes, payoutRes] = await Promise.all([
       supabase.from("rental_websites").select("*").order("created_at", { ascending: false }),
       supabase.from("rental_payments").select("*"),
       supabase.from("leads").select("name,email"),
       supabase.from("commissions").select("id,title,date,amount,payment_status,note,payment_form,implementer,source_type,source_id,customer_email"),
+      supabase.from("payout_records").select("id,source_table,source_id,amount,paid_at,truth_level,note,reference,implementer").order("paid_at", { ascending: false }),
     ]);
     if (w.error) {
       toast({
@@ -564,6 +576,9 @@ export default function AdminRentals() {
           fallback.data.map((r) => ({ ...r, payment_form: null })) as typeof commissions,
         );
       }
+    }
+    if (!payoutRes.error && payoutRes.data) {
+      setPayoutRecords(payoutRes.data as typeof payoutRecords);
     }
   };
 
@@ -1437,6 +1452,7 @@ export default function AdminRentals() {
           year={year}
           websites={websites}
           commissions={commissions}
+          payoutRecords={payoutRecords}
           clientEmailMap={clientEmailMap}
           yearStats={yearStats}
           onSaved={() => void loadAll()}

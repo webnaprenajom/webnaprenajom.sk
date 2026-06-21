@@ -7,6 +7,9 @@ import type { CommissionRow } from "@/lib/commissionSource";
 import { normalizeRentalImplementers } from "@/lib/rentalImplementers";
 import { findRentalWorkflowCommission } from "@/lib/finance/rentalCommissionPayoutBridge";
 import {
+  buildRentalCommissionDeals,
+} from "@/lib/finance/rentalCommissionDeal";
+import {
   implementerTotalsFromCommissionPayouts,
   type ImplementerFinanceTotals,
 } from "@/lib/finance/commissionPayoutStatus";
@@ -51,7 +54,7 @@ function bumpImplementerTotals(
   });
 }
 
-/** Client-paid rental revenue for one website+year (same formula as AdminRentals.yearStats). */
+/** Client-paid rental revenue for one website+year (same formula as AdminRentals.yearStats paid). */
 export function rentalYearClientPaidTotal(
   website: RentalWebsiteRow,
   payments: RentalPaymentRow[],
@@ -66,6 +69,32 @@ export function rentalYearClientPaidTotal(
     if (st === "paid") paid += amt;
   }
   return paid;
+}
+
+/** Full-year rental potential (sum of month prices) — AdminRentals.yearStats.potential. */
+export function rentalYearPotentialTotal(
+  website: RentalWebsiteRow,
+  payments: RentalPaymentRow[],
+  year: number,
+): number {
+  let potential = 0;
+  for (let m = 1; m <= 12; m++) {
+    const p = payments.find((row) => row.website_id === website.id && row.year === year && row.month === m);
+    const price = p?.custom_price != null ? Number(p.custom_price) : Number(website.monthly_price || 0);
+    potential += price;
+  }
+  return potential;
+}
+
+export function rentalYearStats(
+  website: RentalWebsiteRow,
+  payments: RentalPaymentRow[],
+  year: number,
+): { paid: number; potential: number } {
+  return {
+    paid: rentalYearClientPaidTotal(website, payments, year),
+    potential: rentalYearPotentialTotal(website, payments, year),
+  };
 }
 
 export function mergeRentalJsonIntoImplementerTotals(
@@ -83,8 +112,8 @@ export function mergeRentalJsonIntoImplementerTotals(
   const scope = opts.scopeImplementer?.trim().toLowerCase();
 
   for (const website of opts.websites) {
-    const clientPaid = rentalYearClientPaidTotal(website, opts.payments, opts.year);
-    if (clientPaid <= 0) continue;
+    const stats = rentalYearStats(website, opts.payments, opts.year);
+    if (stats.potential <= 0) continue;
 
     for (const imp of normalizeRentalImplementers(website.implementers)) {
       const pct = Number(imp.percentage) || 0;
@@ -102,7 +131,7 @@ export function mergeRentalJsonIntoImplementerTotals(
         continue;
       }
 
-      const amount = (clientPaid * pct) / 100;
+      const amount = (stats.potential * pct) / 100;
       if (amount <= 0) continue;
 
       if (imp.payment_status === "paid") {
@@ -149,54 +178,59 @@ export type FinanceRentalImplementerDetailRow = {
   websiteName: string;
   percentage: number;
   amount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  payoutStatus: RentalCommissionDeal["payoutStatus"];
   payment_status: "paid" | "unpaid";
   note?: string;
 };
 
-/** Read-side rental JSON rows for Finance implementer detail — skips materialized commissions. */
+/** Canonical rental deal rows for Finance implementer detail — one row per deal. */
 export function buildFinanceRentalImplementerDetailRows(opts: {
   implementer: string;
   websites: RentalWebsiteRow[];
   payments: RentalPaymentRow[];
   commissions: CommissionRow[];
+  payoutRecords: Array<{
+    source_table?: string | null;
+    source_id?: string | null;
+    amount?: number | null;
+    paid_at: string;
+    truth_level?: string | null;
+    note?: string | null;
+    reference?: string | null;
+    id?: string;
+  }>;
   year: number;
 }): FinanceRentalImplementerDetailRow[] {
-  const name = opts.implementer.trim().toLowerCase();
-  if (!name) return [];
+  const { rentalDeals } = buildRentalCommissionDeals({
+    implementerName: opts.implementer,
+    year: opts.year,
+    websites: opts.websites.map((w) => ({
+      id: w.id,
+      name: String(w.name ?? w.id),
+      client_name: null,
+      implementers: normalizeRentalImplementers(w.implementers),
+    })),
+    commissions: opts.commissions,
+    payoutRecords: opts.payoutRecords,
+    yearStats: (w) =>
+      rentalYearStats(
+        opts.websites.find((x) => x.id === w.id) ?? { id: w.id, monthly_price: 0 },
+        opts.payments,
+        opts.year,
+      ),
+  });
 
-  const rows: FinanceRentalImplementerDetailRow[] = [];
-  for (const website of opts.websites) {
-    const clientPaid = rentalYearClientPaidTotal(website, opts.payments, opts.year);
-    if (clientPaid <= 0) continue;
-
-    for (const imp of normalizeRentalImplementers(website.implementers)) {
-      if (imp.name.trim().toLowerCase() !== name) continue;
-      const pct = Number(imp.percentage) || 0;
-      if (pct <= 0) continue;
-
-      if (
-        findRentalWorkflowCommission(opts.commissions, {
-          websiteId: website.id,
-          implementer: imp.name,
-          year: opts.year,
-        })
-      ) {
-        continue;
-      }
-
-      const amount = (clientPaid * pct) / 100;
-      if (amount <= 0) continue;
-
-      rows.push({
-        websiteId: website.id,
-        websiteName: String(website.name ?? website.id),
-        percentage: pct,
-        amount,
-        payment_status: imp.payment_status === "paid" ? "paid" : "unpaid",
-        note: imp.note,
-      });
-    }
-  }
-
-  return rows.sort((a, b) => b.amount - a.amount);
+  return rentalDeals.map((d) => ({
+    websiteId: d.websiteId ?? d.dealKey,
+    websiteName: d.title,
+    percentage: d.percentage ?? 0,
+    amount: d.potentialCommission,
+    paidAmount: d.paidAmount,
+    remainingAmount: d.remainingAmount,
+    payoutStatus: d.payoutStatus,
+    payment_status: d.payoutStatus === "paid" || d.payoutStatus === "overpaid" ? "paid" : "unpaid",
+    note: d.note,
+  }));
 }

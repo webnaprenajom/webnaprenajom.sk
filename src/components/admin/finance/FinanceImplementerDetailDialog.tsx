@@ -167,9 +167,10 @@ export function FinanceImplementerDetailDialog({
         websites,
         payments,
         commissions,
+        payoutRecords,
         year,
       }),
-    [implementer, websites, payments, commissions, year],
+    [implementer, websites, payments, commissions, payoutRecords, year],
   );
 
   const totals = useMemo(() => {
@@ -185,13 +186,10 @@ export function FinanceImplementerDetailDialog({
   }, [rows, payoutRecords]);
 
   const rentalTotals = useMemo(() => {
-    const paid = rentalRows
-      .filter((r) => r.payment_status === "paid")
-      .reduce((s, r) => s + r.amount, 0);
-    const unpaid = rentalRows
-      .filter((r) => r.payment_status === "unpaid")
-      .reduce((s, r) => s + r.amount, 0);
-    return { paid, unpaid, count: rentalRows.length };
+    const potential = rentalRows.reduce((s, r) => s + r.amount, 0);
+    const paid = rentalRows.reduce((s, r) => s + r.paidAmount, 0);
+    const remaining = rentalRows.reduce((s, r) => s + r.remainingAmount, 0);
+    return { paid, remaining, potential, count: rentalRows.length };
   }, [rentalRows]);
 
   return (
@@ -210,7 +208,7 @@ export function FinanceImplementerDetailDialog({
           <span className="text-muted-foreground">{totals.count} commission riadkov</span>
           {rentalTotals.count > 0 && (
             <span className="text-primary">
-              {rentalTotals.count} prenájom JSON · {fmtEur(rentalTotals.paid)} / {fmtEur(rentalTotals.unpaid)} nezap.
+              {rentalTotals.count} prenájom · vypl. {fmtEur(rentalTotals.paid)} · ostáva {fmtEur(rentalTotals.remaining)}
             </span>
           )}
           <span className="text-muted-foreground">{totals.linked} prepojených</span>

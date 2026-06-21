@@ -44,9 +44,36 @@ export async function commissionHasLinkedPayout(commissionId: string): Promise<b
     .select("id")
     .eq("source_table", "commissions")
     .eq("source_id", commissionId)
-    .maybeSingle();
+    .limit(1);
   if (error) return false;
-  return !!data?.id;
+  return (data?.length ?? 0) > 0;
+}
+
+export function buildCommissionPayoutDraft(
+  commission: CommissionForPayoutBridge,
+  opts?: { amount?: number },
+): FactDraft {
+  const amount = opts?.amount ?? (Number(commission.amount) || 0);
+  return {
+    kind: "payout",
+    amount: String(amount),
+    paid_at: toLocalInput(commission.date ? `${commission.date}T12:00:00` : undefined),
+    implementer: commission.implementer ?? "",
+    note: commission.note ?? commission.title,
+    source_table: "commissions",
+    source_id: commission.id,
+  };
+}
+
+/** Draft for next partial payout — remaining after existing payout_records. */
+export function buildPartialCommissionPayoutDraft(
+  commission: CommissionForPayoutBridge,
+  paidSoFar: number,
+): FactDraft | null {
+  const potential = Number(commission.amount) || 0;
+  const remaining = Math.max(potential - paidSoFar, 0);
+  if (remaining <= 0) return null;
+  return buildCommissionPayoutDraft(commission, { amount: remaining });
 }
 
 export function buildCommissionPayoutFactDraft(

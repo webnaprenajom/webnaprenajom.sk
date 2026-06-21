@@ -1,10 +1,15 @@
-import { useMemo, useState } from "react";
-import { fmtEur, formatAmount1Decimal } from "@/lib/money/formatMoney";
+import { Fragment, useMemo, useState } from "react";
+import { fmtEur } from "@/lib/money/formatMoney";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -20,25 +25,34 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { PAYMENT_FORM_OPTIONS, type PaymentFormValue } from "@/lib/paymentForm";
-import { COMMISSION_STATUS_LABELS } from "@/lib/finance/labels";
+import { PAYMENT_FORM_OPTIONS, paymentFormLabel, type PaymentFormValue } from "@/lib/paymentForm";
+import { COMMISSION_PAYOUT_STATUS_LABELS } from "@/lib/finance/commissionPayoutStatus";
 import { customerHrefByClientName } from "@/lib/adminNav";
-import { bucketCommissionsBySection } from "@/lib/commissionFilters";
-import { detectRentalDualModelWarning } from "@/lib/finance/commissionConsistency";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
 import type { FactDraft } from "@/lib/finance/factDrafts";
-import { resolveCommissionPayoutBridgeAfterMarkPaid } from "@/lib/finance/commissionPayoutBridge";
-import { resolveRentalJsonPayoutBridgeAfterMarkPaid } from "@/lib/finance/rentalCommissionPayoutBridge";
+import {
+  buildPartialCommissionPayoutDraft,
+} from "@/lib/finance/commissionPayoutBridge";
+import {
+  ensureRentalCommissionMaterialized,
+} from "@/lib/finance/rentalCommissionPayoutBridge";
+import {
+  buildRentalCommissionDeals,
+  DEAL_PAYOUT_STATUS_LABELS,
+  dealPayoutStatusClass,
+  summarizeRentalCommissionDeals,
+  type RentalCommissionDeal,
+} from "@/lib/finance/rentalCommissionDeal";
+import type { PayoutRecordLike } from "@/lib/finance/commissionPayoutStatus";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import {
   canToggleCommissionPaymentStatus,
   commissionPaymentStatusDeniedMessage,
 } from "@/lib/rbac/writePermissions";
-import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import type { CommissionRow as SourceCommissionRow } from "@/lib/commissionSource";
 import {
   type RentalImplementer,
-  type RentalImplementerPaymentStatus,
   serializeRentalImplementerForSave,
 } from "@/lib/rentalImplementers";
 
@@ -63,6 +77,7 @@ interface Props {
   year: number;
   websites: RentalWebsite[];
   commissions: CommissionRow[];
+  payoutRecords?: PayoutRecordLike[];
   clientEmailMap: Map<string, string>;
   yearStats: (w: RentalWebsite) => { paid: number; potential: number };
   onSaved: () => void;
@@ -75,6 +90,7 @@ export function ImplementerCommissionDetailDialog({
   year,
   websites,
   commissions,
+  payoutRecords = [],
   clientEmailMap,
   yearStats,
   onSaved,
@@ -83,95 +99,29 @@ export function ImplementerCommissionDetailDialog({
   const canTogglePaymentStatus = canToggleCommissionPaymentStatus(access, implementerName);
   const [payoutFactDraft, setPayoutFactDraft] = useState<FactDraft | null>(null);
   const [payoutFactOpen, setPayoutFactOpen] = useState(false);
+  const [expandedDealKey, setExpandedDealKey] = useState<string | null>(null);
 
-  const openPayoutBridge = (bridge: Awaited<ReturnType<typeof resolveCommissionPayoutBridgeAfterMarkPaid>>) => {
-    if (bridge.action === "open_dialog") {
-      setPayoutFactDraft(bridge.draft);
-      setPayoutFactOpen(true);
-    }
+  const openPayoutDraft = (draft: FactDraft | null) => {
+    if (!draft) return;
+    setPayoutFactDraft(draft);
+    setPayoutFactOpen(true);
   };
 
-  const rentalRows = useMemo(() => {
-    const rows: Array<{
-      websiteId: string;
-      title: string;
-      clientName: string | null;
-      percentage: number;
-      paid: number;
-      potential: number;
-      payment_status: RentalImplementerPaymentStatus;
-      payment_form: PaymentFormValue | "";
-      note: string;
-      impIndex: number;
-    }> = [];
+  const { rentalDeals, legacyDeals } = useMemo(
+    () =>
+      buildRentalCommissionDeals({
+        implementerName,
+        year,
+        websites,
+        commissions,
+        payoutRecords,
+        yearStats,
+      }),
+    [implementerName, year, websites, commissions, payoutRecords, yearStats],
+  );
 
-    for (const w of websites) {
-      const idx = (w.implementers || []).findIndex(
-        (i) => i.name.trim().toLowerCase() === implementerName.trim().toLowerCase(),
-      );
-      if (idx < 0) continue;
-      const imp = w.implementers[idx];
-      const pct = Number(imp.percentage) || 0;
-      if (pct <= 0) continue;
-      const stats = yearStats(w);
-      rows.push({
-        websiteId: w.id,
-        title: w.name,
-        clientName: w.client_name,
-        percentage: pct,
-        paid: (stats.paid * pct) / 100,
-        potential: (stats.potential * pct) / 100,
-        payment_status: imp.payment_status,
-        payment_form: (imp.payment_form as PaymentFormValue) || "",
-        note: imp.note || "",
-        impIndex: idx,
-      });
-    }
-    return rows.sort((a, b) => b.potential - a.potential);
-  }, [websites, implementerName, yearStats]);
-
-  const { section: rentalCommissionRows, legacy: legacyCommissionRows } = useMemo(() => {
-    const yearFiltered = commissions.filter(
-      (c) =>
-        c.implementer.trim().toLowerCase() === implementerName.trim().toLowerCase() &&
-        c.date.startsWith(String(year)),
-    );
-    return bucketCommissionsBySection(yearFiltered, "rental");
-  }, [commissions, implementerName, year]);
-
-  const commissionRows = useMemo(() => {
-    return rentalCommissionRows
-      .map((c) => ({
-        id: c.id,
-        title: c.title,
-        date: c.date,
-        amount: Number(c.amount),
-        paid: c.payment_status === "paid" ? Number(c.amount) : 0,
-        potential: Number(c.amount),
-        payment_form: (c.payment_form as PaymentFormValue) || "",
-        note: c.note || "",
-        payment_status: c.payment_status,
-        isLegacy: false,
-      }))
-      .sort((a, b) => b.potential - a.potential);
-  }, [rentalCommissionRows]);
-
-  const legacyRows = useMemo(() => {
-    return legacyCommissionRows
-      .map((c) => ({
-        id: c.id,
-        title: c.title,
-        date: c.date,
-        amount: Number(c.amount),
-        paid: c.payment_status === "paid" ? Number(c.amount) : 0,
-        potential: Number(c.amount),
-        payment_form: (c.payment_form as PaymentFormValue) || "",
-        note: c.note || "",
-        payment_status: c.payment_status,
-        isLegacy: true,
-      }))
-      .sort((a, b) => b.potential - a.potential);
-  }, [legacyCommissionRows]);
+  const rentalTotals = useMemo(() => summarizeRentalCommissionDeals(rentalDeals), [rentalDeals]);
+  const legacyTotals = useMemo(() => summarizeRentalCommissionDeals(legacyDeals), [legacyDeals]);
 
   const saveRentalRow = async (
     websiteId: string,
@@ -179,7 +129,6 @@ export function ImplementerCommissionDetailDialog({
     patch: {
       payment_form?: PaymentFormValue | "";
       note?: string;
-      payment_status?: RentalImplementerPaymentStatus;
     },
   ) => {
     const w = websites.find((x) => x.id === websiteId);
@@ -218,138 +167,282 @@ export function ImplementerCommissionDetailDialog({
     onSaved();
   };
 
-  const toggleCommissionPaid = async (id: string, current: string) => {
+  const recordDealPayout = async (deal: RentalCommissionDeal) => {
     if (!canTogglePaymentStatus) {
       toast({ title: commissionPaymentStatusDeniedMessage(), variant: "destructive" });
       return;
     }
-    const next = current === "paid" ? "unpaid" : "paid";
-    const row = [...commissionRows, ...legacyRows].find((c) => c.id === id);
-    await saveCommissionRow(id, { payment_status: next });
-    if (access.userId) {
-      void logAdminAuditEvent({
-        actorUserId: access.userId,
-        actionType: AUDIT_ACTION_TYPES.commission_status_changed,
-        targetType: "commission",
-        targetId: id,
-        summary: `Provízia ${implementerName}: ${current} → ${next}`,
-        before: { payment_status: current },
-        after: { payment_status: next },
-      });
+    if (deal.remainingAmount <= 0) {
+      toast({ title: "Nič na výplatu", description: "Zákazka je už plne vyplatená.", variant: "destructive" });
+      return;
     }
-    if (next === "paid" && row) {
-      const full = commissions.find((c) => c.id === id);
-      if (full) {
-        const bridge = await resolveCommissionPayoutBridgeAfterMarkPaid(full);
-        openPayoutBridge(bridge);
-      }
-    }
-  };
 
-  const toggleRentalPaid = async (
-    websiteId: string,
-    impIndex: number,
-    current: RentalImplementerPaymentStatus,
-    row: (typeof rentalRows)[number],
-  ) => {
-    if (!canTogglePaymentStatus) {
-      toast({ title: commissionPaymentStatusDeniedMessage(), variant: "destructive" });
-      return;
-    }
-    const next: RentalImplementerPaymentStatus = current === "paid" ? "unpaid" : "paid";
-    await saveRentalRow(websiteId, impIndex, { payment_status: next });
-    if (access.userId) {
-      void logAdminAuditEvent({
-        actorUserId: access.userId,
-        actionType: AUDIT_ACTION_TYPES.commission_status_changed,
-        targetType: "rental_website",
-        targetId: websiteId,
-        summary: `Prenájom provízia ${implementerName}: ${current} → ${next}`,
-        before: { payment_status: current },
-        after: { payment_status: next },
-      });
-    }
-    if (next === "paid") {
-      const customerEmail = row.clientName
-        ? clientEmailMap.get(row.clientName.trim().toLowerCase()) ?? null
+    let commissionId = deal.commissionId;
+    let bridgeCommission = commissionId ? commissions.find((c) => c.id === commissionId) : undefined;
+
+    if (!commissionId && deal.websiteId != null && deal.impIndex != null) {
+      const customerEmail = deal.clientName
+        ? clientEmailMap.get(deal.clientName.trim().toLowerCase()) ?? null
         : null;
-      const bridge = await resolveRentalJsonPayoutBridgeAfterMarkPaid(
+      const materialized = await ensureRentalCommissionMaterialized(
         {
-          websiteId,
-          websiteName: row.title,
+          websiteId: deal.websiteId,
+          websiteName: deal.title,
           implementer: implementerName,
           year,
-          amount: row.paid,
+          amount: deal.potentialCommission,
           customerEmail,
-          note: row.note || null,
+          note: deal.note || null,
         },
         commissions,
       );
-      openPayoutBridge(bridge);
-      if (bridge.commissionId) {
-        onSaved();
+      if (!materialized) {
+        toast({ title: "Chyba", description: "Nepodarilo sa pripraviť provízny záznam.", variant: "destructive" });
+        return;
       }
+      commissionId = materialized.commissionId;
+      bridgeCommission = commissions.find((c) => c.id === commissionId) ?? ({
+        id: commissionId,
+        title: deal.title,
+        amount: deal.potentialCommission,
+        date: `${year}-12-31`,
+        implementer: implementerName,
+        note: deal.note,
+      } as CommissionRow);
+      onSaved();
     }
+
+    if (!bridgeCommission || !commissionId) {
+      toast({ title: "Chyba", description: "Chýba provízny záznam pre výplatu.", variant: "destructive" });
+      return;
+    }
+
+    const draft = buildPartialCommissionPayoutDraft(
+      {
+        id: commissionId,
+        title: bridgeCommission.title,
+        amount: Number(bridgeCommission.amount) || deal.potentialCommission,
+        date: bridgeCommission.date,
+        implementer: bridgeCommission.implementer,
+        note: bridgeCommission.note,
+      },
+      deal.paidAmount,
+    );
+    openPayoutDraft(draft);
   };
 
-  const paymentStatusButtonClass = (status: string) =>
-    status === "paid"
-      ? "border-green-500/40 text-green-600"
-      : "border-amber-500/40 text-amber-600";
-
-  const dualModelWarning = useMemo(
-    () => detectRentalDualModelWarning(implementerName, commissionRows.length, rentalRows.length),
-    [implementerName, commissionRows.length, rentalRows.length],
-  );
-
-  const totals = useMemo(() => {
-    const rentalPaid = rentalRows.reduce((s, r) => s + r.paid, 0);
-    const rentalPot = rentalRows.reduce((s, r) => s + r.potential, 0);
-    const commPaid = commissionRows.reduce((s, r) => s + r.paid, 0);
-    const commPot = commissionRows.reduce((s, r) => s + r.potential, 0);
-    return {
-      paid: rentalPaid + commPaid,
-      potential: rentalPot + commPot,
-      rentalCount: rentalRows.length,
-      commissionCount: commissionRows.length,
-    };
-  }, [rentalRows, commissionRows]);
+  const renderDealRow = (deal: RentalCommissionDeal, isLegacy = false) => {
+    const expanded = expandedDealKey === deal.dealKey;
+    return (
+      <Fragment key={deal.dealKey}>
+        <TableRow className={isLegacy ? "bg-muted/20" : undefined}>
+          <TableCell>
+            <Badge
+              variant={isLegacy ? "outline" : "secondary"}
+              className={`text-[10px] ${isLegacy ? "border-amber-500/40 text-amber-700 dark:text-amber-400" : ""}`}
+            >
+              {isLegacy ? "Legacy" : "Prenájom"}
+            </Badge>
+          </TableCell>
+          <TableCell className="text-sm font-medium max-w-[140px]">
+            <Collapsible
+              open={expanded}
+              onOpenChange={(o) => setExpandedDealKey(o ? deal.dealKey : null)}
+            >
+              <CollapsibleTrigger className="text-left hover:underline truncate block max-w-full">
+                {deal.title}
+              </CollapsibleTrigger>
+            </Collapsible>
+          </TableCell>
+          <TableCell className="text-xs">
+            {deal.clientName && !isLegacy ? (
+              customerHrefByClientName(deal.clientName, clientEmailMap) ? (
+                <Link
+                  to={customerHrefByClientName(deal.clientName, clientEmailMap)!}
+                  className="text-primary hover:underline"
+                >
+                  {deal.clientName}
+                </Link>
+              ) : (
+                deal.clientName
+              )
+            ) : (
+              "—"
+            )}
+          </TableCell>
+          <TableCell className="text-right text-xs">{deal.percentage != null ? `${deal.percentage}%` : "—"}</TableCell>
+          <TableCell className="text-right text-xs text-green-600">
+            {deal.clientPaidShare != null ? fmtEur(deal.clientPaidShare) : "—"}
+          </TableCell>
+          <TableCell className="text-right text-xs">{fmtEur(deal.potentialCommission)}</TableCell>
+          <TableCell className="text-right text-xs text-green-600">{fmtEur(deal.paidAmount)}</TableCell>
+          <TableCell className="text-right text-xs text-amber-600">{fmtEur(deal.remainingAmount)}</TableCell>
+          <TableCell>
+            <Badge variant="outline" className={`text-[10px] ${dealPayoutStatusClass(deal.payoutStatus)}`}>
+              {DEAL_PAYOUT_STATUS_LABELS[deal.payoutStatus]}
+            </Badge>
+            {deal.workflowPaidUnaudited && (
+              <div className="text-[9px] text-muted-foreground mt-0.5">
+                {COMMISSION_PAYOUT_STATUS_LABELS.paid_workflow_unaudited}
+              </div>
+            )}
+          </TableCell>
+          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+            {deal.lastPayoutAt ? new Date(deal.lastPayoutAt).toLocaleDateString("sk-SK") : "—"}
+          </TableCell>
+          <TableCell className="text-xs">{paymentFormLabel(deal.paymentForm) || "—"}</TableCell>
+          <TableCell>
+            {deal.dealType === "rental" && deal.impIndex != null && deal.websiteId ? (
+              <select
+                className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
+                value={deal.paymentForm}
+                onChange={(e) =>
+                  void saveRentalRow(deal.websiteId!, deal.impIndex!, {
+                    payment_form: e.target.value as PaymentFormValue,
+                  })
+                }
+              >
+                <option value="">—</option>
+                {PAYMENT_FORM_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            ) : deal.commissionId ? (
+              <select
+                className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
+                value={deal.paymentForm}
+                onChange={(e) =>
+                  void saveCommissionRow(deal.commissionId!, {
+                    payment_form: e.target.value as PaymentFormValue,
+                  })
+                }
+              >
+                <option value="">—</option>
+                {PAYMENT_FORM_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            ) : (
+              "—"
+            )}
+          </TableCell>
+          <TableCell>
+            <div className="flex flex-col gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-[10px]"
+                disabled={!canTogglePaymentStatus || deal.remainingAmount <= 0}
+                onClick={() => void recordDealPayout(deal)}
+              >
+                Zaznamenať výplatu
+              </Button>
+              {deal.dealType === "rental" && deal.impIndex != null && deal.websiteId ? (
+                <Input
+                  className="h-8 text-xs min-w-[100px]"
+                  defaultValue={deal.note}
+                  placeholder="Poznámka"
+                  onBlur={(e) => {
+                    if (e.target.value !== deal.note) {
+                      void saveRentalRow(deal.websiteId!, deal.impIndex!, { note: e.target.value });
+                    }
+                  }}
+                />
+              ) : deal.commissionId ? (
+                <Input
+                  className="h-8 text-xs min-w-[100px]"
+                  defaultValue={deal.note}
+                  placeholder="Poznámka"
+                  onBlur={(e) => {
+                    if (e.target.value !== deal.note) {
+                      void saveCommissionRow(deal.commissionId!, { note: e.target.value });
+                    }
+                  }}
+                />
+              ) : null}
+            </div>
+          </TableCell>
+        </TableRow>
+        {expanded && (
+          <TableRow className="bg-muted/30">
+            <TableCell colSpan={13} className="py-3">
+              <div className="text-xs font-medium mb-2">História výplat — {deal.title}</div>
+              {deal.payoutTransactions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Zatiaľ žiadne auditované výplaty.</p>
+              ) : (
+                <div className="rounded border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Dátum</TableHead>
+                        <TableHead className="text-right">Suma</TableHead>
+                        <TableHead>Truth</TableHead>
+                        <TableHead>Poznámka</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {deal.payoutTransactions.map((t) => (
+                        <TableRow key={t.id}>
+                          <TableCell className="text-xs">
+                            {new Date(t.paid_at).toLocaleString("sk-SK")}
+                          </TableCell>
+                          <TableCell className="text-right text-xs">{fmtEur(t.amount)}</TableCell>
+                          <TableCell>
+                            {t.truth_level === "payout_fact" || t.truth_level === "legacy_import" ? (
+                              <TruthLevelBadge level={t.truth_level} />
+                            ) : (
+                              "—"
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{t.note || t.reference || "—"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+              {deal.hadDualSource && (
+                <p className="text-[10px] text-amber-700 dark:text-amber-400 mt-2">
+                  Pred zlúčením existoval JSON podiel aj materializovaná provízia — zobrazené ako jedna zákazka.
+                </p>
+              )}
+            </TableCell>
+          </TableRow>
+        )}
+      </Fragment>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Provízie — {implementerName} ({year})</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
-          Prenájmy: stĺpec „Z klienta“ = podiel z uhradených mesiacov klienta; „Stav úhrady provízie“ = manuálny
-          workflow výplaty realizátorovi.
+          Jedna zákazka = jeden riadok. Vyplatené = súčet <code className="text-[10px]">payout_records</code>;
+          ostáva vyplatiť = potenciál mínus vyplatené. Kliknite na názov pre históriu výplat.
         </p>
-        {dualModelWarning && (
-          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
-            {dualModelWarning}
-          </div>
-        )}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
           <div className="rounded border p-2">
-            <div className="text-[10px] text-muted-foreground">Weby</div>
-            <div className="font-semibold">{totals.rentalCount}</div>
-          </div>
-          <div className="rounded border p-2">
             <div className="text-[10px] text-muted-foreground">Zákazky</div>
-            <div className="font-semibold">{totals.commissionCount}</div>
-          </div>
-          <div className="rounded border p-2">
-            <div className="text-[10px] text-muted-foreground">Vyplatené</div>
-            <div className="font-semibold text-green-600">{fmtEur(totals.paid)}</div>
+            <div className="font-semibold">{rentalTotals.count}</div>
           </div>
           <div className="rounded border p-2">
             <div className="text-[10px] text-muted-foreground">Potenciál</div>
-            <div className="font-semibold text-primary">{fmtEur(totals.potential)}</div>
+            <div className="font-semibold text-primary">{fmtEur(rentalTotals.potential)}</div>
+          </div>
+          <div className="rounded border p-2">
+            <div className="text-[10px] text-muted-foreground">Vyplatené</div>
+            <div className="font-semibold text-green-600">{fmtEur(rentalTotals.paid)}</div>
+          </div>
+          <div className="rounded border p-2">
+            <div className="text-[10px] text-muted-foreground">Ostáva vyplatiť</div>
+            <div className="font-semibold text-amber-600">{fmtEur(rentalTotals.remaining)}</div>
           </div>
         </div>
 
-        {rentalRows.length === 0 && commissionRows.length === 0 && legacyRows.length === 0 ? (
+        {rentalDeals.length === 0 && legacyDeals.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">Žiadne záznamy pre tohto realizátora.</p>
         ) : (
           <div className="rounded-lg border overflow-x-auto">
@@ -360,208 +453,35 @@ export function ImplementerCommissionDetailDialog({
                   <TableHead>Názov</TableHead>
                   <TableHead>Klient</TableHead>
                   <TableHead className="text-right">%</TableHead>
-                  <TableHead className="text-right" title="Podiel z mesiacov, kde klient uhradil prenájom">
-                    Z klienta
-                  </TableHead>
-                  <TableHead className="text-right">Potenc.</TableHead>
-                  <TableHead title="Manuálny stav výplaty provízie realizátorovi">Stav úhrady provízie</TableHead>
-                  <TableHead>Forma úhrady</TableHead>
-                  <TableHead>Poznámka</TableHead>
+                  <TableHead className="text-right">Z klienta</TableHead>
+                  <TableHead className="text-right">Potenciál</TableHead>
+                  <TableHead className="text-right">Vyplatené</TableHead>
+                  <TableHead className="text-right">Ostáva</TableHead>
+                  <TableHead>Stav výplaty</TableHead>
+                  <TableHead>Posl. výplata</TableHead>
+                  <TableHead>Forma</TableHead>
+                  <TableHead>Akcie</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rentalRows.map((r) => (
-                  <TableRow key={`rental-${r.websiteId}`}>
-                    <TableCell>
-                      <Badge variant="outline" className="text-[10px]">Prenájom</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm font-medium max-w-[140px] truncate">{r.title}</TableCell>
-                    <TableCell className="text-xs">
-                      {r.clientName ? (
-                        customerHrefByClientName(r.clientName, clientEmailMap) ? (
-                          <Link
-                            to={customerHrefByClientName(r.clientName, clientEmailMap)!}
-                            className="text-primary hover:underline"
-                          >
-                            {r.clientName}
-                          </Link>
-                        ) : (
-                          r.clientName
-                        )
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right text-xs">{r.percentage}%</TableCell>
-                    <TableCell className="text-right text-xs text-green-600">{fmtEur(r.paid)}</TableCell>
-                    <TableCell className="text-right text-xs">{fmtEur(r.potential)}</TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={!canTogglePaymentStatus}
-                        className={`h-7 text-[10px] ${paymentStatusButtonClass(r.payment_status)}`}
-                        onClick={() => void toggleRentalPaid(r.websiteId, r.impIndex, r.payment_status, r)}
-                      >
-                        {r.payment_status === "paid"
-                          ? COMMISSION_STATUS_LABELS.paid
-                          : COMMISSION_STATUS_LABELS.unpaid}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
-                        value={r.payment_form}
-                        onChange={(e) =>
-                          void saveRentalRow(r.websiteId, r.impIndex, {
-                            payment_form: e.target.value as PaymentFormValue,
-                          })
-                        }
-                      >
-                        <option value="">—</option>
-                        {PAYMENT_FORM_OPTIONS.map((o) => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        className="h-8 text-xs min-w-[120px]"
-                        defaultValue={r.note}
-                        placeholder="Poznámka"
-                        onBlur={(e) => {
-                          if (e.target.value !== r.note) {
-                            void saveRentalRow(r.websiteId, r.impIndex, { note: e.target.value });
-                          }
-                        }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {commissionRows.map((c) => (
-                  <TableRow key={`comm-${c.id}`}>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-[10px]">Provízia · prenájom</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm font-medium max-w-[140px] truncate" title={c.title}>
-                      {c.title}
-                      <div className="text-[10px] text-muted-foreground">{c.date}</div>
-                    </TableCell>
-                    <TableCell className="text-xs">—</TableCell>
-                    <TableCell className="text-right text-xs">—</TableCell>
-                    <TableCell className="text-right text-xs text-green-600">{fmtEur(c.paid)}</TableCell>
-                    <TableCell className="text-right text-xs">{fmtEur(c.potential)}</TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={!canTogglePaymentStatus}
-                        className={`h-7 text-[10px] ${paymentStatusButtonClass(c.payment_status)}`}
-                        onClick={() => void toggleCommissionPaid(c.id, c.payment_status)}
-                      >
-                        {c.payment_status === "paid"
-                          ? COMMISSION_STATUS_LABELS.paid
-                          : COMMISSION_STATUS_LABELS.unpaid}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
-                        value={c.payment_form}
-                        onChange={(e) =>
-                          void saveCommissionRow(c.id, {
-                            payment_form: e.target.value as PaymentFormValue,
-                          })
-                        }
-                      >
-                        <option value="">—</option>
-                        {PAYMENT_FORM_OPTIONS.map((o) => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        className="h-8 text-xs min-w-[120px]"
-                        defaultValue={c.note}
-                        placeholder="Poznámka"
-                        onBlur={(e) => {
-                          if (e.target.value !== c.note) {
-                            void saveCommissionRow(c.id, { note: e.target.value });
-                          }
-                        }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {legacyRows.length > 0 && (
+                {rentalDeals.map((d) => renderDealRow(d))}
+                {legacyDeals.length > 0 && (
                   <TableRow>
-                    <TableCell colSpan={9} className="bg-muted/40 text-[10px] font-medium text-muted-foreground py-2">
-                      Legacy / bez prepojenia na prenájom (nezapočítava sa do prenájmového zoznamu)
+                    <TableCell colSpan={12} className="bg-muted/40 text-[10px] font-medium text-muted-foreground py-2">
+                      Legacy / bez prepojenia na prenájom
                     </TableCell>
                   </TableRow>
                 )}
-                {legacyRows.map((c) => (
-                  <TableRow key={`legacy-${c.id}`} className="bg-muted/20">
-                    <TableCell>
-                      <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-700 dark:text-amber-400">
-                        Legacy
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm font-medium max-w-[140px] truncate" title={c.title}>
-                      {c.title}
-                      <div className="text-[10px] text-muted-foreground">{c.date}</div>
-                    </TableCell>
-                    <TableCell className="text-xs">—</TableCell>
-                    <TableCell className="text-right text-xs">—</TableCell>
-                    <TableCell className="text-right text-xs text-green-600">{fmtEur(c.paid)}</TableCell>
-                    <TableCell className="text-right text-xs">{fmtEur(c.potential)}</TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={!canTogglePaymentStatus}
-                        className={`h-7 text-[10px] ${paymentStatusButtonClass(c.payment_status)}`}
-                        onClick={() => void toggleCommissionPaid(c.id, c.payment_status)}
-                      >
-                        {c.payment_status === "paid"
-                          ? COMMISSION_STATUS_LABELS.paid
-                          : COMMISSION_STATUS_LABELS.unpaid}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <select
-                        className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
-                        value={c.payment_form}
-                        onChange={(e) =>
-                          void saveCommissionRow(c.id, {
-                            payment_form: e.target.value as PaymentFormValue,
-                          })
-                        }
-                      >
-                        <option value="">—</option>
-                        {PAYMENT_FORM_OPTIONS.map((o) => (
-                          <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        className="h-8 text-xs min-w-[120px]"
-                        defaultValue={c.note}
-                        placeholder="Poznámka"
-                        onBlur={(e) => {
-                          if (e.target.value !== c.note) {
-                            void saveCommissionRow(c.id, { note: e.target.value });
-                          }
-                        }}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {legacyDeals.map((d) => renderDealRow(d, true))}
               </TableBody>
             </Table>
           </div>
+        )}
+        {legacyDeals.length > 0 && (
+          <p className="text-[10px] text-muted-foreground">
+            Legacy súhrn: potenciál {fmtEur(legacyTotals.potential)} · vyplatené {fmtEur(legacyTotals.paid)} ·
+            ostáva {fmtEur(legacyTotals.remaining)}
+          </p>
         )}
         <div className="flex justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Zavrieť</Button>
