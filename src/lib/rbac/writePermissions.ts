@@ -34,6 +34,20 @@ export function canToggleCommissionPaymentStatus(
   return commissionVisibleToUser(implementer, ctx);
 }
 
+/** Realizator confirms they received payout — owner is view-only for this step. */
+export function canConfirmCommissionPayoutReceipt(
+  ctx: AccessContext,
+  implementer: string | null | undefined,
+): boolean {
+  if (isOwner(ctx.role)) return false;
+  if (!isAdministrator(ctx.role)) return false;
+  return commissionVisibleToUser(implementer, ctx);
+}
+
+export function commissionPayoutReceiptDeniedMessage(): string {
+  return "Potvrdenie prijatia výplaty môže urobiť len realizátor, ktorému provízia patrí. Owner vidí stav, ale nemôže potvrdiť za realizátora.";
+}
+
 export function commissionPaymentStatusDeniedMessage(): string {
   return "Stav úhrady môže meniť owner (všetky provízie) alebo realizátor len na svojich províziách.";
 }

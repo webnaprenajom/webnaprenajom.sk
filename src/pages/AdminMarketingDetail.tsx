@@ -291,6 +291,7 @@ export default function AdminMarketingDetail() {
             customerId={record.customer_id}
             defaultTitle={record.title}
             revenueAmount={confirmedRevenue}
+            operatingCost={Number(record.operating_cost ?? 0)}
             revenueKnown={confirmedPaymentCount > 0}
             paymentRecordCount={confirmedPaymentCount}
           />

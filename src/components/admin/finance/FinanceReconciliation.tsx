@@ -46,6 +46,12 @@ import type {
 } from "@/lib/finance/types";
 import { formatReconciliationSourceHint } from "@/lib/finance/financeSourceLabels";
 import { toast } from "@/hooks/use-toast";
+import { useAccessContext } from "@/hooks/useAccessContext";
+import {
+  isReconciliationIssueActionableForUser,
+  reconciliationIssueBlockedHint,
+} from "@/lib/finance/commissionPayoutReceipt";
+import type { AccessContext } from "@/lib/rbac/permissions";
 
 const ISSUE_LABELS: Record<ReconciliationIssueKind, string> = {
   workflow_incoming: "Workflow príjem",
@@ -120,6 +126,7 @@ export function FinanceReconciliation({
   dismissals,
   onSaved,
 }: FinanceReconciliationProps) {
+  const access = useAccessContext();
   const allIssues = snapshot.reconciliation.issues;
   const dismissedKeySet = useMemo(
     () => new Set(dismissals.map((d) => d.issue_key)),
@@ -155,8 +162,8 @@ export function FinanceReconciliation({
   }, [allIssues, dismissedKeySet, filter]);
 
   const issueSummary = useMemo(
-    () => summarizeReconciliationIssueCounts(allIssues, dismissedKeySet, ctx),
-    [allIssues, dismissedKeySet, ctx],
+    () => summarizeReconciliationIssueCounts(allIssues, dismissedKeySet, ctx, access),
+    [allIssues, dismissedKeySet, ctx, access],
   );
 
   const legacyVisibleIssues = useMemo(() => {
@@ -288,6 +295,7 @@ export function FinanceReconciliation({
               title={`${section.title} (${section.issues.length})`}
               issues={section.issues}
               ctx={ctx}
+              access={access}
               dismissalMap={dismissalMap}
               onAction={openAction}
               onDismiss={setDismissTarget}
@@ -312,6 +320,7 @@ export function FinanceReconciliation({
               title={ADVISORY_DIAGNOSTIC_SECTION.title}
               issues={advisoryDiagnosticIssues}
               ctx={ctx}
+              access={access}
               dismissalMap={dismissalMap}
               onAction={openAction}
               onDismiss={setDismissTarget}
@@ -335,6 +344,7 @@ export function FinanceReconciliation({
               title={LEGACY_ISSUE_SECTION.title}
               issues={legacyVisibleIssues}
               ctx={ctx}
+              access={access}
               dismissalMap={dismissalMap}
               onAction={openAction}
               onDismiss={setDismissTarget}
@@ -390,6 +400,7 @@ function IssueSectionTable({
   title,
   issues,
   ctx,
+  access,
   dismissalMap,
   onAction,
   onDismiss,
@@ -400,6 +411,7 @@ function IssueSectionTable({
   title: string;
   issues: ReconciliationIssue[];
   ctx: FinanceRawContext;
+  access: AccessContext;
   dismissalMap: Map<string, IssueDismissalRow>;
   onAction: (issue: ReconciliationIssue) => void;
   onDismiss: (issue: ReconciliationIssue) => void;
@@ -428,7 +440,11 @@ function IssueSectionTable({
             {issues.slice(0, 80).map((issue, idx) => {
               const key = issue.issueKey ?? buildIssueKey(issue);
               const dismissed = dismissalMap.get(key);
-              const actionable = !readOnlyActions && isIssueActionable(issue, ctx) && !dismissed;
+              const actionable =
+                !readOnlyActions &&
+                isReconciliationIssueActionableForUser(issue, ctx, access) &&
+                !dismissed;
+              const blockedHint = reconciliationIssueBlockedHint(issue, ctx, access);
               const actionLabel = getIssueActionLabel(issue);
               const dismissable = isIssueDismissable(issue) && !dismissed;
               const confirmValidOnly = dismissable && !actionable && !readOnlyActions;
@@ -458,11 +474,14 @@ function IssueSectionTable({
                   <TableCell className="text-right text-sm">
                     {issue.amount != null ? fmtEur(issue.amount) : "—"}
                   </TableCell>
-                  <TableCell className="space-x-1">
+                  <TableCell className="space-x-1 max-w-[200px]">
                     {actionable && actionLabel && (
                       <Button size="sm" variant="default" className="text-[10px] h-7" onClick={() => onAction(issue)}>
                         {actionLabel}
                       </Button>
+                    )}
+                    {!actionable && blockedHint && !dismissed && (
+                      <span className="text-[10px] text-muted-foreground block leading-snug">{blockedHint}</span>
                     )}
                     {confirmValidOnly && (
                       <Button

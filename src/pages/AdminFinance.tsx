@@ -220,7 +220,7 @@ const AdminFinance = () => {
 
   const reconciliationSummary = useMemo(() => {
     const keys = new Set(dismissals.map((d) => d.issue_key));
-    return summarizeReconciliationIssueCounts(snapshot.reconciliation.issues, keys, financeCtx);
+    return summarizeReconciliationIssueCounts(snapshot.reconciliation.issues, keys, financeCtx, accessCtx);
   }, [snapshot, dismissals, financeCtx]);
 
   const dailyKpis = useMemo(() => {

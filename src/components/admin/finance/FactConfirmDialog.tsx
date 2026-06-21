@@ -6,6 +6,10 @@ import { AdminDialog } from "@/components/admin/AdminDialog";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { toast } from "@/hooks/use-toast";
+import {
+  canConfirmCommissionPayoutReceipt,
+  commissionPayoutReceiptDeniedMessage,
+} from "@/lib/rbac/writePermissions";
 import { Loader2 } from "lucide-react";
 import { PAYMENT_FORM_OPTIONS } from "@/lib/paymentForm";
 import {
@@ -55,6 +59,21 @@ export function FactConfirmDialog({
     }
     setSaving(true);
     try {
+      if (
+        active.kind === "payout" &&
+        active.source_table === "commissions" &&
+        !canConfirmCommissionPayoutReceipt(
+          { role: access.role, userId: access.userId, implementerName: access.implementerName },
+          active.implementer,
+        )
+      ) {
+        toast({
+          title: "Potvrdenie zablokované",
+          description: commissionPayoutReceiptDeniedMessage(),
+          variant: "destructive",
+        });
+        return false;
+      }
       if (active.recordId && active.kind === "payout") {
         await updatePayoutRecord(active.recordId, active);
         toast({ title: "Výplata upravená" });

@@ -304,9 +304,9 @@ export default function AdminHostingDetail() {
       <Tabs defaultValue="prehlad" className="space-y-4">
         <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="prehlad">Prehľad</TabsTrigger>
+          <TabsTrigger value="poznamky">Poznámky</TabsTrigger>
           <TabsTrigger value="provizie">Provízie</TabsTrigger>
           <TabsTrigger value="platby">Platby</TabsTrigger>
-          <TabsTrigger value="poznamky">Poznámky</TabsTrigger>
           <TabsTrigger value="suvisiace">Súvisiace</TabsTrigger>
         </TabsList>
 
@@ -430,6 +430,7 @@ export default function AdminHostingDetail() {
             revenueAmount={confirmedRevenue}
             operatingCost={Number(record.operating_cost ?? 0)}
             revenueKnown={confirmedPaymentCount > 0}
+            paymentRecordCount={confirmedPaymentCount}
           />
         </TabsContent>
 

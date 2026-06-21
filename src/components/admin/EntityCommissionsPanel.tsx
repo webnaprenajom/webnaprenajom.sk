@@ -37,7 +37,7 @@ import { useAccessContext } from "@/hooks/useAccessContext";
 import { useHistoricalIdentity } from "@/hooks/useHistoricalIdentity";
 import { formatImplementerLabel } from "@/lib/identity/historicalIdentity";
 import { filterCommissionsForUser } from "@/lib/rbac/permissions";
-import { canWriteCommissions, canToggleCommissionPaymentStatus, commissionPaymentStatusDeniedMessage, writeDeniedMessage } from "@/lib/rbac/writePermissions";
+import { canWriteCommissions, canToggleCommissionPaymentStatus, canConfirmCommissionPayoutReceipt, commissionPaymentStatusDeniedMessage, commissionPayoutReceiptDeniedMessage, writeDeniedMessage } from "@/lib/rbac/writePermissions";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
@@ -401,7 +401,7 @@ export function EntityCommissionsPanel({
     toast({ title: "Stav úhrady upravený" });
     await load();
 
-    if (next === "paid") {
+    if (next === "paid" && canConfirmCommissionPayoutReceipt(access, c.implementer)) {
       const bridge = await resolveCommissionPayoutBridgeAfterMarkPaid(c);
       if (bridge.action === "open_dialog") {
         setPayoutFactDraft(bridge.draft);
@@ -434,16 +434,44 @@ export function EntityCommissionsPanel({
     }
     if (info.status === "paid_workflow_unaudited") {
       return (
-        <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground whitespace-nowrap">
-          {COMMISSION_PAYOUT_STATUS_LABELS.paid_workflow_unaudited}
-        </Badge>
+        <div className="flex flex-col gap-1 items-start">
+          <Badge variant="outline" className="text-[10px] border-muted-foreground/30 text-muted-foreground whitespace-nowrap">
+            {COMMISSION_PAYOUT_STATUS_LABELS.paid_workflow_unaudited}
+          </Badge>
+          {!canConfirmCommissionPayoutReceipt(access, c.implementer) && (
+            <span className="text-[10px] text-muted-foreground leading-snug">
+              Čaká na realizátora
+            </span>
+          )}
+        </div>
       );
     }
     return <span className="text-xs text-muted-foreground">—</span>;
   };
 
+  const openPayoutReceiptConfirm = async (c: CommissionRow) => {
+    if (!canConfirmCommissionPayoutReceipt(access, c.implementer)) {
+      toast({
+        title: "Potvrdenie zablokované",
+        description: commissionPayoutReceiptDeniedMessage(),
+        variant: "destructive",
+      });
+      return;
+    }
+    const bridge = await resolveCommissionPayoutBridgeAfterMarkPaid(c);
+    if (bridge.action === "open_dialog") {
+      setPayoutFactDraft(bridge.draft);
+      setPayoutFactOpen(true);
+    } else if (bridge.action === "linked_exists") {
+      toast({ title: "Výplata už je potvrdená" });
+      void load();
+    }
+  };
+
   const renderRow = (c: CommissionRow) => {
     const canToggle = canToggleCommissionPaymentStatus(access, c.implementer);
+    const canConfirmReceipt = canConfirmCommissionPayoutReceipt(access, c.implementer);
+    const payoutInfo = resolveCommissionPayoutInfo(c, payoutRecords);
     const deleteGate = evaluateCommissionDelete(c.id, payoutRecords);
     return (
     <>
@@ -482,6 +510,16 @@ export function EntityCommissionsPanel({
       </TableCell>
       <TableCell className="text-xs">{renderPayoutBadge(c)}</TableCell>
       <TableCell className="text-right">
+        {canConfirmReceipt && payoutInfo.status === "paid_workflow_unaudited" && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-[10px] h-7 mb-1"
+            onClick={() => void openPayoutReceiptConfirm(c)}
+          >
+            Potvrdiť prijatie
+          </Button>
+        )}
         {canWrite ? (
           <div className="flex justify-end gap-0.5">
             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(c)}>
@@ -622,6 +660,17 @@ export function EntityCommissionsPanel({
                   <span className="text-xs text-muted-foreground">{paymentFormLabel(c.payment_form)}</span>
                 </div>
                 <div className="text-xs">{renderPayoutBadge(c)}</div>
+                {canConfirmCommissionPayoutReceipt(access, c.implementer) &&
+                  resolveCommissionPayoutInfo(c, payoutRecords).status === "paid_workflow_unaudited" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-[10px] h-7"
+                      onClick={() => void openPayoutReceiptConfirm(c)}
+                    >
+                      Potvrdiť prijatie
+                    </Button>
+                  )}
               </div>
             );
             })}
@@ -640,6 +689,8 @@ export function EntityCommissionsPanel({
           if (!o) commissionCloseGuard.handleOpenChange(o, closeCommissionDialog);
         }}
         title={form.id ? "Upraviť províziu" : "Nová provízia"}
+        size="lg"
+        stickyFooter
         footer={
           <>
             <Button
@@ -656,6 +707,17 @@ export function EntityCommissionsPanel({
           </>
         }
       >
+      {showProfit && (
+        <div className="mb-3">
+          <EntityProfitBanner
+            entityKind={sourceType}
+            revenue={revenueAmount ?? 0}
+            operatingCost={operatingCost}
+            revenueKnown={revenueKnown}
+            paymentRecordCount={paymentRecordCount}
+          />
+        </div>
+      )}
       {schemaCaps?.percentMode === false && sourceType === "project" && (
         <p className="text-[10px] text-amber-700 dark:text-amber-400 border border-amber-500/30 rounded-lg p-2 bg-amber-500/5">
           Percentuálny režim provízie je vypnutý — databáza ešte nemá migráciu amount_mode. Použite pevnú sumu

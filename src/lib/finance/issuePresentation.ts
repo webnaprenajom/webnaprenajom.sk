@@ -5,12 +5,16 @@ import type { ReconciliationIssue } from "./types";
 import { buildIssueKey, filterActiveIssues } from "./issueKeys";
 import { isIssueActionable, type FinanceRawContext } from "./factDrafts";
 import { isTaskFinanceReconciliationIssueKind } from "@/lib/tasks/taskFinanceCleanup";
+import type { AccessContext } from "@/lib/rbac/permissions";
+import { isReconciliationIssueActionableForUser } from "@/lib/finance/commissionPayoutReceipt";
 
 /** Legacy / info-only kinds — hidden from primary owner reconciliation flow. */
 export const FINANCE_PRIMARY_HIDDEN_ISSUE_KINDS = new Set<ReconciliationIssue["kind"]>([
   "task_missing_payment_deposit",
   "task_missing_payment_full",
   "entity_payment_ahead_of_workflow",
+  "entity_missing_payment_fact",
+  "entity_partial_payment",
 ]);
 
 /** Heuristic / low-signal kinds — collapsed under „Zobraziť diagnostiku“ in Zladenie. */
@@ -57,14 +61,19 @@ export function summarizeReconciliationIssueCounts(
   issues: ReconciliationIssue[],
   dismissedKeys: Set<string>,
   ctx: FinanceRawContext,
+  access?: AccessContext | null,
 ): ReconciliationIssueSummary {
   const active = filterActiveIssues(
     issues.map((i) => ({ ...i, issueKey: buildIssueKey(i) })),
     dismissedKeys,
   );
   const primaryActive = filterPrimaryReconciliationIssues(active);
-  const actionable = primaryActive.filter((i) => isIssueActionable(i, ctx));
-  const advisory = primaryActive.filter((i) => !isIssueActionable(i, ctx));
+  const canAct = (i: ReconciliationIssue) =>
+    access
+      ? isReconciliationIssueActionableForUser(i, ctx, access)
+      : isIssueActionable(i, ctx);
+  const actionable = primaryActive.filter(canAct);
+  const advisory = primaryActive.filter((i) => !canAct(i));
   const hiddenLegacy = active.filter((i) => isFinancePrimaryHiddenIssue(i));
 
   return {

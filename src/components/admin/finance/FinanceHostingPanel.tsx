@@ -28,10 +28,14 @@ import { AdminListSearchInput } from "@/components/admin/AdminListSearchInput";
 import { matchesSearchQuery } from "@/lib/searchMatch";
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
 import {
-  sumConfirmedPaymentsForSource,
   resolveEntityAgreedPrice,
 } from "@/lib/finance/entityPaymentBridge";
-import { resolvePaymentCompleteness } from "@/lib/finance/paymentCompleteness";
+import { formatAgreedPrice } from "@/components/admin/AgreedPriceField";
+import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompletenessBadge";
+import {
+  buildConfirmedPaymentTotalsBySource,
+  confirmedPaidForEntity,
+} from "@/lib/finance/paymentCompleteness";
 import { resolveCustomerIdentity, customerDisplayLabel } from "@/lib/finance/customerBridge";
 import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import { Link } from "react-router-dom";
@@ -137,6 +141,14 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
     if (searchParams.get("hosting") !== "new" || dialogOpen) return;
     openHostingDialog({ reset: false });
   }, [searchParams, dialogOpen, openHostingDialog]);
+
+  const confirmedBySource = useMemo(
+    () =>
+      buildConfirmedPaymentTotalsBySource(
+        ctx.paymentRecords.filter((r) => r.source_table === "hosting_records"),
+      ),
+    [ctx.paymentRecords],
+  );
 
   const filteredRecords = useMemo(() => {
     if (!searchQuery.trim()) return records;
@@ -308,10 +320,11 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
               <TableRow>
                 <TableHead>Klient</TableHead>
                 <TableHead>Poskytovateľ</TableHead>
+                <TableHead className="text-right">Dohodnutá cena</TableHead>
+                <TableHead>Úhrada</TableHead>
                 <TableHead className="text-right">Mesiac</TableHead>
                 <TableHead>Provízny</TableHead>
                 <TableHead>Stav</TableHead>
-                <TableHead>Platba</TableHead>
                 <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
@@ -326,13 +339,12 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                   (r as HostingRecordRow & { customer_id?: string | null }).customer_id,
                   r.customer_email,
                 );
-                const confirmed = sumConfirmedPaymentsForSource(
-                  ctx.paymentRecords,
+                const agreed = resolveEntityAgreedPrice(r);
+                const confirmed = confirmedPaidForEntity(
+                  confirmedBySource,
                   "hosting_records",
                   r.id,
                 );
-                const agreed = resolveEntityAgreedPrice(r);
-                const pc = resolvePaymentCompleteness(agreed > 0 ? agreed : null, confirmed);
                 return (
                   <TableRow key={r.id}>
                     <TableCell className="text-sm">
@@ -346,7 +358,25 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                       )}
                     </TableCell>
                     <TableCell className="text-xs">{r.provider ?? "—"}</TableCell>
-                    <TableCell className="text-right">{r.monthly_price != null ? `${r.monthly_price} €` : "—"}</TableCell>
+                    <TableCell className="text-xs text-right tabular-nums whitespace-nowrap">
+                      {formatAgreedPrice(r.agreed_fee ?? (agreed > 0 ? agreed : null))}
+                    </TableCell>
+                    <TableCell>
+                      <PaymentCompletenessBadge
+                        compact
+                        agreedPrice={r.agreed_fee ?? (agreed > 0 ? agreed : null)}
+                        confirmedPaid={confirmed}
+                      />
+                      <Link
+                        to={`/admin/hosting/${r.id}`}
+                        className="block text-[10px] text-primary hover:underline mt-0.5"
+                      >
+                        Detail →
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-right text-xs tabular-nums">
+                      {r.monthly_price != null ? `${r.monthly_price} €` : "—"}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={r.commissionable ? "default" : "outline"} className="text-[10px]">
                         {r.commissionable ? "áno" : "nie"}
@@ -356,31 +386,6 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                       <Badge variant={r.active ? "secondary" : "outline"} className="text-[10px]">
                         {r.active ? "aktívny" : "neaktívny"}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {confirmed > 0 ? (
-                        <Badge
-                          variant={
-                            pc.status === "paid"
-                              ? "secondary"
-                              : pc.status === "partial"
-                                ? "outline"
-                                : "outline"
-                          }
-                          className="text-[10px]"
-                        >
-                          {confirmed} €
-                          {agreed > 0 ? ` / ${agreed} €` : ""}
-                        </Badge>
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">—</span>
-                      )}
-                      <Link
-                        to={`/admin/hosting/${r.id}`}
-                        className="block text-[10px] text-primary hover:underline mt-0.5"
-                      >
-                        Platby →
-                      </Link>
                     </TableCell>
                     <TableCell>
                       <Button

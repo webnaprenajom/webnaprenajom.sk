@@ -3,6 +3,7 @@ import {
   canEditOperatingCosts,
   canManageUserRoles,
   canToggleCommissionPaymentStatus,
+  canConfirmCommissionPayoutReceipt,
   canWriteCommissions,
 } from "@/lib/rbac/writePermissions";
 
@@ -32,5 +33,11 @@ describe("rc6.6 write permissions", () => {
 
   it("denies payment_status toggle without CRM role", () => {
     expect(canToggleCommissionPaymentStatus(noRole, "Peter")).toBe(false);
+  });
+
+  it("owner cannot confirm payout receipt — only earning realizator", () => {
+    expect(canConfirmCommissionPayoutReceipt(owner, "Peter")).toBe(false);
+    expect(canConfirmCommissionPayoutReceipt(administrator, "Peter")).toBe(true);
+    expect(canConfirmCommissionPayoutReceipt(administrator, "Maroš")).toBe(false);
   });
 });
