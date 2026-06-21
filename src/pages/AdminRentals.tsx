@@ -59,6 +59,7 @@ import {
 import { ImplementerCommissionDetailDialog } from "@/components/admin/rentals/ImplementerCommissionDetailDialog";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { useStableAccessLoad } from "@/hooks/useStableAccessLoad";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
 import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
@@ -453,7 +454,7 @@ export default function AdminRentals() {
     entityId: editing?.id || null,
     isModalOpen: !!editing,
     query: editing?.id ? { edit: editing.id } : undefined,
-    enabled: !loading,
+    enabled: !!accessCtx.userId,
     onRestore: (state) => {
       if (editing || !state.modalId || state.modalId !== "rental-edit") return;
       if (state.entityId && state.entityId !== "new") {
@@ -492,43 +493,7 @@ export default function AdminRentals() {
 
   const financeTargetId = editing?.id ?? pricesOpen?.id ?? null;
 
-  useEffect(() => {
-    if (accessCtx.authChecking) return;
-    void loadAll().finally(() => setLoading(false));
-  }, [accessCtx.authChecking, accessCtx.role]);
-
-  useEffect(() => {
-    if (!financeTargetId) {
-      setRentalFinance(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      const [payRes, costRes] = await Promise.all([
-        supabase.from("payment_records").select("amount").eq("rental_website_id", financeTargetId),
-        supabase.from("cost_records").select("amount").eq("rental_website_id", financeTargetId),
-      ]);
-      if (cancelled) return;
-      if (payRes.error || costRes.error) {
-        const msg = [payRes.error?.message, costRes.error?.message].filter(Boolean).join("; ");
-        toast({
-          title: "Chyba načítania financií prenájmu",
-          description: msg,
-          variant: "destructive",
-        });
-      }
-      setRentalFinance({
-        websiteId: financeTargetId,
-        paymentRecords: (payRes.error ? [] : payRes.data ?? []) as Array<{ amount: number }>,
-        costRecords: (costRes.error ? [] : costRes.data ?? []) as Array<{ amount: number }>,
-      });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [financeTargetId]);
-
-  const loadAll = async () => {
+  const loadAll = useCallback(async () => {
     const [w, p, leadsRes, commRes, payoutRes] = await Promise.all([
       supabase.from("rental_websites").select("*").order("created_at", { ascending: false }),
       supabase.from("rental_payments").select("*"),
@@ -580,7 +545,55 @@ export default function AdminRentals() {
     if (!payoutRes.error && payoutRes.data) {
       setPayoutRecords(payoutRes.data as typeof payoutRecords);
     }
-  };
+  }, [accessCtx]);
+
+  const reloadCommissionPayoutData = useCallback(async () => {
+    const [commRes, payoutRes] = await Promise.all([
+      supabase.from("commissions").select("id,title,date,amount,payment_status,note,payment_form,implementer,source_type,source_id,customer_email"),
+      supabase.from("payout_records").select("id,source_table,source_id,amount,paid_at,truth_level,note,reference,implementer").order("paid_at", { ascending: false }),
+    ]);
+    if (!commRes.error && commRes.data) {
+      setCommissions(commRes.data as typeof commissions);
+    }
+    if (!payoutRes.error && payoutRes.data) {
+      setPayoutRecords(payoutRes.data as typeof payoutRecords);
+    }
+  }, []);
+
+  useStableAccessLoad(accessCtx.authChecking, accessCtx.userId, accessCtx.role, () => {
+    void loadAll().finally(() => setLoading(false));
+  });
+
+  useEffect(() => {
+    if (!financeTargetId) {
+      setRentalFinance(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const [payRes, costRes] = await Promise.all([
+        supabase.from("payment_records").select("amount").eq("rental_website_id", financeTargetId),
+        supabase.from("cost_records").select("amount").eq("rental_website_id", financeTargetId),
+      ]);
+      if (cancelled) return;
+      if (payRes.error || costRes.error) {
+        const msg = [payRes.error?.message, costRes.error?.message].filter(Boolean).join("; ");
+        toast({
+          title: "Chyba načítania financií prenájmu",
+          description: msg,
+          variant: "destructive",
+        });
+      }
+      setRentalFinance({
+        websiteId: financeTargetId,
+        paymentRecords: (payRes.error ? [] : payRes.data ?? []) as Array<{ amount: number }>,
+        costRecords: (costRes.error ? [] : costRes.data ?? []) as Array<{ amount: number }>,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [financeTargetId]);
 
   const paymentMap = useMemo(() => {
     const map = new Map<string, RentalPayment>();
@@ -1456,6 +1469,7 @@ export default function AdminRentals() {
           clientEmailMap={clientEmailMap}
           yearStats={yearStats}
           onSaved={() => void loadAll()}
+          onPayoutSaved={() => void reloadCommissionPayoutData()}
         />
       )}
 

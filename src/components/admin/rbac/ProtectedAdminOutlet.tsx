@@ -1,17 +1,25 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldAlert } from "lucide-react";
+import { AdminAccessProvider } from "@/hooks/useAdminAccess";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { isAdministrator, isCrmUser } from "@/lib/rbac/permissions";
 import { canAccessRoute, redirectPathForRole, routeAccessDeniedMessage } from "@/lib/rbac/routeAccess";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
-import { useNavigate } from "react-router-dom";
 
 /**
  * Single route-level guard for all /admin/* routes (RC6.6).
  * Deep links cannot bypass — checks pathname against shared routeAccess rules.
  */
 export function ProtectedAdminOutlet() {
+  return (
+    <AdminAccessProvider>
+      <ProtectedAdminOutletInner />
+    </AdminAccessProvider>
+  );
+}
+
+function ProtectedAdminOutletInner() {
   const { pathname } = useLocation();
   const ctx = useAccessContext();
   const navigate = useNavigate();

@@ -24,6 +24,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, Search, AlertTriangle, Info, Download } from "lucide-react";
 import { adminCustomerHref, adminLeadHref } from "@/lib/adminNav";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
+import { useStableAccessLoad } from "@/hooks/useStableAccessLoad";
 import { isCrmUser } from "@/lib/rbac/permissions";
 import {
   leadLogsEmptyMessage,
@@ -118,11 +119,10 @@ const AdminLogs = () => {
     setLoading(false);
   }, [access.role]);
 
-  useEffect(() => {
-    if (access.authChecking) return;
+  useStableAccessLoad(access.authChecking, access.userId, access.role, () => {
     document.title = "CRM Logy | Web na prenájom";
     void loadLogs();
-  }, [access.authChecking, loadLogs]);
+  });
 
   const filtered = useMemo(() => {
     return logs.filter((l) => {

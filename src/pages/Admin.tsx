@@ -90,6 +90,7 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AdminStatCard } from "@/components/admin/AdminStatCard";
 import { confirmAdminSignOut } from "@/lib/adminSignOut";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useAccessContext } from "@/hooks/useAccessContext";
@@ -320,7 +321,7 @@ const Admin = () => {
     entityId: addOpen ? "new" : null,
     isModalOpen: addOpen,
     query: addOpen ? { lead: "new" } : undefined,
-    enabled: !loading && !!userId,
+    enabled: !!userId,
     onRestore: (state) => {
       if (addOpen || selected || state.modalId !== "lead-create") return;
       openAddLead({ reset: false });
@@ -331,6 +332,8 @@ const Admin = () => {
     document.title = "Admin CRM | Web na prenájom";
   }, [navigate]);
 
+  const lastLoadKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (authChecking) return;
 
@@ -338,6 +341,10 @@ const Admin = () => {
       navigate("/auth", { replace: true });
       return;
     }
+
+    const key = `${userId}:${role ?? ""}`;
+    if (lastLoadKeyRef.current === key) return;
+    lastLoadKeyRef.current = key;
 
     if (canAccessOperationalCrm(role)) {
       void loadLeads();
@@ -472,7 +479,7 @@ const Admin = () => {
     entityId: selected?.id ?? null,
     isModalOpen: !!selected,
     query: selected ? { lead: selected.id } : undefined,
-    enabled: !loading && !!userId,
+    enabled: !!userId,
     onRestore: (state) => {
       if (selected || !state.entityId || state.modalId !== "lead-detail") return;
       const target = leads.find((l) => l.id === state.entityId);
@@ -1398,12 +1405,12 @@ const Admin = () => {
       <div className="space-y-6">
         {/* Stats */}
         <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <StatCard icon={Users} label="Spolu" value={stats.total} />
-          <StatCard icon={CalendarLucide} label="Dnes" value={stats.today} />
-          <StatCard icon={TrendingUp} label="7 dní" value={stats.week} />
-          <StatCard icon={TrendingUp} label="Tento mesiac" value={stats.month} />
-          <StatCard icon={Bot} label="Nové" value={stats.newCount} accent="text-blue-500" />
-          <StatCard icon={CheckCircle2} label="Zrealizované" value={stats.won} accent="text-green-500" />
+          <AdminStatCard icon={Users} label="Spolu" value={stats.total} />
+          <AdminStatCard icon={CalendarLucide} label="Dnes" value={stats.today} />
+          <AdminStatCard icon={TrendingUp} label="7 dní" value={stats.week} />
+          <AdminStatCard icon={TrendingUp} label="Tento mesiac" value={stats.month} />
+          <AdminStatCard icon={Bot} label="Nové" value={stats.newCount} accent="text-blue-500" />
+          <AdminStatCard icon={CheckCircle2} label="Zrealizované" value={stats.won} accent="text-green-500" />
         </section>
 
         {/* View toggle: current / stale / archive / imported */}
@@ -1770,25 +1777,5 @@ const Admin = () => {
     </AdminLayout>
   );
 };
-
-const StatCard = ({
-  icon: Icon,
-  label,
-  value,
-  accent = "text-primary",
-}: {
-  icon: typeof Users;
-  label: string;
-  value: number;
-  accent?: string;
-}) => (
-  <div className="rounded-xl border border-border bg-card p-4">
-    <div className="flex items-center gap-2 text-muted-foreground text-xs">
-      <Icon className={`w-3.5 h-3.5 ${accent}`} />
-      {label}
-    </div>
-    <p className="text-2xl font-bold mt-1">{value}</p>
-  </div>
-);
 
 export default Admin;

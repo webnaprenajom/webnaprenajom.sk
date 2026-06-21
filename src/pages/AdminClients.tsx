@@ -46,6 +46,7 @@ import {
 } from "lucide-react";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { useStableAccessLoad } from "@/hooks/useStableAccessLoad";
 import { isAdministrator, isOwner } from "@/lib/rbac/permissions";
 import { filterLeadsForUser, filterRentalsForUser } from "@/lib/rbac/scopeHelpers";
 import { supabase } from "@/integrations/supabase/client";
@@ -131,10 +132,7 @@ export default function AdminClients() {
     setDirectoryLoading(false);
   }, [accessCtx]);
 
-  useEffect(() => {
-    if (accessCtx.authChecking) return;
-    void loadDirectory();
-  }, [loadDirectory, accessCtx.authChecking, accessCtx.role]);
+  useStableAccessLoad(accessCtx.authChecking, accessCtx.userId, accessCtx.role, loadDirectory);
 
   const filteredDirectory = useMemo(() => {
     if (!query.trim()) return directory;

@@ -96,6 +96,61 @@ describe("crmPersistence viewRestoreStore", () => {
   it("view restore is mount-only — no visibilitychange handler in hook source", () => {
     const src = readFileSync(join(process.cwd(), "src/hooks/useCrmViewRestore.ts"), "utf8");
     expect(src).not.toContain("visibilitychange");
+    expect(src).toContain("restoreAttemptedForRouteRef");
+  });
+});
+
+describe("crm tab-return stability", () => {
+  it("QueryClient disables focus/reconnect/mount refetch by default", () => {
+    const src = readFileSync(join(process.cwd(), "src/App.tsx"), "utf8");
+    expect(src).toContain("refetchOnWindowFocus: false");
+    expect(src).toContain("refetchOnReconnect: false");
+    expect(src).toContain("refetchOnMount: false");
+  });
+
+  it("admin access ignores TOKEN_REFRESHED — no tab-return auth storm", () => {
+    const src = readFileSync(join(process.cwd(), "src/hooks/useAdminAccess.ts"), "utf8");
+    expect(src).not.toMatch(/event\s*===\s*["']TOKEN_REFRESHED["']/);
+    expect(src).toContain("AdminAccessProvider");
+  });
+
+  it("admin routes wrap a single AdminAccessProvider", () => {
+    const src = readFileSync(
+      join(process.cwd(), "src/components/admin/rbac/ProtectedAdminOutlet.tsx"),
+      "utf8",
+    );
+    expect(src).toContain("<AdminAccessProvider>");
+  });
+});
+
+describe("useStableAccessLoad", () => {
+  it("dedupes loads per userId+role key", async () => {
+    const { renderHook } = await import("@testing-library/react");
+    const { useStableAccessLoad } = await import("@/hooks/useStableAccessLoad");
+
+    let calls = 0;
+    const load = () => {
+      calls += 1;
+    };
+
+    const { rerender } = renderHook(
+      ({ authChecking, userId, role }) => {
+        useStableAccessLoad(authChecking, userId, role, load);
+      },
+      { initialProps: { authChecking: true, userId: null as string | null, role: null as import("@/lib/rbac/permissions").AppRole | null } },
+    );
+
+    expect(calls).toBe(0);
+
+    rerender({ authChecking: false, userId: "u1", role: "owner" });
+    expect(calls).toBe(1);
+
+    // Tab return / token refresh — same identity must not re-fetch
+    rerender({ authChecking: false, userId: "u1", role: "owner" });
+    expect(calls).toBe(1);
+
+    rerender({ authChecking: false, userId: "u2", role: "owner" });
+    expect(calls).toBe(2);
   });
 });
 

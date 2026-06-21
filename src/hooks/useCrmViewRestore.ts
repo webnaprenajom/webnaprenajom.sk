@@ -39,6 +39,7 @@ export function useCrmViewRestore({
   const isModalOpenRef = useRef(isModalOpen);
   isModalOpenRef.current = isModalOpen;
   const appliedRestoreKeyRef = useRef<string | null>(null);
+  const restoreAttemptedForRouteRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!enabled || !isModalOpen || !modalId) return;
@@ -53,6 +54,9 @@ export function useCrmViewRestore({
 
   useEffect(() => {
     if (!enabled || !onRestoreRef.current) return;
+    // Mount / route entry only — not when `enabled` flips after list reload.
+    if (restoreAttemptedForRouteRef.current === route) return;
+    restoreAttemptedForRouteRef.current = route;
 
     const tryRestore = () => {
       if (location.pathname !== route) return;

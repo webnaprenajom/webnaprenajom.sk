@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FinanceHostingPanel } from "@/components/admin/finance/FinanceHostingPanel";
@@ -6,6 +6,7 @@ import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { useStableAccessLoad } from "@/hooks/useStableAccessLoad";
 import { filterHostingForUser } from "@/lib/rbac/scopeHelpers";
 
 export default function AdminHosting() {
@@ -18,12 +19,7 @@ export default function AdminHosting() {
     document.title = "Hosting | CRM";
   }, []);
 
-  useEffect(() => {
-    if (accessCtx.authChecking) return;
-    void load();
-  }, [accessCtx.authChecking, accessCtx.role]);
-
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const [hosting, payments] = await Promise.all([
       supabase.from("hosting_records").select("*").order("created_at", { ascending: false }),
@@ -47,7 +43,9 @@ export default function AdminHosting() {
       setPaymentRecords(payments.data || []);
     }
     setLoading(false);
-  };
+  }, [accessCtx]);
+
+  useStableAccessLoad(accessCtx.authChecking, accessCtx.userId, accessCtx.role, load);
 
   const ctx = useMemo(
     () => ({

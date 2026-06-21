@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { AppRole } from "@/lib/rbac/permissions";
 import { clearStaleAuthSession } from "@/lib/auth/clearStaleAuthSession";
@@ -53,8 +62,16 @@ const initialState: AppAccessState = {
   displayName: null,
 };
 
-export const useAdminAccess = (): AppAccessState => {
+const AdminAccessContext = createContext<AppAccessState | null>(null);
+
+/**
+ * Single auth listener for all /admin routes.
+ * Tab focus / TOKEN_REFRESHED must not remount CRM or re-show auth spinners.
+ */
+export function AdminAccessProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppAccessState>(initialState);
+  const hasResolvedOnceRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
 
   const resolveAccess = useCallback(async (user: { id: string; email?: string | null }) => {
     const { data: roles, error: roleError } = await supabase
@@ -96,10 +113,11 @@ export const useAdminAccess = (): AppAccessState => {
   useEffect(() => {
     let active = true;
 
-    const refreshAccess = async (options?: { silent?: boolean }) => {
+    const refreshAccess = async () => {
       if (!active) return;
 
-      if (!options?.silent) {
+      const showSpinner = !hasResolvedOnceRef.current;
+      if (showSpinner) {
         setState((prev) => ({ ...prev, authChecking: true }));
       }
 
@@ -116,13 +134,19 @@ export const useAdminAccess = (): AppAccessState => {
         if (!user) {
           await clearStaleAuthSession();
           if (!active) return;
+          hasResolvedOnceRef.current = true;
+          lastUserIdRef.current = null;
           setState({ ...initialState, authChecking: false });
           return;
         }
 
         const access = await resolveAccess(user);
         if (!active) return;
+
+        hasResolvedOnceRef.current = true;
+        lastUserIdRef.current = user.id;
         const nextEmail = user.email ?? "";
+
         setState((prev) => {
           const next: AppAccessState = {
             authChecking: false,
@@ -153,6 +177,7 @@ export const useAdminAccess = (): AppAccessState => {
       } catch (error) {
         console.error("[useAdminAccess] resolution failed", error);
         if (active) {
+          hasResolvedOnceRef.current = true;
           setState((prev) => ({
             ...prev,
             authChecking: false,
@@ -171,23 +196,27 @@ export const useAdminAccess = (): AppAccessState => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
+        hasResolvedOnceRef.current = true;
+        lastUserIdRef.current = null;
         if (active) setState({ ...initialState, authChecking: false });
         return;
       }
+
       if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
-        window.setTimeout(() => {
-          if (!active) return;
-          void refreshAccess();
-        }, 0);
+        const sessionUserId = session?.user?.id ?? null;
+        const userChanged =
+          sessionUserId != null && sessionUserId !== lastUserIdRef.current;
+        if (!hasResolvedOnceRef.current || userChanged) {
+          window.setTimeout(() => {
+            if (!active) return;
+            void refreshAccess();
+          }, 0);
+        }
       }
-      if (event === "TOKEN_REFRESHED") {
-        window.setTimeout(() => {
-          if (!active) return;
-          void refreshAccess({ silent: true });
-        }, 0);
-      }
+
+      // TOKEN_REFRESHED: session stays valid — no UI churn, no role re-fetch storm.
     });
 
     return () => {
@@ -196,5 +225,13 @@ export const useAdminAccess = (): AppAccessState => {
     };
   }, [resolveAccess]);
 
-  return state;
+  return createElement(AdminAccessContext.Provider, { value: state }, children);
+}
+
+export const useAdminAccess = (): AppAccessState => {
+  const ctx = useContext(AdminAccessContext);
+  if (!ctx) {
+    throw new Error("useAdminAccess must be used within AdminAccessProvider");
+  }
+  return ctx;
 };

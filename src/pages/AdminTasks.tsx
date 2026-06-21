@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { useAccessContext } from "@/hooks/useAccessContext";
+import { useStableAccessLoad } from "@/hooks/useStableAccessLoad";
 import { useCrmDraft } from "@/hooks/useCrmDraft";
 import { useCrmViewRestore } from "@/hooks/useCrmViewRestore";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
@@ -187,12 +188,7 @@ const AdminTasks = () => {
     document.title = "Úlohy | CRM";
   }, []);
 
-  useEffect(() => {
-    if (accessCtx.authChecking) return;
-    void load();
-  }, [accessCtx.authChecking, accessCtx.role]);
-
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     const [tasksRes, leadsRes] = await Promise.all([
       supabase.from("tasks").select("*").order("created_at", { ascending: false }),
@@ -216,7 +212,9 @@ const AdminTasks = () => {
       });
     }
     setLoading(false);
-  };
+  }, [accessCtx]);
+
+  useStableAccessLoad(accessCtx.authChecking, accessCtx.userId, accessCtx.role, load);
 
   const openNew = useCallback(
     (opts?: { reset?: boolean; parentType?: TaskParentType }) => {
@@ -285,7 +283,7 @@ const AdminTasks = () => {
     entityId: dialogOpen ? (form.id || "new") : null,
     isModalOpen: dialogOpen,
     query: dialogOpen ? { task: form.id || "new" } : undefined,
-    enabled: !loading,
+    enabled: !!accessCtx.userId,
     onRestore: (state) => {
       if (dialogOpen || state.modalId !== "task-edit") return;
       if (state.entityId && state.entityId !== "new") {
