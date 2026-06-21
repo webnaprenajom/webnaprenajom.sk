@@ -3,7 +3,7 @@
  */
 
 import type { AccessContext } from "@/lib/rbac/permissions";
-import { commissionVisibleToUser, isAdministrator, isOwner } from "@/lib/rbac/permissions";
+import { commissionVisibleToUser, isAdministrator, isCrmUser, isOwner } from "@/lib/rbac/permissions";
 
 export function canWriteCommissions(ctx: AccessContext): boolean {
   return isOwner(ctx.role);
@@ -34,18 +34,20 @@ export function canToggleCommissionPaymentStatus(
   return commissionVisibleToUser(implementer, ctx);
 }
 
-/** Realizator confirms they received payout — owner is view-only for this step. */
+/** Earning realizator confirms payout receipt — identity-based (team profile), not role-based. */
 export function canConfirmCommissionPayoutReceipt(
   ctx: AccessContext,
   implementer: string | null | undefined,
 ): boolean {
-  if (isOwner(ctx.role)) return false;
-  if (!isAdministrator(ctx.role)) return false;
-  return commissionVisibleToUser(implementer, ctx);
+  if (!isCrmUser(ctx.role)) return false;
+  const userImpl = ctx.implementerName?.trim().toLowerCase();
+  const commissionImpl = (implementer ?? "").trim().toLowerCase();
+  if (!userImpl || !commissionImpl) return false;
+  return userImpl === commissionImpl;
 }
 
 export function commissionPayoutReceiptDeniedMessage(): string {
-  return "Potvrdenie prijatia výplaty môže urobiť len realizátor, ktorému provízia patrí. Owner vidí stav, ale nemôže potvrdiť za realizátora.";
+  return "Potvrdenie prijatia výplaty môže urobiť len účet prepojený s realizátorom, ktorému provízia patrí.";
 }
 
 export function commissionPaymentStatusDeniedMessage(): string {

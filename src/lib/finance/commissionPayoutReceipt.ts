@@ -47,18 +47,18 @@ export function reconciliationIssueBlockedHint(
   if (issue.kind === "entity_missing_payment_fact" || issue.kind === "entity_partial_payment") {
     return "Platby zadáva owner priamo v detaile dealu — Zladenie už nepotvrdzuje entity platby.";
   }
-  if (issue.kind === "workflow_outgoing_commission" && isOwner(access.role)) {
+  if (issue.kind === "workflow_outgoing_commission") {
     const implementer = resolveCommissionImplementerFromIssue(issue, financeCtx);
-    return implementer
-      ? `Čaká na potvrdenie realizátora (${implementer}).`
-      : "Čaká na potvrdenie realizátora.";
-  }
-  if (
-    issue.kind === "workflow_outgoing_commission" &&
-    isAdministrator(access.role) &&
-    !canConfirmCommissionPayoutReceipt(access, resolveCommissionImplementerFromIssue(issue, financeCtx))
-  ) {
-    return commissionPayoutReceiptDeniedMessage();
+    if (!canConfirmCommissionPayoutReceipt(access, implementer)) {
+      if (isOwner(access.role)) {
+        return implementer
+          ? `Čaká na potvrdenie realizátora (${implementer}).`
+          : "Čaká na potvrdenie realizátora.";
+      }
+      if (isAdministrator(access.role)) {
+        return commissionPayoutReceiptDeniedMessage();
+      }
+    }
   }
   return null;
 }

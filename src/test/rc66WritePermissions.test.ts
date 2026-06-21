@@ -8,6 +8,7 @@ import {
 } from "@/lib/rbac/writePermissions";
 
 const owner = { role: "owner" as const, userId: "a1", implementerName: null };
+const ownerMaros = { role: "owner" as const, userId: "a2", implementerName: "Maroš" };
 const administrator = { role: "administrator" as const, userId: "u1", implementerName: "Peter" };
 const noRole = { role: null, userId: "x1", implementerName: "Peter" };
 
@@ -35,9 +36,13 @@ describe("rc6.6 write permissions", () => {
     expect(canToggleCommissionPaymentStatus(noRole, "Peter")).toBe(false);
   });
 
-  it("owner cannot confirm payout receipt — only earning realizator", () => {
+  it("payout receipt confirm is identity-based — owner role alone is not enough", () => {
     expect(canConfirmCommissionPayoutReceipt(owner, "Peter")).toBe(false);
+    expect(canConfirmCommissionPayoutReceipt(owner, "Maroš")).toBe(false);
+    expect(canConfirmCommissionPayoutReceipt(ownerMaros, "Maroš")).toBe(true);
+    expect(canConfirmCommissionPayoutReceipt(ownerMaros, "Peter")).toBe(false);
     expect(canConfirmCommissionPayoutReceipt(administrator, "Peter")).toBe(true);
     expect(canConfirmCommissionPayoutReceipt(administrator, "Maroš")).toBe(false);
+    expect(canConfirmCommissionPayoutReceipt(noRole, "Peter")).toBe(false);
   });
 });
