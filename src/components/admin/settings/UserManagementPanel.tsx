@@ -846,7 +846,14 @@ export function UserManagementPanel() {
         <p className={adminType.caption}>
           Mená pre provízie a priradenia. Historické záznamy v financiách sa nemenia.
         </p>
-        <ImplementerRegistryPanel registry={registry} managedUsers={withRole} />
+        <ImplementerRegistryPanel
+          registry={registry}
+          managedUsers={withRole}
+          onCatalogChanged={async () => {
+            await reload();
+            await registry.reload();
+          }}
+        />
       </div>
 
       <ConfirmSensitiveActionDialog

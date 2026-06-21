@@ -25,6 +25,8 @@ function implementerNamesEqual(a: string, b: string): boolean {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
+export { implementerNamesEqual };
+
 /** Safe catalog delete — historical commission/rental strings are untouched. */
 export function evaluateImplementerRegistryRemove(
   entry: Pick<

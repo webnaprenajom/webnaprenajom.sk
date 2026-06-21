@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { useImplementerRegistry } from "@/hooks/useImplementerRegistry";
 import {
@@ -25,6 +25,8 @@ import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { adminCtrl } from "@/lib/admin/readability";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ImplementerEditDialog } from "@/components/admin/settings/ImplementerEditDialog";
+import type { ImplementerRegistryEntry } from "@/lib/admin/implementerRegistry";
 
 type RegistryApi = Pick<
   ReturnType<typeof useImplementerRegistry>,
@@ -42,13 +44,15 @@ type RegistryApi = Pick<
 type Props = {
   registry: RegistryApi;
   managedUsers: CrmManagedUser[];
+  onCatalogChanged?: () => void | Promise<void>;
 };
 
-export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
+export function ImplementerRegistryPanel({ registry, managedUsers, onCatalogChanged }: Props) {
   const { userId: actorId } = useAdminAccess();
   const [newName, setNewName] = useState("");
   const [pendingDeactivate, setPendingDeactivate] = useState<string | null>(null);
   const [pendingRemove, setPendingRemove] = useState<string | null>(null);
+  const [editingEntry, setEditingEntry] = useState<ImplementerRegistryEntry | null>(null);
   const [saving, setSaving] = useState(false);
 
   const entries = useMemo(
@@ -229,6 +233,17 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex flex-wrap justify-end gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className={`${adminCtrl.sm}`}
+                      disabled={saving}
+                      onClick={() => setEditingEntry(entry)}
+                    >
+                      <Pencil className="w-3.5 h-3.5 mr-1" />
+                      Upraviť
+                    </Button>
                     {entry.active && !entry.assignedUserId && (
                       <Button
                         type="button"
@@ -341,6 +356,18 @@ export function ImplementerRegistryPanel({ registry, managedUsers }: Props) {
         confirmLabel="Odstrániť z katalógu"
         destructive
         onConfirm={() => void confirmRemove()}
+      />
+
+      <ImplementerEditDialog
+        open={!!editingEntry}
+        onOpenChange={(open) => !open && setEditingEntry(null)}
+        entry={editingEntry}
+        registry={registry.rows}
+        managedUsers={managedUsers}
+        onSaved={async () => {
+          await registry.reload();
+          await onCatalogChanged?.();
+        }}
       />
     </div>
   );
