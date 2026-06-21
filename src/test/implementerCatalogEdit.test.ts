@@ -53,16 +53,91 @@ const adminEva = {
   riskFlags: [],
 } as CrmManagedUser;
 
+const ownerFree = {
+  userId: "u-owner",
+  email: "o@x.com",
+  authDisplayName: null,
+  roleRowId: "r4",
+  role: "owner",
+  teamDisplayName: null,
+  implementerName: null,
+  profileActive: false,
+  inactiveProfile: false,
+  orphanActiveProfile: false,
+  displayName: "Owner User",
+  missingProfile: false,
+  riskFlags: [],
+} as CrmManagedUser;
+
+const ownerScope = { actorIsOwner: true as const };
+const adminSelfScope = { actorIsOwner: false as const, actorUserId: "u-free" };
+
 describe("implementerCatalogEdit", () => {
   it("lists assignable administrators without conflicting implementer", () => {
     const users = listAssignableUsersForImplementer(
       [adminFree, adminPeter, adminEva],
       "Peter",
       "u-peter",
+      ownerScope,
     );
     expect(users.map((u) => u.userId)).toContain("u-free");
     expect(users.map((u) => u.userId)).toContain("u-peter");
     expect(users.map((u) => u.userId)).not.toContain("u-eva");
+  });
+
+  it("owner scope includes owner accounts without implementer", () => {
+    const users = listAssignableUsersForImplementer(
+      [adminFree, ownerFree, adminEva],
+      "Nový",
+      null,
+      ownerScope,
+    );
+    expect(users.map((u) => u.userId)).toContain("u-owner");
+    expect(users.map((u) => u.userId)).toContain("u-free");
+    expect(users.map((u) => u.userId)).not.toContain("u-eva");
+  });
+
+  it("administrator scope is limited to self only", () => {
+    const users = listAssignableUsersForImplementer(
+      [adminFree, adminPeter, ownerFree],
+      "Nový",
+      null,
+      adminSelfScope,
+    );
+    expect(users.map((u) => u.userId)).toEqual(["u-free"]);
+  });
+
+  it("allows owner to assign implementer to owner account", () => {
+    const result = validateImplementerCatalogEdit({
+      entry: {
+        name: "Nový",
+        inRegistry: true,
+        active: true,
+        assignedUserId: null,
+      },
+      draft: { name: "Nový", assignedUserId: "u-owner" },
+      registry: [{ name: "Nový", active: true }],
+      managedUsers: [ownerFree],
+      scope: ownerScope,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("blocks administrator actor from assigning other accounts", () => {
+    const result = validateImplementerCatalogEdit({
+      entry: {
+        name: "Nový",
+        inRegistry: true,
+        active: true,
+        assignedUserId: null,
+      },
+      draft: { name: "Nový", assignedUserId: "u-peter" },
+      registry: [{ name: "Nový", active: true }],
+      managedUsers: [adminPeter],
+      scope: adminSelfScope,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/vlastné priradenie/i);
   });
 
   it("allows rename with historical warning", () => {

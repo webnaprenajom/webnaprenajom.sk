@@ -4,6 +4,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CrmManagedUser } from "@/lib/admin/crmUserDirectory";
 import { implementerNameTaken } from "@/lib/admin/crmUserDirectory";
+import type { AppRole } from "@/lib/rbac/permissions";
 import {
   buildTeamProfileDeactivateUpdate,
   normalizeTeamDisplayName,
@@ -26,16 +27,42 @@ export type ImplementerCatalogEditValidation = {
   warnings: string[];
 };
 
+export type ImplementerCatalogEditScope = {
+  /** Owner in Settings — may assign to any CRM owner/administrator account. */
+  actorIsOwner: boolean;
+  actorUserId?: string | null;
+};
+
+const defaultOwnerScope: ImplementerCatalogEditScope = { actorIsOwner: true };
+
+function userCanReceiveImplementer(
+  user: CrmManagedUser,
+  implementerName: string,
+  currentAssignedUserId: string | null,
+): boolean {
+  if (user.userId === currentAssignedUserId) return true;
+  if (!user.profileActive || !user.implementerName?.trim()) return true;
+  return implementerNamesEqual(user.implementerName, implementerName);
+}
+
+function isImplementerAssignableRole(role: AppRole | null): boolean {
+  return role === "owner" || role === "administrator";
+}
+
 export function listAssignableUsersForImplementer(
   managedUsers: CrmManagedUser[],
   implementerName: string,
   currentAssignedUserId: string | null,
+  scope: ImplementerCatalogEditScope = defaultOwnerScope,
 ): CrmManagedUser[] {
   return managedUsers.filter((user) => {
-    if (user.role !== "administrator") return false;
-    if (user.userId === currentAssignedUserId) return true;
-    if (!user.profileActive || !user.implementerName?.trim()) return true;
-    return implementerNamesEqual(user.implementerName, implementerName);
+    if (!scope.actorIsOwner) {
+      if (user.userId !== scope.actorUserId) return false;
+      if (user.role !== "administrator") return false;
+    } else if (!isImplementerAssignableRole(user.role)) {
+      return false;
+    }
+    return userCanReceiveImplementer(user, implementerName, currentAssignedUserId);
   });
 }
 
@@ -47,7 +74,9 @@ export function validateImplementerCatalogEdit(input: {
   draft: ImplementerCatalogEditDraft;
   registry: CrmImplementerRow[];
   managedUsers: CrmManagedUser[];
+  scope?: ImplementerCatalogEditScope;
 }): ImplementerCatalogEditValidation {
+  const scope = input.scope ?? defaultOwnerScope;
   const warnings: string[] = [];
   const normalized = normalizeImplementerName(input.draft.name);
   if (!normalized) {
@@ -85,10 +114,25 @@ export function validateImplementerCatalogEdit(input: {
     if (!user) {
       return { ok: false, error: "Vybraný účet sa nenašiel.", warnings };
     }
-    if (user.role !== "administrator") {
+    if (!scope.actorIsOwner) {
+      if (user.userId !== scope.actorUserId) {
+        return {
+          ok: false,
+          error: "Môžete meniť len vlastné priradenie realizátora.",
+          warnings,
+        };
+      }
+      if (user.role !== "administrator") {
+        return {
+          ok: false,
+          error: "Realizátora možno priradiť len účtu s rolou administrator.",
+          warnings,
+        };
+      }
+    } else if (!isImplementerAssignableRole(user.role)) {
       return {
         ok: false,
-        error: "Realizátora možno priradiť len účtu s rolou administrator.",
+        error: "Účet nemá CRM rolu owner ani administrator.",
         warnings,
       };
     }
@@ -148,6 +192,7 @@ export async function applyImplementerCatalogEdit(input: {
   draft: ImplementerCatalogEditDraft;
   managedUsers: CrmManagedUser[];
   registry: CrmImplementerRow[];
+  scope?: ImplementerCatalogEditScope;
 }): Promise<{ finalName: string }> {
   const normalized = normalizeImplementerName(input.draft.name);
   if (!normalized) throw new Error("Neplatné meno");
@@ -157,6 +202,7 @@ export async function applyImplementerCatalogEdit(input: {
     draft: input.draft,
     registry: input.registry,
     managedUsers: input.managedUsers,
+    scope: input.scope,
   });
   if (!validation.ok) throw new Error(validation.error ?? "Úprava nie je povolená");
 

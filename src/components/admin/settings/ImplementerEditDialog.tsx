@@ -49,7 +49,14 @@ export function ImplementerEditDialog({
   managedUsers,
   onSaved,
 }: Props) {
-  const { userId: actorId } = useAdminAccess();
+  const { userId: actorId, role: actorRole } = useAdminAccess();
+  const editScope = useMemo(
+    () => ({
+      actorIsOwner: actorRole === "owner",
+      actorUserId: actorId,
+    }),
+    [actorRole, actorId],
+  );
   const [form, setForm] = useState<ImplementerCatalogEditDraft | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -65,8 +72,9 @@ export function ImplementerEditDialog({
       draft: form,
       registry,
       managedUsers,
+      scope: editScope,
     });
-  }, [entry, form, registry, managedUsers]);
+  }, [entry, form, registry, managedUsers, editScope]);
 
   const assignableUsers = useMemo(() => {
     if (!entry) return [];
@@ -74,8 +82,9 @@ export function ImplementerEditDialog({
       managedUsers,
       form?.name ?? entry.name,
       entry.assignedUserId,
+      editScope,
     );
-  }, [entry, form?.name, managedUsers]);
+  }, [entry, form?.name, managedUsers, editScope]);
 
   const save = async (): Promise<boolean> => {
     if (!entry || !form || !validation?.ok) {
@@ -93,6 +102,7 @@ export function ImplementerEditDialog({
         draft: form,
         managedUsers,
         registry,
+        scope: editScope,
       });
       if (actorId) {
         void logAdminAuditEvent({
@@ -197,6 +207,7 @@ export function ImplementerEditDialog({
                   <SelectItem key={user.userId} value={user.userId}>
                     {user.displayName}
                     {user.email ? ` (${user.email})` : ""}
+                    {user.role === "owner" ? " · owner" : ""}
                     {user.missingProfile ? " · bez profilu" : ""}
                   </SelectItem>
                 ))}
@@ -204,8 +215,9 @@ export function ImplementerEditDialog({
             </Select>
             {assignableUsers.length === 0 && (
               <p className="text-xs text-muted-foreground">
-                Žiadny voľný administrator účet. Pridajte používateľa s rolou administrator
-                vyššie.
+                {editScope.actorIsOwner
+                  ? "Žiadny voľný CRM účet (owner/administrator). Pridajte používateľa vyššie alebo uvoľnite existujúce priradenie."
+                  : "Môžete priradiť realizátora len k vlastnému účtu administrator."}
               </p>
             )}
           </div>
