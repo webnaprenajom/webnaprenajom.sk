@@ -29,6 +29,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { Loader2, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
 import { buildFinanceSnapshot } from "@/lib/finance/buildFinanceSnapshot";
+import { buildCommissionParentContext } from "@/lib/finance/rentalCommissionEntitlement";
 import { FINANCE_TRUTH_DISCLAIMER } from "@/lib/finance/labels";
 import {
   FINANCE_ENTITY_KIND_LABELS,
@@ -262,6 +263,17 @@ const AdminFinance = () => {
 
   const scopeImplementer = canSeeAllCommissions(accessCtx.role) ? null : accessCtx.implementerName;
 
+  const commissionParents = useMemo(
+    () =>
+      buildCommissionParentContext({
+        projects: raw.projects,
+        hosting: hostingRecords,
+        marketing: raw.marketing,
+        websites: raw.websites,
+      }),
+    [raw.projects, raw.marketing, raw.websites, hostingRecords],
+  );
+
   const dailyCommissionDetail = useMemo(() => {
     const rows = buildDailyCommissionDetailRows({
       year,
@@ -270,9 +282,18 @@ const AdminFinance = () => {
       websites: raw.websites,
       payments: raw.payments,
       scopeImplementer,
+      parents: commissionParents,
     });
     return { rows, summary: summarizeDailyCommissionRows(rows) };
-  }, [year, scopedCommissions, scopedPayoutRecords, raw.websites, raw.payments, scopeImplementer]);
+  }, [
+    year,
+    scopedCommissions,
+    scopedPayoutRecords,
+    raw.websites,
+    raw.payments,
+    scopeImplementer,
+    commissionParents,
+  ]);
 
   const dailyCostDetail = useMemo(() => {
     const rows = buildDailyCostDetailRows(raw.costRecords, year);
@@ -287,6 +308,7 @@ const AdminFinance = () => {
         allCommissions: scopedCommissions as CommissionRow[],
         year,
         scopeImplementer,
+        parents: commissionParents,
       }).entries(),
     ).sort(
       (a, b) =>
@@ -300,6 +322,7 @@ const AdminFinance = () => {
     scopedCommissions,
     year,
     scopeImplementer,
+    commissionParents,
   ]);
 
   const toggleAdvanced = () => {

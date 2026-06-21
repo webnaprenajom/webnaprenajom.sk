@@ -14,6 +14,7 @@ import {
   classifyRentalCommissionLiveState,
   commissionLinkedPayoutSurfacesInProductUx,
   rentalCommissionSurfacesInProductUx,
+  type CommissionParentContext,
   type RentalWebsiteEntitlementInput,
 } from "@/lib/finance/rentalCommissionEntitlement";
 
@@ -190,6 +191,7 @@ export function implementerTotalsFromCommissionPayouts(
   payoutRecords: Array<PayoutRecordLike & { implementer?: string | null }>,
   opts?: {
     websites?: readonly RentalWebsiteEntitlementInput[];
+    parents?: CommissionParentContext;
     /** Full commission set for orphan payout classification (year filter may omit linked rows). */
     allCommissions?: Array<
       CommissionLike & {
@@ -205,6 +207,7 @@ export function implementerTotalsFromCommissionPayouts(
   const map = new Map<string, ImplementerFinanceTotals>();
   const commissionIds = new Set(commissions.map((c) => c.id));
   const websites = opts?.websites;
+  const parents = opts?.parents;
   const commissionsById = new Map(
     (opts?.allCommissions ?? commissions).map((c) => [c.id, c]),
   );
@@ -241,6 +244,7 @@ export function implementerTotalsFromCommissionPayouts(
         },
         websites,
         payoutRecords,
+        parents,
       );
       if (!rentalCommissionSurfacesInProductUx(liveState)) continue;
     }
@@ -280,7 +284,13 @@ export function implementerTotalsFromCommissionPayouts(
     }
     if (
       p.source_table === "commissions" &&
-      !commissionLinkedPayoutSurfacesInProductUx(p, commissionsById, websites ?? [], payoutRecords)
+      !commissionLinkedPayoutSurfacesInProductUx(
+        p,
+        commissionsById,
+        websites ?? [],
+        payoutRecords,
+        parents,
+      )
     ) {
       continue;
     }

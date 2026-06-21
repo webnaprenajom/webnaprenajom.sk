@@ -4,6 +4,7 @@
  * ponytail: skips rows already materialized in commissions; no writes, no new truth model.
  */
 import type { CommissionRow } from "@/lib/commissionSource";
+import type { CommissionParentContext } from "@/lib/finance/rentalCommissionEntitlement";
 import { normalizeRentalImplementers } from "@/lib/rentalImplementers";
 import { findRentalWorkflowCommission } from "@/lib/finance/rentalCommissionPayoutBridge";
 import {
@@ -161,11 +162,13 @@ export function buildImplementerFinanceTotalsWithRentals(
     allCommissions: CommissionRow[];
     year: number;
     scopeImplementer?: string | null;
+    parents?: CommissionParentContext;
   },
 ): Map<string, ImplementerFinanceTotals> {
   const base = implementerTotalsFromCommissionPayouts(commissions, payoutRecords, {
     websites: opts.websites,
     allCommissions: opts.allCommissions,
+    parents: opts.parents,
   });
   return mergeRentalJsonIntoImplementerTotals(base, {
     websites: opts.websites,

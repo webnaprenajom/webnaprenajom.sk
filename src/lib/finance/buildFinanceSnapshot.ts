@@ -21,7 +21,11 @@ import {
   resolvePayoutRecordOrigin,
   financeSourceTableLabel,
 } from "./financeSourceLabels";
-import { classifyRentalCommissionLiveState } from "@/lib/finance/rentalCommissionEntitlement";
+import {
+  buildCommissionParentContext,
+  classifyRentalCommissionLiveState,
+  paymentRecordHasLiveDealParent,
+} from "@/lib/finance/rentalCommissionEntitlement";
 
 type CommissionRow = {
   id: string;
@@ -165,6 +169,7 @@ export function buildFinanceSnapshot(input: {
     filterYear,
   } = input;
   const rows: FinanceLedgerRow[] = [];
+  const parents = buildCommissionParentContext({ projects, hosting, marketing, websites });
 
   const paymentSources = new Set(
     paymentRecords
@@ -289,6 +294,7 @@ export function buildFinanceSnapshot(input: {
       },
       websites,
       payoutRecords,
+      parents,
     );
     if (liveState === "stale_orphan" || liveState === "historical_paid") continue;
 
@@ -434,10 +440,16 @@ export function buildFinanceSnapshot(input: {
   rows.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
   const paymentsConfirmed = paymentRecords
-    .filter((r) => r.truth_level === "payment_fact")
+    .filter(
+      (r) =>
+        r.truth_level === "payment_fact" && paymentRecordHasLiveDealParent(r, parents),
+    )
     .reduce((s, r) => s + Number(r.amount || 0), 0);
   const paymentsLegacyImport = paymentRecords
-    .filter((r) => r.truth_level === "legacy_import")
+    .filter(
+      (r) =>
+        r.truth_level === "legacy_import" && paymentRecordHasLiveDealParent(r, parents),
+    )
     .reduce((s, r) => s + Number(r.amount || 0), 0);
   const payoutsConfirmed = payoutRecords
     .filter((r) => r.truth_level === "payout_fact")
@@ -465,6 +477,7 @@ export function buildFinanceSnapshot(input: {
           },
           websites,
           payoutRecords,
+          parents,
         );
         if (liveState === "stale_orphan" || liveState === "historical_paid") return false;
         return (
@@ -486,7 +499,7 @@ export function buildFinanceSnapshot(input: {
   if (payoutRecords.length > 0) sources.push("payout_records");
   if (costRecords.length > 0) sources.push("cost_records");
 
-  const entityPaymentsConfirmed = aggregateConfirmedEntityPayments(paymentRecords);
+  const entityPaymentsConfirmed = aggregateConfirmedEntityPayments(paymentRecords, parents);
 
   const reconciliation = buildReconciliation({
     commissions,

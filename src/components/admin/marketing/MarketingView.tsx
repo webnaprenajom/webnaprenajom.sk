@@ -35,11 +35,13 @@ import {
 } from "./shared";
 import { MarketingRecordEditDialog } from "./MarketingRecordEditDialog";
 import { saveMarketingRecord } from "./marketingRecordSave";
+import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 
 type StatusFilter = "all" | MarketingStatus;
 type ChannelFilter = "all" | MarketingChannel;
 
 export function MarketingView() {
+  const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({ onSuccess: () => void load() });
   const [items, setItems] = useState<MarketingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -102,15 +104,13 @@ export function MarketingView() {
     return true;
   };
 
-  const remove = async (id: string) => {
-    if (!confirm("Naozaj zmazať tento marketingový záznam?")) return;
-    const { error } = await supabase.from("marketing_records").delete().eq("id", id);
-    if (error) {
-      toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Zmazané" });
-      void load();
-    }
+  const remove = (id: string) => {
+    const row = items.find((i) => i.id === id);
+    void requestDelete({
+      entityType: "marketing",
+      entityId: id,
+      entityLabel: row?.title,
+    });
   };
 
   const channelLabel = (channel: string) =>
@@ -368,6 +368,7 @@ export function MarketingView() {
         customerFieldError={customerFieldError}
         onClearCustomerFieldError={() => setCustomerFieldError(null)}
       />
+      <DestructiveModal {...modalProps} />
     </AdminShell>
   );
 }

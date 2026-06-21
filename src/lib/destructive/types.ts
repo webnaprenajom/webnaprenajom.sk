@@ -1,4 +1,4 @@
-export type DestructiveEntityType = "customer" | "hosting" | "rental_website" | "lead";
+export type DestructiveEntityType = "customer" | "hosting" | "rental_website" | "lead" | "project" | "marketing";
 
 export type DestructiveSectionSeverity = "info" | "warning";
 
@@ -108,6 +108,8 @@ const ENTITY_TYPE_LABELS: Record<DestructiveEntityType, string> = {
   hosting: "Hosting",
   rental_website: "Prenájom webu",
   lead: "Lead",
+  project: "Projekt",
+  marketing: "Marketing",
 };
 
 const LEAD_IMPACT_SECTION_KEYS: LeadImpactSectionKey[] = [

@@ -53,9 +53,11 @@ import {
   parseInsertRowId,
 } from "@/lib/crmLookup/entitySaveHelpers";
 import { resolveFormCustomerLink } from "@/lib/crmLookup/resolveFormCustomerLink";
+import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 
 export function ProjectNotesView() {
   const access = useAdminAccess();
+  const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction({ onSuccess: () => void load() });
   const [items, setItems] = useState<ProjectNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -209,25 +211,13 @@ export function ProjectNotesView() {
     return true;
   };
 
-  const remove = async (id: string) => {
-    if (!confirm("Naozaj zmazať tento projekt?")) return;
+  const remove = (id: string) => {
     const row = items.find((i) => i.id === id);
-    const { error } = await supabase.from("project_notes").delete().eq("id", id);
-    if (error) toast({ title: "Chyba", description: error.message, variant: "destructive" });
-    else {
-      if (access.userId) {
-        logCrmEvent({
-          actorUserId: access.userId,
-          actionType: CRM_HISTORY_ACTIONS.entity_deleted,
-          entityType: "project_notes",
-          entityId: id,
-          entityLabel: row?.title ?? id,
-          summary: `Zmazaný projekt: ${row?.title ?? id}`,
-        });
-      }
-      toast({ title: "Zmazané" });
-      void load();
-    }
+    void requestDelete({
+      entityType: "project",
+      entityId: id,
+      entityLabel: row?.title,
+    });
   };
 
   const openEdit = (item: Partial<ProjectNote>) => {
@@ -590,6 +580,7 @@ function EditDialog({
           </div>
         </div>
       </AdminDialog>
+      <DestructiveModal {...modalProps} />
     </>
   );
 }

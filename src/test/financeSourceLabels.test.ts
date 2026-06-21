@@ -67,6 +67,16 @@ describe("buildFinanceSnapshot entity payments", () => {
       expenses: [],
       websites: [],
       payments: [],
+      projects: [
+        {
+          id: "p-1",
+          title: "Projekt",
+          client_name: "Klient",
+          customer_email: null,
+          agreed_fee: 500,
+          status: "active",
+        },
+      ],
       paymentRecords: [
         {
           id: "pay-1",
@@ -93,5 +103,35 @@ describe("buildFinanceSnapshot entity payments", () => {
     const ledger = snap.rows.find((r) => r.id === "payment-record-pay-1");
     expect(ledger?.linkedOriginLabel).toBe("Projekty");
     expect(ledger?.title).toContain("Projekty");
+  });
+
+  it("excludes orphan entity payments when parent deal missing", () => {
+    const snap = buildFinanceSnapshot({
+      commissions: [],
+      expenses: [],
+      websites: [],
+      payments: [],
+      projects: [],
+      paymentRecords: [
+        {
+          id: "pay-orphan",
+          source_table: "project_notes",
+          source_id: "p-deleted",
+          customer_email: null,
+          client_name: "Klient",
+          rental_website_id: null,
+          amount: 500,
+          currency: "EUR",
+          paid_at: "2026-06-01T12:00:00Z",
+          method: null,
+          reference: null,
+          note: null,
+          truth_level: "payment_fact",
+          imported_from: null,
+        },
+      ],
+    });
+    expect(snap.totals.paymentsConfirmed).toBe(0);
+    expect(snap.totals.entityPaymentsConfirmed.project.amount).toBe(0);
   });
 });

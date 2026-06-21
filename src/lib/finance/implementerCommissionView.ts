@@ -16,6 +16,11 @@ import {
 import { rentalYearStats } from "@/lib/finance/rentalImplementerFinanceTotals";
 import { normalizeRentalImplementers } from "@/lib/rentalImplementers";
 import type { PayoutRecordLike } from "@/lib/finance/commissionPayoutStatus";
+import {
+  classifyRentalCommissionLiveState,
+  rentalCommissionSurfacesInProductUx,
+  type CommissionParentContext,
+} from "@/lib/finance/rentalCommissionEntitlement";
 
 export type ImplementerCommissionTab = "all" | "rental" | "hosting" | "marketing" | "project";
 
@@ -153,6 +158,7 @@ type BuildOpts = {
     custom_price?: number | null;
     amount?: number | null;
   }>;
+  parents?: CommissionParentContext;
 };
 
 /** One normalized row per commission/deal — rentals merged, no duplicates. */
@@ -213,6 +219,15 @@ export function buildImplementerCommissionViewRows(opts: BuildOpts): Implementer
   for (const c of commissionById.values()) {
     if (consumedIds.has(c.id)) continue;
     if (c.source_type === "rental") continue;
+    if (opts.parents) {
+      const liveState = classifyRentalCommissionLiveState(
+        c,
+        websiteInputs,
+        opts.payoutRecords,
+        opts.parents,
+      );
+      if (!rentalCommissionSurfacesInProductUx(liveState)) continue;
+    }
     rows.push(commissionToViewRow(c, opts.payoutRecords));
   }
 

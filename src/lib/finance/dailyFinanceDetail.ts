@@ -22,6 +22,7 @@ import { normalizeRentalImplementers } from "@/lib/rentalImplementers";
 import {
   classifyRentalCommissionLiveState,
   rentalCommissionSurfacesInProductUx,
+  type CommissionParentContext,
 } from "@/lib/finance/rentalCommissionEntitlement";
 
 export type DailyFinanceDetailKind = "commission" | "cost";
@@ -97,6 +98,7 @@ type BuildCommissionOpts = {
   }>;
   /** null = all implementers (owner scope). */
   scopeImplementer: string | null;
+  parents?: CommissionParentContext;
 };
 
 function costRecordDate(cr: CostRecordInput): string {
@@ -116,7 +118,12 @@ export function collectImplementerNamesForYear(opts: BuildCommissionOpts): strin
     const impl = (c.implementer || "").trim();
     if (!impl) continue;
     if (opts.scopeImplementer && impl !== opts.scopeImplementer) continue;
-    const liveState = classifyRentalCommissionLiveState(c, opts.websites, opts.payoutRecords);
+    const liveState = classifyRentalCommissionLiveState(
+      c,
+      opts.websites,
+      opts.payoutRecords,
+      opts.parents,
+    );
     if (!rentalCommissionSurfacesInProductUx(liveState)) continue;
     names.add(impl);
   }
@@ -177,6 +184,7 @@ export function buildDailyCommissionDetailRows(opts: BuildCommissionOpts): Daily
       payoutRecords: opts.payoutRecords,
       websites: opts.websites,
       payments: opts.payments,
+      parents: opts.parents,
     });
     for (const row of viewRows) {
       const daily = commissionViewToDailyRow(row, implementer);

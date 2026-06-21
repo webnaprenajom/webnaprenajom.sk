@@ -3,6 +3,11 @@
  * ponytail: composite task source_id `${uuid}:deposit|full` parsed here only — no DB change.
  */
 
+import {
+  paymentRecordHasLiveDealParent,
+  type CommissionParentContext,
+} from "@/lib/finance/rentalCommissionEntitlement";
+
 export type FinanceOriginKind =
   | "hosting"
   | "project"
@@ -163,13 +168,16 @@ export function aggregateConfirmedEntityPayments(
   paymentRecords: Array<{
     source_table?: string | null;
     source_id?: string | null;
+    rental_website_id?: string | null;
     amount: number;
     truth_level: string;
   }>,
+  parents?: CommissionParentContext,
 ): EntityPaymentTotals {
   const totals = emptyEntityPaymentTotals();
   for (const row of paymentRecords) {
     if (row.truth_level !== "payment_fact") continue;
+    if (parents && !paymentRecordHasLiveDealParent(row, parents)) continue;
     const { entityKind } = resolvePaymentRecordOrigin(row);
     totals[entityKind].amount += Number(row.amount || 0);
     totals[entityKind].count += 1;

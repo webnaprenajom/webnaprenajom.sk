@@ -3,7 +3,7 @@ import { metaStringFromCustomer } from "@/lib/crmLookup/customerProfile";
 import { fmtEur } from "@/lib/money/formatMoney";
 import { resolveProfitDisplayContext } from "@/lib/profit/profitContext";
 import { countConfirmedPayments } from "@/lib/finance/entityPaymentBridge";
-import { commissionLinkedPayoutSurfacesInProductUx } from "@/lib/finance/rentalCommissionEntitlement";
+import { commissionLinkedPayoutSurfacesInProductUx, buildCommissionParentContext } from "@/lib/finance/rentalCommissionEntitlement";
 import type {
   CommissionPayout,
   CustomerFinanceSummary,
@@ -273,6 +273,12 @@ export function computeCustomerFinanceSummary(
     ]),
   );
   const rentalWebsites = data.rentals.map((r) => ({ id: r.id, implementers: r.implementers }));
+  const commissionParents = buildCommissionParentContext({
+    projects: data.projects,
+    hosting: data.hosting,
+    marketing: data.marketing,
+    websites: data.rentals,
+  });
 
   data.payoutRecords.forEach((p) => {
     if (p.truth_level !== "payout_fact") return;
@@ -284,6 +290,7 @@ export function computeCustomerFinanceSummary(
         commissionsById,
         rentalWebsites,
         data.payoutRecords,
+        commissionParents,
       )
     ) {
       return;
