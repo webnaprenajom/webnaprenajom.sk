@@ -1,4 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
+import {
+  paymentCompletenessDetail,
+  resolvePaymentCompleteness,
+} from "@/lib/finance/paymentCompleteness";
 
 export type TaskPaymentVariant = "deposit" | "full";
 
@@ -123,6 +127,59 @@ export function marketingPaymentCreateHint(record: { agreed_fee?: number | null 
   const fee = Number(record.agreed_fee ?? 0);
   if (!fee || fee <= 0) return "Vyplňte dohodnutú cenu v prehľade.";
   return null;
+}
+
+/** Contract amount for payment completeness — hosting falls back to monthly/yearly until agreed_fee is set. */
+export function resolveEntityAgreedPrice(entity: {
+  agreed_fee?: number | null;
+  monthly_price?: number | null;
+  yearly_price?: number | null;
+}): number {
+  const agreed = Number(entity.agreed_fee ?? 0);
+  if (agreed > 0) return agreed;
+  const monthly = Number(entity.monthly_price ?? 0);
+  if (monthly > 0) return monthly;
+  return Number(entity.yearly_price ?? 0);
+}
+
+export function hostingPaymentCreateHint(record: {
+  agreed_fee?: number | null;
+  monthly_price?: number | null;
+  yearly_price?: number | null;
+}): string | null {
+  if (resolveEntityAgreedPrice(record) <= 0) return "Vyplňte dohodnutú cenu v prehľade.";
+  return null;
+}
+
+/** When add-payment should be disabled (missing agreed price or fully paid). */
+export function entityPaymentAddHint(
+  agreedPrice: number | null | undefined,
+  confirmedPaid: number,
+): string | null {
+  const base =
+    Number(agreedPrice ?? 0) > 0
+      ? null
+      : "Vyplňte dohodnutú cenu v prehľade.";
+  if (base) return base;
+  const pc = resolvePaymentCompleteness(agreedPrice, confirmedPaid);
+  if (pc.status === "paid" && pc.overpaid <= 0) {
+    return "Dohodnutá suma je plne uhradená.";
+  }
+  return null;
+}
+
+export function entityPaymentRemainingAmount(
+  agreedPrice: number | null | undefined,
+  confirmedPaid: number,
+): number {
+  return resolvePaymentCompleteness(agreedPrice, confirmedPaid).remaining;
+}
+
+export function formatEntityPaymentRemainingHint(
+  agreedPrice: number | null | undefined,
+  confirmedPaid: number,
+): string | null {
+  return paymentCompletenessDetail(resolvePaymentCompleteness(agreedPrice, confirmedPaid));
 }
 
 export function taskPaymentCreateHint(

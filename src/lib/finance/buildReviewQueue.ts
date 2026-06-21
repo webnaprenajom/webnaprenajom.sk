@@ -49,6 +49,7 @@ export interface HostingRecordRow {
   note: string | null;
   active: boolean;
   created_at: string;
+  agreed_fee?: number | null;
   operating_cost?: number;
 }
 

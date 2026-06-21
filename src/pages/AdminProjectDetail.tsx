@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { EntityCommissionsPanel } from "@/components/admin/EntityCommissionsPanel";
-import { EntityPaymentRecordsPanel } from "@/components/admin/EntityPaymentRecordsPanel";
+import { EntityPaymentRecordsPanel, type EntityPaymentContext } from "@/components/admin/EntityPaymentRecordsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,11 +22,9 @@ import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompleteness
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import {
   countConfirmedPayments,
-  projectPaymentCreateHint,
   sumConfirmedPayments,
   type EntityPaymentRow,
 } from "@/lib/finance/entityPaymentBridge";
-import { financeCtxWithPayments, prefillFromProject } from "@/lib/finance/factDrafts";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { buildTaskCreateHref } from "@/lib/tasks/taskParentModel";
@@ -160,7 +158,17 @@ export default function AdminProjectDetail() {
     () => PROJECT_STATUSES.find((s) => s.value === project?.status),
     [project?.status],
   );
-  const paymentCtx = useMemo(() => financeCtxWithPayments(linkedPayments), [linkedPayments]);
+  const paymentEntity = useMemo((): EntityPaymentContext | null => {
+    if (!project) return null;
+    return {
+      sourceTable: "project_notes",
+      sourceId: project.id,
+      agreedPrice: project.agreed_fee,
+      clientName: project.client_name,
+      customerEmail: project.customer_email ?? null,
+      defaultNote: `Projekt · ${project.title}`,
+    };
+  }, [project]);
 
   if (loading || !project) {
     return (
@@ -175,7 +183,6 @@ export default function AdminProjectDetail() {
   const customerEmail = project.customer_email;
   const projectType = project.project_type;
   const clientLinked = !!project.lead_id;
-  const projectPaymentHint = projectPaymentCreateHint(project);
 
   return (
     <AdminShell
@@ -366,17 +373,9 @@ export default function AdminProjectDetail() {
         <TabsContent value="platby">
           <EntityPaymentRecordsPanel
             payments={linkedPayments}
+            entity={paymentEntity!}
             onSaved={() => void load()}
             footerNote={ENTITY_PAYMENTS_TAB_NOTE}
-            createActions={[
-              {
-                key: "create",
-                label: "Vytvoriť platbu",
-                disabled: !!projectPaymentHint,
-                hint: projectPaymentHint,
-                buildDraft: () => prefillFromProject(project, paymentCtx),
-              },
-            ]}
           />
         </TabsContent>
 

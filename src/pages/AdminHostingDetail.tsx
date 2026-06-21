@@ -3,13 +3,16 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { EntityCommissionsPanel } from "@/components/admin/EntityCommissionsPanel";
-import { EntityPaymentRecordsPanel } from "@/components/admin/EntityPaymentRecordsPanel";
+import {
+  EntityPaymentRecordsPanel,
+  type EntityPaymentContext,
+} from "@/components/admin/EntityPaymentRecordsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
-import { ArrowLeft, Loader2, AlertCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, AlertCircle, Trash2, Pencil } from "lucide-react";
 import {
   ConfirmedLinkBadge,
   EstimatedLinkBadge,
@@ -19,6 +22,8 @@ import { normalizeEmail } from "@/lib/crmLookup/normalizeIdentity";
 import { isValidEntityId } from "@/lib/crmLookup/resolveFormCustomerLink";
 import { adminDebugLog } from "@/lib/admin/adminDebugLog";
 import { OperatingCostField } from "@/components/admin/OperatingCostField";
+import { AgreedPriceField, ENTITY_PAYMENTS_TAB_NOTE } from "@/components/admin/AgreedPriceField";
+import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompletenessBadge";
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import { toast } from "@/hooks/use-toast";
 import { useAccessContext } from "@/hooks/useAccessContext";
@@ -26,10 +31,21 @@ import { AUDIT_ACTION_TYPES, logAdminAuditEvent } from "@/lib/audit/auditLog";
 import { useDestructiveAction } from "@/hooks/useDestructiveAction";
 import { buildTaskCreateHref } from "@/lib/tasks/taskParentModel";
 import {
-  entityHasLinkedPaymentInRows,
+  countConfirmedPayments,
+  resolveEntityAgreedPrice,
+  sumConfirmedPayments,
   type EntityPaymentRow,
 } from "@/lib/finance/entityPaymentBridge";
-import { financeCtxWithPayments, prefillFromHosting } from "@/lib/finance/factDrafts";
+import {
+  HostingRecordEditDialog,
+  type HostingRecordEditDraft,
+} from "@/components/admin/hosting/HostingRecordEditDialog";
+import {
+  assertDeliveryHasCanonicalCustomer,
+  parseInsertRowId,
+} from "@/lib/crmLookup/entitySaveHelpers";
+import { resolveFormCustomerLink } from "@/lib/crmLookup/resolveFormCustomerLink";
+import { linkLeadAfterDelivery } from "@/lib/crmLookup/leadCustomerLifecycle";
 
 export default function AdminHostingDetail() {
   const { id = "" } = useParams();
@@ -41,8 +57,10 @@ export default function AdminHostingDetail() {
   const [linkedRental, setLinkedRental] = useState<{ id: string; name: string; url: string | null } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [estimatedProjects, setEstimatedProjects] = useState<Array<{ id: string; title: string }>>([]);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<HostingRecordEditDraft | null>(null);
+  const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
   const { requestDelete, modalProps, DestructiveModal } = useDestructiveAction();
-  const paymentCtx = useMemo(() => financeCtxWithPayments(payments), [payments]);
 
   useEffect(() => {
     if (!id) return;
@@ -106,6 +124,104 @@ export default function AdminHostingDetail() {
     setLoading(false);
   };
 
+  const confirmedRevenue = useMemo(() => sumConfirmedPayments(payments), [payments]);
+  const confirmedPaymentCount = useMemo(() => countConfirmedPayments(payments), [payments]);
+  const agreedPrice = useMemo(
+    () => (record ? resolveEntityAgreedPrice(record) : 0),
+    [record],
+  );
+  const paymentEntity = useMemo((): EntityPaymentContext | null => {
+    if (!record) return null;
+    return {
+      sourceTable: "hosting_records",
+      sourceId: record.id,
+      agreedPrice: record.agreed_fee ?? (agreedPrice > 0 ? agreedPrice : null),
+      clientName: record.client_name,
+      customerEmail: record.customer_email,
+      defaultNote: `Hosting · ${record.provider || record.client_name || record.id}`,
+    };
+  }, [record, agreedPrice]);
+
+  const openEdit = () => {
+    if (!record) return;
+    setCustomerFieldError(null);
+    setEditing({
+      ...record,
+      customer_id: (record as HostingRecordRow & { customer_id?: string | null }).customer_id ?? null,
+      lead_id: (record as HostingRecordRow & { lead_id?: string | null }).lead_id ?? null,
+    });
+    setEditOpen(true);
+  };
+
+  const saveEdit = async (): Promise<boolean> => {
+    if (!editing?.id) return false;
+
+    let linked;
+    try {
+      linked = await resolveFormCustomerLink({
+        customer_id: editing.customer_id,
+        customer_email: editing.customer_email,
+        client_name: editing.client_name,
+        lead_id: editing.lead_id,
+        createIfMissing: true,
+      });
+    } catch (e) {
+      toast({
+        title: "Klient — neplatný e-mail",
+        description: e instanceof Error ? e.message : "Skontrolujte e-mail klienta.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    const customerGuard = assertDeliveryHasCanonicalCustomer(linked);
+    if (!customerGuard.ok) {
+      setCustomerFieldError(customerGuard.message);
+      toast({ title: customerGuard.message, variant: "destructive" });
+      return false;
+    }
+    setCustomerFieldError(null);
+
+    const payload = {
+      client_name: linked.client_name || null,
+      customer_email: linked.customer_email,
+      customer_id: linked.customer_id,
+      provider: editing.provider?.trim() || null,
+      domains_count: editing.domains_count != null ? Number(editing.domains_count) : null,
+      monthly_price: editing.monthly_price != null ? Number(editing.monthly_price) : null,
+      yearly_price: editing.yearly_price != null ? Number(editing.yearly_price) : null,
+      agreed_fee:
+        editing.agreed_fee != null && Number(editing.agreed_fee) > 0
+          ? Math.max(0, Number(editing.agreed_fee))
+          : null,
+      acquired_by: editing.acquired_by?.trim() || null,
+      note: editing.note?.trim() || null,
+    };
+
+    const { data: saved, error } = await supabase
+      .from("hosting_records")
+      .update(payload)
+      .eq("id", editing.id)
+      .select("id")
+      .maybeSingle();
+
+    const result = parseInsertRowId(saved, error, "Hosting");
+    if (!result.ok) {
+      toast({ title: "Aktualizácia zlyhala", description: result.error, variant: "destructive" });
+      return false;
+    }
+
+    if (linked.lead_id && linked.customer_id) {
+      await linkLeadAfterDelivery(linked.lead_id, linked.customer_id);
+    }
+
+    setEditOpen(false);
+    setEditing(null);
+    void load();
+    toast({ title: "Hosting uložený" });
+    return true;
+  };
+
   if (loading) {
     return (
       <AdminShell title="Hosting" subtitle="Načítavam…">
@@ -142,12 +258,7 @@ export default function AdminHostingDetail() {
 
   const label = record.client_name || record.customer_email || record.provider || "Hosting";
   const isStandalone = !record.rental_website_id;
-  const hostingPaymentLinked = entityHasLinkedPaymentInRows("hosting_records", record.id, payments);
-  const hostingPaymentHint = hostingPaymentLinked
-    ? "Pre tento hosting už existuje potvrdená platba."
-    : record.monthly_price == null && record.yearly_price == null
-      ? "Vyplňte mesačnú alebo ročnú cenu hostingu v prehľade."
-      : null;
+  const displayAgreedPrice = record.agreed_fee ?? (agreedPrice > 0 ? agreedPrice : null);
 
   return (
     <AdminShell
@@ -165,6 +276,9 @@ export default function AdminHostingDetail() {
             >
               Nová úloha
             </Link>
+          </Button>
+          <Button size="sm" variant="outline" onClick={openEdit}>
+            <Pencil className="w-4 h-4 mr-1" /> Upraviť
           </Button>
           <Button
             size="sm"
@@ -202,71 +316,106 @@ export default function AdminHostingDetail() {
               {isStandalone ? <StandaloneEntityBadge /> : <ConfirmedLinkBadge label="Viazaný na prenájom" />}
             </div>
             <div className="grid sm:grid-cols-2 gap-4 text-sm">
-            <Field label="Klient" value={record.client_name || "—"} />
-            <Field label="E-mail">
-              {(() => {
-                const href = adminCustomerHrefPreferred((record as any).customer_id, record.customer_email);
-                return href ? (
-                  <Link to={href} className="text-primary hover:underline">
-                    {record.customer_email}
-                  </Link>
-                ) : (
-                  "—"
-                );
-              })()}
-            </Field>
-            <Field label="Poskytovateľ" value={record.provider || "—"} />
-            <Field label="Cena / mesiac" value={record.monthly_price != null ? `${record.monthly_price} €` : "—"} />
-            <div className="sm:col-span-2">
-              <OperatingCostField
-                value={Number((record as any).operating_cost ?? 0)}
-                onSave={async (next) => {
-                  const prev = Number((record as any).operating_cost ?? 0);
-                  const { error } = await supabase
-                    .from("hosting_records")
-                    .update({ operating_cost: next })
-                    .eq("id", record.id);
-                  if (error) {
-                    toast({ title: "Chyba", description: error.message, variant: "destructive" });
-                    throw error;
-                  }
-                  setRecord({ ...record, operating_cost: next } as HostingRecordRow);
-                  if (access.userId) {
-                    await logAdminAuditEvent({
-                      actorUserId: access.userId,
-                      actionType: AUDIT_ACTION_TYPES.operating_cost_changed,
-                      targetType: "hosting_records",
-                      targetId: record.id,
-                      summary: `Prevádzkové náklady hostingu: ${prev} → ${next} €`,
-                      before: { operating_cost: prev },
-                      after: { operating_cost: next },
-                    });
-                  }
-                  toast({ title: "Náklady uložené" });
-                }}
+              <Field label="Klient" value={record.client_name || "—"} />
+              <Field label="E-mail">
+                {(() => {
+                  const href = adminCustomerHrefPreferred(
+                    (record as HostingRecordRow & { customer_id?: string | null }).customer_id,
+                    record.customer_email,
+                  );
+                  return href ? (
+                    <Link to={href} className="text-primary hover:underline">
+                      {record.customer_email}
+                    </Link>
+                  ) : (
+                    "—"
+                  );
+                })()}
+              </Field>
+              <Field label="Poskytovateľ" value={record.provider || "—"} />
+              <Field
+                label="Cena / mesiac"
+                value={record.monthly_price != null ? `${record.monthly_price} €` : "—"}
               />
-            </div>
-            <div className="sm:col-span-2">
-              <EntityProfitBanner
-                entityKind="hosting"
-                revenue={Number(record.monthly_price ?? 0)}
-                operatingCost={Number((record as any).operating_cost ?? 0)}
-                revenueKnown={record.monthly_price != null}
+              <Field
+                label="Cena / rok"
+                value={record.yearly_price != null ? `${record.yearly_price} €` : "—"}
               />
-            </div>
-            <Field label="Domény" value={record.domains_count != null ? String(record.domains_count) : "—"} />
-            <Field label="Získal" value={record.acquired_by || "—"} />
-            <Field label="Provízny">
-              <Badge variant={record.commissionable ? "default" : "outline"} className="text-[10px]">
-                {record.commissionable ? "áno" : "nie"}
-              </Badge>
-            </Field>
-            <Field label="Stav">
-              <Badge variant={record.active ? "secondary" : "outline"} className="text-[10px]">
-                {record.active ? "aktívny" : "neaktívny"}
-              </Badge>
-            </Field>
-            <Field label="Vytvorené" value={new Date(record.created_at).toLocaleString("sk-SK")} />
+              <div className="sm:col-span-2">
+                <AgreedPriceField
+                  compact
+                  value={Number(record.agreed_fee ?? 0)}
+                  onSave={async (next) => {
+                    const { error } = await supabase
+                      .from("hosting_records")
+                      .update({ agreed_fee: next > 0 ? next : null })
+                      .eq("id", record.id);
+                    if (error) {
+                      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                      throw error;
+                    }
+                    setRecord({ ...record, agreed_fee: next > 0 ? next : null });
+                    toast({ title: "Dohodnutá cena uložená" });
+                  }}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <PaymentCompletenessBadge
+                  agreedPrice={displayAgreedPrice}
+                  confirmedPaid={confirmedRevenue}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <OperatingCostField
+                  value={Number(record.operating_cost ?? 0)}
+                  onSave={async (next) => {
+                    const prev = Number(record.operating_cost ?? 0);
+                    const { error } = await supabase
+                      .from("hosting_records")
+                      .update({ operating_cost: next })
+                      .eq("id", record.id);
+                    if (error) {
+                      toast({ title: "Chyba", description: error.message, variant: "destructive" });
+                      throw error;
+                    }
+                    setRecord({ ...record, operating_cost: next });
+                    if (access.userId) {
+                      await logAdminAuditEvent({
+                        actorUserId: access.userId,
+                        actionType: AUDIT_ACTION_TYPES.operating_cost_changed,
+                        targetType: "hosting_records",
+                        targetId: record.id,
+                        summary: `Prevádzkové náklady hostingu: ${prev} → ${next} €`,
+                        before: { operating_cost: prev },
+                        after: { operating_cost: next },
+                      });
+                    }
+                    toast({ title: "Náklady uložené" });
+                  }}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <EntityProfitBanner
+                  entityKind="hosting"
+                  revenue={confirmedRevenue}
+                  operatingCost={Number(record.operating_cost ?? 0)}
+                  revenueKnown={confirmedPaymentCount > 0}
+                  paymentRecordCount={confirmedPaymentCount}
+                />
+              </div>
+              <Field label="Domény" value={record.domains_count != null ? String(record.domains_count) : "—"} />
+              <Field label="Získal" value={record.acquired_by || "—"} />
+              <Field label="Provízny">
+                <Badge variant={record.commissionable ? "default" : "outline"} className="text-[10px]">
+                  {record.commissionable ? "áno" : "nie"}
+                </Badge>
+              </Field>
+              <Field label="Stav">
+                <Badge variant={record.active ? "secondary" : "outline"} className="text-[10px]">
+                  {record.active ? "aktívny" : "neaktívny"}
+                </Badge>
+              </Field>
+              <Field label="Vytvorené" value={new Date(record.created_at).toLocaleString("sk-SK")} />
             </div>
           </section>
         </TabsContent>
@@ -276,28 +425,20 @@ export default function AdminHostingDetail() {
             sourceType="hosting"
             sourceId={record.id}
             customerEmail={record.customer_email}
-            customerId={(record as any).customer_id}
+            customerId={(record as HostingRecordRow & { customer_id?: string | null }).customer_id}
             defaultTitle={`Hosting — ${label}`}
-            revenueAmount={Number(record.monthly_price ?? 0)}
-            operatingCost={Number((record as any).operating_cost ?? 0)}
-            revenueKnown={record.monthly_price != null}
+            revenueAmount={confirmedRevenue}
+            operatingCost={Number(record.operating_cost ?? 0)}
+            revenueKnown={confirmedPaymentCount > 0}
           />
         </TabsContent>
 
         <TabsContent value="platby">
           <EntityPaymentRecordsPanel
             payments={payments}
+            entity={paymentEntity!}
             onSaved={() => void load()}
-            createActions={[
-              {
-                key: "create",
-                label: "Vytvoriť platbu",
-                linkedExists: hostingPaymentLinked,
-                disabled: !!hostingPaymentHint,
-                hint: hostingPaymentHint,
-                buildDraft: () => prefillFromHosting(record, paymentCtx),
-              },
-            ]}
+            footerNote={ENTITY_PAYMENTS_TAB_NOTE}
           />
         </TabsContent>
 
@@ -350,6 +491,17 @@ export default function AdminHostingDetail() {
           </section>
         </TabsContent>
       </Tabs>
+
+      <HostingRecordEditDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        editing={editing}
+        setEditing={setEditing}
+        onSave={saveEdit}
+        customerFieldError={customerFieldError}
+        onClearCustomerFieldError={() => setCustomerFieldError(null)}
+      />
+
       <DestructiveModal {...modalProps} />
     </AdminShell>
   );

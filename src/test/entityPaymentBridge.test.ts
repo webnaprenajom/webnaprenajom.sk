@@ -5,8 +5,11 @@ import {
   canOfferTaskPaymentCreate,
   countConfirmedPayments,
   entityHasLinkedPaymentInRows,
+  entityPaymentAddHint,
+  hostingPaymentCreateHint,
   marketingPaymentCreateHint,
   projectPaymentCreateHint,
+  resolveEntityAgreedPrice,
   sumConfirmedPayments,
   sumConfirmedPaymentsForSource,
   taskPaymentCreateHint,
@@ -201,5 +204,30 @@ describe("confirmed payment totals", () => {
       },
     ];
     expect(sumConfirmedPaymentsForSource(rows, "project_notes", "p-1")).toBe(500);
+  });
+
+  it("resolveEntityAgreedPrice prefers agreed_fee over monthly/yearly", () => {
+    expect(
+      resolveEntityAgreedPrice({ agreed_fee: 500, monthly_price: 20, yearly_price: 200 }),
+    ).toBe(500);
+    expect(resolveEntityAgreedPrice({ agreed_fee: null, monthly_price: 15, yearly_price: 120 })).toBe(
+      15,
+    );
+    expect(resolveEntityAgreedPrice({ agreed_fee: null, monthly_price: null, yearly_price: 99 })).toBe(
+      99,
+    );
+  });
+
+  it("hostingPaymentCreateHint requires resolvable price", () => {
+    expect(hostingPaymentCreateHint({ agreed_fee: null, monthly_price: null, yearly_price: null })).toMatch(
+      /prehľade/i,
+    );
+    expect(hostingPaymentCreateHint({ agreed_fee: 100, monthly_price: null, yearly_price: null })).toBeNull();
+  });
+
+  it("entityPaymentAddHint blocks when fully paid", () => {
+    expect(entityPaymentAddHint(1000, 1000)).toMatch(/plne uhradená/i);
+    expect(entityPaymentAddHint(1000, 400)).toBeNull();
+    expect(entityPaymentAddHint(null, 0)).toMatch(/prehľade/i);
   });
 });

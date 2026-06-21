@@ -12,6 +12,7 @@ import {
   sumConfirmedPaymentsForSource,
   taskPaymentSourceId,
   type TaskPaymentVariant,
+  resolveEntityAgreedPrice,
 } from "@/lib/finance/entityPaymentBridge";
 import { CRM_HISTORY_ACTIONS, logCrmEvent } from "@/lib/history/logCrmEvent";
 import { upsertPaymentFactForSource } from "@/lib/finance/syncFinanceFact";
@@ -307,12 +308,13 @@ export function prefillFromExpense(expense: any, ctx: FinanceRawContext): FactDr
   };
 }
 
-/** Opt-in payment fact from hosting record — no auto-sync. */
+/** Opt-in payment fact from hosting — draft amount = zostatok dohodnutej ceny. */
 export function prefillFromHosting(
   hosting: {
     id: string;
     client_name: string | null;
     customer_email: string | null;
+    agreed_fee?: number | null;
     monthly_price: number | null;
     yearly_price: number | null;
     provider: string | null;
@@ -320,12 +322,13 @@ export function prefillFromHosting(
   },
   ctx: FinanceRawContext,
 ): FactDraft | null {
-  if (hasSourceLinkedRecord(ctx, "hosting_records", hosting.id)) return null;
-  const amount = hosting.monthly_price ?? hosting.yearly_price;
-  if (amount == null || Number(amount) <= 0) return null;
+  const agreed = resolveEntityAgreedPrice(hosting);
+  if (agreed <= 0) return null;
+  const confirmed = sumConfirmedPaymentsForSource(ctx.paymentRecords, "hosting_records", hosting.id);
+  const remaining = Math.max(0, agreed - confirmed);
   return {
     kind: "payment",
-    amount: String(amount),
+    amount: remaining > 0 ? String(remaining) : "",
     paid_at: todayLocal(),
     customer_email: hosting.customer_email ?? "",
     client_name: hosting.client_name ?? "",

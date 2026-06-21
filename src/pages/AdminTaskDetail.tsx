@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { EntityCommissionsPanel } from "@/components/admin/EntityCommissionsPanel";
-import { EntityPaymentRecordsPanel } from "@/components/admin/EntityPaymentRecordsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -84,6 +83,15 @@ const PRIORITY_CONFIG: Record<TaskPriority, { label: string; className: string }
 };
 
 import { fmtEur } from "@/lib/money/formatMoney";
+import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function AdminTaskDetail() {
   const { id = "" } = useParams();
@@ -308,19 +316,44 @@ export default function AdminTaskDetail() {
               </>
             ) : null}
           </p>
-          {linkedPayments.length > 0 && (
-            <p className="text-[11px] text-amber-700 dark:text-amber-400">
-              Legacy task platby (len na čítanie) — {linkedPayments.length} záznam(ov).
+          {linkedPayments.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center border border-dashed rounded-xl">
+              Žiadne legacy platby na tejto úlohe.
             </p>
+          ) : (
+            <div className="rounded-xl border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Dátum</TableHead>
+                    <TableHead>Suma</TableHead>
+                    <TableHead>Typ</TableHead>
+                    <TableHead>Stav</TableHead>
+                    <TableHead>Poznámka</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {linkedPayments.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="text-xs">
+                        {p.paid_at ? new Date(p.paid_at).toLocaleDateString("sk-SK") : "—"}
+                      </TableCell>
+                      <TableCell className="font-medium">{fmtEur(Number(p.amount || 0))}</TableCell>
+                      <TableCell className="text-xs">
+                        {taskPaymentVariantLabel(p.source_id || "", task.id) || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <TruthLevelBadge level={p.truth_level as "payment_fact"} />
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-[240px] truncate">
+                        {p.note || "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
-          <EntityPaymentRecordsPanel
-            payments={linkedPayments}
-            onSaved={() => void load()}
-            variantLabel={(row) =>
-              taskPaymentVariantLabel(row.source_id || "", task.id)
-            }
-            createActions={[]}
-          />
         </TabsContent>
       </Tabs>
     </AdminShell>

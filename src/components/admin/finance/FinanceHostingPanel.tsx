@@ -28,12 +28,10 @@ import { AdminListSearchInput } from "@/components/admin/AdminListSearchInput";
 import { matchesSearchQuery } from "@/lib/searchMatch";
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
 import {
-  hasSourceLinkedRecord,
-  prefillFromHosting,
-  type FinanceRawContext,
-  type FactDraft,
-} from "@/lib/finance/factDrafts";
-import { FactConfirmDialog } from "@/components/admin/finance/FactConfirmDialog";
+  sumConfirmedPaymentsForSource,
+  resolveEntityAgreedPrice,
+} from "@/lib/finance/entityPaymentBridge";
+import { resolvePaymentCompleteness } from "@/lib/finance/paymentCompleteness";
 import { resolveCustomerIdentity, customerDisplayLabel } from "@/lib/finance/customerBridge";
 import { adminCustomerHrefPreferred } from "@/lib/adminNav";
 import { Link } from "react-router-dom";
@@ -45,6 +43,7 @@ import {
 } from "@/lib/crmLookup/entitySaveHelpers";
 import { resolveFormCustomerLink } from "@/lib/crmLookup/resolveFormCustomerLink";
 import { logEntityCommunicationEventSafe } from "@/lib/communication/events";
+import type { FinanceRawContext } from "@/lib/finance/factDrafts";
 
 interface Props {
   records: HostingRecordRow[];
@@ -75,8 +74,6 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
   const [form, setForm] = useState(emptyForm());
   const [formBaseline, setFormBaseline] = useState(emptyForm());
   const [customerFieldError, setCustomerFieldError] = useState<string | null>(null);
-  const [paymentDraft, setPaymentDraft] = useState<FactDraft | null>(null);
-  const [paymentOpen, setPaymentOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
   const openHostingDialog = useCallback((opts?: { reset?: boolean }) => {
@@ -140,16 +137,6 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
     if (searchParams.get("hosting") !== "new" || dialogOpen) return;
     openHostingDialog({ reset: false });
   }, [searchParams, dialogOpen, openHostingDialog]);
-
-  const linkedIds = useMemo(
-    () =>
-      new Set(
-        ctx.paymentRecords
-          .filter((r) => r.source_table === "hosting_records" && r.source_id)
-          .map((r) => r.source_id as string),
-      ),
-    [ctx.paymentRecords],
-  );
 
   const filteredRecords = useMemo(() => {
     if (!searchQuery.trim()) return records;
@@ -292,24 +279,6 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
     saving,
   });
 
-  const openPaymentFact = (record: HostingRecordRow) => {
-    if (linkedIds.has(record.id) || hasSourceLinkedRecord(ctx, "hosting_records", record.id)) {
-      toast({ title: "Payment fact už existuje", variant: "destructive" });
-      return;
-    }
-    const draft = prefillFromHosting(record, ctx);
-    if (!draft) {
-      toast({
-        title: "Nemožno vytvoriť draft",
-        description: "Chýba cena alebo už existuje source-linked payment.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setPaymentDraft(draft);
-    setPaymentOpen(true);
-  };
-
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
@@ -357,7 +326,13 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                   (r as HostingRecordRow & { customer_id?: string | null }).customer_id,
                   r.customer_email,
                 );
-                const hasPayment = linkedIds.has(r.id) || hasSourceLinkedRecord(ctx, "hosting_records", r.id);
+                const confirmed = sumConfirmedPaymentsForSource(
+                  ctx.paymentRecords,
+                  "hosting_records",
+                  r.id,
+                );
+                const agreed = resolveEntityAgreedPrice(r);
+                const pc = resolvePaymentCompleteness(agreed > 0 ? agreed : null, confirmed);
                 return (
                   <TableRow key={r.id}>
                     <TableCell className="text-sm">
@@ -383,18 +358,29 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {hasPayment ? (
-                        <Badge variant="secondary" className="text-[10px]">platobný fakt</Badge>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-[10px]"
-                          onClick={() => openPaymentFact(r)}
+                      {confirmed > 0 ? (
+                        <Badge
+                          variant={
+                            pc.status === "paid"
+                              ? "secondary"
+                              : pc.status === "partial"
+                                ? "outline"
+                                : "outline"
+                          }
+                          className="text-[10px]"
                         >
-                          Vytvoriť platbu
-                        </Button>
+                          {confirmed} €
+                          {agreed > 0 ? ` / ${agreed} €` : ""}
+                        </Badge>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">—</span>
                       )}
+                      <Link
+                        to={`/admin/hosting/${r.id}`}
+                        className="block text-[10px] text-primary hover:underline mt-0.5"
+                      >
+                        Platby →
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <Button
@@ -479,18 +465,6 @@ export function FinanceHostingPanel({ records, ctx, onSaved }: Props) {
             </label>
           </div>
       </AdminDialog>
-
-      <FactConfirmDialog
-        open={paymentOpen}
-        onOpenChange={setPaymentOpen}
-        draft={paymentDraft}
-        mode="workflow"
-        onSaved={() => {
-          setPaymentOpen(false);
-          setPaymentDraft(null);
-          onSaved();
-        }}
-      />
 
       <DestructiveModal {...modalProps} />
     </div>

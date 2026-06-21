@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { EntityCommissionsPanel } from "@/components/admin/EntityCommissionsPanel";
-import { EntityPaymentRecordsPanel } from "@/components/admin/EntityPaymentRecordsPanel";
+import { EntityPaymentRecordsPanel, type EntityPaymentContext } from "@/components/admin/EntityPaymentRecordsPanel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,11 +28,9 @@ import { PaymentCompletenessBadge } from "@/components/admin/PaymentCompleteness
 import { EntityProfitBanner } from "@/components/admin/EntityProfitBanner";
 import {
   countConfirmedPayments,
-  marketingPaymentCreateHint,
   sumConfirmedPayments,
   type EntityPaymentRow,
 } from "@/lib/finance/entityPaymentBridge";
-import { financeCtxWithPayments, prefillFromMarketing } from "@/lib/finance/factDrafts";
 import { buildTaskCreateHref } from "@/lib/tasks/taskParentModel";
 
 type MarketingRecordDetail = MarketingRecord & {
@@ -121,7 +119,17 @@ export default function AdminMarketingDetail() {
     () => MARKETING_CHANNELS.find((c) => c.value === record?.channel)?.label ?? record?.channel,
     [record?.channel],
   );
-  const paymentCtx = useMemo(() => financeCtxWithPayments(linkedPayments), [linkedPayments]);
+  const paymentEntity = useMemo((): EntityPaymentContext | null => {
+    if (!record) return null;
+    return {
+      sourceTable: "marketing_records",
+      sourceId: record.id,
+      agreedPrice: record.agreed_fee,
+      clientName: record.client_name,
+      customerEmail: record.customer_email,
+      defaultNote: `Marketing · ${record.title}`,
+    };
+  }, [record]);
   const confirmedRevenue = useMemo(() => sumConfirmedPayments(linkedPayments), [linkedPayments]);
   const confirmedPaymentCount = useMemo(
     () => countConfirmedPayments(linkedPayments),
@@ -140,7 +148,6 @@ export default function AdminMarketingDetail() {
 
   const customerHref = adminCustomerHrefPreferred(record.customer_id, record.customer_email);
   const clientLinked = !!record.lead_id;
-  const marketingPaymentHint = marketingPaymentCreateHint(record);
 
   return (
     <AdminShell
@@ -292,17 +299,9 @@ export default function AdminMarketingDetail() {
         <TabsContent value="platby">
           <EntityPaymentRecordsPanel
             payments={linkedPayments}
+            entity={paymentEntity!}
             onSaved={() => void load()}
             footerNote={ENTITY_PAYMENTS_TAB_NOTE}
-            createActions={[
-              {
-                key: "create",
-                label: "Vytvoriť platbu",
-                disabled: !!marketingPaymentHint,
-                hint: marketingPaymentHint,
-                buildDraft: () => prefillFromMarketing(record, paymentCtx),
-              },
-            ]}
           />
         </TabsContent>
 
