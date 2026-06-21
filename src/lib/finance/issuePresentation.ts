@@ -13,6 +13,25 @@ export const FINANCE_PRIMARY_HIDDEN_ISSUE_KINDS = new Set<ReconciliationIssue["k
   "entity_payment_ahead_of_workflow",
 ]);
 
+/** Heuristic / low-signal kinds — collapsed under „Zobraziť diagnostiku“ in Zladenie. */
+export const FINANCE_ADVISORY_DIAGNOSTIC_KINDS = new Set<ReconciliationIssue["kind"]>([
+  "potential_duplicate",
+  "missing_counterparty",
+  "entity_payment_ahead_of_workflow",
+]);
+
+export function isFinanceAdvisoryDiagnosticIssue(issue: ReconciliationIssue): boolean {
+  return FINANCE_ADVISORY_DIAGNOSTIC_KINDS.has(issue.kind);
+}
+
+export function filterOwnerPrimaryReconciliationIssues<T extends ReconciliationIssue>(
+  issues: T[],
+): T[] {
+  return filterPrimaryReconciliationIssues(issues).filter(
+    (i) => !isFinanceAdvisoryDiagnosticIssue(i),
+  );
+}
+
 export function isFinancePrimaryHiddenIssue(issue: ReconciliationIssue): boolean {
   return FINANCE_PRIMARY_HIDDEN_ISSUE_KINDS.has(issue.kind);
 }

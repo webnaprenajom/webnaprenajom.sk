@@ -35,7 +35,8 @@ import {
 import { dismissIssue, revokeDismissal, type IssueDismissalRow } from "@/lib/finance/dismissals";
 import { buildIssueKey, filterActiveIssues, isIssueDismissable } from "@/lib/finance/issueKeys";
 import {
-  filterPrimaryReconciliationIssues,
+  filterOwnerPrimaryReconciliationIssues,
+  isFinanceAdvisoryDiagnosticIssue,
   summarizeReconciliationIssueCounts,
 } from "@/lib/finance/issuePresentation";
 import type {
@@ -86,25 +87,22 @@ const PRIMARY_ISSUE_SECTIONS: IssueSection[] = [
     kinds: ["entity_missing_payment_fact", "entity_partial_payment"],
   },
   {
-    id: "quality",
-    title: "Kvalita & duplicity",
-    kinds: [
-      "legacy_no_reference",
-      "legacy_imprecise_paid_at",
-      "missing_counterparty",
-      "potential_duplicate",
-    ],
+    id: "legacy",
+    title: "Legacy import",
+    kinds: ["legacy_no_reference", "legacy_imprecise_paid_at"],
   },
 ];
+
+const ADVISORY_DIAGNOSTIC_SECTION: IssueSection = {
+  id: "advisory",
+  title: "Diagnostika (heuristika)",
+  kinds: ["missing_counterparty", "potential_duplicate", "entity_payment_ahead_of_workflow"],
+};
 
 const LEGACY_ISSUE_SECTION: IssueSection = {
   id: "tasks",
   title: "Úlohy (legacy, bez akcie)",
-  kinds: [
-    "task_missing_payment_deposit",
-    "task_missing_payment_full",
-    "entity_payment_ahead_of_workflow",
-  ],
+  kinds: ["task_missing_payment_deposit", "task_missing_payment_full"],
 };
 
 interface FinanceReconciliationProps {
@@ -146,7 +144,14 @@ export function FinanceReconciliation({
     else if (filter === "dismissed") {
       list = allIssues.filter((i) => dismissedKeySet.has(i.issueKey ?? buildIssueKey(i)));
     }
-    return filterPrimaryReconciliationIssues(list);
+    return filterOwnerPrimaryReconciliationIssues(list);
+  }, [allIssues, dismissedKeySet, filter]);
+
+  const advisoryDiagnosticIssues = useMemo(() => {
+    if (filter === "dismissed") return [];
+    const base =
+      filter === "active" ? filterActiveIssues(allIssues, dismissedKeySet) : allIssues;
+    return base.filter((i) => isFinanceAdvisoryDiagnosticIssue(i));
   }, [allIssues, dismissedKeySet, filter]);
 
   const issueSummary = useMemo(
@@ -235,10 +240,10 @@ export function FinanceReconciliation({
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-muted-foreground">
-        Výnimky medzi workflow a potvrdenými faktmi ({year} pre prenájmy). Kvalita a duplicity:{" "}
-        <strong>Potvrdiť</strong> = validné (skryje issue), <strong>Zamietnuť</strong> = všeobecné
-        dismiss. Legacy úlohy sú skryté v primárnom zozname. Zamietnuté: {dismissals.length}.
+      <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
+        <strong>Zladenie výnimiek</strong> medzi workflow a auditovanými záznamami ({year} pre
+        prenájmy). Položky s tlačidlom <strong>Potvrdiť</strong> vyžadujú akciu; heuristické
+        upozornenia sú v sekcii „Zobraziť diagnostiku“. Zamietnuté: {dismissals.length}.
       </p>
 
       <div className="flex flex-wrap gap-2">
@@ -291,6 +296,30 @@ export function FinanceReconciliation({
             />
           ))}
         </div>
+      )}
+
+      {advisoryDiagnosticIssues.length > 0 && (
+        <Collapsible className="rounded-xl border border-dashed border-border/80">
+          <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-xs text-muted-foreground hover:bg-muted/30">
+            <span>
+              Zobraziť diagnostiku ({advisoryDiagnosticIssues.length}) — heuristika, bez povinnej
+              akcie
+            </span>
+            <ChevronDown className="w-4 h-4 shrink-0" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-2 pb-2">
+            <IssueSectionTable
+              title={ADVISORY_DIAGNOSTIC_SECTION.title}
+              issues={advisoryDiagnosticIssues}
+              ctx={ctx}
+              dismissalMap={dismissalMap}
+              onAction={openAction}
+              onDismiss={setDismissTarget}
+              onRevoke={handleRevoke}
+              onConfirmValid={(issue) => void confirmAsValid(issue)}
+            />
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {legacyVisibleIssues.length > 0 && (

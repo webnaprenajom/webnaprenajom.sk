@@ -56,9 +56,9 @@ describe("admin customer href helpers", () => {
 });
 
 describe("legacy commissions redirect target", () => {
-  it("matches finance advanced legacy query", () => {
-    const target = "/admin/finance?advanced=1&legacy=commissions";
-    expect(target).toContain("legacy=commissions");
-    expect(target).toContain("advanced=1");
+  it("lands on daily finance (not removed commissions tab)", () => {
+    const target = "/admin/finance";
+    expect(target).toBe("/admin/finance");
+    expect(target).not.toContain("legacy=commissions");
   });
 });

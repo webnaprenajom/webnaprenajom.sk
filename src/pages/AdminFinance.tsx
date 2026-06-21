@@ -6,17 +6,15 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { FinanceRecordsCrud } from "@/components/admin/finance/FinanceRecordsCrud";
 import { FinanceReconciliation } from "@/components/admin/finance/FinanceReconciliation";
 import { FinanceSettlementDrafts } from "@/components/admin/finance/FinanceSettlementDrafts";
-import { FinanceGovernance } from "@/components/admin/finance/FinanceGovernance";
-import { CommissionsExpensesContent } from "@/pages/AdminCommissions";
 import { loadIssueDismissals, type IssueDismissalRow } from "@/lib/finance/dismissals";
-import { filterActiveIssues } from "@/lib/finance/issueKeys";
 import { summarizeReconciliationIssueCounts, type ReconciliationIssueSummary } from "@/lib/finance/issuePresentation";
-import { buildSettlementDrafts } from "@/lib/finance/buildSettlementDrafts";
-import { buildReviewQueue } from "@/lib/finance/buildReviewQueue";
-import { loadReviewStatuses } from "@/lib/finance/reviewGovernance";
 import type { CommissionRule, CommissionRuleOverride } from "@/lib/finance/commissionRules";
 import type { HostingRecordRow } from "@/lib/finance/buildReviewQueue";
-import type { PayoutPolicySetting } from "@/lib/finance/payoutPolicy";
+import {
+  normalizeFinanceLegacyDeepLink,
+  resolveFinanceDiagnostikaTab,
+  type FinanceDiagnostikaTab,
+} from "@/lib/finance/financeDiagnostikaNav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,6 +37,7 @@ import {
 } from "@/lib/finance/financeSourceLabels";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
 import { FinanceImplementerDetailDialog } from "@/components/admin/finance/FinanceImplementerDetailDialog";
+import { FinanceDailyDetailDialog } from "@/components/admin/finance/FinanceDailyDetailDialog";
 import type { CommissionRow } from "@/lib/commissionSource";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import {
@@ -55,6 +54,12 @@ import {
   type ImplementerFinanceTotals,
 } from "@/lib/finance/commissionPayoutStatus";
 import { buildImplementerFinanceTotalsWithRentals } from "@/lib/finance/rentalImplementerFinanceTotals";
+import {
+  buildDailyCommissionDetailRows,
+  buildDailyCostDetailRows,
+  summarizeDailyCommissionRows,
+  summarizeDailyCostRows,
+} from "@/lib/finance/dailyFinanceDetail";
 import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { TeamProfileNotice } from "@/components/admin/rbac/TeamProfileNotice";
 import { ScopedEmptyState } from "@/components/admin/rbac/ScopedEmptyState";
@@ -63,7 +68,7 @@ const AdminFinance = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const access = useAdminAccess();
   const advanced = searchParams.get("advanced") === "1" && canAccessFinanceAdvanced(access.role);
-  const legacyCommissions = searchParams.get("legacy") === "commissions";
+  const diagnostikaTab = resolveFinanceDiagnostikaTab(searchParams.get("tab"));
 
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
@@ -83,11 +88,7 @@ const AdminFinance = () => {
   const [commissionRules, setCommissionRules] = useState<CommissionRule[]>([]);
   const [commissionOverrides, setCommissionOverrides] = useState<CommissionRuleOverride[]>([]);
   const [hostingRecords, setHostingRecords] = useState<HostingRecordRow[]>([]);
-  const [reviewStatuses, setReviewStatuses] = useState<Array<{ item_key: string; item_type: string; status: string; review_note: string | null; reviewed_at: string | null }>>([]);
-  const [policySettings, setPolicySettings] = useState<PayoutPolicySetting[]>([]);
   const [loadErrors, setLoadErrors] = useState<{ table: string; message: string }[]>([]);
-  const [govMonth] = useState(new Date().getMonth() + 1);
-  const [govYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     document.title = "Financie | CRM";
@@ -101,7 +102,7 @@ const AdminFinance = () => {
     // ale chyba sa nestratí — zobrazí sa konsolidovaný toast + banner (pozri loadErrors nižšie).
     const errors: { table: string; message: string }[] = [];
 
-    const [c, e, w, p, pr, po, cr, dis, rules, overrides, hosting, reviews, policies, proj, mkt, tsk] =
+    const [c, e, w, p, pr, po, cr, dis, rules, overrides, hosting, proj, mkt, tsk] =
       await Promise.all([
       supabase.from("commissions").select("*").order("date", { ascending: false }),
       supabase.from("expenses").select("*").order("date", { ascending: false }),
@@ -117,11 +118,6 @@ const AdminFinance = () => {
       supabase.from("commission_rules").select("*").order("revenue_stream_kind"),
       supabase.from("commission_rule_overrides").select("*").order("created_at", { ascending: false }),
       supabase.from("hosting_records").select("*").order("created_at", { ascending: false }),
-      loadReviewStatuses().catch((err) => {
-        errors.push({ table: "finance_review_items", message: err?.message || String(err) });
-        return [];
-      }),
-      supabase.from("finance_policy_settings").select("*").order("policy_key"),
       supabase
         .from("project_notes")
         .select("id,title,client_name,customer_email,agreed_fee,status"),
@@ -145,7 +141,6 @@ const AdminFinance = () => {
       { table: "commission_rules", result: rules },
       { table: "commission_rule_overrides", result: overrides },
       { table: "hosting_records", result: hosting },
-      { table: "finance_policy_settings", result: policies },
       { table: "project_notes", result: proj },
       { table: "marketing_records", result: mkt },
       { table: "tasks", result: tsk },
@@ -172,8 +167,6 @@ const AdminFinance = () => {
     setCommissionRules((rules.data as CommissionRule[]) ?? []);
     setCommissionOverrides((overrides.data as CommissionRuleOverride[]) ?? []);
     setHostingRecords((hosting.data as HostingRecordRow[]) ?? []);
-    setReviewStatuses(reviews);
-    setPolicySettings((policies.data as PayoutPolicySetting[]) ?? []);
     setLoadErrors(errors);
 
     if (errors.length > 0) {
@@ -265,8 +258,26 @@ const AdminFinance = () => {
     [scopedCommissions, year],
   );
 
+  const scopeImplementer = canSeeAllCommissions(accessCtx.role) ? null : accessCtx.implementerName;
+
+  const dailyCommissionDetail = useMemo(() => {
+    const rows = buildDailyCommissionDetailRows({
+      year,
+      commissions: scopedCommissions as CommissionRow[],
+      payoutRecords: scopedPayoutRecords,
+      websites: raw.websites,
+      payments: raw.payments,
+      scopeImplementer,
+    });
+    return { rows, summary: summarizeDailyCommissionRows(rows) };
+  }, [year, scopedCommissions, scopedPayoutRecords, raw.websites, raw.payments, scopeImplementer]);
+
+  const dailyCostDetail = useMemo(() => {
+    const rows = buildDailyCostDetailRows(raw.costRecords, year);
+    return { rows, summary: summarizeDailyCostRows(rows) };
+  }, [raw.costRecords, year]);
+
   const implementerTotals = useMemo(() => {
-    const scopeImplementer = canSeeAllCommissions(accessCtx.role) ? null : accessCtx.implementerName;
     return Array.from(
       buildImplementerFinanceTotalsWithRentals(scopedCommissionsForYear, scopedPayoutRecords, {
         websites: raw.websites,
@@ -286,35 +297,8 @@ const AdminFinance = () => {
     raw.payments,
     scopedCommissions,
     year,
-    accessCtx,
+    scopeImplementer,
   ]);
-
-  const settlementDraftsForGov = useMemo(
-    () =>
-      buildSettlementDrafts({
-        commissions: raw.commissions,
-        payoutRecords: raw.payoutRecords,
-        year: govYear,
-        month: govMonth,
-        rules: commissionRules,
-        overrides: commissionOverrides,
-        websites: raw.websites,
-      }),
-    [raw.commissions, raw.payoutRecords, raw.websites, govYear, govMonth, commissionRules, commissionOverrides],
-  );
-
-  const pendingReviewCount = useMemo(
-    () =>
-      buildReviewQueue({
-        dismissals,
-        overrides: commissionOverrides,
-        hostingRecords,
-        settlementDrafts: settlementDraftsForGov,
-        reviewStatuses: reviewStatuses as any,
-        rules: commissionRules,
-      }).filter((q) => q.status === "pending" || q.status === "reopened").length,
-    [dismissals, commissionOverrides, hostingRecords, settlementDraftsForGov, reviewStatuses, commissionRules],
-  );
 
   const toggleAdvanced = () => {
     if (!canAccessFinanceAdvanced(access.role)) return;
@@ -323,20 +307,30 @@ const AdminFinance = () => {
       next.delete("advanced");
       next.delete("legacy");
       next.delete("tab");
+      next.delete("recordsKind");
     } else {
       next.set("advanced", "1");
+      if (!next.get("tab")) next.set("tab", "reconciliation");
     }
     setSearchParams(next, { replace: true });
   };
 
-  // ponytail: FinanceRecordsCrud mounts only in advanced view — auto-enable when ?record= is present
+  // ponytail: FinanceRecordsCrud mounts only in diagnostika — auto-enable when ?record= is present
   useEffect(() => {
     if (!searchParams.get("record")) return;
     if (advanced || !canAccessFinanceAdvanced(access.role)) return;
     const next = new URLSearchParams(searchParams);
     next.set("advanced", "1");
+    next.set("tab", "records");
     setSearchParams(next, { replace: true });
   }, [searchParams, advanced, access.role, setSearchParams]);
+
+  useEffect(() => {
+    if (!searchParams.get("legacy")) return;
+    const normalized = normalizeFinanceLegacyDeepLink(searchParams);
+    if (normalized.toString() === searchParams.toString()) return;
+    setSearchParams(normalized, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
@@ -350,7 +344,7 @@ const AdminFinance = () => {
   return (
     <AdminShell
       title="Financie"
-      subtitle={advanced ? "Pokročilé nástroje a audit" : "Denný prehľad platieb a provízií"}
+      subtitle={advanced ? "Diagnostika finance" : "Denný prehľad platieb a provízií"}
       actions={
         <div className="flex items-center gap-2 flex-wrap">
           <select
@@ -368,11 +362,11 @@ const AdminFinance = () => {
             <Button size="sm" variant={advanced ? "default" : "outline"} onClick={toggleAdvanced}>
               {advanced ? (
                 <>
-                  <ChevronUp className="w-4 h-4 mr-1" /> Skryť pokročilé
+                  <ChevronUp className="w-4 h-4 mr-1" /> Skryť diagnostiku
                 </>
               ) : (
                 <>
-                  <ChevronDown className="w-4 h-4 mr-1" /> Pokročilé
+                  <ChevronDown className="w-4 h-4 mr-1" /> Diagnostika
                 </>
               )}
             </Button>
@@ -407,19 +401,6 @@ const AdminFinance = () => {
             </div>
           </div>
         )}
-        {legacyCommissions && showOrgFinance && (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-medium">Provízie už nie sú samostatná sekcia v menu.</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Správa provízií a nákladov je v pokročilom režime Financií. Top-level route{" "}
-                <code className="text-[10px]">/admin/commissions</code> presmerováva sem.
-              </p>
-            </div>
-          </div>
-        )}
-
         {loading ? (
           <div className="py-16 flex justify-center">
             <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -432,14 +413,11 @@ const AdminFinance = () => {
             dismissals={dismissals}
             commissionRules={commissionRules}
             commissionOverrides={commissionOverrides}
-            hostingRecords={hostingRecords}
-            reviewStatuses={reviewStatuses}
-            policySettings={policySettings}
             reconciliationSummary={reconciliationSummary}
-            pendingReviewCount={pendingReviewCount}
-            settlementDraftsForGov={settlementDraftsForGov}
-            legacyCommissions={legacyCommissions}
+            diagnostikaTab={diagnostikaTab}
             year={year}
+            searchParams={searchParams}
+            setSearchParams={setSearchParams}
             onSaved={() => void load()}
           />
         ) : (
@@ -452,17 +430,29 @@ const AdminFinance = () => {
             websites={raw.websites}
             payments={raw.payments}
             year={year}
+            commissionSummary={dailyCommissionDetail.summary}
+            costSummary={dailyCostDetail.summary}
+            commissionDetailRows={dailyCommissionDetail.rows}
+            costDetailRows={dailyCostDetail.rows}
             reconciliationSummary={reconciliationSummary}
             scopedEmpty={scopedEmpty}
             showOrgKpis={showOrgFinance}
             implementerLabel={access.implementerName}
-            onOpenAdvanced={() => {
+            onOpenReconciliation={() => {
               if (!canAccessFinanceAdvanced(access.role)) return;
               const next = new URLSearchParams(searchParams);
               next.set("advanced", "1");
+              next.set("tab", "reconciliation");
               setSearchParams(next, { replace: true });
             }}
-            showAdvancedLink={canAccessFinanceAdvanced(access.role)}
+            onOpenDiagnostika={() => {
+              if (!canAccessFinanceAdvanced(access.role)) return;
+              const next = new URLSearchParams(searchParams);
+              next.set("advanced", "1");
+              if (!next.get("tab")) next.set("tab", "reconciliation");
+              setSearchParams(next, { replace: true });
+            }}
+            showDiagnostikaLink={canAccessFinanceAdvanced(access.role)}
           />
         )}
       </div>
@@ -479,12 +469,17 @@ function DailyFinanceView({
   websites = [],
   payments = [],
   year,
+  commissionSummary,
+  costSummary,
+  commissionDetailRows,
+  costDetailRows,
   reconciliationSummary,
   scopedEmpty,
   showOrgKpis,
   implementerLabel,
-  onOpenAdvanced,
-  showAdvancedLink = true,
+  onOpenReconciliation,
+  onOpenDiagnostika,
+  showDiagnostikaLink = true,
 }: {
   dailyKpis: {
     paidInvoices: number;
@@ -516,15 +511,20 @@ function DailyFinanceView({
     amount?: number | null;
   }>;
   year: number;
+  commissionSummary: ReturnType<typeof summarizeDailyCommissionRows>;
+  costSummary: ReturnType<typeof summarizeDailyCostRows>;
+  commissionDetailRows: ReturnType<typeof buildDailyCommissionDetailRows>;
+  costDetailRows: ReturnType<typeof buildDailyCostDetailRows>;
   reconciliationSummary: ReconciliationIssueSummary;
   scopedEmpty: ReturnType<typeof resolveScopedCommissionEmpty>;
   showOrgKpis: boolean;
   implementerLabel: string | null;
-  year: number;
-  onOpenAdvanced: () => void;
-  showAdvancedLink?: boolean;
+  onOpenReconciliation: () => void;
+  onOpenDiagnostika: () => void;
+  showDiagnostikaLink?: boolean;
 }) {
   const [detailImplementer, setDetailImplementer] = useState<string | null>(null);
+  const [dailyDetailKind, setDailyDetailKind] = useState<"commission" | "cost" | null>(null);
 
   return (
     <div className="space-y-6">
@@ -542,8 +542,59 @@ function DailyFinanceView({
       <p className="text-[11px] text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
         {FINANCE_TRUTH_DISCLAIMER}
       </p>
+      {showOrgKpis && (
+        <p className="text-xs text-muted-foreground">
+          Denné Financie — KPI, platby podľa entít a provízie realizátorov podľa auditovaných záznamov.
+        </p>
+      )}
 
       {showOrgKpis && <EntityPaymentsKpiGrid totals={entityPayments} />}
+
+      {showOrgKpis && (
+        <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <KpiCard
+            label="Provízie celkom"
+            value={`${commissionSummary.potential.toFixed(0)} €`}
+            accent="text-primary"
+            hint="Potenciál podľa kanonickej zákazky — vyplatené z payout_records"
+            breakdown={[
+              { level: "payout_fact", amount: commissionSummary.paid },
+              { level: "workflow_only", amount: commissionSummary.remaining },
+            ]}
+            onDetail={() => setDailyDetailKind("commission")}
+            detailLabel="Detail provízií"
+          />
+          <KpiCard
+            label="Náklady celkom"
+            value={`${costSummary.total.toFixed(0)} €`}
+            accent="text-orange-600"
+            hint="Auditované náklady z cost_records (nie workflow expenses)"
+            breakdown={[
+              { level: "cost_fact", amount: costSummary.confirmed },
+              { level: "legacy_import", amount: costSummary.legacy },
+            ]}
+            onDetail={() => setDailyDetailKind("cost")}
+            detailLabel="Detail nákladov"
+          />
+        </section>
+      )}
+
+      {!showOrgKpis && commissionSummary.rowCount > 0 && (
+        <section className="grid grid-cols-1 gap-3">
+          <KpiCard
+            label="Vaše provízie celkom"
+            value={`${commissionSummary.potential.toFixed(0)} €`}
+            accent="text-primary"
+            hint="Potenciál · vyplatené z payout_records"
+            breakdown={[
+              { level: "payout_fact", amount: commissionSummary.paid },
+              { level: "workflow_only", amount: commissionSummary.remaining },
+            ]}
+            onDetail={() => setDailyDetailKind("commission")}
+            detailLabel="Detail"
+          />
+        </section>
+      )}
 
       {showOrgKpis && (
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -664,20 +715,30 @@ function DailyFinanceView({
           </>
         )}
         {showOrgKpis && reconciliationSummary.actionableCount > 0 && (
-          <Badge variant="destructive" className="text-[10px]">
+          <Button
+            size="sm"
+            variant="destructive"
+            className="h-7 text-[10px] px-2"
+            onClick={onOpenReconciliation}
+          >
             {reconciliationSummary.actionableCount} položiek vyžaduje akciu v Zladení
-          </Badge>
+          </Button>
         )}
         {showOrgKpis &&
           reconciliationSummary.actionableCount === 0 &&
           reconciliationSummary.advisoryCount > 0 && (
-            <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-500/40">
-              {reconciliationSummary.advisoryCount} na kontrolu (bez akcie)
-            </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-[10px] px-2 text-amber-600 border-amber-500/40"
+              onClick={onOpenReconciliation}
+            >
+              {reconciliationSummary.advisoryCount} na kontrolu v Zladení
+            </Button>
           )}
-        {showAdvancedLink && (
-          <Button size="sm" variant="ghost" className="text-xs" onClick={onOpenAdvanced}>
-            Otvoriť pokročilé financie →
+        {showDiagnostikaLink && (
+          <Button size="sm" variant="ghost" className="text-xs" onClick={onOpenDiagnostika}>
+            Diagnostika →
           </Button>
         )}
       </div>
@@ -692,6 +753,26 @@ function DailyFinanceView({
         payments={payments}
         year={year}
       />
+
+      <FinanceDailyDetailDialog
+        open={dailyDetailKind === "commission"}
+        onOpenChange={(o) => !o && setDailyDetailKind(null)}
+        kind="commission"
+        title={showOrgKpis ? `Provízie celkom · ${year}` : `Vaše provízie · ${year}`}
+        subtitle="Odkiaľ provízia prišla — jeden riadok = jedna zákazka bez dvojitého počítania."
+        rows={commissionDetailRows}
+        commissionSummary={commissionSummary}
+      />
+
+      <FinanceDailyDetailDialog
+        open={dailyDetailKind === "cost"}
+        onOpenChange={(o) => !o && setDailyDetailKind(null)}
+        kind="cost"
+        title={`Náklady celkom · ${year}`}
+        subtitle="Kam náklad odišiel — len auditované záznamy z cost_records."
+        rows={costDetailRows}
+        costSummary={costSummary}
+      />
     </div>
   );
 }
@@ -703,14 +784,11 @@ function AdvancedFinanceView({
   dismissals,
   commissionRules,
   commissionOverrides,
-  hostingRecords,
-  reviewStatuses,
-  policySettings,
   reconciliationSummary,
-  pendingReviewCount,
-  settlementDraftsForGov,
-  legacyCommissions,
+  diagnostikaTab,
   year,
+  searchParams,
+  setSearchParams,
   onSaved,
 }: {
   snapshot: ReturnType<typeof buildFinanceSnapshot>;
@@ -719,32 +797,38 @@ function AdvancedFinanceView({
   dismissals: IssueDismissalRow[];
   commissionRules: CommissionRule[];
   commissionOverrides: CommissionRuleOverride[];
-  hostingRecords: HostingRecordRow[];
-  reviewStatuses: any[];
-  policySettings: PayoutPolicySetting[];
   reconciliationSummary: ReconciliationIssueSummary;
-  pendingReviewCount: number;
-  settlementDraftsForGov: ReturnType<typeof buildSettlementDrafts>;
-  legacyCommissions: boolean;
+  diagnostikaTab: FinanceDiagnostikaTab;
   year: number;
+  searchParams: URLSearchParams;
+  setSearchParams: (next: URLSearchParams, opts?: { replace?: boolean }) => void;
   onSaved: () => void;
 }) {
-  const defaultTab = legacyCommissions ? "provizie" : "settlement";
+  const [showSettlement, setShowSettlement] = useState(diagnostikaTab === "settlement");
+
+  const setDiagnostikaTab = (tab: FinanceDiagnostikaTab) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("advanced", "1");
+    next.set("tab", tab);
+    if (tab !== "records") next.delete("recordsKind");
+    setSearchParams(next, { replace: true });
+  };
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
-        {FINANCE_TRUTH_DISCLAIMER}
-      </p>
-      <p className="text-[11px] text-muted-foreground">
-        Pokročilé nástroje pre záznamy, vyúčtovanie a výnimky. Denný prehľad KPI a provízií realizátorov je v
-        základnom režime — tu nie sú duplicitne.
+        Nástroje na zladenie výnimiek a výnimočné korekcie. Denné Financie sú v základnom pohľade.
       </p>
 
-      <Tabs defaultValue={defaultTab}>
+      <Tabs
+        value={diagnostikaTab}
+        onValueChange={(v) => {
+          const tab = resolveFinanceDiagnostikaTab(v);
+          if (tab === "settlement") setShowSettlement(true);
+          setDiagnostikaTab(tab);
+        }}
+      >
         <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="records">Záznamy</TabsTrigger>
-          <TabsTrigger value="settlement">Vyúčtovanie</TabsTrigger>
           <TabsTrigger value="reconciliation">
             Zladenie
             {reconciliationSummary.actionableCount > 0 && (
@@ -754,32 +838,26 @@ function AdvancedFinanceView({
               <span className="ml-1 text-muted-foreground">({reconciliationSummary.advisoryCount})</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="provizie">Provízie & náklady</TabsTrigger>
-          <TabsTrigger value="governance" className="text-muted-foreground">
-            Kontrola (audit)
-            {pendingReviewCount > 0 && (
-              <span className="ml-1 text-amber-500">({pendingReviewCount})</span>
-            )}
-          </TabsTrigger>
+          <TabsTrigger value="records">Záznamy (korekcie)</TabsTrigger>
+          {showSettlement && <TabsTrigger value="settlement">Vyúčtovanie</TabsTrigger>}
         </TabsList>
 
-        <TabsContent value="records" className="mt-4">
-          <FinanceRecordsCrud
-            paymentRecords={raw.paymentRecords}
-            payoutRecords={raw.payoutRecords}
-            costRecords={raw.costRecords}
-            onSaved={onSaved}
-          />
-        </TabsContent>
-
-        <TabsContent value="settlement" className="mt-4">
-          <FinanceSettlementDrafts
-            ctx={financeCtx}
-            rules={commissionRules}
-            overrides={commissionOverrides}
-            onSaved={onSaved}
-          />
-        </TabsContent>
+        {!showSettlement && (
+          <div className="mt-2">
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-xs text-muted-foreground"
+              onClick={() => {
+                setShowSettlement(true);
+                setDiagnostikaTab("settlement");
+              }}
+            >
+              Zobraziť hromadné vyúčtovanie
+            </Button>
+          </div>
+        )}
 
         <TabsContent value="reconciliation" className="mt-4">
           <FinanceReconciliation
@@ -791,24 +869,25 @@ function AdvancedFinanceView({
           />
         </TabsContent>
 
-        <TabsContent value="provizie" className="mt-4">
-          <CommissionsExpensesContent />
-        </TabsContent>
-
-        <TabsContent value="governance" className="mt-4">
-          <FinanceGovernance
-            rules={commissionRules}
-            overrides={commissionOverrides}
-            hostingRecords={hostingRecords}
-            dismissals={dismissals}
-            settlementDrafts={settlementDraftsForGov}
-            reviewStatuses={reviewStatuses}
-            policies={policySettings}
-            financeCtx={financeCtx}
-            pendingReviewCount={pendingReviewCount}
+        <TabsContent value="records" className="mt-4">
+          <FinanceRecordsCrud
+            paymentRecords={raw.paymentRecords}
+            payoutRecords={raw.payoutRecords}
+            costRecords={raw.costRecords}
             onSaved={onSaved}
           />
         </TabsContent>
+
+        {showSettlement && (
+          <TabsContent value="settlement" className="mt-4">
+            <FinanceSettlementDrafts
+              ctx={financeCtx}
+              rules={commissionRules}
+              overrides={commissionOverrides}
+              onSaved={onSaved}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );
@@ -821,6 +900,8 @@ function KpiCard({
   accent = "text-foreground",
   truthLevel,
   breakdown,
+  onDetail,
+  detailLabel = "Detail",
 }: {
   label: string;
   value: string;
@@ -830,9 +911,26 @@ function KpiCard({
   truthLevel?: string;
   /** Pre kartu, ktorá je z princípu mixovaná — rozpis súm podľa truth-levelu. */
   breakdown?: { level: string; amount: number }[];
+  onDetail?: () => void;
+  detailLabel?: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div
+      className={`rounded-xl border border-border bg-card p-4 ${onDetail ? "cursor-pointer hover:border-primary/40 transition-colors" : ""}`}
+      role={onDetail ? "button" : undefined}
+      tabIndex={onDetail ? 0 : undefined}
+      onClick={onDetail}
+      onKeyDown={
+        onDetail
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onDetail();
+              }
+            }
+          : undefined
+      }
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="text-xs text-muted-foreground">{label}</div>
         {truthLevel && <TruthLevelBadge level={truthLevel} />}
@@ -853,6 +951,9 @@ function KpiCard({
         </div>
       )}
       {hint && <div className="text-[10px] text-muted-foreground mt-1">{hint}</div>}
+      {onDetail && (
+        <div className="text-[10px] text-primary mt-2 font-medium">{detailLabel} →</div>
+      )}
     </div>
   );
 }

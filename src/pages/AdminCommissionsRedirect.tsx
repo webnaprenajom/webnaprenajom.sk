@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 
-/** Legacy route — provízie presunuté do Financií (pokročilé). */
+/** Legacy route — provízie riešte v Prenájmy / denných Financiách, nie v CRUD tabe. */
 export default function AdminCommissionsRedirect() {
-  return <Navigate to="/admin/finance?advanced=1&legacy=commissions" replace />;
+  return <Navigate to="/admin/finance" replace />;
 }

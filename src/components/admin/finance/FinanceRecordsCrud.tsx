@@ -279,6 +279,13 @@ export function FinanceRecordsCrud({
   });
 
   useEffect(() => {
+    const recordsKind = searchParams.get("recordsKind");
+    if (recordsKind === "payment" || recordsKind === "payout" || recordsKind === "cost") {
+      setTab(recordsKind);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     const param = searchParams.get("record");
     const parsed = parseRecordParam(param);
     if (!parsed) return;
@@ -439,8 +446,15 @@ export function FinanceRecordsCrud({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Nové záznamy = potvrdené fakty. Legacy import je read-only — pre opravu vytvorte nový potvrdený záznam.
+      <p className="text-xs text-muted-foreground border border-border/60 rounded-lg p-3 bg-muted/20">
+        <strong>Záznamy (korekcie)</strong> — nástroj na opravy a výnimočné zásahy do{" "}
+        <code className="text-[10px]">payment_records</code>, <code className="text-[10px]">payout_records</code>{" "}
+        a <code className="text-[10px]">cost_records</code>. Bežné platby riešte v sekciách Prenájmy,
+        Hosting, Projekty a Marketing.
+      </p>
+      <p className="text-[11px] text-muted-foreground">
+        Nové záznamy = potvrdené fakty. Legacy import je read-only — pre opravu vytvorte nový
+        potvrdený záznam.
       </p>
       <Tabs value={tab} onValueChange={(v) => setTab(v as RecordKind)}>
         <TabsList>
