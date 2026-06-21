@@ -1,15 +1,11 @@
-import { Fragment, useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { fmtEur } from "@/lib/money/formatMoney";
 import { Link } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -323,151 +319,208 @@ export function ImplementerCommissionDetailDialog({
     }
   };
 
+  const toggleDealExpanded = (dealKey: string) => {
+    setExpandedDealKey((prev) => (prev === dealKey ? null : dealKey));
+  };
+
+  const stopRowToggle = (e: MouseEvent | KeyboardEvent) => {
+    e.stopPropagation();
+  };
+
   const renderDealRow = (deal: RentalCommissionDeal, isLegacy = false) => {
     const expanded = expandedDealKey === deal.dealKey;
     return (
-      <Fragment key={deal.dealKey}>
-        <TableRow className={isLegacy ? "bg-muted/20" : undefined}>
-          <TableCell>
-            <Badge
-              variant={isLegacy ? "outline" : "secondary"}
-              className={`text-[10px] ${isLegacy ? "border-amber-500/40 text-amber-700 dark:text-amber-400" : ""}`}
-            >
-              {isLegacy ? "Legacy" : "Prenájom"}
-            </Badge>
-          </TableCell>
-          <TableCell className="text-sm font-medium max-w-[140px]">
-            <Collapsible
-              open={expanded}
-              onOpenChange={(o) => setExpandedDealKey(o ? deal.dealKey : null)}
-            >
-              <CollapsibleTrigger className="text-left hover:underline truncate block max-w-full">
-                {deal.title}
-              </CollapsibleTrigger>
-            </Collapsible>
-          </TableCell>
-          <TableCell className="text-xs">
-            {deal.clientName && !isLegacy ? (
-              customerHrefByClientName(deal.clientName, clientEmailMap) ? (
-                <Link
-                  to={customerHrefByClientName(deal.clientName, clientEmailMap)!}
-                  className="text-primary hover:underline"
+      <div
+        key={deal.dealKey}
+        className={`rounded-lg border border-border/70 bg-card overflow-hidden ${
+          isLegacy ? "border-amber-500/25" : ""
+        } ${expanded ? "ring-1 ring-border/80" : ""}`}
+      >
+        <button
+          type="button"
+          className={`w-full text-left px-3 py-2.5 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+            expanded ? "bg-muted/25" : ""
+          }`}
+          aria-expanded={expanded}
+          onClick={() => toggleDealExpanded(deal.dealKey)}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-start gap-3 min-w-0 w-full">
+            <ChevronDown
+              className={`w-4 h-4 mt-0.5 shrink-0 text-muted-foreground transition-transform ${
+                expanded ? "rotate-180" : ""
+              }`}
+              aria-hidden
+            />
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="flex flex-wrap items-center gap-2 min-w-0">
+                <Badge
+                  variant={isLegacy ? "outline" : "secondary"}
+                  className={`text-[10px] shrink-0 ${isLegacy ? "border-amber-500/40 text-amber-700 dark:text-amber-400" : ""}`}
                 >
-                  {deal.clientName}
-                </Link>
-              ) : (
-                deal.clientName
-              )
-            ) : (
-              "—"
-            )}
-          </TableCell>
-          <TableCell className="text-right text-xs">{deal.percentage != null ? `${deal.percentage}%` : "—"}</TableCell>
-          <TableCell className="text-right text-xs text-green-600">
-            {deal.clientPaidShare != null ? fmtEur(deal.clientPaidShare) : "—"}
-          </TableCell>
-          <TableCell className="text-right text-xs">{fmtEur(deal.potentialCommission)}</TableCell>
-          <TableCell className="text-right text-xs text-green-600">{fmtEur(deal.paidAmount)}</TableCell>
-          <TableCell className="text-right text-xs text-amber-600">{fmtEur(deal.remainingAmount)}</TableCell>
-          <TableCell>
-            <Badge variant="outline" className={`text-[10px] ${dealPayoutStatusClass(deal.payoutStatus)}`}>
-              {DEAL_PAYOUT_STATUS_LABELS[deal.payoutStatus]}
-            </Badge>
-            {deal.workflowPaidUnaudited && (
-              <div className="text-[9px] text-muted-foreground mt-0.5">
-                {COMMISSION_PAYOUT_STATUS_LABELS.paid_workflow_unaudited}
+                  {isLegacy ? "Legacy" : "Prenájom"}
+                </Badge>
+                <span className="text-sm font-medium truncate">{deal.title}</span>
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] shrink-0 ${dealPayoutStatusClass(deal.payoutStatus)}`}
+                >
+                  {DEAL_PAYOUT_STATUS_LABELS[deal.payoutStatus]}
+                </Badge>
               </div>
-            )}
-          </TableCell>
-          <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-            {deal.lastPayoutAt ? new Date(deal.lastPayoutAt).toLocaleDateString("sk-SK") : "—"}
-          </TableCell>
-          <TableCell className="text-xs">{paymentFormLabel(deal.paymentForm) || "—"}</TableCell>
-          <TableCell>
-            {deal.dealType === "rental" && deal.impIndex != null && deal.websiteId ? (
-              <select
-                className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
-                value={deal.paymentForm}
-                onChange={(e) =>
-                  void saveRentalRow(deal.websiteId!, deal.impIndex!, {
-                    payment_form: e.target.value as PaymentFormValue,
-                  })
-                }
-              >
-                <option value="">—</option>
-                {PAYMENT_FORM_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            ) : deal.commissionId ? (
-              <select
-                className="h-8 w-full min-w-[90px] rounded-md border border-input bg-background px-2 text-xs"
-                value={deal.paymentForm}
-                onChange={(e) =>
-                  void saveCommissionRow(deal.commissionId!, {
-                    payment_form: e.target.value as PaymentFormValue,
-                  })
-                }
-              >
-                <option value="">—</option>
-                {PAYMENT_FORM_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            ) : (
-              "—"
-            )}
-          </TableCell>
-          <TableCell>
-            <div className="flex flex-col gap-1">
+              <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0">
+                {deal.clientName && !isLegacy ? (
+                  customerHrefByClientName(deal.clientName, clientEmailMap) ? (
+                    <Link
+                      to={customerHrefByClientName(deal.clientName, clientEmailMap)!}
+                      className="text-primary hover:underline truncate max-w-[200px]"
+                      onClick={stopRowToggle}
+                    >
+                      {deal.clientName}
+                    </Link>
+                  ) : (
+                    <span className="truncate max-w-[200px]">{deal.clientName}</span>
+                  )
+                ) : (
+                  <span>—</span>
+                )}
+                {deal.percentage != null && <span>{deal.percentage}%</span>}
+                {deal.clientPaidShare != null && (
+                  <span className="text-green-600">Z klienta {fmtEur(deal.clientPaidShare)}</span>
+                )}
+                {deal.workflowPaidUnaudited && (
+                  <span className="text-[10px]">{COMMISSION_PAYOUT_STATUS_LABELS.paid_workflow_unaudited}</span>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-x-4 gap-y-1 text-right text-xs tabular-nums sm:shrink-0 w-full sm:w-auto">
+              <div>
+                <div className="text-[10px] text-muted-foreground">Potenciál</div>
+                <div className="font-medium">{fmtEur(deal.potentialCommission)}</div>
+              </div>
+              <div>
+                <div className="text-[10px] text-green-600">Vyplatené</div>
+                <div className="font-medium text-green-600">{fmtEur(deal.paidAmount)}</div>
+              </div>
+              <div>
+                <div className="text-[10px] text-amber-600">Ostáva</div>
+                <div className="font-medium text-amber-600">{fmtEur(deal.remainingAmount)}</div>
+              </div>
+            </div>
+          </div>
+        </button>
+
+        {expanded && (
+          <div className="border-t border-border/60 bg-muted/15 px-3 py-3 space-y-3" onClick={stopRowToggle}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <div className="text-[10px] text-muted-foreground mb-1">Posledná výplata</div>
+                <div>
+                  {deal.lastPayoutAt
+                    ? new Date(deal.lastPayoutAt).toLocaleDateString("sk-SK")
+                    : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] text-muted-foreground mb-1">Forma výplaty</div>
+                {deal.dealType === "rental" && deal.impIndex != null && deal.websiteId ? (
+                  <select
+                    className="h-8 w-full max-w-xs rounded-md border border-input bg-background px-2 text-xs"
+                    value={deal.paymentForm}
+                    onClick={stopRowToggle}
+                    onChange={(e) =>
+                      void saveRentalRow(deal.websiteId!, deal.impIndex!, {
+                        payment_form: e.target.value as PaymentFormValue,
+                      })
+                    }
+                  >
+                    <option value="">—</option>
+                    {PAYMENT_FORM_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : deal.commissionId ? (
+                  <select
+                    className="h-8 w-full max-w-xs rounded-md border border-input bg-background px-2 text-xs"
+                    value={deal.paymentForm}
+                    onClick={stopRowToggle}
+                    onChange={(e) =>
+                      void saveCommissionRow(deal.commissionId!, {
+                        payment_form: e.target.value as PaymentFormValue,
+                      })
+                    }
+                  >
+                    <option value="">—</option>
+                    {PAYMENT_FORM_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <span>{paymentFormLabel(deal.paymentForm) || "—"}</span>
+                )}
+              </div>
+              <div className="sm:col-span-2">
+                <div className="text-[10px] text-muted-foreground mb-1">Poznámka</div>
+                {deal.dealType === "rental" && deal.impIndex != null && deal.websiteId ? (
+                  <Input
+                    className="h-8 text-xs max-w-md"
+                    defaultValue={deal.note}
+                    placeholder="Poznámka k zákazke"
+                    onClick={stopRowToggle}
+                    onBlur={(e) => {
+                      if (e.target.value !== deal.note) {
+                        void saveRentalRow(deal.websiteId!, deal.impIndex!, { note: e.target.value });
+                      }
+                    }}
+                  />
+                ) : deal.commissionId ? (
+                  <Input
+                    className="h-8 text-xs max-w-md"
+                    defaultValue={deal.note}
+                    placeholder="Poznámka k zákazke"
+                    onClick={stopRowToggle}
+                    onBlur={(e) => {
+                      if (e.target.value !== deal.note) {
+                        void saveCommissionRow(deal.commissionId!, { note: e.target.value });
+                      }
+                    }}
+                  />
+                ) : (
+                  <span className="text-muted-foreground">{deal.note || "—"}</span>
+                )}
+              </div>
+            </div>
+
+            {canTogglePaymentStatus && (
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 text-[10px]"
-                disabled={!canTogglePaymentStatus || deal.remainingAmount <= 0}
-                onClick={() => void recordDealPayout(deal)}
+                className="h-8 text-xs"
+                disabled={deal.remainingAmount <= 0}
+                onClick={(e) => {
+                  stopRowToggle(e);
+                  void recordDealPayout(deal);
+                }}
               >
                 Zaznamenať výplatu
               </Button>
-              {deal.dealType === "rental" && deal.impIndex != null && deal.websiteId ? (
-                <Input
-                  className="h-8 text-xs min-w-[100px]"
-                  defaultValue={deal.note}
-                  placeholder="Poznámka"
-                  onBlur={(e) => {
-                    if (e.target.value !== deal.note) {
-                      void saveRentalRow(deal.websiteId!, deal.impIndex!, { note: e.target.value });
-                    }
-                  }}
-                />
-              ) : deal.commissionId ? (
-                <Input
-                  className="h-8 text-xs min-w-[100px]"
-                  defaultValue={deal.note}
-                  placeholder="Poznámka"
-                  onBlur={(e) => {
-                    if (e.target.value !== deal.note) {
-                      void saveCommissionRow(deal.commissionId!, { note: e.target.value });
-                    }
-                  }}
-                />
-              ) : null}
-            </div>
-          </TableCell>
-        </TableRow>
-        {expanded && (
-          <TableRow className="bg-muted/30">
-            <TableCell colSpan={13} className="py-3">
-              <div className="text-xs font-medium mb-2">História výplat — {deal.title}</div>
+            )}
+
+            <div>
+              <div className="text-xs font-medium mb-2">História výplat</div>
               {deal.payoutTransactions.length === 0 ? (
                 <p className="text-xs text-muted-foreground">Zatiaľ žiadne auditované výplaty.</p>
               ) : (
-                <div className="rounded border overflow-x-auto">
+                <div className="rounded-md border border-border/60 overflow-hidden">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Dátum</TableHead>
                         <TableHead className="text-right">Suma</TableHead>
+                        <TableHead>Forma / ref.</TableHead>
                         <TableHead>Truth</TableHead>
                         <TableHead>Poznámka</TableHead>
                         {canTogglePaymentStatus && <TableHead className="text-right">Akcie</TableHead>}
@@ -476,10 +529,13 @@ export function ImplementerCommissionDetailDialog({
                     <TableBody>
                       {deal.payoutTransactions.map((t) => (
                         <TableRow key={t.id}>
-                          <TableCell className="text-xs">
+                          <TableCell className="text-xs whitespace-nowrap">
                             {new Date(t.paid_at).toLocaleString("sk-SK")}
                           </TableCell>
-                          <TableCell className="text-right text-xs">{fmtEur(t.amount)}</TableCell>
+                          <TableCell className="text-right text-xs tabular-nums">{fmtEur(t.amount)}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground max-w-[120px] truncate">
+                            {t.reference || "—"}
+                          </TableCell>
                           <TableCell>
                             {t.truth_level === "payout_fact" || t.truth_level === "legacy_import" ? (
                               <TruthLevelBadge level={t.truth_level} />
@@ -487,7 +543,9 @@ export function ImplementerCommissionDetailDialog({
                               "—"
                             )}
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{t.note || t.reference || "—"}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground max-w-[140px] truncate">
+                            {t.note || "—"}
+                          </TableCell>
                           {canTogglePaymentStatus && (
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-1 flex-wrap">
@@ -525,23 +583,22 @@ export function ImplementerCommissionDetailDialog({
                   Pred zlúčením existoval JSON podiel aj materializovaná provízia — zobrazené ako jedna zákazka.
                 </p>
               )}
-            </TableCell>
-          </TableRow>
+            </div>
+          </div>
         )}
-      </Fragment>
+      </div>
     );
   };
 
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Provízie — {implementerName} ({year})</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
-          Jedna zákazka = jeden riadok. Vyplatené = súčet <code className="text-[10px]">payout_records</code>;
-          ostáva vyplatiť = potenciál mínus vyplatené. Kliknite na názov pre históriu výplat.
+          Jedna zákazka = jeden riadok. Kliknite na riadok pre detail, históriu výplat a úpravy.
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
           <div className="rounded border p-2">
@@ -565,36 +622,14 @@ export function ImplementerCommissionDetailDialog({
         {rentalDeals.length === 0 && legacyDeals.length === 0 ? (
           <p className="text-sm text-muted-foreground py-6 text-center">Žiadne záznamy pre tohto realizátora.</p>
         ) : (
-          <div className="rounded-lg border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Typ</TableHead>
-                  <TableHead>Názov</TableHead>
-                  <TableHead>Klient</TableHead>
-                  <TableHead className="text-right">%</TableHead>
-                  <TableHead className="text-right">Z klienta</TableHead>
-                  <TableHead className="text-right">Potenciál</TableHead>
-                  <TableHead className="text-right">Vyplatené</TableHead>
-                  <TableHead className="text-right">Ostáva</TableHead>
-                  <TableHead>Stav výplaty</TableHead>
-                  <TableHead>Posl. výplata</TableHead>
-                  <TableHead>Forma</TableHead>
-                  <TableHead>Akcie</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rentalDeals.map((d) => renderDealRow(d))}
-                {legacyDeals.length > 0 && (
-                  <TableRow>
-                    <TableCell colSpan={12} className="bg-muted/40 text-[10px] font-medium text-muted-foreground py-2">
-                      Legacy / bez prepojenia na prenájom
-                    </TableCell>
-                  </TableRow>
-                )}
-                {legacyDeals.map((d) => renderDealRow(d, true))}
-              </TableBody>
-            </Table>
+          <div className="space-y-2">
+            {rentalDeals.map((d) => renderDealRow(d))}
+            {legacyDeals.length > 0 && (
+              <p className="text-[10px] font-medium text-muted-foreground px-1 pt-2">
+                Legacy / bez prepojenia na prenájom
+              </p>
+            )}
+            {legacyDeals.map((d) => renderDealRow(d, true))}
           </div>
         )}
         {legacyDeals.length > 0 && (
