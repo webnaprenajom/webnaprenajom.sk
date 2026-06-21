@@ -36,6 +36,8 @@ export interface FactDraft {
   note?: string;
   source_table?: string | null;
   source_id?: string | null;
+  /** Set when editing an existing payout_records row (insert skipped). */
+  recordId?: string;
 }
 
 export interface FinanceRawContext {

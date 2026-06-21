@@ -12,12 +12,13 @@ import {
   type FactKind,
   saveFactDraft,
 } from "@/lib/finance/factDrafts";
+import { updatePayoutRecord } from "@/lib/finance/commissionPayoutMutations";
 
 interface FactConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   draft: FactDraft | null;
-  mode?: "create" | "promote" | "workflow";
+  mode?: "create" | "promote" | "workflow" | "edit";
   onSaved: () => void;
 }
 
@@ -52,8 +53,13 @@ export function FactConfirmDialog({
     }
     setSaving(true);
     try {
-      await saveFactDraft(active);
-      toast({ title: "Potvrdený záznam vytvorený" });
+      if (active.recordId && active.kind === "payout") {
+        await updatePayoutRecord(active.recordId, active);
+        toast({ title: "Výplata upravená" });
+      } else {
+        await saveFactDraft(active);
+        toast({ title: "Potvrdený záznam vytvorený" });
+      }
       closeDialog();
       onSaved();
       return true;
@@ -77,15 +83,17 @@ export function FactConfirmDialog({
   if (!open || !displayForm) return null;
 
   const title =
-    mode === "promote"
-      ? "Potvrdiť legacy ako nový fact"
-      : mode === "workflow"
-        ? "Vytvoriť potvrdený záznam"
-        : displayForm.kind === "payment"
-          ? "Nová potvrdená platba"
-          : displayForm.kind === "payout"
-            ? "Nová potvrdená výplata"
-            : "Nový potvrdený náklad";
+    mode === "edit" || displayForm.recordId
+      ? "Upraviť výplatu"
+      : mode === "promote"
+        ? "Potvrdiť legacy ako nový fact"
+        : mode === "workflow"
+          ? "Vytvoriť potvrdený záznam"
+          : displayForm.kind === "payment"
+            ? "Nová potvrdená platba"
+            : displayForm.kind === "payout"
+              ? "Nová potvrdená výplata"
+              : "Nový potvrdený náklad";
 
   return (
     <>
@@ -109,7 +117,7 @@ export function FactConfirmDialog({
             </Button>
             <Button onClick={() => void persist()} disabled={saving} className="w-full sm:w-auto">
               {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Potvrdiť a uložiť
+              {displayForm.recordId ? "Uložiť" : "Potvrdiť a uložiť"}
             </Button>
           </>
         }

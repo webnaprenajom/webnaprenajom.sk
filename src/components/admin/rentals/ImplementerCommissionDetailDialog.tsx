@@ -34,6 +34,11 @@ import {
   buildPartialCommissionPayoutDraft,
 } from "@/lib/finance/commissionPayoutBridge";
 import {
+  buildPayoutEditDraft,
+  canMutatePayoutRecord,
+  deletePayoutRecord,
+} from "@/lib/finance/commissionPayoutMutations";
+import {
   ensureRentalCommissionMaterialized,
 } from "@/lib/finance/rentalCommissionPayoutBridge";
 import {
@@ -41,10 +46,20 @@ import {
   DEAL_PAYOUT_STATUS_LABELS,
   dealPayoutStatusClass,
   summarizeRentalCommissionDeals,
+  type PayoutTransaction,
   type RentalCommissionDeal,
 } from "@/lib/finance/rentalCommissionDeal";
 import type { PayoutRecordLike } from "@/lib/finance/commissionPayoutStatus";
 import { TruthLevelBadge } from "@/components/admin/finance/TruthLevelBadge";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useAccessContext } from "@/hooks/useAccessContext";
 import {
   canToggleCommissionPaymentStatus,
@@ -102,10 +117,17 @@ export function ImplementerCommissionDetailDialog({
   const canTogglePaymentStatus = canToggleCommissionPaymentStatus(access, implementerName);
   const [payoutFactDraft, setPayoutFactDraft] = useState<FactDraft | null>(null);
   const [payoutFactOpen, setPayoutFactOpen] = useState(false);
+  const [payoutEditMode, setPayoutEditMode] = useState(false);
   const [expandedDealKey, setExpandedDealKey] = useState<string | null>(null);
+  const [deletePayoutTarget, setDeletePayoutTarget] = useState<{
+    transaction: PayoutTransaction;
+    dealTitle: string;
+  } | null>(null);
+  const [deletingPayout, setDeletingPayout] = useState(false);
 
-  const openPayoutDraft = (draft: FactDraft | null) => {
+  const openPayoutDraft = (draft: FactDraft | null, edit = false) => {
     if (!draft) return;
+    setPayoutEditMode(edit);
     setPayoutFactDraft(draft);
     setPayoutFactOpen(true);
   };
@@ -241,10 +263,63 @@ export function ImplementerCommissionDetailDialog({
         toast({ title: "Nič na výplatu", description: "Zostávajúca suma je 0.", variant: "destructive" });
         return;
       }
-      openPayoutDraft(draft);
+      openPayoutDraft(draft, false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Neočakávaná chyba";
       toast({ title: "Chyba výplaty", description: msg, variant: "destructive" });
+    }
+  };
+
+  const openEditPayout = (deal: RentalCommissionDeal, transaction: PayoutTransaction) => {
+    if (!canTogglePaymentStatus) {
+      toast({ title: commissionPaymentStatusDeniedMessage(), variant: "destructive" });
+      return;
+    }
+    if (!canMutatePayoutRecord(transaction.truth_level)) {
+      toast({
+        title: "Legacy výplata",
+        description: "Historický import upravte v Finance → Diagnostika → Záznamy.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const row = payoutRecords.find((r) => r.id === transaction.id);
+    if (!row?.id) {
+      toast({ title: "Chyba", description: "Záznam výplaty sa nenašiel.", variant: "destructive" });
+      return;
+    }
+    openPayoutDraft(buildPayoutEditDraft({ ...row, id: row.id }), true);
+  };
+
+  const requestDeletePayout = (deal: RentalCommissionDeal, transaction: PayoutTransaction) => {
+    if (!canTogglePaymentStatus) {
+      toast({ title: commissionPaymentStatusDeniedMessage(), variant: "destructive" });
+      return;
+    }
+    if (!canMutatePayoutRecord(transaction.truth_level)) {
+      toast({
+        title: "Legacy výplata",
+        description: "Historický import nemožno zmazať odtiaľto.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setDeletePayoutTarget({ transaction, dealTitle: deal.title });
+  };
+
+  const confirmDeletePayout = async () => {
+    if (!deletePayoutTarget) return;
+    setDeletingPayout(true);
+    try {
+      await deletePayoutRecord(deletePayoutTarget.transaction.id);
+      toast({ title: "Výplata zmazaná" });
+      setDeletePayoutTarget(null);
+      void (onPayoutSaved ?? onSaved)();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Chyba pri mazaní";
+      toast({ title: "Chyba", description: msg, variant: "destructive" });
+    } finally {
+      setDeletingPayout(false);
     }
   };
 
@@ -395,6 +470,7 @@ export function ImplementerCommissionDetailDialog({
                         <TableHead className="text-right">Suma</TableHead>
                         <TableHead>Truth</TableHead>
                         <TableHead>Poznámka</TableHead>
+                        {canTogglePaymentStatus && <TableHead className="text-right">Akcie</TableHead>}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -412,6 +488,32 @@ export function ImplementerCommissionDetailDialog({
                             )}
                           </TableCell>
                           <TableCell className="text-xs text-muted-foreground">{t.note || t.reference || "—"}</TableCell>
+                          {canTogglePaymentStatus && (
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1 flex-wrap">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-[10px]"
+                                  disabled={!canMutatePayoutRecord(t.truth_level)}
+                                  onClick={() => openEditPayout(deal, t)}
+                                >
+                                  Upraviť
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-[10px] text-destructive hover:text-destructive"
+                                  disabled={!canMutatePayoutRecord(t.truth_level)}
+                                  onClick={() => requestDeletePayout(deal, t)}
+                                >
+                                  Zmazať
+                                </Button>
+                              </div>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>
@@ -509,15 +611,55 @@ export function ImplementerCommissionDetailDialog({
 
     <FactConfirmDialog
       open={payoutFactOpen}
-      onOpenChange={setPayoutFactOpen}
+      onOpenChange={(o) => {
+        setPayoutFactOpen(o);
+        if (!o) {
+          setPayoutFactDraft(null);
+          setPayoutEditMode(false);
+        }
+      }}
       draft={payoutFactDraft}
-      mode="workflow"
+      mode={payoutEditMode ? "edit" : "workflow"}
       onSaved={() => {
         setPayoutFactOpen(false);
         setPayoutFactDraft(null);
+        setPayoutEditMode(false);
         void (onPayoutSaved ?? onSaved)();
       }}
     />
+
+    <AlertDialog open={!!deletePayoutTarget} onOpenChange={(o) => !o && setDeletePayoutTarget(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Zmazať výplatu?</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p>
+                Odstránite auditovanú výplatu pre realizátora <strong>{implementerName}</strong>
+                {deletePayoutTarget ? (
+                  <>
+                    {" "}
+                    — provízia <strong>{deletePayoutTarget.dealTitle}</strong>, suma{" "}
+                    <strong>{fmtEur(deletePayoutTarget.transaction.amount)}</strong>.
+                  </>
+                ) : null}
+              </p>
+              <p>Stav zákazky (vyplatené / ostáva) sa prepočíta zostávajúcich payout záznamov.</p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deletingPayout}>Zrušiť</AlertDialogCancel>
+          <Button
+            variant="destructive"
+            disabled={deletingPayout}
+            onClick={() => void confirmDeletePayout()}
+          >
+            Zmazať výplatu
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
