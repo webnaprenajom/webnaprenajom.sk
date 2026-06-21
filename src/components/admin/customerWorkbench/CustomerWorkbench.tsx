@@ -310,7 +310,7 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
         onCustomerSaved={onReload}
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_260px] gap-4 items-start">
+      <div className="min-w-0">
         <Tabs value={activeTab} onValueChange={(v) => setTab(v as WorkbenchTabId)} className="min-w-0">
           <TabsList className="w-full flex h-auto gap-1 bg-muted/50 p-1 overflow-x-auto flex-nowrap justify-start">
             {WORKBENCH_TABS.map((t) => (
@@ -838,67 +838,6 @@ export function CustomerWorkbench({ data, routeValue, loading, onReload, section
             )}
           </TabsContent>
         </Tabs>
-
-        {/* Context panel */}
-        <aside className="hidden xl:block space-y-3 sticky top-4">
-          <section className="rounded-xl border border-border bg-card p-4 space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Kontext
-            </h3>
-            {primaryLead ? (
-              <div className="text-xs space-y-1">
-                <div className="font-medium">{primaryLead.name}</div>
-                <Badge variant="outline" className="text-[10px]">
-                  {leadStatusLabel(primaryLead.status)}
-                </Badge>
-                {primaryLead.assigned_to && (
-                  <p className="text-muted-foreground">Rieši: {primaryLead.assigned_to}</p>
-                )}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">Bez leadu v pipeline.</p>
-            )}
-          </section>
-
-          {unresolvedIssues.length > 0 && (
-            <section className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
-              <h3 className="text-xs font-semibold text-amber-800 dark:text-amber-300 mb-2">
-                Pozor
-              </h3>
-              <ul className="text-[11px] space-y-1 text-amber-900 dark:text-amber-200">
-                {unresolvedIssues.slice(0, 4).map((i) => (
-                  <li key={i}>• {i}</li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          <section className="rounded-xl border border-border bg-card p-4 space-y-2 text-xs">
-            <h3 className="font-semibold">Súvisiace moduly</h3>
-            <div className="flex flex-col gap-1">
-              {summary.activeRentalsCount > 0 && (
-                <Link to="/admin/rentals" className="text-primary hover:underline">
-                  Prenájmy ({summary.activeRentalsCount})
-                </Link>
-              )}
-              {unpaidCommissions.length > 0 && (
-                <Link to="/admin/commissions" className="text-primary hover:underline">
-                  Provízie ({unpaidCommissions.length} nevyplatených)
-                </Link>
-              )}
-              {data.signatures.length > 0 && (
-                <Link to="/admin/signatures" className="text-primary hover:underline">
-                  Podpisy ({data.signatures.length})
-                </Link>
-              )}
-              {data.designs.length > 0 && (
-                <Link to="/admin/designs" className="text-primary hover:underline">
-                  Dizajny ({data.designs.length})
-                </Link>
-              )}
-            </div>
-          </section>
-        </aside>
       </div>
 
       <CustomerQuickCreateDialogs

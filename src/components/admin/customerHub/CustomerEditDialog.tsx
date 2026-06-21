@@ -206,16 +206,22 @@ interface EditButtonProps {
   customer: CustomerRow | null;
   fallbackPhone?: string | null;
   onSaved: () => void;
+  className?: string;
 }
 
 /** Header action — opens customer edit dialog when canonical record exists. */
-export function CustomerEditButton({ customer, fallbackPhone, onSaved }: EditButtonProps) {
+export function CustomerEditButton({ customer, fallbackPhone, onSaved, className }: EditButtonProps) {
   const [open, setOpen] = useState(false);
   if (!customer) return null;
 
   return (
     <>
-      <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs" onClick={() => setOpen(true)}>
+      <Button
+        size="sm"
+        variant="outline"
+        className={className ?? "shrink-0 h-8 text-xs"}
+        onClick={() => setOpen(true)}
+      >
         <Pencil className="w-3.5 h-3.5 mr-1" /> Upraviť
       </Button>
       <CustomerEditDialog

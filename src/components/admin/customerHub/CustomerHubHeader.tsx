@@ -92,11 +92,14 @@ export function CustomerHubHeader({
     toast({ title: "Skopírované do schránky" });
   };
 
+  const hasCockpitActions =
+    !!primaryLead || (!!data.canonicalCustomer && !!onCustomerSaved) || canDeleteCustomer;
+
   return (
     <div className="space-y-3">
       <section className="rounded-xl border border-border bg-card p-4 sm:p-5 space-y-3">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="space-y-1 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+          <div className="space-y-1 min-w-0 flex-1">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">
               Klientsky cockpit
             </p>
@@ -158,17 +161,43 @@ export function CustomerHubHeader({
               </Link>
             )}
           </div>
-          {primaryLead && (
-            <Button size="sm" variant="default" asChild>
-              <Link to={`/admin?lead=${primaryLead.id}`}>Hlavný lead</Link>
-            </Button>
-          )}
-          {data.canonicalCustomer && onCustomerSaved && (
-            <CustomerEditButton
-              customer={data.canonicalCustomer}
-              fallbackPhone={summary.phone}
-              onSaved={onCustomerSaved}
-            />
+
+          {hasCockpitActions && (
+            <div className="flex flex-col gap-2.5 w-full sm:w-44 shrink-0 sm:pt-5">
+              {primaryLead && (
+                <Button size="sm" variant="default" className="w-full h-9 text-xs" asChild>
+                  <Link to={`/admin?lead=${primaryLead.id}`}>Hlavný lead</Link>
+                </Button>
+              )}
+              {data.canonicalCustomer && onCustomerSaved && (
+                <CustomerEditButton
+                  customer={data.canonicalCustomer}
+                  fallbackPhone={summary.phone}
+                  onSaved={onCustomerSaved}
+                  className="w-full h-9 text-xs justify-center"
+                />
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full h-9 text-xs"
+                onClick={() => void copyCustomerInfo()}
+              >
+                <Copy className="w-3.5 h-3.5 mr-1.5 shrink-0" /> Kopírovať
+              </Button>
+              {canDeleteCustomer && onDeleteCustomer && (
+                <div className="pt-2 mt-0.5 border-t border-destructive/20">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full h-9 text-xs text-destructive border-destructive/40 bg-destructive/[0.03] hover:bg-destructive/10"
+                    onClick={onDeleteCustomer}
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1.5 shrink-0" /> Zmazať klienta
+                  </Button>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -228,19 +257,6 @@ export function CustomerHubHeader({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button size="sm" variant="ghost" className="shrink-0 h-8 text-xs" onClick={() => void copyCustomerInfo()}>
-            <Copy className="w-3.5 h-3.5 mr-1" /> Kopírovať
-          </Button>
-          {canDeleteCustomer && onDeleteCustomer && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="shrink-0 h-8 text-xs text-destructive border-destructive/40 hover:bg-destructive/5"
-              onClick={onDeleteCustomer}
-            >
-              <Trash2 className="w-3.5 h-3.5 mr-1" /> Zmazať klienta
-            </Button>
-          )}
         </div>
       </section>
     </div>
