@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { CommissionRow } from "@/lib/commissionSource";
-import { prefillFromCommission, type FactDraft } from "@/lib/finance/factDrafts";
+import { prefillFromCommission, toLocalInput, type FactDraft } from "@/lib/finance/factDrafts";
 
 const EMPTY_FINANCE_CTX = {
   commissions: [],
@@ -57,7 +57,7 @@ export function buildCommissionPayoutDraft(
   return {
     kind: "payout",
     amount: String(amount),
-    paid_at: toLocalInput(commission.date ? `${commission.date}T12:00:00` : undefined),
+    paid_at: toLocalInput(new Date().toISOString()),
     implementer: commission.implementer ?? "",
     note: commission.note ?? commission.title,
     source_table: "commissions",
@@ -69,8 +69,9 @@ export function buildCommissionPayoutDraft(
 export function buildPartialCommissionPayoutDraft(
   commission: CommissionForPayoutBridge,
   paidSoFar: number,
+  opts?: { potentialAmount?: number },
 ): FactDraft | null {
-  const potential = Number(commission.amount) || 0;
+  const potential = opts?.potentialAmount ?? (Number(commission.amount) || 0);
   const remaining = Math.max(potential - paidSoFar, 0);
   if (remaining <= 0) return null;
   return buildCommissionPayoutDraft(commission, { amount: remaining });

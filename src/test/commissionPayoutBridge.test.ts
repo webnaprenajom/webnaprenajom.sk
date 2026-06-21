@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   buildCommissionPayoutFactDraft,
+  buildCommissionPayoutDraft,
+  buildPartialCommissionPayoutDraft,
   commissionHasLinkedPayoutInRows,
   shouldOfferCommissionPayoutFact,
 } from "@/lib/finance/commissionPayoutBridge";
@@ -38,5 +40,40 @@ describe("commissionPayoutBridge", () => {
       source_table: "commissions",
       source_id: "c-marketing",
     });
+  });
+
+  it("builds partial payout draft from remaining potential", () => {
+    const draft = buildPartialCommissionPayoutDraft(
+      {
+        id: "c1",
+        title: "Prenájom",
+        implementer: "Peter",
+        amount: 300,
+        date: "2026-12-31",
+        note: null,
+      },
+      100,
+      { potentialAmount: 300 },
+    );
+    expect(draft).toMatchObject({
+      kind: "payout",
+      amount: "200",
+      source_table: "commissions",
+      source_id: "c1",
+      implementer: "Peter",
+    });
+    expect(draft?.paid_at).toBeTruthy();
+  });
+
+  it("buildCommissionPayoutDraft does not throw (toLocalInput import)", () => {
+    const draft = buildCommissionPayoutDraft({
+      id: "c1",
+      title: "Test",
+      implementer: "A",
+      amount: 50,
+      date: "2026-01-01",
+      note: "note",
+    });
+    expect(draft.amount).toBe("50");
   });
 });

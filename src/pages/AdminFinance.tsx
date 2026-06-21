@@ -51,7 +51,6 @@ import {
   type AccessContext,
 } from "@/lib/rbac/permissions";
 import {
-  implementerPaidDisplayTotal,
   resolveImplementerFinanceTruthLevel,
   type ImplementerFinanceTotals,
 } from "@/lib/finance/commissionPayoutStatus";
@@ -278,7 +277,7 @@ const AdminFinance = () => {
       }).entries(),
     ).sort(
       (a, b) =>
-        implementerPaidDisplayTotal(b[1]) + b[1].unpaid - (implementerPaidDisplayTotal(a[1]) + a[1].unpaid),
+        b[1].paidAudited + b[1].unpaid - (a[1].paidAudited + a[1].unpaid),
     );
   }, [
     scopedCommissionsForYear,
@@ -614,7 +613,7 @@ function DailyFinanceView({
             </TableHeader>
             <TableBody>
               {implementerTotals.map(([name, t]) => {
-                const paid = implementerPaidDisplayTotal(t);
+                const paid = t.paidAudited;
                 const truthLevel = resolveImplementerFinanceTruthLevel(t);
                 return (
                 <TableRow
@@ -623,7 +622,14 @@ function DailyFinanceView({
                   onClick={() => setDetailImplementer(name)}
                 >
                   <TableCell className="font-medium">{name}</TableCell>
-                  <TableCell className="text-right text-green-600">{fmtEur(paid)}</TableCell>
+                  <TableCell className="text-right text-green-600">
+                    {fmtEur(paid)}
+                    {t.paidWorkflowUnaudited > 0 && (
+                      <div className="text-[9px] text-muted-foreground font-normal">
+                        +{fmtEur(t.paidWorkflowUnaudited)} workflow
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right text-amber-600">{fmtEur(t.unpaid)}</TableCell>
                   <TableCell className="text-right text-muted-foreground">{t.lineCount}</TableCell>
                   <TableCell>
@@ -638,10 +644,10 @@ function DailyFinanceView({
         )}
         {implementerTotals.length > 0 && (
           <p className="text-[10px] text-muted-foreground px-4 py-2 border-t border-border/60">
-            Vyplatené: auditované sumy z <code className="text-[10px]">payout_records</code> (ak existujú) +
-            workflow provízie bez payoutu. Nezaplatené: <code className="text-[10px]">commissions</code> bez
-            linked payout + podiel z prenájmov (JSON, ak ešte nie je materializovaný v commissions). Rok{" "}
-            {year}. Bez dvojitého započítania commission + payout pre ten istý zdroj.
+            Vyplatené: auditované sumy z <code className="text-[10px]">payout_records</code> (primárna pravda).
+            Workflow provízie bez payoutu sú len diagnostika pod sumou. Nezaplatené: zostávajúca suma podľa
+            kanonickej zákazky (potenciál mínus vyplatené) + JSON podiely bez materializovanej provízie. Rok{" "}
+            {year}. Bez dvojitého započítania.
           </p>
         )}
       </section>

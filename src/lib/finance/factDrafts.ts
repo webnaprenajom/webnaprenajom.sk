@@ -527,7 +527,7 @@ export async function saveFactDraft(draft: FactDraft): Promise<void> {
       amount,
       paid_at: fromLocalInput(draft.paid_at),
       implementer: draft.implementer || null,
-      reference: draft.reference || null,
+      reference: [draft.reference, draft.method].filter(Boolean).join(" · ") || null,
       note: draft.note || null,
       currency: "EUR",
       truth_level: "payout_fact",

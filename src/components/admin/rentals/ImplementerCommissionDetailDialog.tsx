@@ -81,6 +81,8 @@ interface Props {
   clientEmailMap: Map<string, string>;
   yearStats: (w: RentalWebsite) => { paid: number; potential: number };
   onSaved: () => void;
+  /** Scoped reload after payout fact — commissions + payout_records only. */
+  onPayoutSaved?: () => void | Promise<void>;
 }
 
 export function ImplementerCommissionDetailDialog({
@@ -94,6 +96,7 @@ export function ImplementerCommissionDetailDialog({
   clientEmailMap,
   yearStats,
   onSaved,
+  onPayoutSaved,
 }: Props) {
   const access = useAccessContext();
   const canTogglePaymentStatus = canToggleCommissionPaymentStatus(access, implementerName);
@@ -177,58 +180,72 @@ export function ImplementerCommissionDetailDialog({
       return;
     }
 
-    let commissionId = deal.commissionId;
-    let bridgeCommission = commissionId ? commissions.find((c) => c.id === commissionId) : undefined;
+    try {
+      let commissionId = deal.commissionId;
+      let bridgeCommission = commissionId ? commissions.find((c) => c.id === commissionId) : undefined;
 
-    if (!commissionId && deal.websiteId != null && deal.impIndex != null) {
-      const customerEmail = deal.clientName
-        ? clientEmailMap.get(deal.clientName.trim().toLowerCase()) ?? null
-        : null;
-      const materialized = await ensureRentalCommissionMaterialized(
-        {
-          websiteId: deal.websiteId,
-          websiteName: deal.title,
-          implementer: implementerName,
-          year,
+      if (!commissionId && deal.websiteId != null && deal.impIndex != null) {
+        const customerEmail = deal.clientName
+          ? clientEmailMap.get(deal.clientName.trim().toLowerCase()) ?? null
+          : null;
+        const materialized = await ensureRentalCommissionMaterialized(
+          {
+            websiteId: deal.websiteId,
+            websiteName: deal.title,
+            implementer: implementerName,
+            year,
+            amount: deal.potentialCommission,
+            customerEmail,
+            note: deal.note || null,
+          },
+          commissions,
+        );
+        if (!materialized) {
+          toast({ title: "Chyba", description: "Nepodarilo sa pripraviť provízny záznam.", variant: "destructive" });
+          return;
+        }
+        commissionId = materialized.commissionId;
+        bridgeCommission = {
+          id: materialized.commissionId,
+          title: deal.title,
           amount: deal.potentialCommission,
-          customerEmail,
-          note: deal.note || null,
-        },
-        commissions,
-      );
-      if (!materialized) {
-        toast({ title: "Chyba", description: "Nepodarilo sa pripraviť provízny záznam.", variant: "destructive" });
+          date: `${year}-12-31`,
+          implementer: implementerName,
+          note: deal.note,
+          payment_status: "unpaid",
+          payment_form: deal.paymentForm,
+          source_type: "rental",
+          source_id: deal.websiteId,
+          customer_email: customerEmail,
+        } as CommissionRow;
+      }
+
+      if (!bridgeCommission || !commissionId) {
+        toast({ title: "Chyba", description: "Chýba provízny záznam pre výplatu.", variant: "destructive" });
         return;
       }
-      commissionId = materialized.commissionId;
-      bridgeCommission = commissions.find((c) => c.id === commissionId) ?? ({
-        id: commissionId,
-        title: deal.title,
-        amount: deal.potentialCommission,
-        date: `${year}-12-31`,
-        implementer: implementerName,
-        note: deal.note,
-      } as CommissionRow);
-      onSaved();
-    }
 
-    if (!bridgeCommission || !commissionId) {
-      toast({ title: "Chyba", description: "Chýba provízny záznam pre výplatu.", variant: "destructive" });
-      return;
+      const draft = buildPartialCommissionPayoutDraft(
+        {
+          id: commissionId,
+          title: bridgeCommission.title,
+          amount: deal.potentialCommission,
+          date: bridgeCommission.date,
+          implementer: bridgeCommission.implementer,
+          note: bridgeCommission.note,
+        },
+        deal.paidAmount,
+        { potentialAmount: deal.potentialCommission },
+      );
+      if (!draft) {
+        toast({ title: "Nič na výplatu", description: "Zostávajúca suma je 0.", variant: "destructive" });
+        return;
+      }
+      openPayoutDraft(draft);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Neočakávaná chyba";
+      toast({ title: "Chyba výplaty", description: msg, variant: "destructive" });
     }
-
-    const draft = buildPartialCommissionPayoutDraft(
-      {
-        id: commissionId,
-        title: bridgeCommission.title,
-        amount: Number(bridgeCommission.amount) || deal.potentialCommission,
-        date: bridgeCommission.date,
-        implementer: bridgeCommission.implementer,
-        note: bridgeCommission.note,
-      },
-      deal.paidAmount,
-    );
-    openPayoutDraft(draft);
   };
 
   const renderDealRow = (deal: RentalCommissionDeal, isLegacy = false) => {
@@ -414,6 +431,7 @@ export function ImplementerCommissionDetailDialog({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl w-[calc(100vw-1.5rem)] sm:w-full max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -486,19 +504,20 @@ export function ImplementerCommissionDetailDialog({
         <div className="flex justify-end">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Zavrieť</Button>
         </div>
-
-        <FactConfirmDialog
-          open={payoutFactOpen}
-          onOpenChange={setPayoutFactOpen}
-          draft={payoutFactDraft}
-          mode="workflow"
-          onSaved={() => {
-            setPayoutFactOpen(false);
-            setPayoutFactDraft(null);
-            onSaved();
-          }}
-        />
       </DialogContent>
     </Dialog>
+
+    <FactConfirmDialog
+      open={payoutFactOpen}
+      onOpenChange={setPayoutFactOpen}
+      draft={payoutFactDraft}
+      mode="workflow"
+      onSaved={() => {
+        setPayoutFactOpen(false);
+        setPayoutFactDraft(null);
+        void (onPayoutSaved ?? onSaved)();
+      }}
+    />
+    </>
   );
 }

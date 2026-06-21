@@ -6,6 +6,7 @@ import { AdminDialog } from "@/components/admin/AdminDialog";
 import { useAdminCloseGuard } from "@/hooks/useAdminCloseGuard";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { PAYMENT_FORM_OPTIONS } from "@/lib/paymentForm";
 import {
   type FactDraft,
   type FactKind,
@@ -31,16 +32,27 @@ export function FactConfirmDialog({
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (draft) setForm({ ...draft });
-  }, [draft]);
+    if (open && draft) {
+      setForm({ ...draft });
+      return;
+    }
+    if (!open) setForm(null);
+  }, [open, draft]);
+
+  const displayForm = form ?? (open && draft ? draft : null);
 
   const closeDialog = () => onOpenChange(false);
 
   const persist = async (): Promise<boolean> => {
-    if (!form) return false;
+    const active = form ?? displayForm;
+    if (!active) return false;
+    if (active.kind !== "cost" && !active.paid_at?.trim()) {
+      toast({ title: "Chýba dátum", description: "Zadajte dátum platby/výplaty.", variant: "destructive" });
+      return false;
+    }
     setSaving(true);
     try {
-      await saveFactDraft(form);
+      await saveFactDraft(active);
       toast({ title: "Potvrdený záznam vytvorený" });
       closeDialog();
       onSaved();
@@ -55,23 +67,23 @@ export function FactConfirmDialog({
   };
 
   const closeGuard = useAdminCloseGuard({
-    isOpen: open && !!form,
-    current: form ?? {},
+    isOpen: open && !!displayForm,
+    current: displayForm ?? {},
     onSave: persist,
     onDiscard: () => setForm(null),
     saving,
   });
 
-  if (!form) return null;
+  if (!open || !displayForm) return null;
 
   const title =
     mode === "promote"
       ? "Potvrdiť legacy ako nový fact"
       : mode === "workflow"
         ? "Vytvoriť potvrdený záznam"
-        : form.kind === "payment"
+        : displayForm.kind === "payment"
           ? "Nová potvrdená platba"
-          : form.kind === "payout"
+          : displayForm.kind === "payout"
             ? "Nová potvrdená výplata"
             : "Nový potvrdený náklad";
 
@@ -107,7 +119,7 @@ export function FactConfirmDialog({
             ? "Vytvorí sa nový *_fact záznam. Legacy import zostáva nezmenený."
             : "Human-in-the-loop: skontrolujte údaje pred uložením. Žiadny auto-sync."}
         </p>
-        <FormFields kind={form.kind} form={form} setForm={setForm} />
+        <FormFields kind={displayForm.kind} form={displayForm} setForm={setForm} />
       </AdminDialog>
     </>
   );
@@ -167,11 +179,27 @@ function FormFields({
               onChange={(e) => setForm({ ...form, paid_at: e.target.value })}
             />
           </Field>
+          <Field label="Forma výplaty">
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={form.reference ?? ""}
+              onChange={(e) => setForm({ ...form, reference: e.target.value || undefined })}
+            >
+              <option value="">—</option>
+              {PAYMENT_FORM_OPTIONS.map((o) => (
+                <option key={o.value} value={o.label}>{o.label}</option>
+              ))}
+            </select>
+          </Field>
           <Field label="Implementér">
             <Input value={form.implementer ?? ""} onChange={(e) => setForm({ ...form, implementer: e.target.value })} />
           </Field>
-          <Field label="Referencia">
-            <Input value={form.reference ?? ""} onChange={(e) => setForm({ ...form, reference: e.target.value })} />
+          <Field label="Banková referencia (voliteľné)">
+            <Input
+              value={form.method ?? ""}
+              onChange={(e) => setForm({ ...form, method: e.target.value })}
+              placeholder="VS / IBAN / hash"
+            />
           </Field>
         </>
       )}
